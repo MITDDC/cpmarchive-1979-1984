@@ -1,0 +1,164 @@
+SECURSYS.DOC as of 7/10/81
+
+     Doesn't  it  really burn you when some jerk logs  into  your 
+remote  CP/M  system (that  you've spent hundreds  of  hours  and 
+thousands  of dollars to put on-line for public use) and promptly 
+tries to steal you blind and crash or ruin your system?   In  the 
+(almost)  2  years  that Technical CBBS has been  on  line,  I've 
+compiled  a user log about 6 feet high (no kidding,  5  boxes  of 
+3000 sheets each) that probably has at least one example of every 
+possible  thing that a system crasher can try to steal or  screw-
+up.  I've been keeping a list of the "top-10" solutions that I've 
+found  since TCBBS has been in operation,  which might be of some 
+use to new SYSOP's.  There is nothing amazing in the  file,  it's 
+mostly  just  common sense,  but it is very easy to forget  these 
+ideas.  I know that from many painful experiences.
+     SYSOP'S, here are some things you can do to stop a potential 
+system crasher:
+
+1.      Keep a CRCK file for ALL of the .COM files that you leave 
+    on-line  (And also any other files that get loaded  into  the 
+    TPA  and  executed,  like MINICBBS.OBJ).   If  you  have  any 
+    password files (like the PWDS file used by RBBS),  CRCK those 
+    too.  For obvious reasons, don't leave the CRCK file on-line.  
+    (CRCK.ASM  is  a program that produces  a  cyclic-redundancy-
+    check value for any specified files.)
+
+2.      Use  MDIR.COM frequently to see what goodies the jerk may 
+    have left you in certain user  areas.   Note;  however,  that 
+    MDIR.COM  will NOT find files that are "hidden" in the  "user 
+    areas" above 20H!  The best way to see everything on the disk 
+    is  to  use  the MAP (M) function of DU.COM.   It  will  show 
+    EVERYTHING on the disk, even the remains of any erased files.  
+    I  routinely Map the disks on TCBBS and SYSOP CBBS and  have, 
+    on occasion, found special files and other no-no's on both.
+
+3.      Don't  leave any .COM files on the system that can  allow 
+    a remote user to find .SYS files.   Most directory  programs, 
+    and  also  WHATSNEW allow anybody to list .SYS files by  just 
+    typing  an extra character or two.   The best thing to do  is 
+    remove the .SYS list options altogether.   (A quick fix is to 
+    DDT  the  .COM  file and change the character  to  a  control 
+    character  like  ^C which can't be entered into  the  command 
+    buffer.)
+
+4.      Keep  a hard-copy log of all remote input to the  system.  
+    Although  a log won't actually make your system more  secure, 
+    it will give you an opportunity to see how anybody "gets in", 
+    and will,  hopefully, insure that the same break-in procedure 
+    can't be used twice.   Installing a log is really easier than 
+    it sounds, since it only requires printing the stuff typed by 
+    the  remote  user,  not the stuff typed by  the  system.   An 
+    inexpensive (i.e.  cheap) printer is perfect, since you don't 
+    need  letter-quality type to see who's been screwing up  your 
+    $3000-and-up  computer  system.    Many  BYE  programs  (like 
+    BYE69.ASM) already include the option for a hard-copy log.  
+
+5.      Of  course,  you  should also change the  CP/M  commands.  
+    Again,  the  best  thing is to REMOVE commands like  ERA  and 
+    SAVE,  but if you're not that ambitious,  or if you think you 
+    can't do without them, just change them as usual, with SYSGEN 
+    and DDT.  Try to pick new commands that aren't easy to guess, 
+    although  it's  impossible to guarantee that no one  will  be 
+    able to figure them out in time. (I have a listing from TCBBS 
+    log  where some idiot spent about 8 hours trying to find  one 
+    of  the commands.)  If you want to eliminate a  command,  you 
+    can  embed a control character into the command word and make 
+    it impossible to use.
+
+6.      Don't leave any .COM files out that would allow a  remote 
+    user to examine or modify memory, or to load a .HEX file.  It 
+    is perfectly safe to leave out ASM.COM, because it can't make 
+    a  .COM  file,  but to leave LOAD.COM or L80.COM  out  is  to 
+    invite a remote user to download his favorite debugger to see 
+    what  he  can do.   BASIC.COM and DDT.COM are also bad  news, 
+    since  both  could  allow a remote user to  make  changes  in 
+    memory.   Even a compiler can be left safely on-line, as long 
+    as  its associated loader program is  not  available.   Also, 
+    don't  leave out any files that would allow a remote user  to 
+    send a .COM file over to your system.   XMODEM.COM checks for 
+    .COM  files  and won't allow them,  but many other  programs, 
+    like MODEM.COM and BSTAM,  will allow ANY file to be sent  or 
+    received.  Once a system crasher has a way to download a .COM 
+    file to your system, all is lost.
+
+7.      In  CP/M 2.x,  an illegal drive request might also change 
+    the current user area!   In other words,  a remote caller who 
+    is  logged  into A:  user 0 could type "Q:" and end up on  A: 
+    user  1!  Digital  Research doesn't think of this as  a  bug, 
+    because  in an unmodified CP/M system,  a disk  select  error 
+    will  cause a PERMANENT BDOS error.   The problem arises when 
+    the  user  changes his BIOS to allow a warm-boot  on  a  disk 
+    select  error,  instead  of  a permanent  BDOS  error.   CP/M 
+    doesn't  reset  the user/drive  byte  properly.   That's  the 
+    reason for the strange results.  This problem can be fixed in 
+    your  BIOS  by properly handling a SELDSK error,  but if  you 
+    don't have the source for your BIOS, you could be in trouble.  
+    Another  way to protect yourself against this problem  is  to 
+    keep  "private" stuff in user 5 or 16-32.   Strangely enough, 
+    all  other  user areas can be entered with an  illegal  drive 
+    code.   Putting things in user 5 will make them pretty  safe, 
+    and,  of course, putting things in user areas 16-32 will make 
+    them even safer,  but the CCP can't get YOU into those areas, 
+    so  their use is a bit restricted.   Most BYE programs have a 
+    MAXUSER  equate that will keep remote users out of  any  area 
+    greater than a preset value,  so they can also protect you to 
+    a certain extent from an illegal drive select.
+
+8.      You  can protect licensed or private software by  keeping 
+    it  in  an unaccessible user area,  and using a short  loader 
+    program  like  Keith Petersen's  SECURITY.ASM.   This  really 
+    works,  and makes the SYSOP feel good when he sees in the LOG 
+    that  some  BOZO who thinks he has just  successfully  stolen 
+    MINICBBS has actually just stolen a short loader program.
+
+9.      Probably  the  biggest  security  problem  is  INCREDIBLE 
+    STUPIDITY.   It is rumored that some SYSOP's have  actually 
+    done  really dumb things like leave PIP.COM or  MODEM.COM  or 
+    FORMAT.COM  (shiver...) out in a public user  area!   If  you 
+    absolutely  have  to leave one of these  (potentially)  nasty 
+    little  programs on your system,  put it in a user area  that 
+    can't  be  accessed remotely (or at least a non-public  area) 
+    and rename it to a .OBJ file.  Then even if someone gets into 
+    the user area with the program, he can't run it (.OBJ).
+ 
+10.     Don't leave your system or CP/M passwords anywhere on the 
+    system.   Use  TAG.COM to make sure that someone can't XMODEM 
+    your BYE.COM program and other goodies.  Don't leave a SYSGEN 
+    image  (CPM56.COM) laying around either,  since it  could  be 
+    downloaded  and  DDT'ed to find the system  commands.   Also, 
+    don't  leave your system PW's on another system in a  private 
+    message  to  a  friend thinking that his  message  system  is 
+    private,  because it probably isn't.  I'm not being paranoid, 
+    everybody REALLY IS trying to break into my system...
+
+Some  of these things may seem like a pain in the neck,  but  the 
+more  prevention you do,  the less you have to worry about the  1 
+jerk in a thousand callers who wants to mis-use your system.   NO 
+SYSTEM  is  absolutely  secure,  but with these  suggestions  you 
+should be able to run a system that is almost absolutely  secure, 
+which isn't really that bad.  
+
+   Good luck,  Dave Hardy   Sysop, TECHNICAL CBBS (313) 846-6127
+                            Sysop, SYSOP CBBS (313) 885-0506
+
+P.S.  Please pass any additions or corrections on to me at one of 
+the above systems.  -thanks
+
+COROLLARIES:
+
+11.     Watch out for booby-trapped .COM files!  If someone sends 
+    down  an  .OBJ file suggesting that you leave it out on  your 
+    system,  be sure to check that file for any hidden  functions 
+    that may allow someone to break into your system later.   One 
+    way  to  prevent this would be to only leave out  .COM  files 
+    that you have assembled from SOURCE files.   In any case,  be 
+    suspicious  of  any files left you for public use that  don't 
+    have  the source with them.   A good programmer could hide  a 
+    secret function in a .COM file so well that it could only  be 
+    found  with  a great deal of  difficulty.   In  addition,  an 
+    unknown  .COM file might also have many other terrible hidden 
+    functions  (See  BANZAI.ASM for some ideas) that  could  even 
+    destroy other files on the system's disks, so be careful.
+                         -Dave Hardy (as suggested by Ron Fowler)
+

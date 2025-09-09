@@ -1,0 +1,463 @@
+        -DISKBUG- Diskette Debugger for CP/M 8" Single Density Disks Page 1
+
+
+
+                  Note  that  you  may do anything  you  want  with  this 
+             program except sell it. Give it away to anyone who wants it, 
+             and drop me a message with any bugs, suggestions etc. at the 
+             NECS CBBS or thereabouts.
+
+                  By   Tom Jennings
+                       221 W. Springfield St.
+                       Boston MA 02118
+
+                  DISKBUG is a CP/M 1.4, 2.0, 2.2 or PDOS 1.17-up utility 
+             that  provides read/write access to any sector or sectors of 
+             an  IBM 3741 format diskette.  See a later section  for  use 
+             with  other  formats.  DISKBUG  was originally  a  hack  for 
+             installing  a  bootable CP/M system to a diskette,  but  has 
+             grown  somewhat,  so  have patience with  the  poor  command 
+             structure.
+
+                  There are three logical entities in DISKBUG: the sector 
+             oriented  commands,  the  file oriented  commands,  and  the 
+             buffer.  
+
+             BUFFER:
+                  All  data is transferred through  the  buffer,  whether 
+             to/from sectors or files. Data can be moved from one or more 
+             sectors to a normal CP/M disk file,  or vice versa.  Data in 
+             the buffer can be displayed or modified manually, similar to 
+             DDT.
+
+             SECTOR COMMANDS:
+                  The  sector  oriented commands are all done via  direct 
+             BIOS calls in CP/M,  or by system calls under PDOS.  One  or 
+             more  sectors can be read at a time,  and multiple reads  or 
+             writes  can extend over a track boundary;  for example,  you 
+             can read two sequential sectors, starting at the last sector 
+             in a track.
+
+                  See the end of this manual for tips on using DISKBUG on 
+             other diskette formats.
+
+             FILE COMMANDS:
+                  DISKBUG has a two file oriented commands.  These read a 
+             disk  file into the buffer,  or write the buffer to  a  CP/M 
+             disk  file.  Under PDOS,  the full filename spec can be used 
+             (i.e.  FILE.NAME[99]  )  Character case conversion  is  done 
+             automatically.
+
+
+
+
+
+
+
+
+
+
+
+                                        1
+
+
+
+
+
+        -DISKBUG- Diskette Debugger for CP/M 8" Single Density Disks Page 2
+
+
+
+                                  DISKBUG OPERATION
+
+                  DISKBUG  is  just a CP/M utility,  run  in  the  normal 
+             manner.  It uses only 8080 opcodes, so will run on anything. 
+             (Well,  anything we care about. Shows my narrow CPM-8080-Z80 
+             point  of view) It is not particularly fast,  but who  cares 
+             anyways. It does not use any command line arguments.
+
+                  All  commands  are  quit  low  level,   which  I  found 
+             appropriate for my uses,  such as system  installation,  un-
+             erasing  files,  copying  files from Intel ISIS  and  PDP-11 
+             diskettes.
+
+                  One note on the buffer. It is assumed you have a fairly 
+             large memory,  like 48K or so. The buffer is fixed at 32K in 
+             length,  and almost no commands do any checking on  reaching 
+             the  end  of it,  so it is possible to destroy  your  system 
+             memory if you try. In practice, I have had no problems.
+
+                  Buffer  management  is minimal.  All  commands  (except 
+             display buffer and change buffer) operate from the bottom of 
+             the buffer up.
+
+                  The  command  prompt  always  displays  the  number  of 
+             (decimal) bytes in the buffer.  All number typed to  DISKBUG 
+             are in hex.
+
+                  See the end of the manual for some examples.
+
+                  A  hopefully  complete description of the  command  set 
+             follows, with a list of features, bugs and side effects.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                        2
+
+
+
+
+
+        -DISKBUG- Diskette Debugger for CP/M 8" Single Density Disks Page 3
+
+
+
+                                 DISKBUG COMMAND SET
+
+             X         Select the disk to use,
+             R         Read sectors into the buffer,
+             W         Write the buffer to sectors,
+             G         Get a CP/M disk file,
+             P         Put the buffer to a CP/M disk file,
+             D         Display buffer contents,
+             C         Change buffer contents,
+             Q         Quit back to CP/M.
+
+
+             X    -Select a disk drive.
+
+                  This  command  must  be  performed  before  any  sector 
+             command will operate. The disk selected will be used for all 
+             upcoming  R or W commands.  Note that this is independent of 
+             the  disk  used  by  the  G  and  P  commands;   see   those 
+             descriptions for details.
+
+             R    -Read one or more sectors to the buffer.
+
+                  You are prompted for the starting track and sector, and 
+             number of sectors.  All values are in hex.  Sectors are read 
+             sequentially (assuming a standard diskette) into the buffer, 
+             starting  at the bottom of the buffer.  Note that you cannot 
+             append to data already in the buffer;  it gets  overwritten. 
+             (If you need to,  you'll have to P it out to a diskfile, and 
+             append it later manually.)
+
+                  Note  that  no checking is done on the amount  of  data 
+             read;  if  you  specify  more than  128  sectors,  you  will 
+             probably bash something.
+
+             W    -Write buffer data out to one or more sectors.
+
+                  As in the R command,  you are prompted for the starting 
+             track and sector, and number of sectors. To be safe, it asks 
+             "Write  to  disk <x>:?" before actually  writing,  therefore 
+             allowing you to abort.
+
+                  Only  the  specified  number  of  sectors  is  written, 
+             regardless of how much data is in the buffer. (even none!) 
+
+             G    -Get a diskfile, put it in the buffer.
+
+                  This reads the specified disk file and puts it into the 
+             buffer,  starting  at the bottom of the buffer.  The  entire 
+             file  is  read  until end of file.  Note that you  can  (and 
+             probably should!) specify a disk other than the one selected 
+             by  the X command.  File names are specified as  per  normal 
+             operating system specs:  X:FILE.NAM, or with the user number 
+             if PDOS. All characters are converted to upper case.
+
+
+
+                                        3
+
+
+
+
+
+        -DISKBUG- Diskette Debugger for CP/M 8" Single Density Disks Page 4
+
+
+             P    -Put the buffer contents to a diskfile.
+
+                  All  data  within  the buffer is written to  the  disk. 
+             NEVER  'P'  to the same disk as selected by the  X  command, 
+             unless you were merely reading from it.  Filenames are  full 
+             legal names, as described above. The number of bytes written 
+             out is the same as listed at the prompt.
+
+             D    -Display buffer contents.
+
+                  D  prompts  you  for a  buffer  starting  address,  and 
+             displays  256  bytes in hex and ASCII.  This address is  the 
+             offset  from  the start of the buffer,  and runs from  0  to 
+             7f00.   Unfortunately,  you  have  to  maintain  the  buffer 
+             address/sector numbers yourself.  For example,  if you  have 
+             read  4 sectors from track 0 sector 10,  sector 10 is in the 
+             buffer at 0 to 7f, sector 11 at 80 to ff, etc.
+
+                  You  may type CR only at the address prompt to  display 
+             the next sequential 256 bytes instead of the next address.
+
+             C    -Change buffer contents.
+
+                  This command is patterned after Digital Research's  DDT 
+             'S'  command.   After  entering  the  address,  the  current 
+             contents are displayed,  and you can enter new ones. Type an 
+             illegal  hex  number to quit.  CAUTION:  Unlike  DDT's  'S', 
+             typing  CR  only  as  new contents will  wreck  the  current 
+             contents,  not leave it.  You MUST retype the same value  if 
+             you want to leave it alone.
+
+             Q    -Quit back to the operating system.
+
+                  Pretty  much self explanatory.  Does absolutely nothing 
+             to the X'd disk, the buffer, or any diskfiles.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                        4
+
+
+
+
+
+        -DISKBUG- Diskette Debugger for CP/M 8" Single Density Disks Page 5
+
+
+
+                   NOTE ON OPERATING ON OTHER TYPE DISKETTE FORMATS
+
+                  Although  DISKBUG  is meant for use  only  on  standard 
+             eight inch single density disks,  you can use it on any type 
+             diskette  if  you DO NOT attempt to perform multiple  sector 
+             I/O  the would make DISKBUG think it should  change  tracks, 
+             and  make certain concessions.  Track size is currently hard 
+             coded to 26 sectors per track.  (Someday I'll finish DISKBUG 
+             so it reads the CP/M disk descriptor block...)
+
+                  When a sector write is done,  a "write allocated"  type 
+             write is done.  If you write to a diskette that has physical 
+             sectors  larger  than  128  bytes,  before  you  remove  the 
+             diskette  make  sure  you perform some operation  that  will 
+             ensure  the sector actually gets written;  reading a  sector 
+             will do.
+
+                                       EXAMPLES
+
+                  Here are some simple examples to show various things.
+
+                   READ THE CP/M SYSTEM TRACKS, DUMP TO A DISK FILE
+
+                  This  is one of the simplest things to do.  Select  the 
+             disk  to  read,  say A:,  using the X  command.  Do  an  'R' 
+             command,  and  read the first two tracks to the  buffer.  At 
+             this  point,  you might poke around with the 'D' command  to 
+             see  what's  there.   To  write  it  to  a  diskfile,   say, 
+             TRACK2.BIN, so you can look at it with DDT or something, use 
+             the 'P' command.  In this case,  you can 'P' it to disk  A:, 
+             since you only read it.
+
+             (0 bytes in buffer) pick one: X
+             Disk: A
+
+             (0 bytes in buffer) pick one: R
+             Track: 2
+             Sector: 1
+             # sectors: 1A
+             Disk IO complete
+
+             (3322 bytes in buffer) pick one: D
+             Starting address: 0
+
+             0000: 31 80 00 44 1a 7c 55 66 77 88 aa 55 4f 3e 1a 3c 1__D_|Ufw__UO>_<
+             0010: 41 42 43 44 45 31 32 33 34 35 61 62 63 64 65 66 ABCDE12345abcdef
+             .... etc
+
+             (3322 bytes in buffer) pick one: P
+             File to write to: A:TRACK2.BIN
+
+             (3322 bytes in buffer) pick one: Q
+             A>
+
+
+
+                                        5
+
+
+
+
+
+        -DISKBUG- Diskette Debugger for CP/M 8" Single Density Disks Page 6
+
+
+
+
+                     WRITING A DISKFILE OUT TO THE SYSTEM TRACKS
+
+                  This  was  the  original  use  of  DISKBUG.   Read  the 
+             diskfile,  say SYSTEM.COM,  to tracks 0 and 1.  Note that in 
+             this  example  the disk file is larger than the size of  the 
+             two tracks,  like you SAVEd too many blocks.  However,  only 
+             the desired 6144 bytes will be written out.
+
+             (0 bytes in buffer) pick one: G
+             File to read: A:SYSTEM.COM
+             Buffer contains 8192 bytes         (I should delete this msg...)
+
+             (8192 bytes in buffer) pick one: X
+             Disk: B
+
+             (8192 bytes in buffer) pick one: W
+             Track: 0
+             Sector: 1
+             # sectors 33                       (did I add right?)
+             Write to disk A:? Y
+             Disk IO complete
+
+             (8192 bytes in buffer) pick one:
+
+                               UNDELETE A CP/M DISKFILE
+
+                  First,  read track 2 into the buffer (r,2,1,1a) Use the 
+             'D'  command to look for the directory entry  (below).  Once 
+             found,  use the 'C' command to change the ET byte from E5 to 
+             the desired user number (0 will do) If the file was over 16K 
+             bytes,  don't  forget the other extents (same  filename,  EX 
+             byte  1,2,3...  for each extent) In order to update the disk 
+             directory, write the entire track back (w,2,1,1a) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                        6
+
+
+
+
+
+        -DISKBUG- Diskette Debugger for CP/M 8" Single Density Disks Page 7
+
+
+                                 BUGS AND "FEATURES"
+
+                  This  first  one is not a bug,  but an  undesired  side 
+             effect  of fiddling with the BIOS without the  BDOS  knowing 
+             it.  Bad  things  can  happen when you  change  the  default 
+             disk,  and you aren't careful to specify the disk when using 
+             the 'P' or 'G' commands. 
+
+                  There  is  possibly  a bug in the  disk  select  stuff, 
+             however. I couldn't get it to repeat, but I thought I should 
+             mention it anyways.  After performing sector reads or writes 
+             to a disk, a file access, such as 'G' or 'P' may look on the 
+             wrong  disk.  Fortunately,  this happened only with the  'G' 
+             command  ("Can't find FILE.NAM") and was not destructive.  I 
+             really should add a DISK SELECT command via a BDOS call.
+
+                  The number and filename parsers aren't too smart.  They 
+             will not report errors such as illegal hex numbers, or blank 
+             filenames. Be careful here.
+
+                  If  you read a file greater than 32K  bytes,  you  will 
+             probably munch something.
+
+                  In the 'C' command, typing CR in response to the prompt 
+             for a new value will not leave that location alone, but will 
+             change it to some random value.
+
+                  If  you  write an empty buffer to a diskfile,  it  will 
+             create a file with one (garbage) byte in it.
+
+                               ---- End of Manual ----
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                        7
+
+
+
+
+
+

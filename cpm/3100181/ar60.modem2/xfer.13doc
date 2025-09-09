@@ -1,0 +1,93 @@
+              DOCUMENTATION FOR XFER.BAS PROGRAM
+
+             Original program by AL JEWER 11/11/81
+            Re-written by Wayne M. Hammerly 11/19/81
+               Enhancements added 12/01/81 by wmh
+             Version 1.3 released 12/16/81 by wmh
+
+                +++YOU MUST HAVE SENDOUT.COM+++
+
+HERE'S THE OLD PROBLEM:
+      You are  on your favorite  RCPM  systems and see five or six
+files to transfer  to your  system, or  perhaps  you  want to send
+a  group  of  programs over there  To reduce  your phone time, you
+could prepare a submit file which uses  SENDOUT.COM  and MODEM.COM
+to modem over the files automatically. Writing a SUBMIT file takes
+a while, and would be VERY  impolite  to tie up the RCPM while you
+hack away, editing the file. SYSOPs don't like that kind of thing!
+      Well,if you make a SHORT list of the programs you want, then
+run XFER.BAS, it will prompt you for  file names & other  commands
+for both your's and the Remote system, creating the file  XFER.SUB
+containing  all  the  commands  necessary  for the transfer. These
+commands would include change logged disks, and user areas.
+      Using this utility, you could be back in minutes,transfering
+programs with a minimum of delay.
+      One word of caution: Unless  you have the permission  of the
+SYSOP, please do not transfer a large batch of files, tying up the
+phone for hours on end.  I can think  of no better way to wear out
+a welcome! Most systems have one hour limits, so plan accordingly.
+
+updated commands as of 12/16/81:
+        If you are Sending files, you will be  asked if the remote
+accepts the 'C' XMODEM option for CRC checking.
+        Very few, if any, RCPM  systems will  accept a  'COM' file
+A warning message will be issued if you try sending COM files. You
+may  eliminate this  feature in the source code to send COM files.
+
+                   How to run XFER.BAS:
+      Upon running XFER,  you will be asked if you wish to send or
+receive, and at what baud  rate.  The  next prompt asks you if you
+would like to freeze the options.  Answer  Y (yes) if you want all
+transfers to  use the same  modem  options  (O,Q,C, ect.)  and all
+files  transfered  to or  from the same disk. The next two prompts
+are  self-explanitory.  Choosing  to freeze the options will cause
+the  program to  issue  only  the next  two commands listed below.
+Choosing  not  to  freeze  the  options  will give  you all of the
+following prompts:
+
+                    COMMANDS TO THE REMOTE >
+
+Answer with either a command to the remote such as moving to a new
+disk or user area, or a carriage return (CR) for no command.
+
+                           FILENAME >
+
+Use  the standard  CP/M format of  FN.FT  as usual.  If  you  need
+another  command  to the  remote, such as when changing both drive
+and user areas, enter '$$$'  at  the  FILENAME prompt.  This  will
+cause the  COMMANDS line to reappear, and you may enter additional
+command(s).  If you want  a command to your system, type 'XXX' for
+the filename.  Use this comand to to do a  DIR or a MODEM D at the
+end of the transfer. Be sure to send the BYE command to the remote
+before logging off!  A CR will terminate the program.
+
+                          MODEM OPTIONS >
+
+Enter any options IN ADDITION TO the mandatory R or S, such as the
+'O' or 'Q' options DO NOT enter an R or S at this prompt!
+
+                 YOUR DISK TO SEND/RECEIVE FROM/TO >
+
+This is  your disk,  not  the  remote's! If  you  wish  to write or
+send from the default disk  of  your system, a carriage return (CR)
+will do.  You will now return to the top command.  YOU MUST INCLUDE
+A QUOTE!  Type 'B:' to send to or recieve from your drive B.
+
+To end,  hit a CR for both the  COMMAND and the FILENAME.   Remember
+to  return to the  remote and log off with 'BYE' if it is not a part
+of the submit file!
+     Run Xfer a number of time for practice before trying it on line.
+Look at the XFER.SUB file to see how the process works.
+     Happy computing!
+
++++ Notes on compiling XFER.BAS:
+        You will see the following line during compilation, ignor it.
+
+0017  0007      300 CLEAR 1000
+                    ^ SI
+
+        It will  not cause  an error either in assembly or running.
+        Using BASCOM 3.21, XFER.COM is 16K.  Editing out all of the
+REM statements doesn't seem to cut down the size or the run time.
+                                 END
+

@@ -1,0 +1,9 @@
+(COMMENT)
+(PROGN
+ (CLOSE (PROG1 INFILE (INPUSH -1)))	;close self
+ (errset	;make sure user doesn't get trapped in lisp
+  (princ "This program has been withdrawn.  Please use
+       :GUEST5;DOWNL <filename>
+instead.")
+  t)	;print out error messages, why not?
+ (quit))

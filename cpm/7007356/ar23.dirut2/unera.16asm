@@ -1,0 +1,639 @@
+; PROGRAM TO RECOVER ERASED FILES, BY GENE COTTON
+;
+; From Interface Age December 1981 pg 146
+;
+; v1.6 - 01/13/83  Made TRACK two byte, for hard disk offset, and added
+;	 support code. Added ambiguous file recovery. Fix BDOS select.
+;	 Boost DIRMAX to two bytes. Fix stack on main recover loop.
+;	 				- Dave Rand
+;
+; v1.5 - 11/20/82  Removed a superfluous and misleading equate called
+;	 NORMAL.  Reverts automatically to normal if not using Micro-
+;	 polis drives.			- Irv Hoff
+;
+; v1.4 - 11/11/82  Added "professional mode" -- short messages.  Also
+;	 Added option so that recovered file is put into current user
+;	 area instead of user area 0 (if they are different of course).
+;					- Paul Traina
+;
+; v1.3 - 10/10/82  Added the missing comments from the original program.
+;	 Fixed XLT0 bug.  Removed unnecessary equates added in v1.1 for
+;	 CP/M 1.4 and CP/M 2.2 as they are sensed automatically.  Some
+;	 appearance changes.  Alphabetized the routines for easy cross-
+;	 checking.  Restored several deleted lines from the original
+;	 program that automatically print the CP/M version number.
+;					- Irv Hoff
+;
+; v1.2 - 12/06/81  Added provision for reset of disk for single drive
+;	 user - command in the form:  UNERA UFN.TYP P allows pause for
+;	 disk change. Any character other than 'P' (big or small) is ig-
+;	 nored.				- Charlie Strom
+;
+; v1.1 - 11/19/81  Added conditional equates for CP/M 1.4 and 2.2 as
+;	 well as equates for standard CP/M and Micropolis CP/M (differ-
+;	 ent sector skew tables).	- Bruce Blakeslee
+;
+; v1.0 - Retyped from Interface Age (Dec 81).  I didn't type in all of
+;	 the comments, so be sure to read the article.
+;					- Henry Rothberg
+;
+;
+;
+;
+;
+;	 To use:
+;
+;	 A>UNERA HELLO.ASM		(previously erased file)
+;	 A>UNERA QQZ.*			(All files with prim. QQZ)
+;
+; *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *
+;
+; Conditional assembly constants
+;
+FALSE:	EQU	0
+TRUE:	EQU	NOT FALSE
+;
+;
+; System configuration equates:
+;
+MICROP:	EQU	FALSE		;True, if Micropolis drives
+SHORT:	EQU	FALSE		;True, if you want short messages
+CURUSR:	EQU	TRUE		;True, if you want recovered file to go
+;				;into current user area instead of user 0
+;
+	ORG	100H		;START AT BASE OF TPA
+;
+	JMP	BEGIN		;GET AROUND THE STACK
+;
+; EQUATES
+;
+BOOT:	EQU	0000H		;CP/M WARM BOOT JUMP VECTOR
+BDOS:	EQU	0005H		;CP/M BDOS CALL JUMP VECTOR
+CR:	EQU	'M'-40H		;CTL-M FOR CARRIAGE RETURN
+FCB:	EQU	BOOT+5CH	;DEFAULT FILE CONTROL BLOCK
+FCB2:	EQU	BOOT+6CH	;SECONDARY FILE CONTROL AREA
+LF:	EQU	'J'-40H		;CTL-J FOR LINE FEED
+;.....
+;
+;
+; MESSAGES
+;                
+	IF	NOT SHORT
+SONMSG:	DB	CR,LF,'Unerase Version 1.6 (01/13/83) for CP/M $'
+MSG14:	DB	'1.4',CR,LF,'$'
+MSG22:	DB	'2.2',CR,LF,'$'
+BMSG:	DB	'File(s) Recovered -- DOUBLE CHECK before using',CR,LF,'$'
+	ENDIF
+;
+	IF	SHORT
+BMSG:	DB	CR,LF,'File(s) Recovered.$'
+	ENDIF
+;
+ILMSG:	DB	CR,LF,'ABORT -- Illegal drive requested',CR,LF,'$'
+NOFMSG:	DB	CR,LF,'ABORT -- No file name specified',CR,LF,'$'
+NFMSG:	DB	CR,LF,'File NOT found',CR,LF,'$'
+PUSMSG:	DB	CR,LF,'Change disk and type RETURN',CR,LF,'$'
+WMSG:	DB	CR,LF,'Error during disk Write - ABORT',CR,LF,'$'
+;.....
+;
+;
+; DATA AREAS
+;
+BLN:	DB	0		;'CPMCHK' STORES CP/M VERSION
+DIRMAX:	Dw	16		;NUMBER OF SECTORS IN DIRECTORY =
+;				;   MAXIMUM NUMBER OF DIRECTORY ENTRIES
+;				;   DIVIDED BY 4 (ENTRIES PER SECTOR)
+temp:	dw	0		;Temp storage for FCB print
+maxsec:	db	26		;Maximum number of sectors/track
+FIXCNT:	DB	0		;NUMBER OF ENTRIES FIXED
+REWRT:	DB	0		;REWRITE FLAG  0=NO, F=YES
+SECTOR:	DB	0		;CURRENT SECTOR NUMBER
+TRACK:	Dw	2		;TRACK NUMBER OF DIRECTORY
+;
+;
+;    ADDRESS OF THE TRANSLATE TABLE
+;
+DPH: 	DW	XLTO
+	DS	14
+;
+;
+;    THIS IS THE STANDARD TRANSLATE TABLE
+;
+	IF	NOT MICROP
+XLTO:	DB	1,7,13,19,25,5,11,17,23,3,9,15,21
+	DB	2,8,14,20,26,6,12,18,24,4,10,16,22
+	ENDIF
+;
+;
+;    SECTOR TRANSLATE TABLE FOR MICROPOLIS MODEL II
+;
+	IF	MICROP
+XLTO:	DB	1,2,11,12,21,22,31,32
+	DB	9,10,19,20,29,30,7,8
+	DB	17,18,27,28,5,6,15,16
+	DB	25,26,3,4,13,14,23,24
+	ENDIF
+;
+;
+;***********************************************************************
+;                                                                      ;
+;                    PROGRAM STARTS HERE                               ;
+;                                                                      ;
+;***********************************************************************
+;
+;
+BEGIN:	LXI	SP,STACK	;SET STACK POINTER
+	CALL 	HELLO		;SIGN ON MESSAGE
+	CALL	PCHECK		;CHECK PARAMETERS
+	CALL	TRYFIX		;DO THE RECOVERY
+	CALL	BYE		;SIGN OFF MESSAGE
+	JMP	BOOT		;RETURN TO CP/M
+;.....
+;
+;
+;=======================================================================
+;                                                                      ;
+;                        MAIN ROUTINES                                 ;
+;                                                                      ;
+;=======================================================================
+;
+;
+; SIGN OFF AND RESET SYSTEM
+;
+BYE:	MVI	C,13		;SYSTEM RESET
+	CALL	BDOS
+	LDA	FIXCNT		;CHECK FOR ACTIVITY
+	ORA	A
+	JZ	NOFIND		;SAY NONE FOUND
+	LXI	D,BMSG		;WARN FOUND
+	CALL	PRINT
+	RET
+;.....
+;
+;
+; CHECKS THE CURRENT 4 DIRECTORY ENTRIES AGAINST ARGUMENT
+; IF MATCH, REWRITES SECTOR WITH REACTIVATED 1ST BYTES
+;
+CHKENT:	XRA	A		;ASSUME NO REWRITE
+	STA	REWRT
+	MVI	B,4		;NUMBER OF ENTRIES PER SECTOR
+	LXI 	H,80H		;BEGINNING OF BUFFER
+;
+CKLUP:	push	b
+	MOV	A,M
+	CPI	0E5H		;CHECK FOR UNUSED
+	JNZ	CKINC
+	PUSH 	H		;SAVE BEGINNING ADDRESS
+	CALL	COMPAR		;COMPARE WITH ARGUMENT
+	POP	H
+	JNZ	CKINC		;NO MATCH
+;
+	IF	CURUSR		;SET FILE TO CURRENT USER AREA?
+	PUSH	H		;SAVE HL
+	MVI	E,0FFH		;GET USER VALUE
+	MVI	C,32		;GET USER AREA FUNCTION
+	CALL	BDOS		;BDOS RETURNS CURRENT AREA IN 'A' REG.
+	POP	H		;RESTORE HL
+	MOV	M,A		;POKE IN CURRENT USER AREA
+	ENDIF
+;
+	IF	NOT CURUSR	;PUT FILE IN USER AREA 0
+	MVI	M,0		;RESET FLAG FOR ACTIVE
+	ENDIF
+;
+	MVI	A,0FH		;SAY NEED REWRITE
+	STA	REWRT
+	LDA	FIXCNT
+	INR	A		;BUMP COUNT OF CHANGES
+	STA	FIXCNT
+;
+CKINC:	pop	b
+	LXI	D,32		;LENGTH OF ENTRY
+	DAD	D
+	DCR	B
+	JNZ	CKLUP
+	LDA	REWRT		;SEE IF NEED REWRITE
+	ORA	A
+	JZ	CKDONE		;NO - DONE
+;
+;
+; WRITE THE DIRECTORY SECTOR BACK TO THE DISK
+;
+	lhld	TRACK		;SET TRACK
+	MOV	C,l
+	Mov	B,h
+	CALL	SETTRK
+	LDA	SECTOR		;SET SECTOR
+	MOV	C,A
+	CALL	TRNSLT
+	MVI	B,0
+	CALL 	SETSEC
+	CALL	WRITE		;WRITE THE SECTOR BACK
+	ORA	A
+	JNZ	ERRWRT		;ABORT IF ERROR
+;
+CKDONE:	lhld	DIRMAX
+	dcx	h		;REDUCE SECTORS LEFT
+	shld	DIRMAX
+	LDA	SECTOR		;POINT TO NEXT SECTOR
+	INR	A
+	STA	SECTOR
+	mov	b,a
+	lda	maxsec
+	dcr	a
+	cmp	b
+	rnc
+	lhld	track
+	inx	h
+	shld	track
+	RET
+;.....
+;
+;
+; COMPARE 11 BYTES OF DIRECTORY ENTRY AGAINST ARGUMENT
+;
+COMPAR:	shld	temp		;Hold pointer in case of match
+	INX	H
+	LXI	D,FCB+1
+	XCHG
+	MVI	C,11
+;
+CMPR1:	LDAX	D		;GET DIRECTORY ENTRY CHARACTER
+	ANI	7FH		;STRIP ANY FLAGS
+	CMP	M
+;RNZ			;DONE IF NO MATCH
+;
+	jnz	cmpckam
+cmpr2:	INX	D
+	INX	H		;BUMP TO NEXT CHARACTER
+	DCR	C
+	JNZ	CMPR1		;LOOP FOR 11 CHARACTERS
+	lhld	temp
+	call	printfcb
+	xra	a
+	RET			;RETURNS 'ZERO' FLAG SET FOR MATCH
+cmpckam:
+	ldax	d
+	cpi	0e5h		;Non-allocated entry?
+	jz	skip
+	mov	a,m
+	cpi	'?'
+	rnz
+	jmp	cmpr2
+skip:	ora	a
+	ret			;set NZ flag
+;.....
+;
+;
+; CHECK FOR CP/M VERSION AND SET THINGS
+;
+CPMCHK:	LXI	D,80H		;SET DMA TO TBUFF
+	MVI	C,26
+	CALL	BDOS
+	MVI	C,12		;VERSION NUMBER REQUEST
+	CALL 	BDOS
+	CPI	20H		;EARLIER THAN 2.2?
+	MVI	A,42		;ASSUME 1.4
+;
+	IF	NOT SHORT	;ALLOW VERBOSE MODE?
+	LXI	D,MSG14		;POINT TO 1.4 MSG
+	ENDIF
+;
+	CNC	CPM22		;IF 2.2 GO SET THINGS
+	STA	BLN		;SET THE MOVE LENGTH
+;
+	IF	NOT SHORT
+        CALL	PRINT
+	ENDIF
+;
+	CALL	GTBIOS		;ESTABLISH BIOS JUMP VECTOR
+;
+;
+; SELECT DISK AND SETUP DISK PARAMETER HEADER
+;
+	LDA	FCB		;GET THE DISK
+	mov	e,a
+	mvi	c,14
+	call	bdos
+	lda	fcb
+	MOV	C,A
+	MVI	B,0
+	CALL	SELDSK		;MAKE SURE DRIVE IS
+	MOV	A,H		;  SELECTED
+	ORA	L
+	JZ	ILDISK
+	LDA	BLN
+	CPI	48		;IF CP/M 1.4 SKIP REST
+	RC
+	MOV	E,M		;GET THE ADDRESS
+	INX	H		;  OF THE XLTO
+	MOV	D,M	
+	XCHG
+	SHLD	DPH		;SAVE THE ADDRESS
+	RET
+;.....
+;
+;
+; IF CP/M 2.2 DETERMINE NUMBER OF DIRECTORY ENTRIES ALSO
+;
+CPM22:	MVI	C,31		;GET DISK PARAMETERS ADDRESS
+	CALL	BDOS		;DPB ADDRESS IN 'HL' ON RETURN
+	mov	a,m		;Number of sectors/track
+	sta	maxsec
+	LXI	D,7		;OFFSET TO DRM
+	DAD	D
+	MOV	E,M		;GET NUMBER OF
+	INX	H		;  DIRECTORY ENTRIES
+	MOV	D,M
+	XCHG
+	INX	H		;ACCOUNT FOR - 1
+	CALL	SHFHL2		;SHIFT 'HL' RIGHT 2
+	shld	DIRMAX		;SAVE NUMBER DIRECTORY SECTORS
+	LXI	H,5		;NOW POINT TO SYSTEM
+	DAD	D		;  TRACK OFFSET
+	MOV	A,M		;PICK UP NUMBER OF
+;STA	TRACK		;SAVE TRACK OFFSET
+	inx	h
+	mov	h,m
+	mov	l,a
+	shld	track
+	MVI	A,48		;SET MOVE LENGTH
+;
+	IF	NOT SHORT	;VERBOSE MODE?
+    	LXI	D,MSG22		;POINT TO 2.2 MSG
+	ENDIF
+;
+	RET
+;.....
+;
+;
+; ERROR OCCURED DURING DISK WRITE - ABORT
+;
+ERRWRT:	LXI 	D,WMSG
+	CALL	PRINT
+	JMP	BOOT		;ABORT
+;.....
+;
+;
+; MAKE SURE A LEGAL FILENAME IS SPECIFIED
+;
+FCBCHK:	LDA	FCB		;GET DRIVE SPECIFICATION
+	ORA 	A		;SEE IF DEFAULT
+	JNZ	FCBCK1		;NO, GO CHECK FILENAME
+	MVI	C,25		;ASK FOR CURRENT DRIVE
+	CALL	BDOS
+	INR	A		;OFFSET FOR NEXT INSTRUCTION
+;
+FCBCK1:	DCR	A		;CURRENT DRIVE NUMBER
+	STA	FCB		;SAVE IT
+	LDA	FCB+1		;GET 1ST BYTE OF FILENAME
+	CPI	' '		;MAKE SURE IT IS NON-BLANK
+	RNC			;OK - KEEP GOING
+;
+;	
+; IF NO FILE NAME IS SPECIFIED, ABORT WITH NOTICE
+;
+	LXI	D,NOFMSG
+	CALL 	PRINT
+	JMP	BOOT		;ABORT
+;.....
+;
+;
+; GET BIOS JUMPS VECTORS FOR EASY REFERENCE
+;
+GTBIOS:	LHLD	BOOT+1		;POINTS TO BIOS JUMP TABLE+3
+	LXI	D,WBOOT		;WHERE WE WILL KEEP A COPY
+	LDA	BLN		;NUMBER OF BYTES TO MOVE
+	MOV	B,A		;MOVE LIKES IT IN REGISTER 'B'
+	CALL	MOVE		;MOVE THE TABLE
+	RET
+;.....
+;
+;
+; SAY WHO WE ARE
+;
+HELLO:
+;
+	IF	NOT SHORT	;VERBOSE MODE?
+	LXI	D,SONMSG	;POINT TO HELLO MESSAGE
+	CALL	PRINT
+	ENDIF
+;
+	RET			;IF SHORT-MESSAGES, DON'T PRINT ANYTHING
+;.....
+;
+;
+;SPECIFIED AN ILLEGAL DISK DRIVE - ABORT
+;
+ILDISK:	LXI	D,ILMSG
+	CALL	PRINT
+	JMP	BOOT		;ABORT
+;.....
+;
+;
+; GENERAL PURPOSE MOVE ROUTINE
+; FROM 'HL' TO 'DE' FOR COUNT OF 8
+;
+MOVE:	MOV	A,M		;GET A BYTE
+	STAX	D		;PUT A BYTE
+	INX	D		;INCREMENT TO NEXT
+	INX	H
+	DCR	B		;COUNT DOWN
+	JNZ	MOVE
+	RET
+;.....
+;
+;
+NOFIND:	LXI	D,NFMSG
+	CALL	PRINT
+	RET
+;.....
+;
+;
+; READS NEXT SECTOR (GROUP OF FOUR DIRECTORY ENTRIES)
+; RETURNS WITH ZERO FLAG SET IF NO MORE
+;
+NXTSEC:	lhld	DIRMAX		;SEE IF MORE SECTORS
+	mov	a,h
+	ORA	l
+	RZ			;RETURNS ZERO FLAG IF NO MORE
+;
+	lhld	tRACK		;SET TRACK
+	MOV	C,l
+	Mov	B,h
+	CALL	SETTRK
+	LDA	SECTOR		;SET SECTOR
+	MOV	C,A
+	CALL	TRNSLT
+	MVI	B,0
+	CALL	SETSEC
+	CALL	READ		;READ A SECTOR
+	ANI	1		;REVERSE SENSE OF ERROR FLAG
+	XRI	1		;RETURNS WITH ZERO FLAG SET
+	RET			;IF BAD READ
+;.....
+;
+;
+; CHECK FOR VALID PARAMETERS AND SAY WHICH CP?M VERSION
+;
+PCHECK:	CALL	FCBCHK		;MAKE SURE FILE SPECIFIED
+	CALL	CPMCHK		;ESTABLISH CP/M VERSION
+	CALL	PUSCHK		;CHECK IF USER WANTS TO CHANGE DISK
+	RET
+;.....
+;
+;
+; GENERAL PURPOSE PRINT ROUTINE - ENTER WITH REGS 'DE' POINTING TO MSG
+; RETURNS TO CALLER FROM BDOS
+;
+PRINT:	MVI	C,9		;BDOS PRINT STRING COMMAND
+	JMP	BDOS		;GO DO THE PRINT
+;.....
+;
+; FCB printing routine
+;
+printfcb:
+	push	h
+	lxi	d,1+8+3
+	dad	d
+	mov	a,m
+	ora	a
+	pop	h
+	rnz			;Print only first extent
+	inx	h
+	mvi	b,8
+	call	pr1
+	mvi	e,'.'
+	mvi	c,2
+	push	h
+	call	bdos
+	pop	h
+	mvi	b,3
+	call	pr1
+	mvi	e,13		;Send CR/LF
+	mvi	c,2
+	call	bdos
+	mvi	e,10
+	mvi	c,2
+	call	bdos
+	ret
+pr1:	mov	a,m
+	ani	127
+	cpi	' '		;Check for blanks
+	jz	pr2
+	mov	e,a
+	push	h
+	push	b
+	mvi	c,2
+	call	bdos
+	pop	b
+	pop	h
+pr2:	inx	h
+	dcr	b
+	jnz	pr1	
+	ret
+	
+;.....
+;
+;
+; DOES USER WANT TO PAUSE TO CHANGE DISKS?
+;
+PUSCHK:	LDA	FCB2+1		;GET OPTION
+	ANI	5FH		;MAKE IT UPPER CASE
+	CPI	'P'		;IS IT A 'P'?
+	RNZ			;NOPE, SO RETURN
+;
+	LXI	D,PUSMSG
+	CALL	PRINT		;PRINT PAUSE MESSAGE
+	MVI	C,01
+	CALL	BDOS		;INPUT A CHAR
+	MVI	C,02
+	MVI	E,0AH
+	CALL	BDOS		;OUTPUT A LF
+	MVI	C,0DH
+	CALL	BDOS		;RESET THE DISK
+	RET			;AND RETURN
+;.....
+;
+;
+; SHIFT REGS 'HL' RIGHT 2 BITS LOGICAL
+;
+SHFHL2:	CALL	SHFHL		;CLEAR CARRY
+;
+SHFHL:	XRA	A
+	MOV	A,H
+	RAR			;SHIFTED BIT IN CARRY
+	MOV	H,A
+	MOV	A,L
+	RAR
+	MOV	L,A
+	RET
+;.....
+;
+;
+; TRANSLATE REG 'C' FROM LOGICAL TO PHYSICAL SECTOR NUMBER
+;
+TRNSLT:	LHLD	DPH		;GET ADDRESS OF XLTO
+	XCHG
+	CALL	SECTRAN
+	MOV	C,L
+	RET
+;.....
+;
+;
+; LOOK THROUGH DIRECTORY
+;
+TRYFIX:	CALL	NXTSEC		;GET A DIRECTORY SECTOR
+	RZ			;RETURNS ZERO FLAG IF NO MORE
+;
+	CALL	CHKENT		;CHECK IT OUT AND MAYBE FIX
+	JMP	TRYFIX		;KEEP IT UP TILL DONE
+;.....
+;
+;
+; THIS IS THE WORKING COPY OF THE BIOS JUMP TABLE
+; IF CP/M 2.2, NO CHANGES ARE NECESSARY
+; IF CP/M 1.4, SECTRAN IS NOT COPIED FROM BIOS
+;              BE SURE TO CORRECT THE INCLUDED
+;              VERSION FOR YOUR OWN DISK SYSTEM
+;
+WBOOT:	 DS	3
+CONST:	 DS	3
+CONIN:	 DS	3
+CONOUT:	 DS	3
+LIST:	 DS	3
+PUNCH:	 DS	3
+READER:	 DS	3
+HOME:	 DS	3
+SELDSK:	 DS	3
+SETTRK:	 DS	3
+SETSEC:	 DS	3
+SETDMA:	 DS  	3
+READ:	 DS	3
+WRITE:	 DS	3
+LISTST:	 DS	3
+SECTRAN: JMP	STRAN
+;
+;
+; SECTOR TRANSLATION ROUTINE FOR
+; CP/M VERSIONS EARLIER THAN 2.0
+; REGS 'DE' CONTAIN ADDRESS OF 'XLTO'
+; REGS 'BC' CONTAIN THE LOGICAL SECTOR NUMBER
+;
+; RETURNS PHYSICAL SECTOR NUMBER IN 'HL' REGISTERS
+;
+STRAN:	MVI	B,0
+	XCHG
+	DAD	B
+	MOV	L,M
+	RET
+;.....
+;
+;
+ 	DS	100		;STACK DEPTH
+;
+STACK:	DS	0		;LOCATION OF STACK
+;
+;
+	END	100H
+

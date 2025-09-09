@@ -1,0 +1,86 @@
+	NOTES ON BSORT.COM
+
+Written and copyrighted by C. E. Duncan 1979, 1980, 1981.
+Permission granted to copy for non-commercial and personal use.
+
+BSORT is a combination sort for fixed length records.  It operates
+on a contiguous array of records in memory, which it has read from
+disk, then writes the sorted records again out to disk.
+
+BSORT is a CP/M COM file and is called as follows:
+
+	BSORT <input file name> <output file name>
+
+The file names are, according to CP/M conventions
+
+	[d:]name.typ
+
+where the brackets [] mean that the contents are optional.
+
+After the program is initiated, you will be asked for the record
+length.  Respond with a suitable number between 1 and 255, the
+upper limit.  This length must be that which is in the disk record.
+If each record terminates with carriage return and line feed, as
+would be the case of a list of words prepared under the CP/M editor,
+then the record length must be the fixed word length plus two.
+BSORT reads the disk file without change, complete, to an internal
+array in the form
+
+	[1:number of records][1:record size] CHAR
+
+where CHAR is an eight bit byte.
+
+Next you will be asked for sort parameters, by means of which you
+may designate one or two sort fields.  Your response must take the
+form
+
+	s1l s1h [a| |d] [s2l s2h [a| |d]]
+
+where "snl" are the position numbers of the first characters of the
+sort substrings and the "snh" are the position numbers of the last
+characters of the sort substrings. The symbol "|" indicates alternate
+choices.  The sort substrings may not overlap.
+The letters "a" and "d", which may be either upper or lower case,
+indicate the direction of the sort, whether ascending or descending
+according to numerical byte value.  When omitted, default is to
+ascending.
+The program makes many checks on the appropriateness of the
+entered data and requests re-entry when not satisfied.  It also
+checks that the requested file will fit into available storage.
+
+Typical dialog:
+
+	BSORT B:FILE.DAT OUT.DAT
+
+	Enter record length: 9
+
+	Enter sort parameters: 9 9 d 1 8
+
+This dialog requests that file "FILE.DAT" from the "B" disk be sorted
+and the sorted file be written out to file "OUT.DAT" on the default
+disk.  It consists of 9-byte records, and is to be sorted in descending
+order on the ninth character, under which it will be in ascending order
+on bytes 1 to 8.
+Entry of record length and the sort parameters has few constraints
+of format.  For record length, the first set of contiguous ASCII
+digits is taken; all other input is ignored:
+
+	Enter record length: #swX  R14,tg  9 8 (etc)
+
+This response will be interpreted as "14".
+ 
+Sort parameters will be sought in the following five patterns:
+
+	n n {a|d} n n {a|d}
+	n n {a|d} n n
+	n n n n {a|d}
+	n n {a|d}
+	n n
+
+Only the ten digits and the letters "A", "a", "D" and "d" are
+recognized, hence any other characters may be present but will be
+ignored.  I.e. all other characters, including blanks, will act as
+separators for the parameters.
+
+The program may be aborted in the entry portion by typing control-C.
+

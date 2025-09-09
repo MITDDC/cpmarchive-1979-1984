@@ -1,0 +1,32 @@
+PROCEDURE QSORT( left,right: INTEGER );
+{	The classic Quicksort by C.A.R Hoare method.
+	Presented here for Pascal users.		}
+{
+GLOBAL
+  TYPE
+    Index  = 1..N;
+    Scalar = <Some scalar type>
+  VAR
+    A : array [Index] of Scalar;
+}
+VAR
+  II, JJ : integer;
+  Pivot, temp : Scalar;
+BEGIN 				{$C-,M-,F-}
+  II := left;
+  JJ := right;
+  Pivot := A[(II+JJ) DIV 2];
+  REPEAT
+    WHILE A[II] < Pivot DO II := II + 1;
+    WHILE A[JJ] > Pivot DO JJ := JJ - 1;
+    IF II <= JJ THEN 
+      BEGIN
+	temp := A[II]; A[II] := A[JJ]; A[JJ] := temp;
+	II := II + 1;
+	JJ := JJ - 1
+      END
+  UNTIL II > JJ;
+  IF left < JJ THEN QSORT( left, JJ );
+  IF II < right THEN QSORT( II, right )
+END;{of QSORT}			{$C+,M+,F+}
+

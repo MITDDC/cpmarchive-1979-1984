@@ -1,0 +1,23 @@
+
+SIG/M volume 14		HELP file system on major system level software
+
+
+number	name		size	description
+
+14.1	HELP.COM	 2K	HELP file system describing
+14.2	HELP.HLP	 7K	   HELP file system
+14.3	CPM.HLP		31K	   CP/M 1.4
+14.4	CPM2.HLP	37K	   CP/M 2.2
+14.5	ASM.HLP		 4K	   CP/M 1.4 ASM (assembler)
+14.6	ASM2.HLP	 4K	   CP/M 2.2 ASM (assembler)
+14.7	MAC.HLP		 8K	   CP/M MAC (macro assembler)
+14.8	MBASIC.HLP	21K	   Microsoft BASIC
+14.9	CBASIC.HLP	14K	   CBasic
+14.10	EBASIC.HLP	12K	   Basic-E
+14.11	CBASIC2.HLP	22K	   CBasic-2
+14.12	MASM.HLP	 8K	   MACRO-80 (M80)
+14.13	ALGOLM.HLP	13K	   ALGOL-M
+14.14	C.HLP		17K	   BDS 'C'
+14.15	FORTRAN.HLP	 7K	   Microsoft Fortran
+14.16	PASCAL.HLP	10K	   PASCAL/MT
+

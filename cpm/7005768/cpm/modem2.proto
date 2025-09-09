@@ -1,0 +1,156 @@
+                 MODEM/XMODEM Protocol Explained
+                by Kelly Smith, CP/M-Net "SYSOP"
+                         January 8,1980
+                   Edited April 28, 1981 - FJW
+
+     I  thought  that it may be of some interest to those of  you 
+who use the MODEM/XMODEM file transfer capability to get a little 
+insight  as  to the communications  protocol  (i.e.  "handshaking 
+method") used by the system. 
+
+     Herein lie the details of a very good (but not perfect) data 
+communications  protocol that has become the "de facto"  standard 
+for  various  remote CP/M systems (RCPM's) which  are  accessible 
+across  the country.   (Refer to RCPMLSTx.DOC on all  RCPM's  for 
+access  numbers and note that the "x" in that list changes as new 
+system  are  listed).   I  also  wish  to  give  credit  to  Ward 
+Christensen  (the "original" CBBS) for writing  MODEM.ASM  (CPMUG 
+Volume 25.11) and Keith Petersen,  Bruce Ratoff,  Dave Hardy, Rod 
+Hart,  Tom  "C"  (we  know who you are  Tom!),  and  others,  for 
+enhancements to Ward's original program which we now call  XMODEM 
+(external modem).
+
+     Data is sent in 128-byte sequentially numbered blocks,  with 
+a single checksum byte appended to the end of each block.  As the 
+receiving  computer acquires the incoming data,  it performs  its 
+own  checksum  and upon each completion of a block,  it  compares 
+its  checksum result with that of the sending computers.   If the 
+receiving computer matches the checksum of the sending  computer, 
+it   transmits   an  ACK  (ASCII  code  protocol  character   for 
+ACKNOWLEDGE  (04 Hex,  Control-F)) back to the sending  computer.  
+The  ACK  therefore  means "all's well on  this  end,  send  some 
+more...".
+
+Notice in the following example,  that the sending computer  will 
+transmit  an "initial NAK" (ASCII protocol character for NEGATIVE 
+ACKNOWLEDGE (15 Hex,  Control-U))...or, "that wasn't quite right, 
+please send again".
+
+Due  to the asynchronous nature of the initial "hook-up"  between 
+the two computers, the receiving computer will "time-out" looking 
+for data,  and send the NAK as the "cue" for the sending computer 
+to  begin  transmission.   The sending computer  knows  that  the 
+receiving computer will "time-out", and uses this fact to "get in 
+sync"...  The sending computer responds to the "initial NAK" with 
+a  SOH  (ASCII code protocol character for START OF  HEADING  (01 
+Hex,  Control-A)),  sends  the first block number,  sends the 1's 
+complement  of the block number (VERY important,  I will  discuss 
+this later...),  sends 128 bytes of 8 bit data (that's why we can 
+transfer  ".COM"  files),  and  finally  a  checksum,  where  the 
+checksum is calculated by summing the SOH,  the block number, the 
+block number 1's complement, and the 128 bytes of data.
+
+Receiving Computer:
+
+----/NAK/------------------------/ACK/----------------------
+    15H                           06H 
+
+Sending Computer:
+
+--------/SOH/BLK#/BLK#/DATA/CSUM/---/SOH/BLK#/BLK#/DATA/etc.
+         01H 001H 0FEH 8bit 8bit     01H 002H 0FDH 8bit .... 
+
+     This  process continues,  with the next 128  bytes,  IF  the 
+block  was  ACK'ed by the receiving computer,  and then the  next 
+sequential block number and its 1's complement, etc.
+
+     But  what  happens if the block  is  NAK'ed?...   Easy,  the 
+sending computer just re-sends the previous block.
+
+     Now the hard part...  What if the sending computer transmits 
+a block, the receiving computer gets it and sends an ACK, but the 
+sender does not see it?...   The sending computer thinks that  it 
+has  failed  and  after  10  seconds  re-transmits  the  block...  
+ARGH!...  The receiving computer has "stashed" the data in memory 
+or  on disk (data is written to disk after receiving 16  blocks), 
+the  receiving  computer is now 1 block AHEAD of the  transmiting 
+computer!   Here comes the operation of the block numbers...  The 
+receiver  detects that this is the last block (all  over  again), 
+and   transmits  back  an  ACK,   throws  away  the  block,   and  
+(effectively)  "catches  up"...    clever!    What's  more,   the 
+integrity  of  the  block number is  verified  by  the  receiving 
+computer,  because  it  "sums"  the SOH (01 Hex) with  the  block 
+number  plus  the 1's complement of the block  number),  and  the 
+result  MUST BE zero for a proper transfer (e.g.  01+01+FE hex  = 
+00, on the first block).  The sequence of events then, looks like 
+this: 
+
+Receiving Computer:
+
+----/ACK/-----------------------/NAK/-----------------------
+    06H                          15H 
+
+Sending Computer:
+
+CSUM/---/SOH/BLK#/BLK#/DATA/CSUM/---/SOH/BLK#/BLK#/DATA/etc.
+8bit     01H 003H 0FCH 8bit 8bit     01H 003H 0FCH 8bit ....
+
+     Normal completion of data transfers will then conclude  with 
+an EOT (ASCII code protocol END OF TRANSMISSION, 04 Hex, Control-
+D) from the sending computer,  and a final ACK from the receiving 
+computer.   Unfortunately,  if  the receiving computer misses the 
+EOT,  it will continue to wait for the next block (sending a  NAK 
+every  10  seconds,  up to 10 times) and  eventually  "time-out".  
+This is rarely the case however, and although not "bullet-proof", 
+it is a very workable protocol.
+
+Receiving Computer:
+
+----/ACK/---/ACK/"Transfer Complete"/A>(or B>)
+     06H     06H .............................
+
+Sending Computer:
+
+CSUM/---/EOT/---/A>(or B>)
+8bit     04H .............
+
+     In   some  cases,   where  the  telephone  transmission   is 
+repeatedly "trashed" (weak signals, multiple noise "hits", etc.), 
+the receiving computer (and operator) will be provided the option 
+to  quit.   Here,  the operator enters "R" or "Q" in response  to 
+"Retry or Quit?" (after 10 retries).
+
+Receiving Computer:
+
+----/NAK/...NAK's ten times.../"Retry or Quit?"(Q)/A>...
+     15H
+
+Sending Computer:
+
+CSUM/---/...Garbled Data....../-----------------------/A>...
+8bit
+
+     A  final  consideration when using the MODEM program,  is  a 
+timing  related  problems when transfer  status  messages  and/or 
+textual  data  is directed to the screen of a slow (4800 Baud  or 
+less)  terminal  or  to a hard copy  printer.   This  problem  is 
+readily apparent (multiple NAK's) when using MODEM for the  first 
+time, and can usually be "cured" by NOT SPECIFYING the "V" (VIEW) 
+sub-option  when sending or receiving files.   Users of  Lifeboat 
+Associates  BSTAM encounter the same problem,  but this is easily 
+fixed  with  the  files  TQPATCH.ASM  and  RQPATCH.ASM  (transfer 
+quiet/receive quiet) that Keith Petersen (Royal Oak CP/M,  "call-
+back" remote system,  (313)-588-7054) wrote to solve the  problem 
+of low speed terminal I/O.
+
+     For  users of CBBS's that do not have MODEM.ASM (but DO HAVE 
+a CP/M disk system...ESSENTIAL!),  let me suggest that you  "data 
+capture" the file MBOOTx.ASM from one of the RCPM's (it's a small 
+8  kilo-byte file that "fits" in most systems' memory) to get the 
+larger  MODEM.ASM (40 kilo-bytes).   Check it very carefully  for 
+errors  using the "data capture" (read ERROR PRONE method  here). 
+Then edit and assemble for your modem configuration.
+
+     If  you are tired of buying software where the  advertisment 
+is written better than the program, then the RCPM's are just what 
+you have been looking for...and FREE!

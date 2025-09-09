@@ -1,0 +1,42 @@
+;                HIMEM.ASM Version 1.0
+;		    by Gordon Banks
+;			2/28/81
+;
+;This program sets a "HIMEM" (to borrow a term from Apple BASIC)
+;which serves to protect a region of memory from being overwritten
+;by other programs (such as BASIC programs compiled by BASCOM).
+;This is needed by Apple users since the usual method of protection
+;is to use MOVCPM to lower the system in memory, but this is not
+;currently being made available by Microsoft.  
+;
+;The system knows how much memory is available for transient programs
+;by the jump vector in locations 6 and 7.  This vector is reset (to
+;CC06 hex for 56k CP/M) every time a warm boot is done.  This program
+;changes the reset routine to put a new vector into locations 6 and 7.
+;This causes a jump to 3 locations before HIMEM.  This program then
+;writes a jump to the old BDOS vector from HIMEM (around your program).
+;
+BOOT	EQU	0	;BOOT ADDRESS
+BDOS	EQU	5	;BDOS ADDRESS JMP
+HIMEM	EQU	0BF00H	;STARTING ADDRESS FOR PROTECTED ROUTINE
+RESET	EQU	0DAF0H	;WHERE CP/M LOADS THE BDOS ADDRESS
+JUMP	EQU	0C3H	;JMP OP-CODE
+;
+; 
+	ORG	0100H
+;
+	LDA	BDOS+2	;WHAT VALUE IS ALREADY THERE
+	CPI	0CCH	;THIS IS WHAT IS NORMALLY THERE
+	JZ 	CONT	;IT IS, SO CONTINUE
+	JMP	BOOT	;IT IS NOT, SO ALREADY HAVE RUN HIMEM, EXIT
+;
+CONT	LHLD 	BDOS+1 ;LOAD CURRENT BDOS JMP 
+	SHLD	HIMEM-2	;PUT IN FRONT OF HIMEM
+	MVI	A,JUMP	;LOAD A JMP OP-CODE
+	STA	HIMEM-3	;PUT IN FRONT OF BDOS ADDRESS
+	LXI	H,HIMEM-3 ;LOAD THE NEW JUMP-TO ADDRESS
+	SHLD	RESET+1	;STORE IN RESET VECTOR
+	JMP 	BOOT
+;
+	END
+

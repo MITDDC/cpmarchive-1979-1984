@@ -1,0 +1,109 @@
+60,65c 2640
+subrev	equ	'2'	; sub-revision
+; History info
+;		4/02/82 Vers. 1.22 - Several minor mods. including
+;		addition of PMMI drivers, replacement of warmboot
+;		(labeled coldboot!) with a return, etc. (C. Strom)
+;
+; 		3/20/1982     FIRST COMPLETE VERSION RELEASED 
+;		BY THE AUTHOR  BOB RICHARDSON OF MICROPRO INTL
+;		CORPORATION - FURTHER DISTRIBUTION MUST CONTAIN
+;		THIS COMMENT - this file made available courtesy
+;		of MicroPro International Corp. and the author
+.
+77a 3742
+	ld	hl,0		; stash CP/M's stack
+	add	hl,sp
+	ld	(stack),hl
+.
+107c 1136
+	jp 	exit 		; terminate
+.
+122c 5046
+	defb	cr,lf,'Upload Vers. ',vers,'.',rev,subrev,cr,lf
+.
+126c 54866
+;  Kudos to Russ Ranshaw for inventing this protocol
+.
+222c 12848
+	jp	exit		; and terminate abnormally
+.
+229,233c 56528
+	ld	de,nospcm	; file found message
+	call	prnmes		; to console
+	jp	exit		; and terminate abnormally
+;
+nospcm:
+.
+240c 15166
+	jp	exit		; and terminate
+.
+608c 62738
+	jp	exit		; and abort
+.
+619c 36303
+	jp	exit		; and abort
+.
+698,699c 34360
+; This routine must send the char in a to the modem without stripping parity
+.
+701,705c 38558
+;
+basprt	equ	0c0h		;pmmi modem base i/o port
+ctl	equ	basprt		;primary control port
+sioprt	equ	basprt+1	;serial data port
+sioir	equ	02h		;data input ready flag
+siotr	equ	01h		;transmitter ready flag
+;
+	push	af
+outwt:	in	a,(ctl)		;read status
+	and	siotr		;isolate bit
+	jr	z,outwt		;wait till ready
+	pop	af
+	out	(sioprt),a	;output char to modem
+;
+.
+717c 53003
+; This routine inputs an 8 bit character
+.
+720,723c 2282
+;
+	call	inwait		;wait for char
+	in	a,(sioprt)	;get it
+	cp	knak		;se if it is knak
+	jp	z,comfail	;comm failure if so
+;
+.
+727a 4798
+inwait:	in	a,(ctl)		;get status
+	and	sioir		;isolate bit
+	jr	z,inwait	;not ready, so loop
+	ret
+;
+.
+736,740c 40095
+	call	inwait		;wait for char
+	in	a,(sioprt)	;get it
+	and	7fh		;strip parity
+;
+	ret			; to caller
+;	
+; Exit gracefully by doing a return rather than a warmboot (which Bob R.
+; keeps calling a coldboot)
+;
+exit:
+	ld	de,80h		; restore dma adress
+	ld	c,fn$std	; to keep op sys happy
+	call	bdos
+	ld	hl,(stack)	; restore old stack
+	ld	sp,hl
+	ret			; and bow out
+;
+.
+759c 26973
+stack:
+	defs	02h		;cp/m's stack
+.
+$a 20876
+.
+

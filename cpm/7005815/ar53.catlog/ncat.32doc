@@ -1,0 +1,145 @@
+DOCUMENTATION FOR:  NCAT.ASM         v3.2   09/07/82
+
+
+        NCAT is a catalog maintenance program.  It gets the directory
+from each disk processed and adds it to a MAST.CAT file.  If any new
+programs have been added (or deleted) since the last time the disk was
+processed, MAST.CAT is upgraded accordingly.  This enables the user to
+keep an accurate and current catalog listing.
+
+        This program is based on NEWCAT (written by Lewis Moseley, Jr.
+in early 1980) that combines the original FMAP, QCAT and UCAT programs
+written by Ward Christensen some years ago.  NCAT was chosen as a new
+name so it would fit into the COMPUSERVE (MICRONET) phone system along
+with the current revision number.  (That system limits the file name
+plus the revision number to a maximum of six characters.)  NCAT has
+several useful enhancements:
+
+
+   1)  Self-determines maximum user space and resets the buffer lengths
+          automatically.
+
+   2)  Allows the user (via NCAT.SET) to select the optimum directory
+          buffer length for his disk system without editing and reassem-
+          bling.  Some disk directories allow only 64 file names (896
+          bytes) while some Winchester systems allow 1024 files names
+          (14k).  Default is currently set to 256.  If inadequate, a
+          message informs the user he should reset the buffer size.
+
+   3)  Can abort easily whenever an answer is expected, via CTL-C.
+
+   4)  Displays the disk ID number for the disk being processed.
+
+
+
+*   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *
+
+
+
+                   USING THE PROGRAM "FIRST TIME"
+
+
+1)  Use your editor to make a MAST.CAT "starter file", with programs
+    you don't want listed since you have many of those.  For instance:
+
+ 
+        (CONFIG.COM           (note left parenthesis for first entry)
+        COPY.COM
+        DDT.COM
+        DUMP.COM
+        PIP.COM)              (note right parenthesis for last entry)
+        
+
+        NOTE:  The first thing NCAT expects to see in this list is a
+               left parenthesis, so make sure there are no blank lines
+               at the start.  The last thing NCAT expects to see is a
+               right parenthesis followed by a "RET".  There should be
+               no additional blank lines.
+
+               
+        (If you want to catalog  a-l-l  files, you still must have one
+        "dummy file" to ignore.  You could use:)
+        
+        (A)           (with a RET following))
+
+
+2)  Each disk to be cataloged requires an unique number for a file type.
+    It needs to be preceeded with a "-" to be recognized by NCAT as a
+    "special file name".  Example:
+        
+ 
+        SAVE 0 B:-.033 
+ 
+
+3)  Put disk with catalog programs into drive A:
+ 
+        NCAT    .COM
+        XCAT    .COM
+        MAST    .CAT
+         
+4)  Put disk to be cataloged into drive B:  and type:
+
+        A>NCAT B:
+        
+    then answer the questions.  
+  
+
+        NOTE:  A "Y", "RET" or "SPACE" are all suitable "yes" answers.
+
+
+5)  Place the next disk to be cataloged into drive B:   Repeat as needed
+    until all desired disks have been processed.  At that time you may
+    wish to catalog the main disk itself.  In that case just say:
+
+        A>NCAT
+
+    and again answer the questions.  (This method is also used for one-
+    drive cataloging.)
+
+
+        NOTE:  A special feature allows the main disk to be placed in
+               any convenient drive.  If used in C: drive for example
+               you could insert the various disks one at a time into
+               the A: drive by using:
+
+        C>NCAT A:
+
+               When using the main disk in a drive other than A:  you
+               would need "some disk" in A: for warm reboot purposes.
+
+
+6)  Printing the file.  A companion program called XCAT automatically
+    makes a new cross-referenced file called MAST.LST.  This file can
+    be placed on disk, or directly sent to the printer.  An option
+    allows use of either fanfold or roll paper.  (If using roll paper,
+    it puts tear tabs each 11 inches.)  This program also permits the
+    user to select up to 9 extra spaces at the beginning of each line
+    to fake a new left margin.  (Some printers do not have adjustable
+    margins.)  The user may also select the starting and stopping pages
+    in case only part of the catalog is to be printed.
+
+
+ADDENDUM:
+--------
+
+        Some users like to add an unique volume name to each disk.
+    Here is a suggstion for doing this:
+
+
+        A>SAVE 0 B:-.123              (volume ID in file type field)
+        A>SAVE 0 B:-07SEP82           (volume date in file name field)
+        A>SAVE 0 B:-EDITORS           (volume name in file name field)
+
+
+        All three can be placed on the same disk.  Since the first has
+    nothing prior to the file type area, it takes precedence and is con-
+    sidered the "volume ID number". None of them takes up any disk space
+    although they do reduce the total number of available directory file
+    names slightly.  These names would be displayed first on any special
+    alphabetical directory listing such as "DIRR", "XDIR", etc.
+
+
+
+
+                                         Irvin M. Hoff
+                                         Los Altos Hills, CA  94022

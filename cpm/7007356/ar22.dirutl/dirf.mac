@@ -1,0 +1,204 @@
+;		DIRF.MAC (Z80 VERSION) ver 1.3
+;	          by Keith Petersen, W8SDZ
+;		     (revised 12/19/80)
+;
+;      DIRECTORY FUNCTION FOR CP/M 1.4 OR 2.x PROGRAMS
+;
+;--->NOTE: Assemble with Microsoft M80 assembler
+;
+;This file contains routines which can be included in any
+;CP/M program to allow listing the directory.  No sorting
+;is done because that would require use of more memory above
+;the program.  These routines use the 80h default buffer for
+;all operations so if you have data there be sure to move it
+;before running this directory function.  Assume all registers
+;destroyed when calling 'DIRF'.
+;
+;This module may be assembled as a stand-alone program for
+;testing.  L80 link command for testing:   L80 DIRF,DIRF,/N/E
+;Execute program from CP/M, not L80.  It will return to the
+;CCP after finishing.
+;
+	.Z80		   ;Z80 SWITCH FOR ASSEMBLER
+	ENTRY	DIRF	   ;DEFINE DIRF AS PUBLIC
+;
+NPL	EQU	4	   ;NUMBER OF NAMES PER LINE
+TAB	EQU	9	   ;HORIZONTAL TAB
+CR	EQU	0DH	   ;CARRIAGE RETURN
+LF	EQU	0AH	   ;LINE FEED
+;
+;BDOS Equates
+;
+RDCHR	EQU	1	   ;READ CHAR FROM CONSOLE
+WRCHR	EQU	2	   ;WRITE CHR TO CONSOLE
+PRINT	EQU	9	   ;PRINT CONSOLE BUFF
+CONST	EQU	11	   ;CHECK CONS STAT
+FSRCHF	EQU	17	   ;0FFH=NOT FOUND
+FSRCHN	EQU	18	   ;   "       "
+CURDSK	EQU	25	   ;GET CURRENT DISK NAME
+BDOS	EQU	5
+FCB	EQU	5CH
+;
+;First, we preserve old stack pointer and set a new one
+;because some functions take more stack space than may
+;be available in the calling program.
+DIRF:	LD	HL,0
+	ADD	HL,SP	   ;GET OLD STACK POINTER
+	LD	(STACK),HL ;SAVE FOR LATER
+	LD	SP,STACK   ;SET NEW STACK POINTER
+;
+;Check FCB for drive request
+	LD	A,(FCB)	   ;GET DRIVE NAME FROM FCB
+	OR	A	   ;ANY REQUESTED? (0=NO)
+	JR	NZ,GOTDRV  ;NOT ZERO MEANS WE HAVE NAME
+;
+;Get drive name
+	LD	C,CURDSK   ;GET CURRENT DRIVE NAME
+	CALL	BDOS
+	INC	A	   ;MAKE 'A' RELATIVE TO 1 NOT 0
+;
+;Print signon message and drive name
+GOTDRV:	ADD	A,40H	   ;MAKE IT ASCII
+	LD	(DNAME),A  ;SAVE IT IN MESSAGE
+	LD	DE,MSG	   ;POINT TO MESSAGE
+	LD	C,PRINT	   ;PRINT IT
+	CALL	BDOS
+;
+;Make FCB all '?' to match any file
+	LD	HL,FCB+1
+	LD	B,11	   ;FN+FT COUNT
+;
+QLOOP:	LD	(HL),'?'   ;STORE '?' IN FCB
+	INC	HL
+	DEC	B
+	JR	NZ,QLOOP
+;
+;Initialize number of names per line counter
+	LD	A,NPL	   ;NR. NAMES PER LINE
+	LD	(NNAMS),A  ;INIT COUNTER
+;
+;Look up the FCB in the directory
+	LD	C,FSRCHF   ;GET 'SEARCH FIRST' FNC
+	LD	DE,FCB
+	CALL	BDOS	   ;READ FIRST
+	INC	A	   ;WERE THERE ANY?
+	JR	NZ,SOME	   ;GOT SOME
+	CALL	ERXIT
+	DEFB	'++NO FILE$'
+;
+;Read more directory entries
+MORDIR:	LD	C,FSRCHN   ;SEARCH NEXT
+	LD	DE,FCB
+	CALL	BDOS	   ;READ DIR ENTRY
+	INC	A	   ;CHECK FOR END (0FFH)
+	JP	Z,EXIT	   ;NO MORE - EXIT
+;
+;Point to directory entry
+SOME:	DEC	A	   ;UNDO PREV 'INC A'
+	AND	3	   ;MAKE MODULUS 4
+	ADD	A,A	   ;MULTIPLY...
+	ADD	A,A	   ;..BY 32 BECAUSE
+	ADD	A,A	   ;..EACH DIRECTORY
+	ADD	A,A	   ;..ENTRY IS 32
+	ADD	A,A	   ;..BYTES LONG
+	LD	HL,81H	   ;POINT TO BUFFER (SKIP TO FN/FT)
+	ADD	A,L	   ;POINT TO ENTRY
+	LD	L,A	   ;SAVE - HL NOW = ENTRY ADRS
+;
+;Check for console break
+	PUSH	HL	   ;SAVE NAME POINTER
+	LD	C,CONST	   ;CK STATUS OF KBD
+	CALL	BDOS
+	POP	HL	   ;RESTORE NAME POINTER
+	OR	A	   ;ANY KEY PRESSED?
+	JP	NZ,ABORT   ;YES, ABORT
+;
+;Print an entry
+	LD	B,8	   ;FILE NAME LENGTH
+	CALL	TYPEIT	   ;TYPE FILENAME
+	LD	A,'.'	   ;PERIOD AFTER FN
+	CALL	TYPE
+	LD	B,3	   ;GET THE FILETYPE
+	CALL	TYPEIT
+	LD	HL,NNAMS   ;POINT TO NAMES COUNTER
+	DEC	(HL)	   ;ONE LESS ON THIS LINE
+	PUSH	AF
+	CALL	NZ,FENCE   ;NO CR-LF NEEDED, DO FENCE
+	POP	AF
+	CALL	Z,CRLF	   ;CR-LF NEEDED
+	JP	MORDIR
+;
+;Print two spaces, fence character, then two more spaces
+FENCE:	CALL	TWOSPC
+	LD	A,':'	   ;FENCE CHARACTER
+	CALL	TYPE
+;
+;Print two spaces
+TWOSPC:	CALL	SPACE
+;
+;Print one space
+SPACE:	LD	A,' '
+;
+;Type char in A register
+TYPE:	PUSH	BC
+	PUSH	DE
+	PUSH	HL
+	LD	E,A	   ;CHAR TO E FOR CP/M
+	LD	C,WRCHR	   ;WRITE CHAR TO CONSOLE FUNC
+	CALL	BDOS
+	POP	HL
+	POP	DE
+	POP	BC
+	RET	
+;
+;Type (B) characters from memory (HL)
+TYPEIT:	LD	A,(HL)
+	AND	7FH	   ;REMOVE CP/M 2.x ATTRIBUTES
+	CALL	TYPE
+	INC	HL
+	DEC	B
+	JR	NZ,TYPEIT
+	RET	
+;
+;CR-LF routine. HL=NNAMS upon entry
+CRLF:	LD	A,CR	   ;CR
+	CALL	TYPE
+	LD	A,LF	   ;LF
+	CALL	TYPE
+	LD	(HL),NPL   ;NUMBER OF NAMES PER LINE
+	RET	
+;
+;Error exit
+ERXIT:	POP	DE	   ;GET MSG
+	LD	C,PRINT
+	JR	CALLB	   ;PRINT MSG, EXIT
+;
+;Abort - read char entered to clear it from CP/M buffer
+ABORT:	LD	C,RDCHR	   ;DELETE THE CHAR
+;
+;Fall into CALLB
+;
+CALLB:	CALL	BDOS
+;
+;Fall into EXIT
+;
+;Exit - All done, return to caller
+EXIT:	LD	HL,(STACK) ;GET OLD STACK
+	LD	SP,HL	   ;MOVE TO STACK
+	RET		   ;...AND RETURN
+;
+MSG:	DEFB	TAB,TAB,'    Directory for drive '
+DNAME:	DEFB	'X:',CR,LF,'$'
+;
+;Temporary storage area
+;
+NNAMS:	DEFS	1	   ;NAMES PER LINE COUNTER
+	DEFS	40	   ;ROOM FOR STACK
+STACK:	DEFS	2	   ;OLD STACK STORED HERE
+;
+;END OF DIRECTORY MODULE
+;
+;Temporary end statement used only for testing DIRF module.
+;Remove before including module in other programs.
+	END	DIRF
+

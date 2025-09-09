@@ -1,0 +1,30 @@
+Sb: #SPELL-11.ASM
+    31-May-82  18:33:06
+Fm: Jim Byram
+To: All
+
+Alan Bomberger originally wrote SPELL in zilog mnemonics and my guess is that
+it was assembled by M80.  If you delete all pseudoops in the beginning and add
+the pseudoop .z80, the program should assemble with M80.  The current pseudoops
+are for PASM-II which I used to assemble it. (This is an advertisement.  PASM
+will assemble just about anything for the 8080/Z80.) As to the question of a
+lex.  I just typed in the program from Dr. Dobbs' and added the file output,
+etc.  Then I ran the program against everything that I had written in the last
+year (in small increments) and sorted and checked each word to eliminate errors
+and duplication. Presto!  I now have a base dictionary of some 7,500 words. 
+The master lex is named MASTER.LEX.  Any unknown words are collected in
+SPELL.LEX and sorted and checked for spelling.  Periodically, I add the new
+words to the MASTER.LEX.  Without compression, the lex takes 10k per 1000
+words.  Alan Bomberger will sell you a 30,000 word lex for $30.  See Dr. Dobbs.
+
+Here's how to assemble SPELL-11.ASM with M80 (which I don't normally use. 1)
+Change name from SPELL-11.ASM to SPELL.MAC. 2) Delete pseudo-ops at beginning
+of file (.TITLE to .PLINK) up to ASEG.  Add before ASEG the pseudo-op .Z80. 
+Thus the first two lines of the file should be .Z80 and ASEG. 3) Assemble -- 
+M80 =SPELL 4) Link --  L80 SPELL,SPELL/N/E 5) You now have SPELL.COM.  Try it.
+It works!!! 6) Read the notes in the beginning of the file and Alan Bomberger's
+article in the April 82 Dr. Dobbs to see how to use it.  Any further
+questions???
+                                Jim Byram
+
+

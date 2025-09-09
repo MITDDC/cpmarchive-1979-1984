@@ -1,0 +1,92 @@
+
+              DOCUMENTATION FOR XFER.BAS PROGRAM
+
+             Original program by AL JEWER 11/11/81
+            Re-written by Wayne M. Hammerly 11/19/81
+
+HERE'S THE OLD PROBLEM:
+
+      You are  on your favorite  RCPM  systems and see five or six
+files to transfer  to your  system, or  perhaps  you  want to send
+a  group  of  programs over there  To reduce  your phone time, you
+could prepare a submit file which uses  SENDOUT.COM  and MODEM.COM
+to modem over the files automatically. Writing a SUBMIT file takes
+a while, and would be VERY  impolite  to tie up the RCPM while you
+hack away, editing the file. SYSOPs don't like that kind of thing!
+      Well,if you make a SHORT list of the programs you want, then
+run XFER.BAS, it will prompt you for  file names & other  commands
+for both your's and the Remote system, creating the file  XFER.SUB
+containing  all  the  commands  necessary  for the transfer. These
+commands would include change logged disks, and user areas.
+      Using this utility, you could be back in minutes,transfering
+programs with a minimum of delay.
+      One word of caution: Unless  you have the  permission  of the
+SYSOP,  please do not transfer a large batch of files, tying up the
+phone for hours  on end.  I can think  of no better way to wear out
+a welcome! Most systems have a one hour limit, so plan accordingly.
+
+                   How to run XFER.BAS:
+
+      Upon running XFER.BAS you will be asked if you wish to send or
+receive, and at what baud rate.  The next prompt is:
+
+                    COMMANDS TO THE REMOTE >
+
+Answer with either a command to the remote such as moving to a new
+disk or user area, or a carriage return (CR) for no command.
+
+                           FILENAME >>
+
+Use the standard  CP/M  format of FN.FT as usual.  If you need another
+command to the remote, such as when changing both drive and user area,
+enter $$$ at the filename prompt.  This  will cause the  COMMANDS line
+to reappear, and you may enter additional command(s).
+
+                          MODEM OPTIONS >
+
+Enter any options IN ADDITION TO the mandatory R or S such as O or Q
+DO NOT enter an R or S at this prompt!
+
+                 YOUR DISK TO SEND/RECEIVE FROM/TO >
+
+This is your disk, not the remote's! If you wish to write or send from
+the default disk of your system, a carriage return (CR) will do.
+
+EXAMPLES:
+
+        1.  Receiving a file from the remote:
+
+SENDOUT D:                              <---Move to remote's drive D
+SENDOUT XMODEM S RAMTEST.ASM            <---Have remote send RAMTEST.ASM
+MODEM RQ.300 B:RAMTEST.ASM              <---Receive in the quiet mode, at
+                                            300 baud, and put it on DRIVE B
+SENDOUT USER 1                          <---Move to the remote's user area 1
+                                            (still on drive D)
+SENDOUT XMODEM S CCPPATCH.ASM           <---Have the remote send CCPPATCH.ASM
+MODEM RQ.300 A:CCPPATCH.ASM             <---Receive it the same as before, but
+                                            put it on your drive A
+SENDOUTUSER 0                          <---Move to the remote's USER 0
+                                        <---We answered $$$ at the FILENAME
+                                            prompt to get another COMMAND
+SENDOUT C:                              <---We have moved from DRIVE D, USER 1
+                                            to DRIVE C  USER 0
+SENDOUT XMODEM S DIF-11.AQM             <---Have the remote send DIF-11.AQM
+MODEM RQ.300 B:TEST.NO1                 <---Recieve in quiet mode, putting the
+                                            file on your DRIVE A
+
+To end, hit a CR for both the COMMAND and the FILENAME.  Remember to return
+to the remote and log off with BYE!
+
+Notes on compiling XFER.BAS:
+
+        You will see the following line during compilation, ignor it.
+
+0017  0007      300 CLEAR 1000
+                    ^ SI
+
+        It will  not cause  an error either in assembly or running.
+        Using BASCOM 3.21, XFER.COM is 14K.  Editing out all of the
+REM statements doesn't seem to cut down the size or the run time.
+
+                                 END
+

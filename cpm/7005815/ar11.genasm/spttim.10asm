@@ -1,0 +1,385 @@
+*  PROGRAM:  SPTTIME.ASM
+*  AUTHOR:  RICHARD CONN
+*  VERSION:  1.0
+*  DATE:  7 MAR 82
+*  PREVIOUS VERSIONS:  None
+
+VERS	EQU	10	;Version Number
+
+*
+*  SPTTIME is a Support Package which provides Clock Interface Support
+*  to programs which generally require it for enhanced performance
+*  (i.e., Time included in their outputs).  SPTTIME consists of two
+*  Modules:
+*	1.  ENDIT -- Returns address of next available page after SPTTIME
+*		in HL
+*	2.  GETTIME -- Returns a pointer to an ASCII text string (vector
+*		of characters ending in a binary 0) which represents the
+*		Time, Day of Week, and Date read from a clock.  This pointer
+*		is returned in HL, and a condition code (0 if clock not
+*		supported and 0FFH if clock supported, which is usually the
+*		case, with the Zero Flag set appropriately) is returned in A.
+*
+*	Both routines may affect only HL and A/PSW Registers.
+*
+
+*
+*  This SPTTIME Support Package is implemented for the DC Hayes Chronograph
+*  which is wired into the system to be commanded thru the PUN: device and
+*  read thru the RDR: device.
+*
+
+*
+*  Basic Equates
+*
+BDOS	equ	5	; BDOS Entry
+CR	equ	0dh	; <CR>
+
+*
+*  Program Equates
+*	Set the desired program to TRUE and all others FALSE
+*
+FALSE	equ	0	; FALSE Definition
+TRUE	equ	NOT FALSE
+
+PRINT2	equ	TRUE
+CAT2	equ	FALSE
+
+*
+*  Origin Table -- this should be set up for each program supported
+*
+	IF	PRINT2
+BASE	EQU	1500H	; BASE ADDRESS
+	ENDIF
+
+	IF	CAT2
+BASE	EQU	2000H	; BASE ADDRESS
+	ENDIF
+
+*
+*  SPTTIME Modules --
+*
+	org	BASE	; Origin
+
+	jmp	endit	; Return Page After Support Package in HL
+	jmp	gettime	; Return Time Pted to by HL and A <> 0 with flag set
+
+*
+*  Return Page Address after Support Package in HL
+*
+endit:
+	lxi	h,endall	; Address in HL
+	ret
+
+*
+*  Return Time as String Pted to by HL
+*
+gettime:
+	push	d	; Save DE, BC
+	push	b
+
+*
+*  Extract Data from Clock
+*
+	call	readclock
+
+*
+*  Load Time/Date/Weekday into buffer 'String'
+*
+	call	prclock
+
+	lxi	h,string	; Pt to Buffer
+
+	mvi	a,0ffh		; OK
+	ora	a		; Clear Flags
+
+	pop	b		; Restore BC, DE
+	pop	d
+	ret
+
+*
+*  Clock Input/Output Entry Routines
+*
+ciclk:
+	push	h	; Save regs
+	push	d
+	push	b
+	mvi	c,3	; RDR: Input
+	call	bdos
+	ani	7fh	; Mask out MSB if Set
+	pop	b	; Restore regs
+	pop	d
+	pop	h
+	ret
+
+coclk:
+	push	h	; Save regs
+	push	d
+	push	b
+	push	psw
+	mvi	c,4	; PUN: Output
+	mov	e,a	; Char in E
+	call	bdos
+	pop	psw	; Restore regs
+	pop	b
+	pop	d
+	pop	h
+	ret
+
+*
+*  Print Time/Date/Weekday on String
+*
+prclock:
+	call	prinit	;Initialize Print
+	call	prtime	;Print Time
+	call	space	;Space
+	call	space
+	call	prmonth	;Print Month Name
+	call	space
+	call	prday	;Print Day Number
+	call	pryear	;Print Year
+	call	prdone	;Close Print
+	ret
+
+*
+*  Read Time, Date, and Weekday from Clock
+*
+readclock:
+	lxi	h,time	;Point to Time Buffer
+	call	command
+	db	'RT'	;Read Time
+	lxi	h,date	;Point to Date Buffer
+	call	command
+	db	'RD'	;Read Date
+	ret
+
+*
+*  Print Time on String
+*
+prtime:
+	lxi	h,time	;Print Time Info
+	call	pr2s	;Print 2 digits
+	call	colon	;Print :
+	call	pr2	;Print 2 digits
+	call	colon	;Print :
+	call	pr2	;Print 2 digits
+	call	space	;Space
+	mov	a,m	;Get A or P
+	call	cpout
+	mvi	a,'M'	;Print M
+	call	cpout
+	ret
+
+*
+*  Print Month Name
+*
+prmonth:
+	lxi	h,date+2	;Convert month number
+	mov	a,m	;Get first digit
+	sui	'0'	;Convert to Binary
+	mov	b,a	;Save in B
+	add	a	;*2
+	add	a	;*4
+	add	b	;*5
+	add	a	;*10
+	inx	h	;Point to next digit
+	mov	b,a	;Value in B
+	mov	a,m	;Get Digit
+	sui	'0'	;Convert to Binary
+	add	b	;Add in
+	lxi	d,mlen	;Length of Month Strings
+	lxi	h,months	;Beginning of Month Strings
+	call	offset	;Compute Offset to Desired String
+	call	cpstr	;Print Month Name
+	ret
+
+*
+*  Print Day Number
+*
+prday:
+	lxi	h,date+4	;Point to Day Digits
+	call	pr2s	;Print as 2 Digits
+	ret
+
+*
+*  Print Year
+*
+pryear:
+	call	cprint	;Print Year Prefix
+	db	', 19',0
+	lxi	h,date	;Point to Year
+	call	pr2	;Print 2 Digits
+	ret
+
+*
+*  Print colon or space
+*
+colon:
+	mvi	a,':'	;Print colon
+	jmp	cpout
+space:
+	mvi	a,' '	;Print space
+	jmp	cpout
+
+*
+*  Command -- Issue 2-letter command pointed to by Return Address to Clock
+*    and copy response into buffer pointed to by HL; affect all registers
+*
+command:
+	mvi	a,'A'	;Send 'AT'
+	call	coclk	;Send to Clock
+	mvi	a,'T'
+	call	coclk
+	xthl		;Pt to command letters and save HL
+	mov	a,m	;Get it
+	call	coclk	;Send to Clock
+	inx	h	;Pt to next char
+	mov	a,m	;Get it
+	call	coclk	;Send to Clock
+	inx	h	;Pt to ret adr
+	xthl		;Get HL and save ret adr
+	mvi	a,CR	;Send <CR>
+	call	coclk	;Send to Clock
+
+*  Collect Response Chars
+cmdloop:
+	call	ciclk	;Get letter
+	cpi	CR	;End of Response?
+	jz	cmddone
+	mov	m,a	;Store in Buffer
+	inx	h	;Point to next position
+	jmp	cmdloop
+cmddone:
+	mvi	m,0	;Store ending zero
+	ret
+
+*
+*  PR2S -- Print chars pointed to by HL and HL+1; if first character is '0',
+*    print only one char; affect all registers; on exit, HL points to byte
+*    after 2nd char printed
+*  PR2 -- PR2S but always print 2 digits
+*
+pr2:
+	mov	a,m	;Get first char
+	jmp	pr2a
+pr2s:
+	mov	a,m	;Get first char
+	cpi	'0'	;Leading zero?
+	jz	pr2b
+pr2a:
+	call	cpout	;Print char
+pr2b:
+	inx	h	;Point to next
+	mov	a,m	;Get it
+	call	cpout
+	inx	h	;Point to next
+	ret
+
+*
+*  Compute Offset to selected string; on input, HL points to first
+*    string, DE=string length, A=Number of String desired (first string = 1)
+*
+offset:
+	dcr	a	;Count down
+	rz
+	dad	d	;Point to next
+	jmp	offset
+
+*
+*  Initialize Buffer Output
+*
+prinit:
+	lxi	h,string	; Pt to first byte of string
+	shld	bptr		; Set ptr
+	ret
+
+*
+*  Close Buffer Output
+*
+prdone:
+	push	h	; save HL
+	lhld	bptr	; Get ptr
+	mvi	m,0	; Store ending 0
+	pop	h	; restore HL
+	ret
+
+*
+*  Send char in A to String
+*
+cpout:
+	push	h	; save HL
+	lhld	bptr	; Pt to next char location
+	mov	m,a	; Put char
+	inx	h	; Incr ptr
+	shld	bptr
+	pop	h
+	ret
+
+*
+*  Print string pted to by return address into String
+*
+cprint:
+	xthl		;Pt to string
+cpr1:
+	mov	a,m	;Get char
+	inx	h	;Pt to next
+	ora	a	;Done?
+	jz	cpr2
+	call	cpout	;Print to CON: or LST:
+	jmp	cpr1
+cpr2:
+	xthl		;Restore HL and Ret Adr
+	ret
+
+*
+*  Print string pted to by HL into String
+*
+cpstr:
+	push	h	;Save ptr
+	push	psw	;Save char
+cpstr1:
+	mov	a,m	;Get next char
+	inx	h	;Pt to next char
+	ora	a	;Done?
+	jz	cpstr2
+	call	cpout	;Print char
+	jmp	cpstr1
+cpstr2:
+	pop	psw	;Get char
+	pop	h	;Get ptr
+	ret
+
+*
+*  Month Strings
+*
+months:
+	db	'January',0,0,0
+month1:
+	db	'February',0,0
+	db	'March',0,0,0,0,0
+	db	'April',0,0,0,0,0
+	db	'May',0,0,0,0,0,0,0
+	db	'June',0,0,0,0,0,0
+	db	'July',0,0,0,0,0,0
+	db	'August',0,0,0,0
+	db	'September',0
+	db	'October',0,0,0
+	db	'November',0,0
+	db	'December',0,0
+mlen	equ	month1-months	;Number of Bytes in Each Entry
+
+*
+*  Input Buffers
+*
+bptr:
+	ds	2	; Pointer to next char position in String Buffer
+time:
+	ds	10	; Time Buffer
+date:
+	ds	10	; Date Buffer
+string:
+	ds	80	; Output String Buffer
+
+endall	equ	$/256*256+256	; End of Support Package
+
+	end

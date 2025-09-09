@@ -1,0 +1,37 @@
+Sig/M	volume 18	miscellaneous CP/M utilities
+
+	-CATALOG.018		catalog of Sig/M volume 18
+	-CATALOG.ACK		volume 18 acknowledgement file
+
+	Name		Size	Description
+
+18.1	2411DUMP.ASM	18K	ICOM microfloppy utility
+18.2	2411DUMP.COM	 3K	 /
+18.3	MFMACRO.LIB	17K	/
+18.4	3812DUMP.ASM	21K	ICOM floppy utility
+18.5	3812DUMP.COM	 4K	 /
+18.6	DDMACRO.LIB	18K	/
+18.7	AREACODE.ASM	14K	region and state area code search
+18.8	AREACODE.COM	 7K	/
+18.9	BANZAI.ASM	 9K	copyright notice protect
+18.10	CAT2.ASM	 6K	master catalog system for CP/M 2.X
+18.11	FMAP3.ASM	 7K	 /
+18.12	UCAT2.ASM	 8K	/
+18.13	CHAT15.ASM	 6K	chat with local remote CP/M operator
+18.14	CHAT15.COM	 1K	/
+18.15	DISPLAYP.ASM	 3K	display facilities of ED.COM
+18.16	DISPLAY.COM	 2K	 /
+18.17	DISPLAY.DOC	 3K	/
+18.18	FILE-EXT.ASM	 7K	display disk directory including hex data
+18.19	FILE-EXT.COM	 1K	/
+18.20	FILE-XT2.ASM	 8K	same as FILE-EXT.ASM with 2.X compatibility
+18.21	FILE-XT2.COM	 1K	/
+18.22	LOOK.ASM	 7K	searches for 1-9 byte sequence in memory
+18.23	LOOK.COM	 1K	/
+18.24	MACTIME.ASM	 7K	patch for real time clock in MAC.COM
+18.25	ASMTIME.ASM	 7K	patch for real time clock in ASM.COM
+18.26	STATTIME.ASM	 6K	patch for real time clock in STAT.COM
+18.27	SAP.ASM		 6K	updated directory sort for CP/M 2.X
+18.28	SAP.COM		 1K	 /
+18.29   XLOOK.ASM	13K	disk/examine/modify utility
+

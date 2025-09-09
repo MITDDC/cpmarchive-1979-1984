@@ -1,0 +1,631 @@
+Mail-From: ARPANET host MIT-XX rcvd at 21-Jul-82 1450-PDT
+Date: 21 Jul 1982 1751-EDT
+Subject: Z80FORTH
+From: Steve Barber <BARBER at MIT-XX>
+To: BILLW at SRI-CSL(Attn: forth)
+Remailed-date: 21 Jul 1982 1820-PDT
+Remailed-from: BILLW at SRI-CSL
+Remailed-to: Forth: ;
+
+
+   Ok, folks, you've convinced me.  I'll pick up a copy of Starting FORTH.
+Thanks to all who responded.
+   FJW mentioned the existence of the public domain Z80FORTH from fig.  Is
+there an online copy floating about somewhere that I could download
+(I don't like to type) or is it worth buying?  I'm particularly interested
+in a TRS80 (Mod I) version, although I know I am asking much.  I'd like
+to have a FORTH to play with very much.
+
+                                          Steve
+
+[ Yes, Fig-Forth in both 8080 and Z80 mnemonics are on line at MIT-MC.
+  They are essentially identical otherwise, with the exception that
+  The Z80 version used block moves in a couple of places, and uses
+  the Z80 output via C register for th POUT(?) and PIN(?) words.
+  Remember that most of FORTH is written in FORTH.  I forget exactly
+  in which archive in the CPM directory the forth suorces sit.  The
+  8080 version is also available on SRI-KL:<MICRO>FORTH.I80 FTPable
+  via anonymous login convention (username anonymous, and any password).
+  I am also partway through typing in the 8086 fig-forth, although I
+  am putting it in a format that does not yet have an assembler.  WW]
+
+Mail-from: ARPANET host USC-ECL rcvd at 21-Jul-82 1447-PDT
+Mail-from: DECNET site ECLD rcvd at 21-Jul-82 1447-PDT
+Date: 21 Jul 1982 1445-PDT
+From:  Ted Shapin <BEC.SHAPIN at USC-ECLD at USC-ECL>
+Subject: Starting FORTH, etc.
+To: billw at SRI-CSL
+cc: BEC.SHAPIN at USC-ECLD at USC-ECL
+Mail-Address: 2500 Harbor Blvd., Fullerton, CA 92634
+Phone: (714) 970-3393
+Remailed-date: 21 Jul 1982 1820-PDT
+Remailed-from: BILLW at SRI-CSL
+Remailed-to: Forth: ;
+
+Laxen & Harris sell a version of FORTH that is the same as the FORTH in
+the book Starting FORTH and a CAI course as well on 2 8" CP/M diskettes.
+It runs on 8080 or Z80 and costs about $65.  Their address is
+24301 Southland Dr., Hayward, CA. 94545, (415)887-2894.
+ 
+                ---------------
+
+Date: 21 Jul 1982 1352-PDT
+From:  Ted Shapin <BEC.SHAPIN at USC-ECLD>
+Subject: Re: Forth Intros
+To: BARBER at MIT-XX
+cc: BEC.SHAPIN
+Mail-Address: 2500 Harbor Blvd., Fullerton, CA 92634
+Phone: (714) 970-3393
+In-Reply-To: Your message of 12-Jul-82 0932-PDT
+
+Yes, Starting FORTH is one of the best. Prentice Hall, $16.
+You should also know about the
+FORTH Interest Group, that publishes a bimonthly magazine, FORTH
+DIMENSIONS, P.O. Box 1105, San Carlos, CA. 94070, $12/year.
+-------
+-------
+
+Mail-from: ARPANET host MIT-MC rcvd at 20-Jul-82 2317-PDT
+Date: 21 July 1982 02:18-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Forth Intros
+To: BARBER at MIT-XX
+cc: FJW at MIT-MC, BILLW at SRI-CSL
+Remailed-date: 21 Jul 1982 1352-PDT
+Remailed-from: BILLW at SRI-CSL
+Remailed-to: Forth: ;
+
+"Starting FORTH" is excellent - and $14.95.  Not cheap, but well worth
+the price - and mostly a compatible description with the FORTHZ80
+public domain version of fig-FORTH.
+
+Shortly after I started reading it (last week), I thought this might
+be worth showing to my two oldest kids.  My 11-year-old daughter
+interrupted me to ask if this book was written for them or me - I said
+both.  My 10-year-old #1 son is now hooked on learning it - better
+than starting with BASIC, I think.  The almost 8-year-old wants to see
+what all the fuss is about, and I will have the 10-year-old teach him.
+The other two kids are too young to type - yet...
+
+--Frank
+
+P.S. As a FORTRAN and many assembly language hacker, I had been
+vascillating on selecting the next language to try to pick up: the
+choice was between Pascal, C, and FORTH.  After reading only a few
+chapters, the choice is clear: FORTH.
+
+
+Mail-From: ARPANET host MIT-XX rcvd at 12-Jul-82 0940-PDT
+Date: 12 Jul 1982 1232-EDT
+Subject: Forth Intros
+From: Steve Barber <BARBER at MIT-XX>
+To: BILLW at SRI-CSL(Attn: INFO-FORTH)
+Remailed-date: 20 Jul 1982 1635-PDT
+Remailed-from: BILLW at SRI-CSL
+Remailed-to: Forth: ;
+
+
+Can anybody recommend a good, cheap introductory FORTH text?
+Either on-line or off-line would be OK.  Reply to BARBER@MIT-XX.
+                                     Thanks in advance,
+                                           Steve
+
+[this was asked once before, and there was a general concenus that
+ "Starting FORTH" by Leo Brodie of FORTH, Inc was quite good.  I
+  seem to remember it costing around $12, although Im not certain.  WW]
+
+Mail-from: ARPANET host SRI-KL rcvd at 29-Jun-82 1243-PDT
+Date: 17 Jun 82 11:10:16-PDT (Thu)
+To: Unix-Wizards at sri-unix
+From: decvax!harpo!floyd!vax135!cornell!dean at Berkeley
+Subject: Forth under UNIX
+Article-I.D.: cornell.3146
+Via:  news.usenet; 18 Jun 82 1:43-PDT
+Remailed-date: 29 Jun 1982 1511-PDT
+Remailed-from: BILLW at SRI-CSL
+Remailed-to: Forth: ;
+
+Does anyone know of a version of the Forth language which runs under UNIX?
+I am interested in any non-toy implementation running under any UNIX system.
+Please send your replies directly to
+	decvax!cornell!dean  (uucp)
+or	dean.cornell@udel-relay (ARPA)
+
+Thanks much.
+			Dean Krafft,  Dept of Computer Science, Cornell U.
+
+
+Mail-from: ARPANET host USC-ECL rcvd at 22-Jun-82 1419-PDT
+Mail-from: DECNET site ECLD rcvd at 22-Jun-82 1419-PDT
+Date: 22 Jun 1982 1417-PDT
+From:  Ted Shapin <BEC.SHAPIN at USC-ECLD at USC-ECL>
+Subject: Re: 68000 FORTH
+To: KSPROUL at RUTGERS
+cc: billw at SRI-CSL
+Mail-Address: 2500 Harbor Blvd., Fullerton, CA 92634
+Phone: (714) 970-3393
+Remailed-date: 22 Jun 1982 1725-PDT
+Remailed-from: BILLW at SRI-CSL
+Remailed-to: Forth: ;
+
+Fig has a public conference tree bulletin board.  You can ask your
+same questions there (and probably get a better answer).
+(415)863-7715.
+i conferences find 68000
+
+  68000                                          3-APR-82  101
+  68000-DTACK                                   23-APR-82   77
+
+COMMAND?  r 68000 complete
+
+*** 68000                 3-APR-82
+  PARENT=SYSTEMS              USAGE=102
+I EXPECT DELIVERY OF A BIG WYCAT SYSTEM
+DURING MARCH, 1982.  I DEFINITELY WANT
+FORTH ON IT.  IF THERE ARE NO PUBLIC
+DOMAIN 68K SYSTEMS, MY PARTNER AND I
+WILL START WRITTING.  ANYONE INTERESTED?
+ANY SUGGESTIONS ON THE 16 BIT VERSUS 32
+BIT ADDRESS DILEMMA? (714) 270-9069
+MORNINGS, (714) 578-5060 X296 AFTERNOONS.
+CALL, OR LEAVE MESSAGES HERE.
+          GUY GROTKE
+     +++ NO SUBMESSAGES +++
+
+COMMAND?  r 68000-dtack c
+
+*** 68000-DTACK          23-APR-82
+  PARENT=SYSTEMS              USAGE= 78
+I HAVE A RUNNING 68000 FIG-FORTH  SYSTEM WHICH  I WOULD LIKE TO  MAKE
+PUBLIC DOMAIN . IT RUNS NOW ON MY COMMODORE 8032  WITH DTACK GOUNDED
+BOARD. THE SYSTEM WAS BROUGHT UP WITH A NAUTILUS CROSS-COMPILER.
+FURTHER INFO CONTACT ME AT ( 201 ) 843 5800 EXT 6641  DAYS OR
+( 201 ) 334 0338 EVENINGS    JACK HALLER
+ 
+     +++ NO SUBMESSAGES +++
+
+COMMAND?  
+-------
+
+Mail-from: ARPANET host PARC-MAXC rcvd at 18-Jun-82 0945-PDT
+Date: 18 Jun 1982 09:42 PDT
+From: GWilliams at PARC-MAXC
+Subject: Re: 68000 FORTH
+In-reply-to: KSPROUL's message of 17 Jun 1982 0847-EDT
+To: KSPROUL at RUTGERS
+cc: BILLW at SRI-CSL(Attn: FORTH)
+Remailed-date: 18 Jun 1982 1042-PDT
+Remailed-from: BILLW at SRI-CSL
+Remailed-to: Forth: ;
+
+I'm interested in a 68000 FORTH!
+
+Please keep us informed.
+
+Glen
+
+
+Mail-From: ARPANET host RUTGERS rcvd at 17-Jun-82 0649-PDT
+Date: 17 Jun 1982 0847-EDT
+Subject: 68000 FORTH
+From: KSPROUL at RUTGERS
+To: BILLW at SRI-CSL(Attn: FORTH)
+Remailed-date: 17 Jun 1982 1152-PDT
+Remailed-from: BILLW at SRI-CSL
+Remailed-to: Forth: ;
+
+IS THE BBOARD ALIVE?
+
+DOES ANYONE KNOW OF A FORTH FOR THE 68000 PREFERABLY ONE THAT
+IS EITHER LESS THATN $100 OR IS IN THE PUBLIC DOMAIN??
+
+KEITH SPROUL
+KSPROUL@RUTGERS
+
+[The bboard is alive, but not very active.  I thought that FIG
+ had a 68000 forth (available under the same terms as there other
+ versions - about $20 for a listing). Unfotunately, all I have
+ lying around is stuff that doesnt list the available software,
+ or give their phone number.  (however, the address is
+	Forth Interest Group
+	PO Box 1105
+	san carlos, ca  94070
+) WEW]
+
+Mail-from: ARPANET host RUTGERS rcvd at 4-Jun-82 0807-PDT
+Date:  4 Jun 1982 1105-EDT
+From: KSPROUL at RUTGERS
+Subject: 68000 forth request
+To: INFO-FORTH at SRI-CSL
+Remailed-date:  7 Jun 1982 1348-PDT
+Remailed-from: BILLW at SRI-CSL
+Remailed-to: Forth: ;
+
+Does anybody know of a FORTH for the 68000 (preferably public domain like FIG)
+
+Keith Sproul
+
+Ksproul@Rutgers
+
+-------
+
+Mail-from: ARPANET host RUTGERS rcvd at 27-May-82 1249-PDT
+Date: 27 May 1982 1549-EDT
+From: KSPROUL at RUTGERS
+Subject: 6502 fig-FORTH source
+To: info-micro at MIT-AI, forth at SRI-CSL
+cc: info-atari at MIT-AI, info-apple at MIT-AI
+Remailed-date: 28 May 1982 0137-PDT
+Remailed-from: BILLW at SRI-CSL
+Remailed-to: Forth: ;
+
+
+I have the 6502 version of fig-FORTH and will be uploading it
+so that it will be avaliable to anybody that wants it.
+(It will be avaliable sometime in June, due to the fact that I am
+very busy)..
+
+So if anybody wants it, send me mail, and I will let you know
+when/where/how to get it...
+
+Keith Sproul
+Ksproul@Rutgers
+-------
+
+Mail-from: ARPANET host SRI-KL rcvd at 8-May-82 0019-PDT
+Date:  8 May 1982 0132-EDT
+From: KSPROUL at RUTGERS
+Subject: FORTH 
+To: info-micro at MIT-AI, info-apple at MIT-AI, info-atari at MIT-AI
+Redistributed-To: BILLW at SRI-CSL(Attn: forth)
+Redistributed-By: BILLW at SRI-KL
+Redistributed-Date:  8 May 1982
+Remailed-date:  8 May 1982 0151-PDT
+Remailed-from: BILLW at SRI-CSL
+Remailed-to: Forth: ;
+
+
+Does anybody have any experience with the fig-FORTH source for the 6502?
+I have this system up and running on my 6502 system 
+
+(my system is a full-blown 64K dual-8" drives, KIM)
+
+I have been told that there are a few bugs in the actuall source listing
+supplied by fig-FORTH, I  would like to know if anybody knows of
+any of these.
+
+I would also like to know if there is enough interest to warrant
+trying to get an 'info-forth' started at mit somewhere.
+
+I would support it here at Rutgers, but I don't think we can
+do it as well as MIT (if at all)
+
+Keith Sproul
+Ksproul@Rutgers
+
+PS: If anybody wants the fig-FORTH source code (6502 version),
+and can prove that they have it, I can give it to you over the net.
+-------
+
+
+Date: 3 April 1982 23:51-EST
+From: John Howard Palevich <TANG at MIT-AI>
+To: INFO-FORTH at MIT-AI
+Redistributed-To: Forth:
+Redistributed-By: BILLW at SRI-CSL
+Redistributed-Date:  3 Apr 1982
+
+What's the fastest kind of Forth?
+P-code (1 byte ops)?
+Address-code (2 byte ops)?
+Machine lang (3 byte ops)?
+Which takes the least space?
+
+
+Date: 21 February 1982 2146-EST (Sunday)
+From: David.Anderson at CMU-10A
+To: forth at SRI-CSL
+Subject:  forth for apple
+CC: jka at washington
+Redistributed-To: Forth:
+Redistributed-By: BILLW at SRI-CSL
+Redistributed-Date: 22 Feb 1982
+
+I have been planning to make a number of extensions to my FORTH for the
+Apple ][, but I hate to reinvent the wheel - so if someone has already
+done these things (and done them well), I'd like to hear about it.  Or,
+if you've tried, and found them infeasible, I'd like to hear about that
+too.  Here's what I would like to have:
+
+	(1) virtual memory - I'd like to have some of the dictionary
+	    thrown out to disk, and an area in memory that these words
+	    could share when needed.  It would be nice to have this as
+	    transparent as possible, but on a micro I'd be willing to
+	    give up alot to have it faster.
+
+	(2) named files, with a real screen editor - whoever dreamed up
+	    numbered, fixed-sized screens had a simple idea, but I think
+	    it's time to grow up.
+
+I've also been thinking of restructuring the dictionary so that whenever
+a word A is rewritten, all of the words that used the old A will change
+and use the new one, rather than continuing to use the old.  This could be
+done by breaking the dictionary into two parts, the first being fixed length
+and containing (1) the name, either stored in a fixed-width field, or as
+a pointer off into some string space, (2) a link to the next entry, which
+could be implicit, and (3) an address where the code lives - possibly on
+disk.  Now when A is rewritten, we just update the 3rd pointer.  All of
+the routines that call A have a pointer to this block, and it hasn't moved.
+If we are going to go around deleting very many of these entries then we
+will probably want to link them together into a list, and make the pointers
+in (2) explicit.  Once again, has anyone tried something like this?
+
+I'm new to the list, so if I am rambling off into history, point me to
+the archives!  Thanks ...
+
+--dave
+
+Date: 21 February 1982 23:04-EST
+From: Marc J. Widennley <MJW at MIT-MC>
+Subject:  Sorcerer Forth
+To: forth at SRI-CSL
+Redistributed-To: Forth:
+Redistributed-By: BILLW at SRI-CSL
+Redistributed-Date: 22 Feb 1982
+
+Sorry, I forgot to specify,  the forth I have is for a Sorcerer Running
+CP/M (I happened to modify it to run on my CP/M system).
+		--Marc
+
+
+Date: 20 February 1982 20:53-EST
+From: Marc J. Widennley <MJW at MIT-MC>
+Subject:  Say again?
+To: forth at SRI-CSL
+Redistributed-To: Forth:
+Redistributed-By: BILLW at SRI-CSL
+Redistributed-Date: 21 Feb 1982
+
+I have a copy of FORTH for the Sorcerer laying arround here somewhere,
+it's very nice,  handles graphics, memory mapped video,  and also
+simulates a disk.  If you want it, drop me a note and I'll dig it up.
+	It is called FORTHSO3 and is by Tim Huang.
+			---Marc
+
+
+Date: 20 Feb 1982 1614-PST
+From:  Ted Shapin <BEC.SHAPIN at USC-ECL>
+Subject: Say again?
+To: forth-request at SRI-CSL
+Mail Address: 2500 Harbor Blvd., Fullerton, CA 92634
+Phone: (714) 970-3393
+Redistributed-To: Forth:
+Redistributed-By: BILLW at SRI-CSL
+Redistributed-Date: 20 Feb 1982
+
+Sorry, I lost your initial msg to me with address of where to
+send contributions.
+
+I do remeber that someone wanted help with his Sorcerer.
+In the latest FORTH Dimensions, III #5 which everyone should
+subscribe to (FORTH Interest Group, PO Box 1105, San Carlos, CA
+94070, $15) there is mention of fig-FORTH tailored for the
+SORCERER from Quality Software, 6660 Reseda Blvd., Suite 105
+Reseda CA 91335. It simulates disk storage in RAM. A 32K Sorcerer
+can hold 14 screens.
+
+Would appreciate it if you would send me the initial announcement
+again.  Also, since I don't have access to FTP, would you please
+mail me some of the back items?
+
+Thanks,  Ted.
+-------
+
+Date: 13 February 1982 22:30-EST
+From: "John Howard Palevich, & CO." <TANG at MIT-AI>
+To: forth at SRI-CSL
+Redistributed-To: Forth:
+Redistributed-By: BILLW at SRI-CSL
+Redistributed-Date: 14 Feb 1982
+
+	I've been able to get the fig-Forth kernal running on
+my friend's Exidy Sorcerer Z80/32K/Cassette computer, but I
+haven't the foggiest idea how to connect tape I/O to Forth's
+screens.  How can I run Forth on a cassette based computer?
+
+
+Date: 6 February 1982 00:51-EST
+From: Daniel J. Blumenfeld <DAN at MIT-ML>
+Subject: FORTH Vendor Directory
+To: Info-FORTH at SRI-KL
+Redistributed-To: Forth:
+Redistributed-By: BILLW at SRI-CSL
+Redistributed-Date:  5 Feb 1982
+
+The January 1982 issue of Digital Design Magazine has an eight page 
+directory of FORTH vendors.  Many packages for numerous processors are
+listed, and each package is described in a short paragraph.  Also 
+included in the directory are vendors for FORTH books and seminars.
+
+
+
+Date: 31 January 1982 00:57-EST
+From: Ian G. Macky <GREN at MIT-MC>
+Subject: FORTH as OS
+To: Forth at SRI-CSL
+Redistributed-To: Forth:
+Redistributed-By: BILLW at SRI-CSL
+Redistributed-Date: 31 Jan 1982
+
+
+I spoke to someone a little while ago who told me that people were coming
+up with pretty sophisticated OS's using FORTH only -- Even as far as good
+business systems with the normal FORTH screen setup, and no named files.
+Since I had to write FORTH anyway, I'm now considering trying the same.
+
+Has anyone out there used a micro that ran FORTH lowermost?  How's it
+feel?  Should I seriously considering doing the same?  >Assorted
+questions of the same nature<
+
+I thought I'd better check up on this before I get too far carried away
+with the run-of-the-mill OS (with the named files and all that) I was
+starting...
+
+Any and all input graciously accepted.
+
+
+Date: 31 January 1982 02:43-EST
+From: David A. Boulton <SPAM at MIT-AI>
+Subject:  Forth DOC's
+To: ELIOT at MIT-DMS
+cc: SPAM at MIT-AI, Forth at SRI-CSL
+Redistributed-To: Forth:
+Redistributed-By: BILLW at SRI-CSL
+Redistributed-Date: 31 Jan 1982
+
+Hi,
+  Unfortunately, there is no on-line documentation to the fig-FORTH
+systems that are on MC:CPM; .  Probably the best solution is to 
+get ahold of a copy of the "fig-FORTH Installation Manual".  This
+booklet has been around for a long time, and is sometimes VERY
+cryptic, but it does have a glossary of all the words in the
+system (with the exception of a few that are specific to the CP/M
+implementation, mainly disk I/O words).  It (like all of FIG's
+publications) is public domain, so if you can find someone who
+has one, feel free to xerox(tm) it.  If not, then you can get a
+copy from FIG (P.O. Box 1105, San Carlos CA. 94070). The price
+is mildly outrageous (like $10 for 50 pages).
+
+  Another document that might be helpful, especially if you are
+trying to figure out what makes fig-FORTH tick for the first time,
+is a book called "System Guide to fig-FORTH" by C.H. Ting, also
+available from FIG.  Ting's English is not too good sometimes, but
+overall, the book is well worth it.  It goes into the details of how
+the interpreter works, and so on.
+
+				;S
+				Dave Boulton
+
+P.S.  FIG's phone number is (415) 962-8653 if you want to call instead.
+
+
+
+Date: 31 January 1982 03:04-EST
+From: David A. Boulton <SPAM at MIT-AI>
+Subject:  Forth Bulletin Boards
+To: Forth at SRI-CSL
+cc: SPAM at MIT-AI
+Redistributed-To: Forth:
+Redistributed-By: BILLW at SRI-CSL
+Redistributed-Date: 31 Jan 1982
+
+  In case anyone was not already aware, there are two Forth
+oriented Computer Bulletin Board Systems currently operating.
+Both of them are based on the 'Conference Tree' software written
+by John James (in Forth, of course).  A Conference Tree is based
+on a tree structure of messages, where the user can attach a 
+new message to any node, so a number of different discussions can
+be going on "at once", and be easily accessed.
+
+   There are currently about seven Conference Trees operating, and
+two of these are almost exclusively devoted to Forth.  They are
+located in San Francisco and L.A. (or Hayward and Santa Monica to
+be precise).  The Hayward system (known as the "FIG-Tree") is at
+(415) 538-3580.  The Santa Monica system is at (213) 394-1505.
+Both are 300 or 110 baud, Bell 103a.  Hit two CR's to start, and
+it should be self teaching from there on.
+
+   Anytime I find something particularly interesting on the Hayward
+FIG-Tree, I will pass it along to those on this mailing list.
+
+			FORTH ?LOVE IF  HONK  THEN
+
+				Dave Boulton
+
+
+SPAM@MIT-AI 01/31/82 02:00:09
+To: FORTH-ARCHIVE at MIT-AI
+    Date: 30 Jan 1982 0200-EST
+    From: ELIOT at MIT-DMS (Eliot Scott Ramey)
+    Redistributed-To: Forth:
+    Redistributed-By: BILLW at SRI-CSL
+    Redistributed-Date: 30 Jan 1982
+
+    Howdy, I have just downloaded a copy of FIG-FORTH, and I have found myself
+    at a loss for the DOC file.  Where can I find or get the DOC to FIG-FORTH.
+    It seems that there are many commands which I cannot figure out what they
+    do let alone the correct arguments for them.
+    					Thanx,
+    						-Eliot@Mit-DM
+
+
+
+
+
+
+SPAM@MIT-AI 01/31/82 01:57:01
+To: FORTH-ARCHIVE at MIT-MC
+    Date: 23 Jan 1982 1549-PST
+    Sender: BILLW at SRI-CSL
+    From: William "Chops" Westfield <BillW@SRI-KL>
+
+    I want to put a Forth kernel in ROM and use it as the basic OS
+    on my computer most of the time.  It needs to fit into about
+    3K, and must read in the rest of Forth from (an IO device) if
+    and when I want it.  Has anybody done this ?  Any ideas on what
+    parts of Fig-Forth can be removed easilly ?
+
+    ( My "Fig-Forth instalation manual" says " when compiled, the model
+    requires about 2800 bytes of memory.  An expanded version with
+    formatted output and compiling aids would require about 4000 bytes..."
+    Now the model is written for a 6502, and the listing I have is for
+    the 8086, but I dont see how I can extract parts and end up with
+    3K worth of Forth that "is sufficient to run and to continue to
+    compile itself.  HELP !  )
+
+    Thanks
+    Bill W
+
+
+SPAM@MIT-AI 01/31/82 01:54:42
+To: FORTH-ARCHIVE at MIT-MC
+    Date: 23 Jan 1982 1556-PST
+    Sender: BILLW at SRI-CSL
+    From: Forth Interest Group <Forth@SRI-CSL>
+
+    Well, Requests to be added to the list have died down, and
+    its time to get busy discussing forth.  I should mention
+    that the Forth mailing list was originally the creation of
+    Stew Rubenstein @ Harvard, but he had trouble finding a site
+    that would distribute the messages.  Since then the list has
+    grown a bit - It now has about 40 people on it.  I will archive
+    messages in the file (on SRI-CSL) <BillW>INFO-FORTH.TXT, obtainable
+    via the anonymous login convention.
+
+    Enjoy
+    BillW
+
+
+SPAM@MIT-AI 01/31/82 01:52:41
+To: FORTH-ARCHIVE at MIT-MC
+    Date: 20 Jan 1982 2344-PST
+    Sender: BILLW at SRI-CSL
+    From: Forth Interest Group <Forth@SRI-CSL>
+
+    A home has been found for the Forth mailing list, which, at one
+    time or another, you have all requested to be on.  The new home
+    for the list is FORTH@SRI-CSL.  The list is being maintained by
+    Bill Westfield (BillW@SRI-KL, FORTH-REQUEST@SRI-CSL).  The mailing
+    list will become an immediate distribution list as soon as CSL
+    brings up XMAILER.  Until then, messages will be redistributed
+    manually at least once a day.  Questio/problems/complaints/additions/
+    deletions, etc to FORTH-REQUEST@SRI-CSL...
+
+    Enjoy
+    BillW
+
+    PS.  INFO-FORTH@CSL and INFO-FORTH-REQUEST@CSL are also legal aliases.
+    	I am in the process of trying to talk to people at MIT to
+    	get fowarding addresses installed there also.
+
+

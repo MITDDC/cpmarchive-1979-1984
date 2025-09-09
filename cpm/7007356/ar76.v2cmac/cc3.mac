@@ -1,0 +1,5370 @@
+
+;/*
+;** Small-C Compiler Version 2.0
+;**
+;** Copyright 1982 J. E. Hendrix
+;**
+;** Part 3
+;*/
+        JMP CC1
+;#include "stdio.h"
+;/*
+;** stdiol.h -- header for local STDIO/CALL, and VM interfaces
+;*/
+;#define stdin 0
+;#define stdout 1
+;#define stderr 2
+;#define stdport 3
+;#define stdlist 4
+;#define ERR -2
+;#define EOF -1
+;#define YES 1
+;#define NO 0
+;#define NULL 0
+;#define CR 13
+;#define LF 10
+;#asm
+;STDIOL.R:LIBRY
+; STD I/O ROUTINES
+  EXTRN INDEX  
+  EXTRN RINDEX 
+  EXTRN GETC   
+  EXTRN GETCHAR
+  EXTRN FGETC  
+  EXTRN FGETS  
+  EXTRN PUTC   
+  EXTRN PUTCHAR
+  EXTRN FPUTC  
+  EXTRN FPUTS  
+  EXTRN PUTS   
+  EXTRN FOPEN  
+  EXTRN FCLOSE 
+  EXTRN GETARG 
+; STD I/O ROUTINES MATCHING VM ROUTINES
+  EXTRN FFLUSH 
+  EXTRN ABORT  
+  EXTRN EXIT   
+  EXTRN UNLINK 
+; ARITHMETIC & LOGICAL ROUTINES
+  EXTRN CCARGC 
+  EXTRN CCSXT  
+  EXTRN CCDSGI 
+  EXTRN CCDDGI 
+  EXTRN CCINCI 
+  EXTRN CCDECI 
+  EXTRN CCGINT 
+  EXTRN CCPIDDPD
+  EXTRN CCPDPI 
+  EXTRN CCDSGC 
+  EXTRN CCDDGC 
+  EXTRN CCINCC 
+  EXTRN CCDECC 
+  EXTRN CCGCHAR
+  EXTRN CCPCDDPD
+  EXTRN CCPDPC 
+  EXTRN CCPCHAR
+  EXTRN CCPINT 
+  EXTRN CCOR   
+  EXTRN CCXOR  
+  EXTRN CCAND  
+  EXTRN CCEQ   
+  EXTRN CCNE   
+  EXTRN CCGT   
+  EXTRN CCLE   
+  EXTRN CCGE   
+  EXTRN CCLT   
+  EXTRN CCCMP  
+  EXTRN CCUGE  
+  EXTRN CCULT  
+  EXTRN CCUGT  
+  EXTRN CCULE  
+  EXTRN CCUCMP 
+  EXTRN CCASR  
+  EXTRN CCASL  
+  EXTRN CCSUB  
+  EXTRN CCNEG  
+  EXTRN CCCOM  
+  EXTRN CCMULT 
+  EXTRN CCDIV  
+  EXTRN CCLNEG 
+  EXTRN CCSWITCH
+; VM ROUTINES
+;VM.R:   LIBRY
+  EXTRN CCBOJ  
+  EXTRN CCEXIT 
+  EXTRN CCPOLL 
+  EXTRN CCHALT 
+  EXTRN CCOPEN 
+  EXTRN CCCLOSE
+  EXTRN CCDELIM
+  EXTRN CCREAD 
+  EXTRN CCWRITE
+  EXTRN CCSEEK 
+  EXTRN CCMODE 
+  EXTRN CCFILE 
+  EXTRN CCPURGE
+  EXTRN CCFLUSH
+  EXTRN CCALLOC
+  EXTRN CCFREE 
+  EXTRN CCAVAIL
+;#include "cc.def"
+;/*
+;** Small-C Compiler Version 2.0
+;**
+;** Copyright 1982 J. E. Hendrix
+;**
+;** Macro Definitions
+;*/
+;
+;/*
+;** compile options
+;*/
+;#define PHASE2   /* 2nd and later compiles */
+;#define SEPARATE /* compile separately */
+;#define OPTIMIZE /* compile output optimizer */
+;#define NOCCARGC /* no calls to CCARGC */
+;/* #define HASH     /* use hash search for macros */
+;/* #define SMALL_VM /* uses Small-VM interface */
+;/* #define CMD_LINE /* command line run options */
+;/* #define DYNAMIC  /* allocate memory dynamically */
+;/* #define POLL     /* poll for operator interruptions */
+;/* #define PDS      /* uses PDS assembler and loader */
+;#define COL      /* terminate labels with a colon */
+;#define TAB  9   /* put out tabs of this value */
+;#define UPPER    /* force symbols to upper case */
+;#define LINK     /* will use with linking loader */
+;
+;/*
+;** machine dependent parameters
+;*/
+;#define BPW     2   /* bytes per word */
+;#define LBPW    1   /* log2(BPW) */
+;#define SBPC    1   /* stack bytes per character */
+;#define ERRCODE 7   /* op sys return code */
+; 
+;/*
+;** symbol table format
+;*/
+;#define IDENT    0
+;#define TYPE     1
+;#define CLASS    2
+;#define OFFSET   3
+;#define NAME     5
+;#define OFFSIZE (NAME-OFFSET)
+;#define SYMAVG  10
+;#define SYMMAX  14
+;
+;/*
+;** symbol table parameters
+;*/
+;#define NUMLOCS   25
+;#define STARTLOC  symtab
+;#define ENDLOC   (symtab+(NUMLOCS*SYMAVG))
+;#define NUMGLBS   180
+;#define STARTGLB  ENDLOC
+;#define ENDGLB   (ENDLOC+((NUMGLBS-1)*SYMMAX))
+;#define SYMTBSZ   2770  /* NUMLOCS*SYMAVG + NUMGLBS*SYMMAX */
+; 
+;/*
+;** System wide name size (for symbols)
+;*/
+;#define NAMESIZE 9
+;#define NAMEMAX  8
+; 
+;/*
+;** possible entries for "IDENT"
+;*/
+;#define LABEL    0
+;#define VARIABLE 1
+;#define ARRAY    2
+;#define POINTER  3
+;#define FUNCTION 4
+; 
+;/*
+;** possible entries for "TYPE"
+;**    low order 2 bits make type unique within length
+;**    high order bits give length of object
+;*/
+;/*      LABEL   0 */
+;#define CCHAR   (1<<2)
+;#define CINT    (BPW<<2)
+; 
+;/*
+;** possible entries for "CLASS"
+;*/
+;/*      LABEL     0 */
+;#define STATIC    1
+;#define AUTOMATIC 2
+;#define EXTERNAL  3
+;
+;/*
+;** "switch" table
+;*/
+;
+;#define SWSIZ   (2*BPW)
+;#define SWTABSZ (25*SWSIZ)
+; 
+;/*
+;** "while" statement queue
+;*/
+;#define WQTABSZ  30
+;#define WQSIZ     3
+;#define WQMAX   (wq+WQTABSZ-WQSIZ)
+; 
+;/*
+;** entry offsets in while queue
+;*/
+;#define WQSP    0
+;#define WQLOOP  1
+;#define WQEXIT  2
+; 
+;/*
+;** literal pool
+;*/
+;#define LITABSZ 700
+;#define LITMAX  (LITABSZ-1)
+; 
+;/*
+;** input line
+;*/
+;#define LINEMAX  80
+;#define LINESIZE 81
+;
+;/*
+;** output staging buffer size
+;*/
+;#define STAGESIZE   800
+;#define STAGELIMIT  (STAGESIZE-1)
+; 
+;/*
+;** macro (define) pool
+;*/
+;#define MACQSIZE 950
+;#define MACMAX  (MACQSIZE-1)
+; 
+;/*
+;** statement types
+;*/
+;#define STIF      1
+;#define STWHILE   2
+;#define STRETURN  3
+;#define STBREAK   4
+;#define STCONT    5
+;#define STASM     6
+;#define STEXPR    7
+;#define STDO      8 /* compile "do" logic */
+;#define STFOR     9 /* compile "for" logic */
+;#define STSWITCH 10 /* compile "switch/case/default" logic */
+;#define STCASE   11
+;#define STDEF    12
+;#define STGOTO   13 /* compile "goto" logic */
+;
+;/*
+;** external references in part 1
+;*/
+;extern char
+;  stage[STAGESIZE],
+  EXTRN STAGE  
+;  litq[LITABSZ],
+  EXTRN LITQ   
+; *glbptr, *lptr,  ssname[NAMESIZE],  quote[2], *stagenext;
+  EXTRN GLBPTR 
+  EXTRN LPTR   
+  EXTRN SSNAME 
+  EXTRN QUOTE  
+  EXTRN STAGENEX       
+;extern int
+;  ch,  csp,  litlab,  litptr,  nch,  op[16],  op2[16],
+  EXTRN CH     
+  EXTRN CSP    
+  EXTRN LITLAB 
+  EXTRN LITPTR 
+  EXTRN NCH    
+  EXTRN OP     
+  EXTRN OP2    
+;  oper,  opindex,  opsize;
+  EXTRN OPER   
+  EXTRN OPINDEX        
+  EXTRN OPSIZE 
+;
+;/*
+;** external references in part 2
+;*/
+;extern int
+;  addsym(),  blanks(),  bump(),  clearstage(),  endst(),
+  EXTRN ADDSYM 
+  EXTRN BLANKS 
+  EXTRN BUMP   
+  EXTRN CLEARSTA       
+  EXTRN ENDST  
+;  error(),  findglb(),  findloc(),  gch(),  getlabel(),
+  EXTRN ERROR  
+  EXTRN FINDGLB        
+  EXTRN FINDLOC        
+  EXTRN GCH    
+  EXTRN GETLABEL       
+;  inbyte(),  junk(),  match(),  needlval(),  needtoken(),
+  EXTRN INBYTE 
+  EXTRN JUNK   
+  EXTRN MATCH  
+  EXTRN NEEDLVAL       
+  EXTRN NEEDTOKE       
+;  nextop(),  nl(),  numeric(),  outbyte(),  outdec(),
+  EXTRN NEXTOP 
+  EXTRN NL     
+  EXTRN NUMERIC        
+  EXTRN OUTBYTE        
+  EXTRN OUTDEC 
+;  outstr(),  postlabel(),  printlabel(),  putint(),
+  EXTRN OUTSTR 
+  EXTRN POSTLABE       
+  EXTRN PRINTLAB       
+  EXTRN PUTINT 
+;  setstage(),  streq(),  symname();
+  EXTRN SETSTAGE       
+  EXTRN STREQ  
+  EXTRN SYMNAME        
+;
+;/*
+;** external references in part 4
+;*/
+;extern int
+;  add(),  and(),  asl(),  asr(),  call(),  callstk(),
+  EXTRN ADD    
+  EXTRN AND    
+  EXTRN ASL    
+  EXTRN ASR    
+  EXTRN CALL   
+  EXTRN CALLSTK        
+;  com(),  dec(),  div(),  doublereg(),  eq(),  eq0(),
+  EXTRN COM    
+  EXTRN DEC    
+  EXTRN DIV    
+  EXTRN DOUBLERE       
+  EXTRN EQ     
+  EXTRN EQ0    
+;  ge(),  ge0(),  getloc(),  getmem(),  gt(),  gt0(),
+  EXTRN GE     
+  EXTRN GE0    
+  EXTRN GETLOC 
+  EXTRN GETMEM 
+  EXTRN GT     
+  EXTRN GT0    
+;  immed(),  immed2(),  inc(),  indirect(),  jump(),
+  EXTRN IMMED  
+  EXTRN IMMED2 
+  EXTRN INC    
+  EXTRN INDIRECT       
+  EXTRN JUMP   
+;  le(),  le0(),  lneg(),  loadargc(),  lt(),  lt0(),
+  EXTRN LE     
+  EXTRN LE0    
+  EXTRN LNEG   
+  EXTRN LOADARGC       
+  EXTRN LT     
+  EXTRN LT0    
+;  mod(),  modstk(),  move(),  mult(),  ne(),  ne0(),
+  EXTRN MOD    
+  EXTRN MODSTK 
+  EXTRN MOVE   
+  EXTRN MULT   
+  EXTRN NE     
+  EXTRN NE0    
+;  neg(),  or(),  pop(),  push(),  putmem(),
+  EXTRN NEG    
+  EXTRN OR     
+  EXTRN POP    
+  EXTRN PUSH   
+  EXTRN PUTMEM 
+;  putstk(),  ret(),  smartpop(),  sub(),  swap(),  swapstk(),
+  EXTRN PUTSTK 
+  EXTRN RET    
+  EXTRN SMARTPOP       
+  EXTRN SUB    
+  EXTRN SWAP   
+  EXTRN SWAPSTK        
+;  testjump(),  uge(),  ugt(),  ule(),  ult(),  ult0(),
+  EXTRN TESTJUMP       
+  EXTRN UGE    
+  EXTRN UGT    
+  EXTRN ULE    
+  EXTRN ULT    
+  EXTRN ULT0   
+;  xor(),  zerojump();
+  EXTRN XOR    
+  EXTRN ZEROJUMP       
+;
+;#include "cc31.c"
+;/*
+;** lval[0] - symbol table address, else 0 for constant
+;** lval[1] - type of indirect obj to fetch, else 0 for static
+;** lval[2] - type of pointer or array, else 0 for all other
+;** lval[3] - true if constant expression
+;** lval[4] - value of constant expression
+;** lval[5] - true if secondary register altered
+;** lval[6] - function address of highest/last binary operator
+;** lval[7] - stage address of "oper 0" code, else 0
+;*/
+;
+;/*
+;** skim over terms adjoining || and && operators
+;*/
+;skim(opstr, testfunc, dropval, endval, heir, lval)
+CC1:
+SKIM::   
+;  char *opstr;
+;  int testfunc, dropval, endval, heir, lval[]; {
+;  int k, hits, droplab, endlab;
+;  hits=0;
+        LXI H,-8
+        DAD SP
+        SPHL
+        LXI H,4
+        DAD SP
+        XCHG;;
+        LXI H,0
+        CALL CCPINT
+;  while(1) {
+CC3:
+;    k=plunge1(heir, lval);
+        LXI H,6
+        DAD SP
+        PUSH H
+        LXI H,14
+        CALL CCDSGI
+        PUSH H
+        LXI H,14
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE1
+        POP B
+        POP B
+        CALL CCPDPI
+;    if(nextop(opstr)) {
+        LXI H,20
+        CALL CCDSGI
+        PUSH H
+        CALL NEXTOP
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC5
+;      bump(opsize);
+        LHLD OPSIZE
+        PUSH H
+        CALL BUMP
+        POP B
+;      if(hits==0) {
+        LXI H,4
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JNZ CC6
+;        hits=1;
+        LXI H,4
+        DAD SP
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;        droplab=getlabel();
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL GETLABEL
+        CALL CCPDPI
+;        }
+;      dropout(k, testfunc, droplab, lval);
+CC6:
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,20
+        CALL CCDSGI
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,16
+        CALL CCDSGI
+        PUSH H
+        CALL DROPOUT
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+;      }
+;    else if(hits) {
+        JMP CC7
+CC5:
+        LXI H,4
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC8
+;      dropout(k, testfunc, droplab, lval);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,20
+        CALL CCDSGI
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,16
+        CALL CCDSGI
+        PUSH H
+        CALL DROPOUT
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+;      const(endval);
+        LXI H,14
+        CALL CCDSGI
+        PUSH H
+        CALL CONST
+        POP B
+;      jump(endlab=getlabel());
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL GETLABEL
+        CALL CCPDPI
+        PUSH H
+        CALL JUMP
+        POP B
+;      postlabel(droplab);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL POSTLABE
+        POP B
+;      const(dropval);
+        LXI H,16
+        CALL CCDSGI
+        PUSH H
+        CALL CONST
+        POP B
+;      postlabel(endlab);
+        POP H
+        PUSH H
+        PUSH H
+        CALL POSTLABE
+        POP B
+;      lval[1]=lval[2]=lval[3]=lval[7]=0;
+        LXI H,10
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        PUSH H
+        LXI H,12
+        CALL CCDSGI
+        LXI D,4
+        DAD D
+        PUSH H
+        LXI H,14
+        CALL CCDSGI
+        LXI D,6
+        DAD D
+        PUSH H
+        LXI H,16
+        CALL CCDSGI
+        LXI D,14
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+        CALL CCPDPI
+        CALL CCPDPI
+        CALL CCPDPI
+;      return 0;
+        LXI H,0
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;      }
+;    else return k;
+CC8:
+        LXI H,6
+        CALL CCDSGI
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+CC9:
+CC7:
+;    }
+        JMP CC3
+CC4:
+;  }
+        LXI H,8
+        DAD SP
+        SPHL
+        RET
+;
+;/*
+;** test for early dropout from || or && evaluations
+;*/
+;dropout(k, testfunc, exit1, lval) int k, testfunc, exit1, lval[]; {
+DROPOUT::        
+;  if(k) rvalue(lval);
+        LXI H,8
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC11
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL RVALUE
+        POP B
+;  else if(lval[3]) const(lval[4]);
+        JMP CC12
+CC11:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,6
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC13
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,8
+        CALL CCDDGI
+        PUSH H
+        CALL CONST
+        POP B
+;  testfunc(exit1); /* jumps on false */
+CC13:
+CC12:
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        XTHL
+        PUSH H
+        LXI H,$+5
+        XTHL
+        PCHL
+        POP B
+;  }
+        RET
+;
+;/*
+;** plunge to a lower level
+;*/
+;plunge(opstr, opoff, heir, lval)
+PLNGE:: 
+;  char *opstr;
+;  int opoff, heir, lval[]; {
+;  int k, lval2[8];
+;  k=plunge1(heir, lval);
+        LXI H,-18
+        DAD SP
+        SPHL
+        LXI H,16
+        DAD SP
+        PUSH H
+        LXI H,24
+        CALL CCDSGI
+        PUSH H
+        LXI H,24
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE1
+        POP B
+        POP B
+        CALL CCPDPI
+;  if(nextop(opstr)==0) return k;
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        CALL NEXTOP
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC15
+        LXI H,16
+        CALL CCDSGI
+        XCHG;;
+        LXI H,18
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  if(k) rvalue(lval);
+CC15:
+        LXI H,16
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC16
+        LXI H,20
+        CALL CCDSGI
+        PUSH H
+        CALL RVALUE
+        POP B
+;  while(1) {
+CC16:
+CC17:
+;    if(nextop(opstr)) {
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        CALL NEXTOP
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC19
+;      bump(opsize);
+        LHLD OPSIZE
+        PUSH H
+        CALL BUMP
+        POP B
+;      opindex=opindex+opoff;
+        LHLD OPINDEX
+        PUSH H
+        LXI H,26
+        CALL CCDSGI
+        POP D
+        DAD D
+        SHLD OPINDEX
+;      plunge2(op[opindex], op2[opindex], heir, lval, lval2);
+        LXI H,OP
+        PUSH H
+        LHLD OPINDEX
+        POP D
+        DAD H
+        CALL CCDDGI
+        PUSH H
+        LXI H,OP2
+        PUSH H
+        LHLD OPINDEX
+        POP D
+        DAD H
+        CALL CCDDGI
+        PUSH H
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL PLNGE2
+        XCHG;;
+        LXI H,10
+        DAD SP
+        SPHL
+        XCHG;;
+;      }
+;    else return 0;
+        JMP CC20
+CC19:
+        LXI H,0
+        XCHG;;
+        LXI H,18
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+CC20:
+;    }
+        JMP CC17
+CC18:
+;  }
+        LXI H,18
+        DAD SP
+        SPHL
+        RET
+;
+;/*
+;** unary plunge to lower level
+;*/
+;plunge1(heir, lval) int heir, lval[]; {
+PLNGE1::        
+;  char *before, *start;
+;  int k;
+;  setstage(&before, &start);
+        PUSH B
+        PUSH B
+        PUSH B
+        LXI H,4
+        DAD SP
+        PUSH H
+        LXI H,4
+        DAD SP
+        PUSH H
+        CALL SETSTAGE
+        POP B
+        POP B
+;  k=heir(lval);
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,12
+        CALL CCDSGI
+        PUSH H
+        LXI H,12
+        CALL CCDSGI
+        XTHL
+        PUSH H
+        LXI H,$+5
+        XTHL
+        PCHL
+        POP B
+        CALL CCPDPI
+;  if(lval[3]) clearstage(before,0); /* load constant later */
+        LXI H,8
+        CALL CCDSGI
+        LXI D,6
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC22
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL CLEARSTA
+        POP B
+        POP B
+;  return k;
+CC22:
+        POP H
+        PUSH H
+        POP B
+        POP B
+        POP B
+        RET
+;  }
+        POP B
+        POP B
+        POP B
+;
+;/*
+;** binary plunge to lower level
+;*/
+;plunge2(oper, oper2, heir, lval, lval2)
+PLNGE2::        
+;  int oper, oper2, heir, lval[], lval2[]; {
+;  char *before, *start;
+;  setstage(&before, &start);
+        PUSH B
+        PUSH B
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL SETSTAGE
+        POP B
+        POP B
+;  lval[5]=1;          /* flag secondary register used */
+        LXI H,8
+        CALL CCDSGI
+        LXI D,10
+        DAD D
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;  lval[7]=0;          /* flag as not "... oper 0" syntax */
+        LXI H,8
+        CALL CCDSGI
+        LXI D,14
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;  if(lval[3]) {       /* constant on left side not yet loaded */
+        LXI H,8
+        CALL CCDSGI
+        LXI D,6
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC24
+;    if(plunge1(heir, lval2)) rvalue(lval2);
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE1
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC25
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL RVALUE
+        POP B
+;    if(lval[4]==0) lval[7]=stagenext;
+CC25:
+        LXI H,8
+        CALL CCDSGI
+        LXI D,8
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JNZ CC26
+        LXI H,8
+        CALL CCDSGI
+        LXI D,14
+        DAD D
+        PUSH H
+        LHLD STAGENEX
+        CALL CCPDPI
+;    const2(lval[4]<<dbltest(lval2, lval));
+CC26:
+        LXI H,8
+        CALL CCDSGI
+        LXI D,8
+        CALL CCDDGI
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,12
+        CALL CCDSGI
+        PUSH H
+        CALL DBLTEST
+        POP B
+        POP B
+        POP D
+        CALL CCASL
+        PUSH H
+        CALL CONST2
+        POP B
+;    }
+;  else {              /* non-constant on left side */
+        JMP CC27
+CC24:
+;    push();
+        CALL PUSH
+;    if(plunge1(heir, lval2)) rvalue(lval2);
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE1
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC28
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL RVALUE
+        POP B
+;    if(lval2[3]) {    /* constant on right side */
+CC28:
+        LXI H,6
+        CALL CCDSGI
+        LXI D,6
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC29
+;      if(lval2[4]==0) lval[7]=start;
+        LXI H,6
+        CALL CCDSGI
+        LXI D,8
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JNZ CC30
+        LXI H,8
+        CALL CCDSGI
+        LXI D,14
+        DAD D
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCPDPI
+;      if(oper==add) { /* may test other commutative operators */
+CC30:
+        LXI H,14
+        CALL CCDSGI
+        PUSH H
+        LXI H,ADD
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC31
+;        csp=csp+2;
+        LHLD CSP
+        LXI D,2
+        DAD D
+        SHLD CSP
+;        clearstage(before, 0);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL CLEARSTA
+        POP B
+        POP B
+;        const2(lval2[4]<<dbltest(lval, lval2));   /* load secondary */
+        LXI H,6
+        CALL CCDSGI
+        LXI D,8
+        CALL CCDDGI
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        CALL DBLTEST
+        POP B
+        POP B
+        POP D
+        CALL CCASL
+        PUSH H
+        CALL CONST2
+        POP B
+;        }
+;      else {
+        JMP CC32
+CC31:
+;        const(lval2[4]<<dbltest(lval, lval2));    /* load primary */
+        LXI H,6
+        CALL CCDSGI
+        LXI D,8
+        CALL CCDDGI
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        CALL DBLTEST
+        POP B
+        POP B
+        POP D
+        CALL CCASL
+        PUSH H
+        CALL CONST
+        POP B
+;        smartpop(lval2, start);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL SMARTPOP
+        POP B
+        POP B
+;        }
+CC32:
+;      }
+;    else {            /* non-constants on both sides */
+        JMP CC33
+CC29:
+;      smartpop(lval2, start);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL SMARTPOP
+        POP B
+        POP B
+;      if((oper==add)|(oper==sub)) {
+        LXI H,14
+        CALL CCDSGI
+        PUSH H
+        LXI H,ADD
+        POP D
+        CALL CCEQ
+        PUSH H
+        LXI H,16
+        CALL CCDSGI
+        PUSH H
+        LXI H,SUB
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC34
+;        if(dbltest(lval,lval2)) doublereg();
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL DBLTEST
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC35
+        CALL DOUBLERE
+;        if(dbltest(lval2,lval)) {
+CC35:
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        CALL DBLTEST
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC36
+;          swap();
+        CALL SWAP
+;          doublereg();
+        CALL DOUBLERE
+;          if(oper==sub) swap();
+        LXI H,14
+        CALL CCDSGI
+        PUSH H
+        LXI H,SUB
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC37
+        CALL SWAP
+;          }
+CC37:
+;        }
+CC36:
+;      }
+CC34:
+CC33:
+;    }
+CC27:
+;  if(oper) {
+        LXI H,14
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC38
+;    if(lval[3]=lval[3]&lval2[3]) {
+        LXI H,8
+        CALL CCDSGI
+        LXI D,6
+        DAD D
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        LXI D,6
+        CALL CCDDGI
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        LXI D,6
+        CALL CCDDGI
+        POP D
+        CALL CCAND
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC39
+;      lval[4]=calc(lval[4], oper, lval2[4]);
+        LXI H,8
+        CALL CCDSGI
+        LXI D,8
+        DAD D
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        LXI D,8
+        CALL CCDDGI
+        PUSH H
+        LXI H,18
+        CALL CCDSGI
+        PUSH H
+        LXI H,12
+        CALL CCDSGI
+        LXI D,8
+        CALL CCDDGI
+        PUSH H
+        CALL CALC
+        POP B
+        POP B
+        POP B
+        CALL CCPDPI
+;      clearstage(before, 0);  
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL CLEARSTA
+        POP B
+        POP B
+;      lval[5]=0;
+        LXI H,8
+        CALL CCDSGI
+        LXI D,10
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;      }
+;    else {
+        JMP CC40
+CC39:
+;      if((lval[2]==0)&(lval2[2]==0)) {
+        LXI H,8
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        XCHG;;
+        LXI H,0
+        CALL CCEQ
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        LXI H,0
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC41
+;        oper();
+        LXI H,14
+        CALL CCDSGI
+        PUSH H
+        LXI H,$+5
+        XTHL
+        PCHL
+;        lval[6]=oper;    /* identify the operator */
+        LXI H,8
+        CALL CCDSGI
+        LXI D,12
+        DAD D
+        PUSH H
+        LXI H,16
+        CALL CCDSGI
+        CALL CCPDPI
+;        }
+;      else {
+        JMP CC42
+CC41:
+;        oper2();
+        LXI H,12
+        CALL CCDSGI
+        PUSH H
+        LXI H,$+5
+        XTHL
+        PCHL
+;        lval[6]=oper2;   /* identify the operator */
+        LXI H,8
+        CALL CCDSGI
+        LXI D,12
+        DAD D
+        PUSH H
+        LXI H,14
+        CALL CCDSGI
+        CALL CCPDPI
+;        }
+CC42:
+;      }
+CC40:
+;    if(oper==sub) {
+        LXI H,14
+        CALL CCDSGI
+        PUSH H
+        LXI H,SUB
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC43
+;      if((lval[2]==CINT)&(lval2[2]==CINT)) {
+        LXI H,8
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        XCHG;;
+        LXI H,8
+        CALL CCEQ
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        XCHG;;
+        LXI H,8
+        CALL CCEQ
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC44
+;        swap();
+        CALL SWAP
+;        const(1);
+        LXI H,1
+        PUSH H
+        CALL CONST
+        POP B
+;        asr();  /** div by 2 **/
+        CALL ASR
+;        }
+;      }
+CC44:
+;    if((oper==sub)|(oper==add)) result(lval, lval2);
+CC43:
+        LXI H,14
+        CALL CCDSGI
+        PUSH H
+        LXI H,SUB
+        POP D
+        CALL CCEQ
+        PUSH H
+        LXI H,16
+        CALL CCDSGI
+        PUSH H
+        LXI H,ADD
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC45
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL RESULT
+        POP B
+        POP B
+;    }
+CC45:
+;  }
+CC38:
+        POP B
+        POP B
+        RET
+;
+;calc(left, oper, right) int left, oper, right; {
+CALC::   
+;       if(oper ==  or) return (left  |  right);
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,OR
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC47
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCOR
+        RET
+;  else if(oper == xor) return (left  ^  right);
+CC47:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,XOR
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC49
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCXOR
+        RET
+;  else if(oper == and) return (left  &  right);
+CC49:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,AND
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC51
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCAND
+        RET
+;  else if(oper ==  eq) return (left  == right);
+CC51:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,EQ
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC53
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCEQ
+        RET
+;  else if(oper ==  ne) return (left  != right);
+CC53:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,NE
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC55
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCNE
+        RET
+;  else if(oper ==  le) return (left  <= right);
+CC55:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,LE
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC57
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCLE
+        RET
+;  else if(oper ==  ge) return (left  >= right);
+CC57:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,GE
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC59
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCGE
+        RET
+;  else if(oper ==  lt) return (left  <  right);
+CC59:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,LT
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC61
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCLT
+        RET
+;  else if(oper ==  gt) return (left  >  right);
+CC61:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,GT
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC63
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCGT
+        RET
+;  else if(oper == asr) return (left  >> right);
+CC63:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,ASR
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC65
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCASR
+        RET
+;  else if(oper == asl) return (left  << right);
+CC65:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,ASL
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC67
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCASL
+        RET
+;  else if(oper == add) return (left  +  right);
+CC67:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,ADD
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC69
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        DAD D
+        RET
+;  else if(oper == sub) return (left  -  right);
+CC69:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,SUB
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC71
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCSUB
+        RET
+;  else if(oper ==mult) return (left  *  right);
+CC71:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,MULT
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC73
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCMULT
+        RET
+;  else if(oper == div) return (left  /  right);
+CC73:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,DIV
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC75
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCDIV
+        RET
+;  else if(oper == mod) return (left  %  right);
+CC75:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,MOD
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC77
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCDIV
+        XCHG;;
+        RET
+;  else return 0;
+CC77:
+        LXI H,0
+        RET
+CC78:
+CC76:
+CC74:
+CC72:
+CC70:
+CC68:
+CC66:
+CC64:
+CC62:
+CC60:
+CC58:
+CC56:
+CC54:
+CC52:
+CC50:
+CC48:
+;  }
+        RET
+;
+;expression(const, val) int *const, *val;  {
+EXPRESSI::       
+;  int lval[8];
+;  if(heir1(lval)) rvalue(lval);
+        LXI H,-16
+        DAD SP
+        SPHL
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL HEIR1
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC80
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL RVALUE
+        POP B
+;  if(lval[3]) {
+CC80:
+        LXI H,0
+        DAD SP
+        LXI D,6
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC81
+;    *const=1;
+        LXI H,20
+        CALL CCDSGI
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;    *val=lval[4];
+        LXI H,18
+        CALL CCDSGI
+        PUSH H
+        LXI H,2
+        DAD SP
+        LXI D,8
+        CALL CCDDGI
+        CALL CCPDPI
+;    }
+;  else *const=0;
+        JMP CC82
+CC81:
+        LXI H,20
+        CALL CCDSGI
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+CC82:
+;  }
+        LXI H,16
+        DAD SP
+        SPHL
+        RET
+;
+;heir1(lval)  int lval[];  {
+HEIR1::  
+;  int k,lval2[8], oper;
+;  k=plunge1(heir3, lval);
+        LXI H,-20
+        DAD SP
+        SPHL
+        LXI H,18
+        DAD SP
+        PUSH H
+        LXI H,HEIR3
+        PUSH H
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE1
+        POP B
+        POP B
+        CALL CCPDPI
+;  if(lval[3]) const(lval[4]);
+        LXI H,22
+        CALL CCDSGI
+        LXI D,6
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC84
+        LXI H,22
+        CALL CCDSGI
+        LXI D,8
+        CALL CCDDGI
+        PUSH H
+        CALL CONST
+        POP B
+;       if(match("|="))  oper=or;
+CC84:
+        LXI H,CC83+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC85
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,OR
+        CALL CCPDPI
+;  else if(match("^="))  oper=xor;
+        JMP CC86
+CC85:
+        LXI H,CC83+3
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC87
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,XOR
+        CALL CCPDPI
+;  else if(match("&="))  oper=and;
+        JMP CC88
+CC87:
+        LXI H,CC83+6
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC89
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,AND
+        CALL CCPDPI
+;  else if(match("+="))  oper=add;
+        JMP CC90
+CC89:
+        LXI H,CC83+9
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC91
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,ADD
+        CALL CCPDPI
+;  else if(match("-="))  oper=sub;
+        JMP CC92
+CC91:
+        LXI H,CC83+12
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC93
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,SUB
+        CALL CCPDPI
+;  else if(match("*="))  oper=mult;
+        JMP CC94
+CC93:
+        LXI H,CC83+15
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC95
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,MULT
+        CALL CCPDPI
+;  else if(match("/="))  oper=div;
+        JMP CC96
+CC95:
+        LXI H,CC83+18
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC97
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,DIV
+        CALL CCPDPI
+;  else if(match("%="))  oper=mod;
+        JMP CC98
+CC97:
+        LXI H,CC83+21
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC99
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,MOD
+        CALL CCPDPI
+;  else if(match(">>=")) oper=asr;
+        JMP CC100
+CC99:
+        LXI H,CC83+24
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC101
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,ASR
+        CALL CCPDPI
+;  else if(match("<<=")) oper=asl;
+        JMP CC102
+CC101:
+        LXI H,CC83+28
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC103
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,ASL
+        CALL CCPDPI
+;  else if(match("="))   oper=0;
+        JMP CC104
+CC103:
+        LXI H,CC83+32
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC105
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;  else return k;
+        JMP CC106
+CC105:
+        LXI H,18
+        CALL CCDSGI
+        XCHG;;
+        LXI H,20
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+CC106:
+CC104:
+CC102:
+CC100:
+CC98:
+CC96:
+CC94:
+CC92:
+CC90:
+CC88:
+CC86:
+;  if(k==0) {
+        LXI H,18
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JNZ CC107
+;    needlval();
+        CALL NEEDLVAL
+;    return 0;
+        LXI H,0
+        XCHG;;
+        LXI H,20
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;    }
+;  if(lval[1]) {
+CC107:
+        LXI H,22
+        CALL CCDSGI
+        LXI D,2
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC108
+;    if(oper) {
+        POP H
+        PUSH H
+        MOV A,H
+        ORA L
+        JZ CC109
+;      push();
+        CALL PUSH
+;      rvalue(lval);
+        LXI H,22
+        CALL CCDSGI
+        PUSH H
+        CALL RVALUE
+        POP B
+;      }
+;    plunge2(oper, oper, heir1, lval, lval2);
+CC109:
+        POP H
+        PUSH H
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,HEIR1
+        PUSH H
+        LXI H,28
+        CALL CCDSGI
+        PUSH H
+        LXI H,10
+        DAD SP
+        PUSH H
+        CALL PLNGE2
+        XCHG;;
+        LXI H,10
+        DAD SP
+        SPHL
+        XCHG;;
+;    if(oper) pop();
+        POP H
+        PUSH H
+        MOV A,H
+        ORA L
+        JZ CC110
+        CALL POP
+;    }
+CC110:
+;  else {
+        JMP CC111
+CC108:
+;    if(oper) {
+        POP H
+        PUSH H
+        MOV A,H
+        ORA L
+        JZ CC112
+;      rvalue(lval);
+        LXI H,22
+        CALL CCDSGI
+        PUSH H
+        CALL RVALUE
+        POP B
+;      plunge2(oper, oper, heir1, lval, lval2);
+        POP H
+        PUSH H
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,HEIR1
+        PUSH H
+        LXI H,28
+        CALL CCDSGI
+        PUSH H
+        LXI H,10
+        DAD SP
+        PUSH H
+        CALL PLNGE2
+        XCHG;;
+        LXI H,10
+        DAD SP
+        SPHL
+        XCHG;;
+;      }
+;    else {
+        JMP CC113
+CC112:
+;      if(heir1(lval2)) rvalue(lval2);
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL HEIR1
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC114
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL RVALUE
+        POP B
+;      lval[5]=lval2[5];
+CC114:
+        LXI H,22
+        CALL CCDSGI
+        LXI D,10
+        DAD D
+        PUSH H
+        LXI H,4
+        DAD SP
+        LXI D,10
+        CALL CCDDGI
+        CALL CCPDPI
+;      }
+CC113:
+;    }
+CC111:
+;  store(lval);
+        LXI H,22
+        CALL CCDSGI
+        PUSH H
+        CALL STORE
+        POP B
+;  return 0;
+        LXI H,0
+        XCHG;;
+        LXI H,20
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+        LXI H,20
+        DAD SP
+        SPHL
+CC83:   DB 124,61,0,94,61,0,38,61,0,43
+        DB 61,0,45,61,0,42,61,0,47,61
+        DB 0,37,61,0,62,62,61,0,60,60
+        DB 61,0,61,0
+;
+;heir3(lval)  int lval[]; {
+HEIR3::  
+;  return skim("||", eq0, 1, 0, heir4, lval);
+        LXI H,CC115+0
+        PUSH H
+        LXI H,EQ0
+        PUSH H
+        LXI H,1
+        PUSH H
+        LXI H,0
+        PUSH H
+        LXI H,HEIR4
+        PUSH H
+        LXI H,12
+        CALL CCDSGI
+        PUSH H
+        CALL SKIM
+        XCHG;;
+        LXI H,12
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+CC115:  DB 124,124,0
+;
+;heir4(lval)  int lval[]; {
+HEIR4::  
+;  return skim("&&", ne0, 0, 1, heir5, lval);
+        LXI H,CC116+0
+        PUSH H
+        LXI H,NE0
+        PUSH H
+        LXI H,0
+        PUSH H
+        LXI H,1
+        PUSH H
+        LXI H,HEIR5
+        PUSH H
+        LXI H,12
+        CALL CCDSGI
+        PUSH H
+        CALL SKIM
+        XCHG;;
+        LXI H,12
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+CC116:  DB 38,38,0
+;
+;heir5(lval)  int lval[]; {
+HEIR5::  
+;  return plunge("|", 0, heir6, lval);
+        LXI H,CC117+0
+        PUSH H
+        LXI H,0
+        PUSH H
+        LXI H,HEIR6
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+CC117:  DB 124,0
+;
+;heir6(lval)  int lval[]; {
+HEIR6::  
+;  return plunge("^", 1, heir7, lval);
+        LXI H,CC118+0
+        PUSH H
+        LXI H,1
+        PUSH H
+        LXI H,HEIR7
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+CC118:  DB 94,0
+;
+;heir7(lval)  int lval[]; {
+HEIR7::  
+;  return plunge("&", 2, heir8, lval);
+        LXI H,CC119+0
+        PUSH H
+        LXI H,2
+        PUSH H
+        LXI H,HEIR8
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+CC119:  DB 38,0
+;
+;heir8(lval)  int lval[];  {
+HEIR8::  
+;  return plunge("== !=", 3, heir9, lval);
+        LXI H,CC120+0
+        PUSH H
+        LXI H,3
+        PUSH H
+        LXI H,HEIR9
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+CC120:  DB 61,61,32,33,61,0
+;
+;heir9(lval)  int lval[];  {
+HEIR9::  
+;  return plunge("<= >= < >", 5, heir10, lval);
+        LXI H,CC121+0
+        PUSH H
+        LXI H,5
+        PUSH H
+        LXI H,HEIR10
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+CC121:  DB 60,61,32,62,61,32,60,32,62,0
+;
+;heir10(lval)  int lval[];  {
+HEIR10:: 
+;  return plunge(">> <<", 9, heir11, lval);
+        LXI H,CC122+0
+        PUSH H
+        LXI H,9
+        PUSH H
+        LXI H,HEIR11
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+CC122:  DB 62,62,32,60,60,0
+;
+;heir11(lval)  int lval[];  {
+HEIR11:: 
+;  return plunge("+ -", 11, heir12, lval);
+        LXI H,CC123+0
+        PUSH H
+        LXI H,11
+        PUSH H
+        LXI H,HEIR12
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+CC123:  DB 43,32,45,0
+;
+;heir12(lval)  int lval[];  {
+HEIR12:: 
+;  return plunge("* / %", 13, heir13, lval);
+        LXI H,CC124+0
+        PUSH H
+        LXI H,13
+        PUSH H
+        LXI H,HEIR13
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL PLNGE
+        XCHG;;
+        LXI H,8
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+CC124:  DB 42,32,47,32,37,0
+;#include "cc32.c"
+;heir13(lval)  int lval[];  {
+HEIR13:: 
+;  int k;
+;  char *ptr;
+;  if(match("++")) {                   /* ++lval */
+        PUSH B
+        PUSH B
+        LXI H,CC125+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC126
+;    if(heir13(lval)==0) {
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL HEIR13
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC127
+;      needlval();
+        CALL NEEDLVAL
+;      return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;      }
+;    step(inc, lval);
+CC127:
+        LXI H,INC
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL STEP
+        POP B
+        POP B
+;    return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;    }
+;  else if(match("--")) {              /* --lval */
+CC126:
+        LXI H,CC125+3
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC129
+;    if(heir13(lval)==0) {
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL HEIR13
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC130
+;      needlval();
+        CALL NEEDLVAL
+;      return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;      }
+;    step(dec, lval);
+CC130:
+        LXI H,DEC
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL STEP
+        POP B
+        POP B
+;    return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;    }
+;  else if (match("~")) {              /* ~ */
+CC129:
+        LXI H,CC125+6
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC132
+;    if(heir13(lval)) rvalue(lval);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL HEIR13
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC133
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL RVALUE
+        POP B
+;    com();
+CC133:
+        CALL COM
+;    lval[4] = ~lval[4];
+        LXI H,6
+        CALL CCDSGI
+        LXI D,8
+        DAD D
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        LXI D,8
+        CALL CCDDGI
+        CALL CCCOM
+        CALL CCPDPI
+;    return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;    }
+;  else if (match("!")) {              /* ! */
+CC132:
+        LXI H,CC125+8
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC135
+;    if(heir13(lval)) rvalue(lval);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL HEIR13
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC136
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL RVALUE
+        POP B
+;    lneg();
+CC136:
+        CALL LNEG
+;    lval[4] = !lval[4];
+        LXI H,6
+        CALL CCDSGI
+        LXI D,8
+        DAD D
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        LXI D,8
+        CALL CCDDGI
+        CALL CCLNEG
+        CALL CCPDPI
+;    return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;    }
+;  else if (match("-")) {              /* unary - */
+CC135:
+        LXI H,CC125+10
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC138
+;    if(heir13(lval)) rvalue(lval);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL HEIR13
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC139
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL RVALUE
+        POP B
+;    neg();
+CC139:
+        CALL NEG
+;    lval[4] = -lval[4];
+        LXI H,6
+        CALL CCDSGI
+        LXI D,8
+        DAD D
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        LXI D,8
+        CALL CCDDGI
+        CALL CCNEG
+        CALL CCPDPI
+;    return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;    }
+;  else if(match("*")) {               /* unary * */
+CC138:
+        LXI H,CC125+12
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC141
+;    if(heir13(lval)) rvalue(lval);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL HEIR13
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC142
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL RVALUE
+        POP B
+;    if(ptr=lval[0])lval[1]=ptr[TYPE];
+CC142:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        CALL CCGINT
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC143
+        LXI H,6
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,1
+        CALL CCDDGC
+        CALL CCPDPI
+;    else lval[1]=CINT;
+        JMP CC144
+CC143:
+        LXI H,6
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        XCHG;;
+        LXI H,8
+        CALL CCPINT
+CC144:
+;    lval[2]=0;  /* flag as not pointer or array */
+        LXI H,6
+        CALL CCDSGI
+        LXI D,4
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;    lval[3]=0;  /* flag as not constant */
+        LXI H,6
+        CALL CCDSGI
+        LXI D,6
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;    return 1;
+        LXI H,1
+        POP B
+        POP B
+        RET
+;    }
+;  else if(match("&")) {               /* unary & */
+CC141:
+        LXI H,CC125+14
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC146
+;    if(heir13(lval)==0) {
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL HEIR13
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC147
+;      error("illegal address");
+        LXI H,CC125+16
+        PUSH H
+        CALL ERROR
+        POP B
+;      return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;      }
+;    ptr=lval[0];
+CC147:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        CALL CCGINT
+        CALL CCPDPI
+;    lval[2]=ptr[TYPE];
+        LXI H,6
+        CALL CCDSGI
+        LXI D,4
+        DAD D
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,1
+        CALL CCDDGC
+        CALL CCPDPI
+;    if(lval[1]) return 0;
+        LXI H,6
+        CALL CCDSGI
+        LXI D,2
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC148
+        LXI H,0
+        POP B
+        POP B
+        RET
+;    /* global & non-array */
+;    address(ptr);
+CC148:
+        POP H
+        PUSH H
+        PUSH H
+        CALL ADDRESS
+        POP B
+;    lval[1]=ptr[TYPE];
+        LXI H,6
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,1
+        CALL CCDDGC
+        CALL CCPDPI
+;    return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;    }
+;  else {
+CC146:
+;    k=heir14(lval);
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL HEIR14
+        POP B
+        CALL CCPDPI
+;    if(match("++")) {                 /* lval++ */
+        LXI H,CC125+32
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC150
+;      if(k==0) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        MOV A,H
+        ORA L
+        JNZ CC151
+;        needlval();
+        CALL NEEDLVAL
+;        return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;        }
+;      step(inc, lval);
+CC151:
+        LXI H,INC
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL STEP
+        POP B
+        POP B
+;      dec(lval[2]>>2);
+        LXI H,6
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCASR
+        PUSH H
+        CALL DEC
+        POP B
+;      return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;      }
+;    else if(match("--")) {            /* lval-- */
+CC150:
+        LXI H,CC125+35
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC153
+;      if(k==0) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        MOV A,H
+        ORA L
+        JNZ CC154
+;        needlval();
+        CALL NEEDLVAL
+;        return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;        }
+;      step(dec, lval);
+CC154:
+        LXI H,DEC
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL STEP
+        POP B
+        POP B
+;      inc(lval[2]>>2);
+        LXI H,6
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCASR
+        PUSH H
+        CALL INC
+        POP B
+;      return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;      }
+;    else return k;
+CC153:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        POP B
+        POP B
+        RET
+CC155:
+CC152:
+;    }
+CC149:
+CC145:
+CC140:
+CC137:
+CC134:
+CC131:
+CC128:
+;  }
+        POP B
+        POP B
+        RET
+CC125:  DB 43,43,0,45,45,0,126,0,33,0
+        DB 45,0,42,0,38,0,105,108,108,101
+        DB 103,97,108,32,97,100,100,114,101,115
+        DB 115,0,43,43,0,45,45,0
+;
+;heir14(lval)  int *lval; {
+HEIR14:: 
+;  int k, const, val, lval2[8];
+;  char *ptr, *before, *start;
+;  k=primary(lval);
+        LXI H,-28
+        DAD SP
+        SPHL
+        LXI H,26
+        DAD SP
+        PUSH H
+        LXI H,32
+        CALL CCDSGI
+        PUSH H
+        CALL PRIMARY
+        POP B
+        CALL CCPDPI
+;  ptr=lval[0];
+        LXI H,4
+        DAD SP
+        PUSH H
+        LXI H,32
+        CALL CCDSGI
+        CALL CCGINT
+        CALL CCPDPI
+;  blanks();
+        CALL BLANKS
+;  if((ch=='[')|(ch=='(')) {
+        LHLD CH
+        PUSH H
+        LXI H,91
+        POP D
+        CALL CCEQ
+        PUSH H
+        LHLD CH
+        PUSH H
+        LXI H,40
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC157
+;    lval[5]=1;    /* secondary register will be used */
+        LXI H,30
+        CALL CCDSGI
+        LXI D,10
+        DAD D
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;    while(1) {
+CC158:
+;      if(match("[")) {                /* [subscript] */
+        LXI H,CC156+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC160
+;        if(ptr==0) {
+        LXI H,4
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JNZ CC161
+;          error("can't subscript");
+        LXI H,CC156+2
+        PUSH H
+        CALL ERROR
+        POP B
+;          junk();
+        CALL JUNK
+;          needtoken("]");
+        LXI H,CC156+18
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;          return 0;
+        LXI H,0
+        XCHG;;
+        LXI H,28
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;          }
+;        else if(ptr[IDENT]==POINTER)rvalue(lval);
+CC161:
+        LXI H,4
+        CALL CCDSGI
+        CALL CCGCHAR
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC163
+        LXI H,30
+        CALL CCDSGI
+        PUSH H
+        CALL RVALUE
+        POP B
+;        else if(ptr[IDENT]!=ARRAY) {
+        JMP CC164
+CC163:
+        LXI H,4
+        CALL CCDSGI
+        CALL CCGCHAR
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC165
+;          error("can't subscript");
+        LXI H,CC156+20
+        PUSH H
+        CALL ERROR
+        POP B
+;          k=0;
+        LXI H,26
+        DAD SP
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;          }
+;        setstage(&before, &start);
+CC165:
+CC164:
+CC162:
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL SETSTAGE
+        POP B
+        POP B
+;        lval2[3]=0;
+        LXI H,6
+        DAD SP
+        LXI D,6
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;        plunge2(0, 0, heir1, lval2, lval2); /* lval2 deadend */
+        LXI H,0
+        PUSH H
+        LXI H,0
+        PUSH H
+        LXI H,HEIR1
+        PUSH H
+        LXI H,12
+        DAD SP
+        PUSH H
+        LXI H,14
+        DAD SP
+        PUSH H
+        CALL PLNGE2
+        XCHG;;
+        LXI H,10
+        DAD SP
+        SPHL
+        XCHG;;
+;        needtoken("]");
+        LXI H,CC156+36
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;        if(lval2[3]) {
+        LXI H,6
+        DAD SP
+        LXI D,6
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC166
+;          clearstage(before, 0);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL CLEARSTA
+        POP B
+        POP B
+;          if(lval2[4]) {
+        LXI H,6
+        DAD SP
+        LXI D,8
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC167
+;            if(ptr[TYPE]==CINT) const2(lval2[4]<<LBPW);
+        LXI H,4
+        CALL CCDSGI
+        LXI D,1
+        CALL CCDDGC
+        XCHG;;
+        LXI H,8
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC168
+        LXI H,6
+        DAD SP
+        LXI D,8
+        CALL CCDDGI
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCASL
+        PUSH H
+        CALL CONST2
+        POP B
+;            else                const2(lval2[4]);
+        JMP CC169
+CC168:
+        LXI H,6
+        DAD SP
+        LXI D,8
+        CALL CCDDGI
+        PUSH H
+        CALL CONST2
+        POP B
+CC169:
+;            add();
+        CALL ADD
+;            }
+;          }
+CC167:
+;        else {
+        JMP CC170
+CC166:
+;          if(ptr[TYPE]==CINT) doublereg();
+        LXI H,4
+        CALL CCDSGI
+        LXI D,1
+        CALL CCDDGC
+        XCHG;;
+        LXI H,8
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC171
+        CALL DOUBLERE
+;          add();
+CC171:
+        CALL ADD
+;          }
+CC170:
+;        lval[0]=lval[2]=0;
+        LXI H,30
+        CALL CCDSGI
+        PUSH H
+        LXI H,32
+        CALL CCDSGI
+        LXI D,4
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+        CALL CCPDPI
+;        lval[1]=ptr[TYPE];
+        LXI H,30
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        LXI D,1
+        CALL CCDDGC
+        CALL CCPDPI
+;        k=1;
+        LXI H,26
+        DAD SP
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;        }
+;      else if(match("(")) {           /* function(...) */
+        JMP CC172
+CC160:
+        LXI H,CC156+38
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC173
+;        if(ptr==0) callfunction(0);
+        LXI H,4
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JNZ CC174
+        LXI H,0
+        PUSH H
+        CALL CALLFUNC
+        POP B
+;        else if(ptr[IDENT]!=FUNCTION) {
+        JMP CC175
+CC174:
+        LXI H,4
+        CALL CCDSGI
+        CALL CCGCHAR
+        PUSH H
+        LXI H,4
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC176
+;          rvalue(lval);
+        LXI H,30
+        CALL CCDSGI
+        PUSH H
+        CALL RVALUE
+        POP B
+;          callfunction(0);
+        LXI H,0
+        PUSH H
+        CALL CALLFUNC
+        POP B
+;          }
+;        else callfunction(ptr);
+        JMP CC177
+CC176:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        CALL CALLFUNC
+        POP B
+CC177:
+CC175:
+;        k=lval[0]=lval[3]=0;
+        LXI H,26
+        DAD SP
+        PUSH H
+        LXI H,32
+        CALL CCDSGI
+        PUSH H
+        LXI H,34
+        CALL CCDSGI
+        LXI D,6
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+        CALL CCPDPI
+        CALL CCPDPI
+;        }
+;      else return k;
+        JMP CC178
+CC173:
+        LXI H,26
+        CALL CCDSGI
+        XCHG;;
+        LXI H,28
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+CC178:
+CC172:
+;      }
+        JMP CC158
+CC159:
+;    }
+;  if(ptr==0) return k;
+CC157:
+        LXI H,4
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JNZ CC179
+        LXI H,26
+        CALL CCDSGI
+        XCHG;;
+        LXI H,28
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  if(ptr[IDENT]==FUNCTION) {
+CC179:
+        LXI H,4
+        CALL CCDSGI
+        CALL CCGCHAR
+        PUSH H
+        LXI H,4
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC180
+;    address(ptr);
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        CALL ADDRESS
+        POP B
+;    return 0;
+        LXI H,0
+        XCHG;;
+        LXI H,28
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;    }
+;  return k;
+CC180:
+        LXI H,26
+        CALL CCDSGI
+        XCHG;;
+        LXI H,28
+        DAD SP
+        SPHL
+        XCHG;;
+        RET
+;  }
+        LXI H,28
+        DAD SP
+        SPHL
+CC156:  DB 91,0,99,97,110,39,116,32,115,117
+        DB 98,115,99,114,105,112,116,0,93,0
+        DB 99,97,110,39,116,32,115,117,98,115
+        DB 99,114,105,112,116,0,93,0,40,0
+;
+;primary(lval)  int *lval; {
+PRIMARY::        
+;  char *ptr;
+;  int k;
+;  if(match("(")) {                    /* (expression) */
+        PUSH B
+        PUSH B
+        LXI H,CC181+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC182
+;    k=heir1(lval);
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL HEIR1
+        POP B
+        CALL CCPDPI
+;    needtoken(")");
+        LXI H,CC181+2
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;    return k;
+        POP H
+        PUSH H
+        POP B
+        POP B
+        RET
+;    }
+;  putint(0, lval, 8<<LBPW); /* clear lval array */
+CC182:
+        LXI H,0
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,16
+        PUSH H
+        CALL PUTINT
+        POP B
+        POP B
+        POP B
+;  if(symname(ssname, YES)) {
+        LXI H,SSNAME
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL SYMNAME
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC183
+;    if(ptr=findloc(ssname)) {
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,SSNAME
+        PUSH H
+        CALL FINDLOC
+        POP B
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC184
+;      if(ptr[IDENT]==LABEL) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGCHAR
+        MOV A,H
+        ORA L
+        JNZ CC185
+;        experr();
+        CALL EXPERR
+;        return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;        }
+;      getloc(ptr);
+CC185:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL GETLOC
+        POP B
+;      lval[0]=ptr;
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        CALL CCPDPI
+;      lval[1]=ptr[TYPE];
+        LXI H,6
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,1
+        CALL CCDDGC
+        CALL CCPDPI
+;      if(ptr[IDENT]==POINTER) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGCHAR
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC186
+;        lval[1]=CINT;
+        LXI H,6
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        XCHG;;
+        LXI H,8
+        CALL CCPINT
+;        lval[2]=ptr[TYPE];
+        LXI H,6
+        CALL CCDSGI
+        LXI D,4
+        DAD D
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,1
+        CALL CCDDGC
+        CALL CCPDPI
+;        }
+;      if(ptr[IDENT]==ARRAY) {
+CC186:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGCHAR
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC187
+;        lval[2]=ptr[TYPE];
+        LXI H,6
+        CALL CCDSGI
+        LXI D,4
+        DAD D
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,1
+        CALL CCDDGC
+        CALL CCPDPI
+;        return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;        }
+;      else return 1;
+CC187:
+        LXI H,1
+        POP B
+        POP B
+        RET
+CC188:
+;      }
+;    if(ptr=findglb(ssname))
+CC184:
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,SSNAME
+        PUSH H
+        CALL FINDGLB
+        POP B
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC189
+;      if(ptr[IDENT]!=FUNCTION) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGCHAR
+        PUSH H
+        LXI H,4
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC190
+;        lval[0]=ptr;
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        CALL CCPDPI
+;        lval[1]=0;
+        LXI H,6
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;        if(ptr[IDENT]!=ARRAY) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGCHAR
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC191
+;          if(ptr[IDENT]==POINTER) lval[2]=ptr[TYPE];
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGCHAR
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC192
+        LXI H,6
+        CALL CCDSGI
+        LXI D,4
+        DAD D
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,1
+        CALL CCDDGC
+        CALL CCPDPI
+;          return 1;
+CC192:
+        LXI H,1
+        POP B
+        POP B
+        RET
+;          }
+;        address(ptr);
+CC191:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL ADDRESS
+        POP B
+;        lval[1]=lval[2]=ptr[TYPE];
+        LXI H,6
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        LXI D,4
+        DAD D
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        LXI D,1
+        CALL CCDDGC
+        CALL CCPDPI
+        CALL CCPDPI
+;        return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;        }
+;    ptr=addsym(ssname, FUNCTION, CINT, 0, &glbptr, STATIC);
+CC190:
+CC189:
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,SSNAME
+        PUSH H
+        LXI H,4
+        PUSH H
+        LXI H,8
+        PUSH H
+        LXI H,0
+        PUSH H
+        LXI H,GLBPTR
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL ADDSYM
+        XCHG;;
+        LXI H,12
+        DAD SP
+        SPHL
+        XCHG;;
+        CALL CCPDPI
+;    lval[0]=ptr;
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        CALL CCPDPI
+;    lval[1]=0;
+        LXI H,6
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;    return 0;
+        LXI H,0
+        POP B
+        POP B
+        RET
+;    }
+;  if(constant(lval)==0) experr();
+CC183:
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL CONSTANT
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC193
+        CALL EXPERR
+;  return 0;
+CC193:
+        LXI H,0
+        POP B
+        POP B
+        RET
+;  }
+        POP B
+        POP B
+CC181:  DB 40,0,41,0
+;
+;experr() {
+EXPERR:: 
+;  error("invalid expression");
+        LXI H,CC194+0
+        PUSH H
+        CALL ERROR
+        POP B
+;  const(0);
+        LXI H,0
+        PUSH H
+        CALL CONST
+        POP B
+;  junk();
+        CALL JUNK
+;  }
+        RET
+CC194:  DB 105,110,118,97,108,105,100,32,101,120
+        DB 112,114,101,115,115,105,111,110,0
+; 
+;callfunction(ptr)  char *ptr; { /* symbol table entry or 0 */
+CALLFUNC::       
+;  int nargs, const, val;
+;  nargs=0;
+        PUSH B
+        PUSH B
+        PUSH B
+        LXI H,4
+        DAD SP
+        XCHG;;
+        LXI H,0
+        CALL CCPINT
+;  blanks();               /* already saw open paren */
+        CALL BLANKS
+;  if(ptr==0) push();      /* calling HL */
+        LXI H,8
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JNZ CC196
+        CALL PUSH
+;  while(streq(lptr,")")==0) {
+CC196:
+CC197:
+        LHLD LPTR
+        PUSH H
+        LXI H,CC195+0
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC198
+;    if(endst()) break;
+        CALL ENDST
+        MOV A,H
+        ORA L
+        JZ CC199
+        JMP CC198
+;    expression(&const, &val);
+CC199:
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL EXPRESSI
+        POP B
+        POP B
+;    if(ptr==0) swapstk(); /* don't push addr */
+        LXI H,8
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JNZ CC200
+        CALL SWAPSTK
+;    push();               /* push argument */
+CC200:
+        CALL PUSH
+;    nargs=nargs+BPW;      /* count args*BPW */
+        LXI H,4
+        DAD SP
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        LXI D,2
+        CALL CCPIDDPD
+;    if (match(",")==0) break;
+        LXI H,CC195+2
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC201
+        JMP CC198
+;    }
+CC201:
+        JMP CC197
+CC198:
+;  needtoken(")");
+        LXI H,CC195+4
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;  if(streq(ptr+NAME, "CCARGC")==0) loadargc(nargs>>LBPW);
+        LXI H,8
+        CALL CCDSGI
+        LXI D,5
+        DAD D
+        PUSH H
+        LXI H,CC195+6
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC202
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCASR
+        PUSH H
+        CALL LOADARGC
+        POP B
+;  if(ptr) call(ptr+NAME);
+CC202:
+        LXI H,8
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC203
+        LXI H,8
+        CALL CCDSGI
+        LXI D,5
+        DAD D
+        PUSH H
+        CALL CALL
+        POP B
+;  else callstk();
+        JMP CC204
+CC203:
+        CALL CALLSTK
+CC204:
+;  csp=modstk(csp+nargs, YES);
+        LHLD CSP
+        XCHG;;
+        LXI H,4
+        CALL CCDSGI
+        DAD D
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL MODSTK
+        POP B
+        POP B
+        SHLD CSP
+;  }
+        POP B
+        POP B
+        POP B
+        RET
+CC195:  DB 41,0,44,0,41,0,67,67,65,82
+        DB 71,67,0
+;#include "cc33.c"
+;/*
+;** true if val1 -> int pointer or int array and val2 not ptr or array
+;*/
+;dbltest(val1,val2) int val1[], val2[]; {
+DBLTEST::        
+;  if(val1[2]!=CINT) return 0;
+        LXI H,4
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        XCHG;;
+        LXI H,8
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC206
+        LXI H,0
+        RET
+;  if(val2[2]) return 0;
+CC206:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,4
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC207
+        LXI H,0
+        RET
+;  return 1;
+CC207:
+        LXI H,1
+        RET
+;  }
+;
+;/*
+;** determine type of binary operation
+;*/
+;result(lval, lval2) int lval[], lval2[]; {
+RESULT:: 
+;  if((lval[2]!=0)&(lval2[2]!=0)) {
+        LXI H,4
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        XCHG;;
+        LXI H,0
+        CALL CCNE
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        LXI H,0
+        POP D
+        CALL CCNE
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC209
+;    lval[2]=0;
+        LXI H,4
+        CALL CCDSGI
+        LXI D,4
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;    }
+;  else if(lval2[2]) {
+        JMP CC210
+CC209:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,4
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC211
+;    lval[0]=lval2[0];
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        CALL CCGINT
+        CALL CCPDPI
+;    lval[1]=lval2[1];
+        LXI H,4
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,2
+        CALL CCDDGI
+        CALL CCPDPI
+;    lval[2]=lval2[2];
+        LXI H,4
+        CALL CCDSGI
+        LXI D,4
+        DAD D
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        CALL CCPDPI
+;    }
+;  }
+CC211:
+CC210:
+        RET
+;
+;step(oper, lval) int oper, lval[]; {
+STEP::   
+;  if(lval[1]) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,2
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC213
+;    if(lval[5]) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,10
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC214
+;      push();
+        CALL PUSH
+;      rvalue(lval);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL RVALUE
+        POP B
+;      oper(lval[2]>>2);
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCASR
+        XTHL
+        PUSH H
+        LXI H,$+5
+        XTHL
+        PCHL
+        POP B
+;      pop();
+        CALL POP
+;      store(lval);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL STORE
+        POP B
+;      return;
+        RET
+;      }
+;    else {
+CC214:
+;      move();
+        CALL MOVE
+;      lval[5]=1;
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,10
+        DAD D
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;      }
+CC215:
+;    }
+;  rvalue(lval);
+CC213:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL RVALUE
+        POP B
+;  oper(lval[2]>>2);
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCASR
+        XTHL
+        PUSH H
+        LXI H,$+5
+        XTHL
+        PCHL
+        POP B
+;  store(lval);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL STORE
+        POP B
+;  }
+        RET
+;
+;store(lval)  int lval[]; {
+STORE::  
+;  if(lval[1]) putstk(lval);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,2
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC217
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PUTSTK
+        POP B
+;  else        putmem(lval);
+        JMP CC218
+CC217:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PUTMEM
+        POP B
+CC218:
+;  }
+        RET
+;
+;rvalue(lval) int lval[]; {
+RVALUE:: 
+;  if ((lval[0]!=0)&(lval[1]==0)) getmem(lval);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGINT
+        PUSH H
+        LXI H,0
+        POP D
+        CALL CCNE
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,2
+        CALL CCDDGI
+        PUSH H
+        LXI H,0
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC220
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL GETMEM
+        POP B
+;  else                         indirect(lval);
+        JMP CC221
+CC220:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL INDIRECT
+        POP B
+CC221:
+;  }
+        RET
+;
+;test(label, parens)  int label, parens;  {
+TEST::   
+;  int lval[8];
+;  char *before, *start;
+;  if(parens) needtoken("(");
+        LXI H,-20
+        DAD SP
+        SPHL
+        LXI H,22
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC223
+        LXI H,CC222+0
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;  while(1) {
+CC223:
+CC224:
+;    setstage(&before, &start);
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL SETSTAGE
+        POP B
+        POP B
+;    if(heir1(lval)) rvalue(lval);
+        LXI H,4
+        DAD SP
+        PUSH H
+        CALL HEIR1
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC226
+        LXI H,4
+        DAD SP
+        PUSH H
+        CALL RVALUE
+        POP B
+;    if(match(",")) clearstage(before, start);
+CC226:
+        LXI H,CC222+2
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC227
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL CLEARSTA
+        POP B
+        POP B
+;    else break;
+        JMP CC228
+CC227:
+        JMP CC225
+CC228:
+;    }
+        JMP CC224
+CC225:
+;  if(parens) needtoken(")");
+        LXI H,22
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC229
+        LXI H,CC222+4
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;  if(lval[3]) {  /* constant expression */
+CC229:
+        LXI H,4
+        DAD SP
+        LXI D,6
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC230
+;    clearstage(before, 0);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL CLEARSTA
+        POP B
+        POP B
+;    if(lval[4]) return;
+        LXI H,4
+        DAD SP
+        LXI D,8
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC231
+        LXI H,20
+        DAD SP
+        SPHL
+        RET
+;    jump(label);
+CC231:
+        LXI H,24
+        CALL CCDSGI
+        PUSH H
+        CALL JUMP
+        POP B
+;    return;
+        LXI H,20
+        DAD SP
+        SPHL
+        RET
+;    }
+;  if(lval[7]) {  /* stage address of "oper 0" code */
+CC230:
+        LXI H,4
+        DAD SP
+        LXI D,14
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC232
+;    oper=lval[6];/* operator function address */
+        LXI H,4
+        DAD SP
+        LXI D,12
+        CALL CCDDGI
+        SHLD OPER
+;         if((oper==eq)|
+;            (oper==ule)) zerojump(eq0, label, lval);
+        LHLD OPER
+        XCHG;;
+        LXI H,EQ
+        CALL CCEQ
+        PUSH H
+        LHLD OPER
+        PUSH H
+        LXI H,ULE
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC233
+        LXI H,EQ0
+        PUSH H
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL ZEROJUMP
+        POP B
+        POP B
+        POP B
+;    else if((oper==ne)|
+        JMP CC234
+CC233:
+;            (oper==ugt)) zerojump(ne0, label, lval);
+        LHLD OPER
+        PUSH H
+        LXI H,NE
+        POP D
+        CALL CCEQ
+        PUSH H
+        LHLD OPER
+        PUSH H
+        LXI H,UGT
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC235
+        LXI H,NE0
+        PUSH H
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL ZEROJUMP
+        POP B
+        POP B
+        POP B
+;    else if (oper==gt)   zerojump(gt0, label, lval);
+        JMP CC236
+CC235:
+        LHLD OPER
+        PUSH H
+        LXI H,GT
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC237
+        LXI H,GT0
+        PUSH H
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL ZEROJUMP
+        POP B
+        POP B
+        POP B
+;    else if (oper==ge)   zerojump(ge0, label, lval);
+        JMP CC238
+CC237:
+        LHLD OPER
+        PUSH H
+        LXI H,GE
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC239
+        LXI H,GE0
+        PUSH H
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL ZEROJUMP
+        POP B
+        POP B
+        POP B
+;    else if (oper==uge)  clearstage(lval[7],0);
+        JMP CC240
+CC239:
+        LHLD OPER
+        PUSH H
+        LXI H,UGE
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC241
+        LXI H,4
+        DAD SP
+        LXI D,14
+        CALL CCDDGI
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL CLEARSTA
+        POP B
+        POP B
+;    else if (oper==lt)   zerojump(lt0, label, lval);
+        JMP CC242
+CC241:
+        LHLD OPER
+        PUSH H
+        LXI H,LT
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC243
+        LXI H,LT0
+        PUSH H
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL ZEROJUMP
+        POP B
+        POP B
+        POP B
+;    else if (oper==ult)  zerojump(ult0, label, lval);
+        JMP CC244
+CC243:
+        LHLD OPER
+        PUSH H
+        LXI H,ULT
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC245
+        LXI H,ULT0
+        PUSH H
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL ZEROJUMP
+        POP B
+        POP B
+        POP B
+;    else if (oper==le)   zerojump(le0, label, lval);
+        JMP CC246
+CC245:
+        LHLD OPER
+        PUSH H
+        LXI H,LE
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC247
+        LXI H,LE0
+        PUSH H
+        LXI H,26
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL ZEROJUMP
+        POP B
+        POP B
+        POP B
+;    else                 testjump(label);
+        JMP CC248
+CC247:
+        LXI H,24
+        CALL CCDSGI
+        PUSH H
+        CALL TESTJUMP
+        POP B
+CC248:
+CC246:
+CC244:
+CC242:
+CC240:
+CC238:
+CC236:
+CC234:
+;    }
+;  else testjump(label);
+        JMP CC249
+CC232:
+        LXI H,24
+        CALL CCDSGI
+        PUSH H
+        CALL TESTJUMP
+        POP B
+CC249:
+;  clearstage(before, start);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL CLEARSTA
+        POP B
+        POP B
+;  }
+        LXI H,20
+        DAD SP
+        SPHL
+        RET
+CC222:  DB 40,0,44,0,41,0
+;
+;constexpr(val) int *val; {
+CONSTEXP::       
+;  int const;
+;  char *before, *start;
+;  setstage(&before, &start);
+        PUSH B
+        PUSH B
+        PUSH B
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL SETSTAGE
+        POP B
+        POP B
+;  expression(&const, val);
+        LXI H,4
+        DAD SP
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        CALL EXPRESSI
+        POP B
+        POP B
+;  clearstage(before, 0);  /* scratch generated code */
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL CLEARSTA
+        POP B
+        POP B
+;  if(const==0) error("must be constant expression");
+        LXI H,4
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JNZ CC251
+        LXI H,CC250+0
+        PUSH H
+        CALL ERROR
+        POP B
+;  return const;
+CC251:
+        LXI H,4
+        CALL CCDSGI
+        POP B
+        POP B
+        POP B
+        RET
+;  }
+        POP B
+        POP B
+        POP B
+CC250:  DB 109,117,115,116,32,98,101,32,99,111
+        DB 110,115,116,97,110,116,32,101,120,112
+        DB 114,101,115,115,105,111,110,0
+;
+;const(val) int val; {
+CONST::  
+;  immed();
+        CALL IMMED
+;  outdec(val);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL OUTDEC
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+;
+;const2(val) int val; {
+CONST2:: 
+;  immed2();
+        CALL IMMED2
+;  outdec(val);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL OUTDEC
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+;
+;constant(lval)  int lval[]; {
+CONSTANT::       
+;  lval=lval+3;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,6
+        CALL CCPIDDPD
+;  *lval=1;       /* assume it will be a constant */
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;  if (number(++lval)) immed();
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        INX H
+        CALL CCPDPI
+        PUSH H
+        CALL NUMBER
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC255
+        CALL IMMED
+;  else if (pstr(lval)) immed();
+        JMP CC256
+CC255:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PSTR
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC257
+        CALL IMMED
+;  else if (qstr(lval)) {
+        JMP CC258
+CC257:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL QSTR
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC259
+;    *(lval-1)=0; /* nope, it's a string address */
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCSUB
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;    immed();
+        CALL IMMED
+;    printlabel(litlab);
+        LHLD LITLAB
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;    outbyte('+');
+        LXI H,43
+        PUSH H
+        CALL OUTBYTE
+        POP B
+;    }
+;  else return 0;
+        JMP CC260
+CC259:
+        LXI H,0
+        RET
+CC260:
+CC258:
+CC256:
+;  outdec(*lval);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGINT
+        PUSH H
+        CALL OUTDEC
+        POP B
+;  nl();
+        CALL NL
+;  return 1;
+        LXI H,1
+        RET
+;  }
+;
+;number(val)  int val[]; {
+NUMBER:: 
+;  int k, minus;
+;  k=minus=0;
+        PUSH B
+        PUSH B
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+        CALL CCPDPI
+;  while(1) {
+CC262:
+;    if(match("+")) ;
+        LXI H,CC261+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC264
+;    else if(match("-")) minus=1;
+        JMP CC265
+CC264:
+        LXI H,CC261+2
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC266
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;    else break;
+        JMP CC267
+CC266:
+        JMP CC263
+CC267:
+CC265:
+;    }
+        JMP CC262
+CC263:
+;  if(numeric(ch)==0)return 0;
+        LHLD CH
+        PUSH H
+        CALL NUMERIC
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC268
+        LXI H,0
+        POP B
+        POP B
+        RET
+;  while (numeric(ch)) k=k*10+(inbyte()-'0');
+CC268:
+CC269:
+        LHLD CH
+        PUSH H
+        CALL NUMERIC
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC270
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        XCHG;;
+        LXI H,10
+        CALL CCMULT
+        PUSH H
+        CALL INBYTE
+        PUSH H
+        LXI H,48
+        POP D
+        CALL CCSUB
+        POP D
+        CALL CCPIDDPD
+        JMP CC269
+CC270:
+;  if (minus) k=(-k);
+        POP H
+        PUSH H
+        MOV A,H
+        ORA L
+        JZ CC271
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        CALL CCNEG
+        CALL CCPDPI
+;  val[0]=k;
+CC271:
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        CALL CCPDPI
+;  return 1;
+        LXI H,1
+        POP B
+        POP B
+        RET
+;  }
+        POP B
+        POP B
+CC261:  DB 43,0,45,0
+;
+;address(ptr) char *ptr; {
+ADDRESS::        
+;  immed();
+        CALL IMMED
+;  outstr(ptr+NAME);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,5
+        DAD D
+        PUSH H
+        CALL OUTSTR
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+;
+;pstr(val)  int val[]; {
+PSTR::   
+;  int k;
+;  k=0;
+        PUSH B
+        LXI H,0
+        DAD SP
+        XCHG;;
+        LXI H,0
+        CALL CCPINT
+;  if (match("'")==0) return 0;
+        LXI H,CC273+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC274
+        LXI H,0
+        POP B
+        RET
+;  while(ch!=39)    k=(k&255)*256 + (litchar()&255);
+CC274:
+CC275:
+        LHLD CH
+        PUSH H
+        LXI H,39
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC276
+        LXI H,0
+        DAD SP
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,255
+        POP D
+        CALL CCAND
+        XCHG;;
+        LXI H,256
+        CALL CCMULT
+        PUSH H
+        CALL LITCHAR
+        PUSH H
+        LXI H,255
+        POP D
+        CALL CCAND
+        POP D
+        CALL CCPIDDPD
+        JMP CC275
+CC276:
+;  ++lptr;
+        LHLD LPTR
+        INX H
+        SHLD LPTR
+;  val[0]=k;
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCPDPI
+;  return 1;
+        LXI H,1
+        POP B
+        RET
+;  }
+        POP B
+CC273:  DB 39,0
+;
+;qstr(val)  int val[]; {
+QSTR::   
+;  char c;
+;  if (match(quote)==0) return 0;
+        DCX SP
+        LXI H,QUOTE
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC278
+        LXI H,0
+        INX SP
+        RET
+;  val[0]=litptr;
+CC278:
+        LXI H,3
+        CALL CCDSGI
+        PUSH H
+        LHLD LITPTR
+        CALL CCPDPI
+;  while (ch!='"') {
+CC279:
+        LHLD CH
+        PUSH H
+        LXI H,34
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC280
+;    if(ch==0) break;
+        LHLD CH
+        MOV A,H
+        ORA L
+        JNZ CC281
+        JMP CC280
+;    stowlit(litchar(), 1);
+CC281:
+        CALL LITCHAR
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL STOWLIT
+        POP B
+        POP B
+;    }
+        JMP CC279
+CC280:
+;  gch();
+        CALL GCH
+;  litq[litptr++]=0;
+        LXI H,LITQ
+        PUSH H
+        LHLD LITPTR
+        INX H
+        SHLD LITPTR
+        DCX H
+        POP D
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPC
+;  return 1;
+        LXI H,1
+        INX SP
+        RET
+;  }
+        INX SP
+;
+;stowlit(value, size) int value, size; {
+STOWLIT::        
+;  if((litptr+size) >= LITMAX) {
+        LHLD LITPTR
+        XCHG;;
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        DAD D
+        XCHG;;
+        LXI H,699
+        CALL CCGE
+        MOV A,H
+        ORA L
+        JZ CC283
+;    error("literal queue overflow"); abort(ERRCODE);
+        LXI H,CC282+0
+        PUSH H
+        CALL ERROR
+        POP B
+        LXI H,7
+        PUSH H
+        CALL ABORT
+        POP B
+;    }
+;  putint(value, litq+litptr, size);
+CC283:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,LITQ
+        PUSH H
+        LHLD LITPTR
+        POP D
+        DAD D
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL PUTINT
+        POP B
+        POP B
+        POP B
+;  litptr=litptr+size;
+        LHLD LITPTR
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        DAD D
+        SHLD LITPTR
+;  }
+        RET
+CC282:  DB 108,105,116,101,114,97,108,32,113,117
+        DB 101,117,101,32,111,118,101,114,102,108
+        DB 111,119,0
+;
+;/*
+;** return current literal char & bump lptr
+;*/
+;litchar() {
+LITCHAR::        
+;  int i, oct;
+;  if((ch!=92)|(nch==0)) return gch();
+        PUSH B
+        PUSH B
+        LHLD CH
+        PUSH H
+        LXI H,92
+        POP D
+        CALL CCNE
+        PUSH H
+        LHLD NCH
+        PUSH H
+        LXI H,0
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC285
+        CALL GCH
+        POP B
+        POP B
+        RET
+;  gch();
+CC285:
+        CALL GCH
+;  if(ch=='n') {gch(); return 13;} /* CR */
+        LHLD CH
+        PUSH H
+        LXI H,110
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC286
+        CALL GCH
+        LXI H,13
+        POP B
+        POP B
+        RET
+;  if(ch=='t') {gch(); return  9;} /* HT */
+CC286:
+        LHLD CH
+        PUSH H
+        LXI H,116
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC287
+        CALL GCH
+        LXI H,9
+        POP B
+        POP B
+        RET
+;  if(ch=='b') {gch(); return  8;} /* BS */
+CC287:
+        LHLD CH
+        PUSH H
+        LXI H,98
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC288
+        CALL GCH
+        LXI H,8
+        POP B
+        POP B
+        RET
+;  if(ch=='f') {gch(); return 12;} /* FF */
+CC288:
+        LHLD CH
+        PUSH H
+        LXI H,102
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC289
+        CALL GCH
+        LXI H,12
+        POP B
+        POP B
+        RET
+;  i=3; oct=0;
+CC289:
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,3
+        CALL CCPDPI
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;  while(((i--)>0)&(ch>='0')&(ch<='7')) oct=(oct<<3)+gch()-'0';
+CC290:
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        INX H
+        XCHG;;
+        LXI H,0
+        CALL CCGT
+        PUSH H
+        LHLD CH
+        PUSH H
+        LXI H,48
+        POP D
+        CALL CCGE
+        POP D
+        CALL CCAND
+        PUSH H
+        LHLD CH
+        PUSH H
+        LXI H,55
+        POP D
+        CALL CCLE
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC291
+        LXI H,0
+        DAD SP
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCASL
+        PUSH H
+        CALL GCH
+        POP D
+        DAD D
+        PUSH H
+        LXI H,48
+        POP D
+        CALL CCSUB
+        CALL CCPDPI
+        JMP CC290
+CC291:
+;  if(i==2) return gch(); else return oct;
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC292
+        CALL GCH
+        POP B
+        POP B
+        RET
+CC292:
+        POP H
+        PUSH H
+        POP B
+        POP B
+        RET
+CC293:
+;  }
+        POP B
+        POP B
+        RET
+        END
+    

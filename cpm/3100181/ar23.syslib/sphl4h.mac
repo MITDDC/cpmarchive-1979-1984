@@ -1,0 +1,18 @@
+;
+;  PHL4HC -- Print HL as 4 Hex Characters
+;	No Registers are to be affected.
+;
+
+	EXT	PA2HC	; PRINT A AS 2 HEX CHARACTERS
+
+PHL4HC::
+	PUSH	PSW	; SAVE A
+	MOV	A,H	; PRINT H
+	CALL	PA2HC
+	MOV	A,L	; PRINT L
+	CALL	PA2HC
+	POP	PSW	; RESTORE A
+	RET
+
+	END
+

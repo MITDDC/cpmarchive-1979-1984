@@ -1,0 +1,383 @@
+Notice
+Changes in the system
+The problem
+What is an archive?
+File lists
+ARCHADD  -- add files to an archive 
+ARCHGET  -- retrieve files from an archive
+ARCHDIR  -- display archive directory
+ARCHTYPE -- display or print archive members
+ARCHCPY  -- copy an archive (reorganize)
+Field modification
+:Notice
+Copyright 1982  Michael M Rubenstein
+
+This documentation and the accompanying programs may 
+be  freely  distributed for  noncommercial  purposes 
+provided that the copyright notice is retained.
+
+The  archive programs were written in pl/i and  com-
+piled  using the Digital Research Inc.  pl/i-80 com-
+piler.   Portions are copyright by Digital  Research 
+Inc and are distributed with their permission.
+
+This help file is for the following versions
+
+     archadd   1.0
+     archcpy   1.0
+     archdir   1.2
+     archget   1.1
+     archtype  1.0
+A  large number of people have taken an interest  in 
+these programs and offered suggestions.  I am grate-
+ful for all such assistance.
+:Changes in the system
+The  following changes have been made since  version 
+1.0:
+
+     - programs  can  now be configured  to  display 
+       progress messages. (1.1)
+
+     - bugs  in archdir and archget have  been  cor-
+       rected. (1.1)
+
+     - the  instructions  included in  the  programs 
+       have been improved. (1.1)
+
+     - programs  now check for excess parameters and 
+       produce  error messages if any  are  present. 
+       (1.1)
+
+     - archget no longer renames the archive. (1.1)
+
+     - archtype has been implemented.
+
+     - archget has been replaced by archadd.
+
+     - archcpy has been implemented.
+
+     - archdir now displays lost space. (1.2)
+:The problem
+Anyone  who works with a computer,  soon finds  that 
+the disk space is limited.   It's amazing how fast a 
+disk can fill up.
+
+My  style of programming is terrible as far as  disk 
+space  usage goes.   I write a large number of small 
+routines  and then put them together to form a  pro-
+gram.   Unfortunately, the system I have, an Osborne 
+1,  combines small capacity disks (90k) with a rela-
+tively large allocation unit (2k).   This means that 
+any file, no matter how small, will require at least 
+2k of disk space.  45 files will fill up a disk.
+
+If you think 45 files is a lot, you've never seen my 
+programs.
+
+Furthermore,  if  I want to distribute  the  source, 
+it's  a  real  pain to send all  these  files  using 
+modem.
+...
+The archive system is a collection of programs which 
+take  a large number of small files and combine them 
+into  a larger file.   In actual  practice,  another 
+small file is built to keep track of the large  data 
+file.   For  example,  one  of my disks contains  27 
+files using 84k.  21 of these files are less than 2k 
+of data.   Most of these actually contain less  than 
+1k of data.  The largest file is 10k (that's quite a 
+large  source file for me.)  Even this file is wast-
+ing about 1.5k.
+
+I ran this disk through the archadd  program.   That 
+reduced the space to 48k for the data and 2k for the 
+directory.  That's a lot better.
+
+We  can do better still.   I now ran the  data  file 
+through  Richard  Greenlaw's excellant squeeze  pro-
+gram.   That reduced it to 30k of data (and still 2k 
+of directory), about 38% of it's original size.  
+
+                              Michael M Rubenstein
+:What is an archive?
+An archive consists of two files,  a data file and a 
+directory file.
+
+The  data  file  contains  all the  members  of  the 
+archive.
+
+The  directory  file contains  information  on  what 
+files are in the archive and where they are.
+
+Usually,  you'll  take  the  simple route  and  just 
+specify the name as a single file name, such as
+
+          source
+
+This is interpreted as the archive
+
+          (source.arc source.dir)
+
+where the first file is the data file and the second 
+is the directory.   You can specify the drive  (e.g. 
+b:source).
+...
+When  adding to or retrieving from an  archive,  you 
+can  omit  the archive  name.   In  that  case,  the 
+archive will be
+
+          (archive.arc archive.dir)
+
+In  any  case,  you  can  just  specify  the  drive.  
+Specifying "b:" will give you
+
+          (b:archive.arc b:archive.dir)
+...
+If you like to play guessing games,  an archive name 
+may  be  specified as two file names in  parentheses 
+separated by one or more spaces.   The first is  the 
+data file, the second the directory file.  For exam-
+ple
+
+          (test.abc  b:foo.def)
+
+Yes,  they can be on different drives.   This can be 
+real  interesting  in a few months when you  try  to 
+figure out which files match.
+
+There  are some complicated rules for selecting  the 
+names  if you give partial specifications.   If  you 
+are   crazy  enough  to  want  to  do   this,   just 
+experiment.  I refuse to give you any help.
+:File lists
+The add, get and type programs require a file list.
+
+A file list may be a single (ambiguous) file name
+
+          *.bas
+
+or  a  list of (ambiguous) file  names  enclosed  in 
+parentheses
+
+          (*.bas test.asm b:*.bas b:test.*)
+
+Notice that the files may be on different drives.
+...
+There are some restrictions on the file names:
+
+     - A temporary file (type .$$$) cannot be put in 
+       an archive.
+
+     - A file with the name $$$.sub cannot be put in 
+       an archive.
+
+     - A  file with the same name as the dat or  the 
+       directory  file can be put into  an  archive, 
+       but  it  cannot be successfully retrieved  to 
+       the same drive as the archive.
+...
+     - If  a  file name contains  parentheses,  they 
+       must  be  matching.   For  example,  you  can 
+       archive the file
+
+          test(ab).dat
+
+       but not the file
+
+          test(ab.dat
+
+     - If  a  file name begins with  a  left  paren-
+       theses,  you  may  not specify the file as  a 
+       single file without parentheses.   For  exam-
+       ple, you must specify
+
+          ((test).*)
+
+       rather than just
+
+          (test).*
+...
+There  are  no restrictions on the  content  of  the 
+files  which  go  into  an  archive.   However,  the 
+following guidelines are recommended.
+
+     - If  you are going to squeeze the  data  file, 
+       the members should be similar (e.g.  all pl/i 
+       programs or all program documentation files).
+
+     - Squeezing  the directory isn't much use since 
+       it's pretty small.   If you do squeeze it you 
+       won't  be able to display the directory  very 
+       easily.
+
+     - If  you squeeze,  you must  unsqueeze  before 
+       retrieving.
+:ARCHADD -- add files to an archive    
+To add files to an archive,  creating the archive if 
+it does not already exist, use the command
+
+          archadd <file list> [<archive name>]
+
+or just use the command
+
+               archadd
+
+to  get  a  short description.   You  will  then  be 
+prompted with an asterisk for the parameters.   This 
+will be repeated until you enter a blank line.
+
+Even  if a file matches more than one specification, 
+it  will only be included once,  so you can use  the 
+file list
+
+          (*.bas test.*)
+     
+even  if  there is a  file  test.bas.  
+...
+If  a  file with the same name as an added  file  is 
+already  in the archive,  it will be  deleted.   The 
+space used by the file will not,  however be  reused 
+in  the archive.   The space may be recovered  using 
+the archcpy program.
+
+The  program  will  not let you add  an  archive  to 
+itself.   This  allows use of *.* even if the  files 
+are  on  the  same  drive as  the  archive.   It  is 
+possible  to add a file from another drive with  the 
+same  name as the archive,  but it will have  to  be 
+retrieved to another drive also. 
+:ARCHGET -- retrieve files from an archive
+To get files from an archive, use the command
+
+          archget <file list> [<archive name>]
+
+or just use the command
+
+          archget
+
+to  get  a  short description.   You  will  then  be 
+prompted with an asterisk for the parameters.   This 
+will be repeated until you enter a blank line.
+...
+The  drive  specifiers in the  file  list  determine 
+which  drive the file will be put on.   It does  not 
+matter which drive it originally came from.
+
+Only  the  first  matching file name is used  for  a 
+file.  For example if you type
+
+          archget (a:test.* b:*.bas) archname
+
+the file test.bas will be put on drive a.
+
+You will be told of any files in the list which  had 
+no  match.   In the above case,  if test.bas is  the 
+only  .bas  file  in the archive,  you  will  get  a 
+message that b:*.bas did not have a match.
+:ARCHDIR -- display archive directory
+To  display  the directory of an  archive,  use  the 
+command
+
+          archdir <archname>
+
+This  will display the names and sizes (in 128  byte 
+sectors) of the members in alphabetic order.
+The final line of the display will be
+
+     Using aaa records of bbb allocated (ccc%)
+
+where aaa is the number of data records.
+      bbb is the number of records in the data file.
+      ccc is the percent usage. 
+...
+If you just use the command
+
+          archdir
+
+     a  brief  description  of the program will  be  dis-
+played.
+:ARCHTYPE -- display or print archive members
+To type files from an archive, use the command
+
+   archtype <file list> [<archive name>] [<option>]
+
+or just use the command
+
+   archtype
+
+to  get  a  short description.   You  will  then  be 
+prompted with an asterisk for the parameters.   This 
+will be repeated until you enter a blank line.
+...
+The  option may only be entered if the archive  name 
+is also entered.  Possible options are
+
+     nopage   --  do not page the display
+     list     --  output to list device
+     plist    --  output  to list device with  form-
+                  feed between files
+
+With no option, the file is displayed on the console 
+with paging (the display pauses at the end of a page 
+or of a file).
+
+If  list  is specified,  two lines will  be  skipped 
+between files.
+
+Only the first letter of the option need be entered.
+...
+During  the  type out,  you may  key  the  following 
+characters.
+
+     control s    --    suspend  output until a  key 
+                        is pressed.
+
+     control x    --    skip to the next file
+
+     control c    --    terminate typing of files
+...
+The drive specifiers in the file list are ignored. 
+
+Only  the  first matching file name is  used  for  a 
+file.  For example if you type
+
+          archtype (test.* *.bas) archname
+
+the file test.bas will be put on drive a.
+
+You will be told of any files in the list which  had 
+no  match.   In the above case,  if test.bas is  the 
+only  .bas  file  in the archive,  you  will  get  a 
+message that b:*.bas did not have a match.
+:ARCHCPY -- copy an archive (reorganize)
+To copy an archive, use the command
+
+          archcpy <old archname> [<new archname>]
+
+or just use the command
+
+          archcpy
+
+to  get  a  short description.   You  will  then  be 
+prompted with an asterisk for the parameters.   This 
+will be repeated until you enter a blank line.
+
+The  major  reason  for using archcpy is  to  regain 
+space lost when archadd is used.
+:Field modification
+
+A  few  modifications  may be made  to  the  archive 
+programs.
+
+As  distributed,  archtype assumes the console  page 
+size is 24 lines.   To change this,  alter  location 
+3DB3H to the desired page size (2-255).
+
+archget,  archadd,  and  archcpy may be modified  to 
+report  file as they are processed.   To enable this 
+option, alter the following locations to 0FFH.
+
+     archget   4005H
+     archadd   4094H
+     archcpy   3B55H
+

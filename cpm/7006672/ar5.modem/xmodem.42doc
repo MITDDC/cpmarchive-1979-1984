@@ -1,0 +1,40 @@
+		XMODEM42.DOC
+	      (revised 6/7/81)
+
+This program is an extension of Keith Petersen's
+XMODEM program.  It adds checking for framing errors,
+overruns, and parity errors.  These checks will only
+be made if a PMMI modem is being used.  These checks
+were added because sometimes the checksum does not
+catch all transmission errors.  Hopefully, by checking
+for framing errors in particular, all transmission
+errors will be caught.  This program does not get rid
+of the checksum, but rather adds the framing error,
+overrun, and parity error check to that function.  The
+parity error check is only meaningful if parity is being
+used.  If parity is not being used, the check will still
+be made, but no parity errors will ever be found.
+
+Whenever a framing error and/or overrun is detected on a
+file receive, the following takes place:
+     1. Purge the line (receive rest of sector and throw
+	it away).
+     2. If error limit has not been exceeded, send a
+	NAK so that the sender will resend the sector.
+     3. If error limit has been exceeded, abort the
+	transmission.
+
+The capability to display the status of the PMMI on a front
+panel has also been added.  The default for the front panel
+is port FFh.  If you do not have a front panel, then set
+the FRNTPNL EQU to FALSE.  If you have a front panel at a
+port other than FFh, then change the PANEL EQU to your port
+address.  The status is only displayed when data is being
+by the PMMI modem.  See your PMMI manual for the meaning of
+the PMMI status bits.
+	- bit 0 is transmit buffer empty
+	- bit 1 is input data is available
+	- bit 3 is a parity error has been detected
+	- bit 4 is an overrun has occurred
+	- bit 5 is a framing error has occurred
+

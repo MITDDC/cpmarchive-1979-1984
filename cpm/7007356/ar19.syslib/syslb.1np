@@ -1,0 +1,397 @@
+                        SYSLIB User and Reference Manual
+
+
+
+
+
+              SYSLIB -- An Integrated Library of Assembly Language
+          Utility Subroutines for use with the Microsoft M80 Assembler
+
+
+        1.0  Introduction
+
+        1.01 What is SYSLIB?
+
+             SYSLIB  (SYStem LIBrary) is a collection of over 130 subrou-
+        tines which are designed to provide to the CP/M 8080/Z80 assembly 
+        language  programmer a set of functions upon which he  can  build 
+        his programs.  This library is intended to relieve the programmer 
+        of  the task of frequently "reinventing the wheel" and to provide 
+        him with an environment of reliable tools which encourages struc-
+        tured programming at the assembly language level.
+
+             Each  subroutine within SYSLIB can be viewed as  a  reliable 
+        "black box."  The subroutines in SYSLIB are completely documented 
+        within  this 112+ page manual and the SYSLIBx.HLP files,  and the 
+        programmer  is consistently provided with the following  informa-
+        tion:
+                  1.  Name of Subroutine
+                  2.  Function it performs
+                  3.  What its inputs are
+                  4.  What its outputs are
+                  5.  What registers are affected by it
+                  6.  What other library routines it calls upon
+                  7.  What errors can occur and how it handles them
+
+             The routines within SYSLIB are designed to work together and 
+        complement each other.   Parameter passing is consistent  between 
+        the various subroutines;   For instance,  all routines which need 
+        to  be  passed a pointer to a File Control Block are passed  that 
+        pointer in the DE register pair.   As a general rule, if a regis-
+        ter is not returned as an output from the SYSLIB subroutine, then 
+        its value is not affected (it has the same value when the routine 
+        is exited as it had when the routine was called).
+
+             SYSLIB  itself  is a library of relocatable  object  modules 
+        created  in  the Microsoft M80 relocatable  object  format.   All 
+        subroutines within SYSLIB are grouped within functionally-related 
+        modules.   Once  a routine is referenced (by the EXT statement in 
+        the M80 assembly language program),  its module is loaded and  it 
+        is  available  to the programmer by means of a simple  subroutine 
+        call.   All  other subroutines within that particular module  are 
+        also loaded,  but they are not available to the programmer unless 
+        he  has also referenced them by EXT statements.   The  module  is 
+        loaded  only  once,  regardless of how many routines  within  the 
+        module  are referenced.   For this reason,  I have designed  each 
+        module  to contain routines which are frequently used together or 
+        are  called  by each other (one routine within the  module  calls 
+        another routine within the module).
+
+
+         1 - Introduction                                      Page 1
+
+
+
+
+
+                        SYSLIB User and Reference Manual
+
+
+
+        1.02 What is Needed to Use SYSLIB?
+
+             You  need an 8080- or Z80-based microcomputer with at  least 
+        48K  bytes of contiguous memory running CP/M 2.2,  the  Microsoft 
+        M80  assembler tool set (specifically,  the M80 assembler and the 
+        L80 linker),  and the usual set of software development tools (an 
+        editor and, preferably, a debugger) to use SYSLIB.
+
+
+
+        1.03 What Does SYSLIB Buy Me?
+
+             The bottom line is that,  to the experienced SYSLIB program-
+        mer,  SYSLIB has the potential of being a significant tool  which 
+        enables him to:
+
+                  1.  Solve his programming task quickly
+                       -- because  he spends less time writing  com-
+            monly-used subroutines and worrying about how his regis-
+            ters  are  affected by these subroutines and  more  time 
+            concentrating on the problem at hand
+
+                  2.  Write space- and speed-efficient code
+                       -- because  all  of the SYSLIB routines  have 
+            been gone over time and time again to reduce their  size 
+            and  make  them more efficient in terms  of  speed;  for 
+            example,  the  SORT routine is a Shell Sort that can  be 
+            called to perform the sort using pointers (in which case 
+            it  exchanges pointers rather than records when it needs 
+            to do a swap) or perform the sort without using pointers 
+            (when space is a factor and there may not be enough room 
+            for a pointer table)
+
+                  3.  Write more maintainable code
+                       -- because SYSLIB is designed with structured 
+            programming philosophy in mind; each subroutine is equi-
+            valent  to a process box,  having (1) only one  entrance 
+            and one exit,  (2) a precisely-defined function, and (3) 
+            a precisely-defined set of input and output  parameters; 
+            having  used  SYSLIB for some time now,  the author  has 
+            noted that his programming thought processes and program 
+            designs  have tended more and more toward  end-in  (top-
+            down from the objective point of view and bottom-up from 
+            the SYSLIB subroutine point of view), structured designs 
+            that  he  can  go back to at a later  date  and  readily 
+            decipher and modify
+
+
+
+
+
+
+
+
+
+
+         1 - Introduction                                      Page 2
+
+
+
+
+
+                        SYSLIB User and Reference Manual
+
+
+
+                  4.  Reduce the programming effort
+                       -- because  SYSLIB provides a number of  very 
+            involved routines which would, in themselves, take quite 
+            some  time to code;  for example,  the DIRF routine will 
+            load the directory of a disk into memory,  select a  set 
+            of  files  from that loaded directory as specified by  a 
+            File Control Block and a flag which indicates whether to 
+            include System or Non-System files and what user area is 
+            to  be examined,  packs the loaded  directory  (removing 
+            entries not selected from the memory buffer),  alphabet-
+            izes  the directory entries by file name and type or  by 
+            file  type and name,  and returns a pointer to the first 
+            entry and a count of the number of entries selected
+
+
+             In many ways,  SYSLIB brings some of the advantages of  pro-
+        gramming  in  a High-Order Language,  like C or  Pascal,  to  the 
+        assembly  language  programmer.  It  allows him to  maintain  the 
+        smaller code size and greater efficiency which can be realized in 
+        assembly  language programming and simultaneously realize  a  re-
+        duced  life-cycle  cost  (from development to fielding  to  post-
+        fielding  maintenance  and modification) over  assembly  language 
+        programming without a SYSLIB-like tool set.
+
+
+
+        1.04 How Do I Assemble with SYSLIB?
+
+             Each  example in Section 21 of this manual shows an assembly 
+        of the sample program.   I frequently use a command file, which I 
+        call M80.SUB,  to assemble my programs.   This command file takes 
+        only one parameter,  the name of the file to be assembled WITHOUT 
+        its type (MAC is assumed).  Warning:  The command MUST be:
+
+                                SUB M80 filename
+
+        and it MUST NOT be:
+
+                              SUB M80 filename.typ
+
+        If  it  is of the latter form,  the source code will  be  deleted 
+        during the assembly process!  You may wish to remove the
+
+                                   ERA $1.BAK 
+
+        command in the M80.SUB file to eliminate this problem.  I only do 
+        this for a space savings.
+
+
+
+
+
+
+
+
+
+         1 - Introduction                                      Page 3
+
+
+
+
+
+                        SYSLIB User and Reference Manual
+
+
+
+             My M80.SUB command file is:
+
+        ;  M80.SUB -- MACRO-80 Assembler and Linker
+        M80 =$1
+        SUB /A  PLEASE ABORT IF ERROR(S) EXIST
+        ERA $1.BAK
+        ERA $1.COM
+        L80 /P:100,$1,A:SYSLIB/S,$1/N,/U,/E
+        ERA $1.REL
+        ;  ASSEMBLY COMPLETE
+
+             I run ZCPR2 instead of the CP/M 2.2 CCP,  and I am always on 
+        Drive  B:  doing  my  development  work,  while  my  editors  and 
+        assemblers (and SYSLIB.REL) are on Drive A:.   Note that this  is 
+        reflected in M80.SUB, where L80 looks for A:SYSLIB for the scan.
+
+
+
+        1.05 How Do I Learn to Use SYSLIB Effectively?
+
+             This is, of course, opinion, but I feel that the best way to 
+        learn how to use SYSLIB would involve the following steps:
+
+                  1.   Study  the  SYSLIB manual in an overview  fashion, 
+        familiarizing  yourself  with the functions  of  the  subroutines 
+        available
+
+                  2.   Study in some detail the sample source programs in 
+        Section 21, jumping back to the main body of the manual from time 
+        to  time to see why the routines I selected in the programs  were 
+        used in the way I used them
+
+                  3.  Try coding a couple of the routines in this manual, 
+        copying them verbatim and assembling them
+
+                  4.  Try making up a few simple problems of your own and 
+        use SYSLIB to code them
+
+                  5.   Apply  SYSLIB to a significant program you want to 
+        write
+
+             I am a strong advocate of writing programs in order to learn 
+        how to program,  and I feel that it is most important to (1) gain 
+        as  much familiarity with the SYSLIB routines as you can and  (2) 
+        to write programs using these routines.
+
+
+
+
+
+
+
+
+
+
+
+         1 - Introduction                                      Page 4
+
+
+
+
+
+                        SYSLIB User and Reference Manual
+
+
+
+        1.06 Who May Use SYSLIB?
+
+             SYSLIB is hereby released to the public domain.   Anyone who 
+        wishes to USE it may do so with no strings attached.   The author 
+        assumes no responsibility or liability for the use of SYSLIB.  It 
+        is copyrighted by the author,  Richard Conn,  who has sole rights 
+        to  it.   SYSLIB and its associated documentation may be sold  by 
+        itself  or  as an independent part of a package of programs  only 
+        with  the express,  written consent of the author.   The  author, 
+        however, supports the use of SYSLIB by commercial software devel-
+        opers,  and  places no restriction on the sale of programs  which 
+        are  BASED on SYSLIB and use routines contained within SYSLIB  to 
+        perform their major functions.
+
+
+
+             I  hope you enjoy using SYSLIB and find it to be as useful a 
+        tool as I do.
+
+                                                Richard Conn
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         1 - Introduction                                      Page 5
+
+
+
+
+
+                        SYSLIB User and Reference Manual
+
+
+
+        2.0  SYSLIB Directory Manipulation Routines
+
+
+        2.01 Introduction
+             This set of SYSLIB routines concerns itself with the loading 
+        of and access of a disk directory for the general purposes of the 
+        user.  Included in this set of routines are the functions of:
+
+                  1.  Preallocation of buffer space for the routines
+
+                  2.  Two routines which load all undeleted directory
+                       entries into a buffer, constantly checking for
+                       memory overflow as they go
+                            DIRLOAD loads the first entry for each file
+                                 (this is the faster of the two)
+                            DIRSLOAD loads the last entry for each file
+                                 (this routine is required if the
+                                      user wishes to compute file sizes)
+
+                  3.  A routine to determine the amount of free space on
+                       the disk
+
+                  4.  A routine to compute the size of a file in K
+
+                  5.  A routine to sort a loaded directory by file name
+                       and type or by file type and name
+
+                  6.  A routine to select (by marking) a set of directory
+                       entries which match a given ambiguous file spec
+
+                  7.  A routine to pack the loaded directory, leaving in
+                       it only those entries marked by the select routine
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         2 - Directory Manipulation Routines                   Page 6
+
+
+
+
+
+

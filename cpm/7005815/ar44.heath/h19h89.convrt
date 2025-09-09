@@ -1,0 +1,228 @@
+ 9-Jan-82 19:18:06-PST,1320;000000000001
+Date:  9 Jan 1982 1918-PST
+From: SCHIFFMAN
+Subject: Upgrading a Z-19 to a H-89
+To: info-micro at MIT-MC
+cc: schiffman
+
+A few questions to those of you who know about the Zenith/Heath
+machine (please reply to Schiffman@SRI-KL):
+
+I have a friend who has a Z-19 and would like to transform it into a
+CP/M runnable system.
+
+	1) Is the Heathkit upgrade package for the H-19 (to convert it
+	to the H-89) equally applicable to the Z-19?  (I'm pretty sure
+	that the Z-19 and the H-19A differ only in the nameplate).
+
+	2) What does that package consist of?  Is it only a handfull
+	of parts or does it include new circuit boards?
+
+	3) With that upgrade kit, you get 16K of RAM.  To get more RAM
+	can you just plug in more chips, or do you need new circuit
+	boards from Heath?
+
+	4) Given that you buy the Heath diskette controller, can you
+	then get the floppies elsewhere (namely are the Heath floppy
+	drives vanilla or are they somehow special)?
+
+Another way to phrase these questions is -- seeing I'm handy with
+digital electronics and microprocessors, how can I help my friend
+upgrade his Z-19 for the minimum amount of cash?
+
+Pointers to documentation will be appreciated.  (I've already guessed
+that buying the upgrade kit manual from Heath for $5 would be a good
+start).
+
+-Allan
+-------
+ 9-Jan-82 20:34:24-PST,712;000000000001
+Mail-from: ARPAnet host MIT-AI rcvd at 9-Jan-82 2034-PST
+Date:  9 Jan 1982 2325-EST
+From: James J. Dempsey <JJD at MIT-EECS at MIT-AI>
+Reply-to: JJD at MIT-MC
+Subject: Re: Upgrading a Z-19 to a H-89
+To: SCHIFFMAN at SRI-KL
+In-Reply-To: Your message of 9-Jan-82 2227-EST
+
+My h89 contains three major circuit boards:
+1. Video controller board (analog)
+2. Terminal logic board
+3. Cpu board
+
+The H19/Z19 (they are the same) contain 1 and 2.  I believe
+the major component of the upgrade kit is the cpu
+board.  The cpu board contains sockets for upt to 48K ram
+(4116s).  FOr 64K you have to buy an upgrade board.
+Feel free to ask any more questions, I'll try to answer them.
+
+		--Jim--
+-------
+
+10-Jan-82 22:05:34-PST,1396;000000000001
+Mail-from: ARPAnet host RUTGERS rcvd at 10-Jan-82 2205-PST
+Date: 11 Jan 1982 0058-EST
+From: COHEN at RUTGERS
+Subject: z-19 upgrade
+To: schiffman at SRI-KL
+
+	I am not sure if the Heath upgrade kit can be used on the Z-19, but I
+can give you some idea of the process, as I converted my H-19 a few months
+ago.
+	First, the upgrade kit consists of a new power supply and a cpu
+board.  The power supply that comes with the H-19 is almost completely
+removed.  The cpu board has RAM slots for 48K of memory, but you can piggy
+back another 16K on top of 1 set of 16K.  The standard single side, single
+density drive that they use is the Siemens FDD-100-5, and there are many
+places that sell it for less than Heath.  Another expense that is probably
+recommended is the 3 port SIO board.  The terminal part of the H-89 talks
+to the computer board through the terminals UART (at up to 19.2Kb) so once
+installed, you will need some way to communicate with the outside world.
+You should also check whether you have the proper proms for running CPM.
+If you want, I can give you the Heath part numbers for the new proms so that
+you can check.  One thing that you might be interested in, the new power
+supply can power two 51/4 floppies with no problem, which is useful if
+you want to expand for the cost of a drive.
+	If you have any other questions, get in touch.
+Howard Cohen
+-------
+10-Jan-82 22:32:47-PST,365;000000000001
+Date: 10 Jan 1982 2232-PST
+From: SCHIFFMAN
+Subject: Thanks for your replies...
+To: jjd at MIT-MC, cohen at RUTGERS
+cc: schiffman
+
+All replies to my query are being archived in
+	<SCHIFFMAN>Z19-TO-H89.MAIL
+which should be FTP'able from SRI-KL with account ANONYMOUS, password GUEST.
+
+Does anyone sell the upgrade kit cheaper than Heath?
+
+-Allan
+-------
+11-Jan-82 05:26:19-PST,361;000000000001
+Mail-from: ARPAnet host MIT-AI rcvd at 11-Jan-82 0526-PST
+Date: 11 Jan 1982 0822-EST
+From: James J. Dempsey <JJD at MIT-EECS at MIT-AI>
+Reply-to: JJD at MIT-MC
+Subject: Re: Thanks for your replies...
+To: SCHIFFMAN at SRI-KL
+In-Reply-To: Your message of 11-Jan-82 0457-EST
+
+I don't think anyone sells the upgrade kit except heath.
+		--Jim--
+-------
+
+14-Jan-82 05:49:04-PST,3622;000000000001
+Mail-from: ARPAnet host BBN-UNIX rcvd at 14-Jan-82 0548-PST
+Date: 14 Jan 1982  8:43:37 EST (Thursday)
+From: John Swain <jswain at BBN-UNIX>
+Subject: Reply to your message
+To: schiffman@sri-kl
+
+Date:  9 Jan 1982 1918-PST
+From: SCHIFFMAN at SRI-KL
+Subject: Upgrading a Z-19 to a H-89
+To: info-micro at MIT-MC
+cc: schiffman at SRI-KL
+
+A few questions to those of you who know about the Zenith/Heath
+machine (please reply to Schiffman@SRI-KL):
+
+I have a friend who has a Z-19 and would like to transform it into a
+CP/M runnable system.
+
+	1) Is the Heathkit upgrade package for the H-19 (to convert it
+	to the H-89) equally applicable to the Z-19?  (I'm pretty sure
+	that the Z-19 and the H-19A differ only in the nameplate).
+
+-------
+	The Z-19 and H-19 differ in only that one was built in Michigan
+	and the other is a kit.  The (A) suffix means that it is an
+	upgrade, and also has a bunch of rf mods in it.  It is still
+	functionally the same and can be upgraded with the old kit,
+	but heath will say you have to wait.
+-------
+
+	2) What does that package consist of?  Is it only a handfull
+	of parts or does it include new circuit boards?
+--------
+	The package consists of a standard H-88 pc board (CPU), power
+	supply upgrade and fan.  All additional hardware to mount the
+	and all wiring to make it work.  Also included is the manuals
+	that will be needed.
+-------
+
+       	3) With that upgrade kit, you get 16K of RAM.  To get more RAM
+	can you just plug in more chips, or do you need new circuit
+	boards from Heath?
+--------
+	To go up to 48K, all you have to do is plug in more ram, and then
+	change jumpers on the cpu card.  To go up to 64K, you will have to 
+	get an addition PC board from Heath, or else-where, and the
+	prom set.  The newer kits, however, already have the proms
+	in them to allow up to 64K.
+--------
+
+	4) Given that you buy the Heath diskette controller, can you
+	then get the floppies elsewhere (namely are the Heath floppy
+	drives vanilla or are they somehow special)?
+--------
+	They are as vanilla as can be.  The only thing about the drives
+	that Heath uses, is that they have a 30 ms. step rate, which
+	is slow as hell.  The hard sectored controller will support
+	double sided drives, although Heath doesn't support it.  There
+	is a device driver from HUG which supports double sided drives
+	on the controller.  It will also support high track densitys if
+	you use the HUG device driver.  If he is running CP/M, then the
+	BIOS code will have to be modified.
+--------
+
+
+Another way to phrase these questions is -- seeing I'm handy with
+digital electronics and microprocessors, how can I help my friend
+upgrade his Z-19 for the minimum amount of cash?
+---------
+	To give you and idea of what Heath does when you buy a
+	H89, they will send you 4 to 5 boxes of kits.
+	1 - H19 terminal kit
+	1 - box containing the CRT tube of your choice
+	1 - H88-1 upgrade kit
+	1 - H88-17 Disk controller kit
+	1 - Floppy disk drive
+	and if you bye the total kit (H89) now they also include
+	2 - Ram upgrade kits  (Total of 48k)
+	1 - H88-3 Serial I/O controller
+	1 - Rom upgrade kit to allow 64k
+
+	As you can see, they just package a h19 with an upgrade
+	kit to make the H89.  Good luck.  I just finished building
+	one of these about 6 mo. ago.  Works well.  If you have any
+	more questions, give me a shout.
+--------
+
+Pointers to documentation will be appreciated.  (I've already guessed
+that buying the upgrade kit manual from Heath for $5 would be a good
+start).
+
+-Allan
+-------
+	John Swain   (jswain at BBN-UNIX)
+
+
+
+ 3-Feb-82 00:32:32-PST,423;000000000011
+Mail-from: ARPAnet host MIT-MC rcvd at 3-Feb-82 0032-PST
+Date: 3 February 1982 03:32-EST
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject:  Upgrading a Z-19 to a H-89
+To: SCHIFFMAN at SRI-KL
+
+I have forwaded your message to INFO-CPM.  INFO-MICRO seems to be
+rather inactive right now (they are looking for a new moderator).  Are
+you on the INFO-CPM mailing list?  If not, send a request to
+INFO-CPM-REQUEST.
+
+
+

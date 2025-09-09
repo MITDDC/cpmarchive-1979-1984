@@ -1,0 +1,898 @@
+;=================================================================
+;
+;  		 SUBGEN.ASM Version 1.2
+;	           (Original - Feb/82)
+;
+;	      Submit File Generator Program
+;
+;		   By Steve Pritchard
+;
+;		of Solutions Canada Inc.
+;		   83 Cummer Ave,
+;		   Willowdale, Ontario
+;		   M2M 2E6   (416)-223-7549
+; 
+;
+;
+; 	    Copyrighted(1982) by Steve Pritchard
+;
+; PERMISSION IS GIVEN FOR USE AND FOR DISTRIBUTION OF THESE ROUTINES
+;
+;	   BUT THEY ARE NOT TO BE SOLD FOR PROFIT.
+;
+;
+;=================================================================
+;
+; Fixes/Updates in reverse order.
+;
+; Feb/26/82 - Fix telephone number.  Fix a couple of comments.
+;	      Suggest 'M' option. (Steve Pritchard)
+;	      Added msg on how to get help.	
+;
+; Feb/24/82 - Remove attribute flags from match testing, remove
+;	      limit on file capacity (W. Earnest)
+;
+; Feb/12/82 - Original. Lifted mostly from FMAP by WARD CHRISTENSEN
+;
+;-----------------------------------------------------------------
+;
+;Possible Extensions
+;
+;(1) - 	Multiple disk drives. Would need expanded sort capability and
+;	probably drive substitute character.
+;
+;(2) -	Since the file match logic is in SUBGEN in can be expanded
+;	beyond CP/Ms wildcard approach.
+;
+;(3) -  Multiple file search capability by 'M' option to cause prompt
+;	for more than one search argument.  Thus could do *.ASM and 
+;	*.PLI in one pass.
+;
+;=================================================================
+;
+;
+;		---  PGM Generation Options ---
+;
+FALSE	EQU	0
+TRUE	EQU	NOT FALSE
+;
+RMAC	EQU	FALSE
+FNFTMRK	EQU	'@'		;char used to signal fn.ft substitute point
+;
+DEFP	EQU	FALSE		;default Prompt option
+DEFH	EQU	FALSE		;	 header option
+DEFT	EQU	FALSE		;	 trailer option
+DEFNOT	EQU	FALSE		;	 not (invert) option
+DEFLOG	EQU	TRUE		;	 log option
+;
+;=================================================================
+;
+;		 LET WORK BEGIN ........
+;
+	IF	RMAC
+	ASEG			; FOR RMAC
+	ENDIF
+;
+;		-----     EQUATES   -------
+;
+;
+FCB	EQU	5CH		;SYSTEM FCB
+CR	EQU	13
+LF	EQU	10
+ELEN	EQU	8+3		;length of entry
+;
+; BDOS EQUATES
+;
+RDCHR	EQU	1		;READ CHAR FROM CONSOLE
+WRCHR	EQU	2		;WRITE CHR TO CONSOLE
+PRINT	EQU	9		;PRINT CONSOLE BUFF
+RCBUF	EQU	10		;READ CONSOLE BUFFER
+CONST	EQU	11		;CHECK CONS STAT
+FOPEN	EQU	15		;0FFH=NOT FOUND
+FCLOSE	EQU	16		;   "	"
+FSRCHF	EQU	17		;   "	"
+FSRCHN	EQU	18		;   "	"
+ERASE	EQU	19		;NO RET CODE
+FREAD	EQU	20		;0=OK, 1=EOF
+FWRTE	EQU	21		;0=OK, 1=ERR, 2=?, 255=NO DIR SPC
+FMAKE	EQU	22		;255=BAD
+FREN	EQU	23		;255=BAD
+FDMA	EQU	26
+BDOS	EQU	5
+REBOOT	EQU	0
+;
+;
+;
+;		------  MAINLINE  --------
+;
+;
+;		PROGRAM INITIATION
+;
+
+	ORG	100H
+	JMP	START
+VERSION	DB	      'SUBGEN - February 26/82 Ver 1.2' 
+	DB	CR,LF,'Copyright(1982) Steve Pritchard'
+	DB	CR,LF
+	DB	CR,LF,'use    SUBGEN ?   for help info'
+	DB	CR,LF
+	DB	'$'	
+HELP	DB	CR,LF,'Command format:SUBGEN [d:afn.ft] [options]'
+	DB	CR,LF
+	DB	CR,LF,'It will generate SUBGEN.SUB from d:afn.ft file match'
+	DB	CR,LF,'under control of skeleton obtained from prompt'
+	DB	CR,LF,'and will substitute fn.ft where ever it finds the'
+	DB	CR,LF,'character '
+	DB	FNFTMRK,' (Try a . suffix and prefix too)'
+	DB	CR,LF
+	DB	CR,LF,'Options are:-'
+	DB	CR,LF,'P = prompt on each file for n, y or CR'
+	DB	CR,LF,'H = generate header(s) before body'
+	DB	CR,LF,'T = generate trailer(s) after body'
+	DB	CR,LF,'- = invert select logic'
+	DB	CR,LF,'L = invert default logging option'
+	DB	CR,LF,'$'
+START	LXI	H,0
+	DAD	SP
+	SHLD	STACK
+	LXI	SP,STACK
+;
+;		MAIN PROGRAM FLOW
+;
+	CALL	INIT		;initialize
+	CALL	DIRLOAD		;load directory into memory
+	CALL	OPENFILE	;open output file
+	CALL	TYPEHIT		;type number of hits
+	LHLD	COUNT		;check number found
+	MOV	A,H
+	ORA	L
+	JZ	EXIT		;return no work
+	CALL	SORTDIR		;sort dir entries
+	CALL	FORMBUF		;form pretty buffer
+	CALL	WHEADER		;write file header(s) if reqd
+	CALL	SKELIN		;read standard format line(s)
+	CALL	WFILE		;write body of file
+	CALL	WTRAIL		;write file trailer(s) if reqd
+EXIT	CALL	CLSEFILE	;close output file
+	NOP	! NOP ! NOP	;JMP 0 FOR DDT
+	LHLD	STACK
+	SPHL
+	RET
+;============================================================
+;       		1ST LEVEL ROUTINES
+;============================================================
+;
+;		INITIALIZE
+;
+INIT	LXI	D,VERSION	;T/ON help if ? in FCB1 pos 1
+	LDA	FCB+1
+	CPI	'?'
+	JNZ	INIT03
+	LDA	FCB+2		;check if just ?
+	CPI	' '
+	JNZ	INIT03		;must be CP/M *.*
+	LXI	D,HELP		;yes - so print and quit
+	CALL	WRCON
+	JMP	EXIT		;out in a hurry
+INIT03	CALL	WRCON
+	CALL	SAVEOPT		;save options
+	LXI	H,FCB+1		;format FCB to ????????.???
+	MVI	B,ELEN		;FN+FT count
+QLOOP	MVI	M,'?'		;store '?' in FCB
+	INX	H
+	DCR	B
+	JNZ	QLOOP
+	RET
+;
+;		LOAD THE DIRECTORY (SELECTED) INTO MEMORY
+;
+DIRLOAD	MVI	C,FSRCHF 	;search first
+DIRL10	LXI	D,FCB
+	CALL	BDOS		;read first
+	INR	A		;some?
+	RZ			;jmp no to done
+	CALL	SELENT		;select entry
+	MVI	C,FSRCHN	;search next
+	JMP	DIRL10		;repeat
+;
+;		OPEN OUTPUT FILE
+;
+OPENFILE
+	LXI	D,MYFCB		;open file
+	MVI	C,ERASE
+	CALL	BDOS
+	LXI	D,MYFCB
+	MVI	C,FMAKE
+	CALL	BDOS
+	INR	A
+	RNZ
+	CALL	ERXIT		;abort type error
+	DB	'>> File MAKE error'
+	DB	CR,LF,'$'
+
+;
+;		SORT THE SAVED ENTRIES
+;
+SORTDIR	LHLD	COUNT		;init the order table
+	PUSH	H		;file count on stack
+	XCHG
+	LHLD	NEXTT
+	SHLD	AORDER		;pointer table start
+	PUSH	H
+	DAD	D		;2 bytes per file
+	DAD	D
+	SHLD	NEXTT		;new table limit
+	POP	H
+	LXI	D,TABLE
+	LXI	B,ELEN		;entry length
+;
+BLDORD	MOV	M,E		;save lo ord addr
+	INX	H
+	MOV	M,D		;save hi ord addr
+	INX	H
+	XCHG			;table addr in HL
+	DAD	B		;point to next entry
+	XCHG
+	XTHL			;count from stack
+	DCX	H
+	MOV	A,H
+	ORA	L		;test cpunt
+	XTHL			;back to stack
+	JNZ	BLDORD		;..yes
+	POP	H		;clean up stack of count
+	LHLD	COUNT		;get count
+	SHLD	SCOUNT		;save as # to sort
+	DCX	H		;only 1 entry?
+	MOV	A,H
+	ORA	L
+	JZ	SORTDONE	;..yes, so skip sort
+;
+SORT	XRA	A		;get a zero
+	STA	SWITCH		;show none switched
+	LHLD	SCOUNT		;get count
+	DCX	H		;use 1 less
+	SHLD	TEMP		;save # to compare
+	SHLD	SCOUNT		;save highest entry
+	MOV	A,H
+	ORA	L
+	JZ	SORTDONE	;exit if no more
+	LHLD	AORDER 	;point to order table
+;
+SORTLP	MVI	A,ELEN		;length of compare
+	CALL	COMPR		;compare 2 entries
+	CM	SWAP		;swap if not in order
+	INX	H		;bump order
+	INX	H		;..table pointer
+	PUSH	H
+	LHLD	TEMP		;get count
+	DCX	H
+	SHLD	TEMP
+	MOV	A,H
+	ORA	L
+	POP	H	
+	JNZ	SORTLP		;continue
+;
+;ONE PASS OF SORT DONE
+	LDA	SWITCH		;any swaps done?
+	ORA	A
+	JNZ	SORT		;jmp yes to repeat another pass
+;
+SORTDONE
+	RET
+;
+;		TYPE NUMBER OF HITS
+;
+TYPEHIT	LHLD	COUNT
+	MOV	A,H
+	ORA	A
+	JNZ	THIT02
+	MOV	A,L
+	CPI	1
+	JZ	THIT10
+THIT02	LXI	D,HITM1
+	CALL	WRCON
+	LHLD	COUNT
+	CALL	DECPRT
+	LXI	D,HITM3
+THIT05	CALL	WRCON
+	RET
+THIT10	LXI	D,HITM2
+	LXI	H,HITM4-1
+	MVI	M,' '
+	JMP	THIT05
+HITM1	DB	'There are $'
+HITM2	DB	'There is 1'
+HITM3	DB	' selected files'
+HITM4	DB	CR,LF,'$'
+;
+;		WRITE HEADER RECORDS IF REQD
+;
+WHEADER	LDA	OPTH		;see if requested
+	ORA	A
+	RZ			;return not
+	LXI	H,PRHDR		;Header prompt
+	CALL	CONCOPY		;copy console input to file
+	RET
+;
+;		INPUT SKELETON LINES
+;
+SKELIN	LHLD	NEXTT		;skel lines start where
+	SHLD	FSKEL		;dir entries stop
+	SHLD	LSKEL
+SKEL10	LXI	D,PRSKEL	;skeleton prompt
+	CALL	WRCON
+	LXI	D,TBUF		;input a line from console
+	MVI	C,RCBUF	
+	CALL	BDOS
+	CALL	TYPECR
+	LDA	TBUF+1		;check for data
+	ORA	A
+	JZ	SKEL50		;jmp no	
+;
+	MOV	B,A		;move entry to save area
+	LXI	D,TBUF+2	;input data
+	LHLD	LSKEL		;output location
+SKEL30	LDAX	D		;pick up byte
+	MOV	M,A		;move it
+	INX	D
+	INX	H
+	DCR	B
+	JNZ	SKEL30		;until done
+	MVI	M,CR		;add crlf
+	INX	H
+	MVI	M,LF
+	INX	H
+	SHLD	LSKEL		;remember where we are
+	JMP	SKEL10		;try again
+;
+SKEL50	LHLD	FSKEL		;see if any entries
+	CALL	FLEND		; .by doing a compare
+	JNZ	SKEL60		;jmp there are some
+	LHLD	LSKEL		;else default to FMAP output
+	MVI	M,FNFTMRK
+	INX	H
+	MVI	M,CR		;and trailer
+	INX	H
+	MVI	M,LF
+	INX	H
+	SHLD	LSKEL		;and save
+SKEL60	RET			;return	
+;
+;		WRITE OUTPUT FILE
+;
+WFILE	LHLD	COUNT		;number of entries to write
+	MOV	C,L
+	MOV	B,H
+	LHLD	AORDER		;first entry
+WFILE10	MOV	E,M		;indirect adr
+	INX	H
+	MOV	D,M
+	INX	H
+	PUSH	H		;save where we are
+	XCHG			;now HL has entry adr
+	CALL	WENTRY		;write entry
+	POP	H		;ready for next
+	DCX	B
+	MOV	A,B
+	ORA	C
+	JNZ	WFILE10		;until done
+	RET
+;
+;		WRITE TRAILERS IF REQD
+;
+WTRAIL	LDA	OPTT		;see if requested
+	ORA	A
+	RZ			;return not
+	LXI	H,PRTRLR	;trailr prompt
+	CALL	CONCOPY		;copy console input to file
+	RET
+;
+;		CLOSE OUTPUT FILE
+;
+CLSEFILE
+	MVI	A,'Z'-40H	;write eof mark
+	CALL	FILCHR
+	CALL	WRSEC		;and then the sector
+	LXI	D,MYFCB		;close file
+	MVI	C,FCLOSE	;function
+	CALL	BDOS
+	RET
+;
+;==========================================================
+;		LEVEL 2 OR MORE ROUTINES
+;==========================================================
+;
+;		SAVE OPTIONS AND INPUT FILE NAME
+;
+SAVEOPT	LXI	D,FCB+1		;move file name to FNFTMAT
+	LXI	H,FNFTMAT
+	MVI	B,8		;FN portion
+	MVI	C,0		;first loop sw
+	LDA	FCB+1		;format to *.* if reqd
+	CPI	' '
+	JNZ	SOPT20
+	MVI	A,'*'		;yes - do it
+	STA	FCB+1
+	STA	FCB+1+8
+SOPT20	LDAX	D		;pick up next byte
+	CPI	'*'		;need expanding?
+	JNZ	SOPT30		;no
+SOPT25	MVI	M,'?'		;so do it
+	INX	H
+	INX	D
+	DCR	B
+	JNZ	SOPT25		;until
+	JMP	SOPT40
+SOPT30	MOV	M,A		;copy byte across
+	INX	H
+	INX	D
+	DCR	B
+	JNZ	SOPT20		;until
+SOPT40	MOV	A,C		;FT portion
+	ORA	A
+	MVI	B,3
+	MVI	C,1		;2nd time sw
+	JZ	SOPT20		;jmp only once so far
+;
+	LXI	D,FCB+17-1	;Pick up options section
+SOPT50	INX	D		;next byte
+	LDAX	D		;next option byte
+	CPI	' '		;test for end
+	JZ	SOPT60		; .yes	
+	CPI	00H		;DDT support
+	JZ	SOPT60
+	MVI	B,(OPTTABE-OPTTAB)/2
+	LXI	H,OPTTAB+1
+SOPT53	CMP	M		;hit
+	JZ	SOPT55		;jmp yes
+	INX	H		;no - try next
+	INX	H
+	DCR	B
+	JNZ	SOPT53
+	STA	SOPTMSG-1
+	CALL	ERXIT		;quit
+	DB	CR,LF
+	DB	'>> Invalid option=x'
+SOPTMSG	DB	'$'
+SOPT55	DCX	H		;have a hit
+	MOV	A,M		;invert hit flag
+	XRI	TRUE		;from default selected at sysgen
+	MOV	M,A		;and store back
+	JMP	SOPT50
+SOPT60	RET			;return all options set
+;
+;		COMPARE HL TO LSKEL. NZ=NOT EQUAL
+;
+FLEND	XCHG			;do a subtract
+	LHLD	LSKEL
+	MOV	A,E
+	SUB	L
+	MOV	A,D
+	SBB	H
+	RET			;return with carry set
+;
+;		SELECT ENTRY IF REQUIRED
+;
+;point to dir entry 
+SELENT	DCR	A		;undo prev 'INR A'
+	ANI	3		;make mod4
+	ADD	A		;multiply...
+	ADD	A		;..by 32 because
+	ADD	A		;..each dir
+	ADD	A		;..entry is 32
+	ADD	A		;..bytes long
+	LXI	H,81H		;point to buffer (first FN.FT entry)
+	ADD	L		;point to entry
+	MOV	L,A		;save (CAN'T CARRY TO H)
+	SHLD	SVEPOS		;save position
+	CALL	FNFTMTC		;match to FNFT wanted and NOT sw invert
+	RNZ			;return unwanted
+	LDA	OPTP		;user want ultimate overide
+	CPI	TRUE
+	JNZ	SELE30		;no - so accept into table
+	CALL	CONFIRM
+	RNZ			;user does not want it
+SELE30
+;move entry to table
+	LHLD	SVEPOS		;entry to save
+	XCHG			;entry to DE
+	LHLD	NEXTT		;next table entry to HL
+	MVI	B,ELEN		;name entry length
+TMOVE	LDAX	D		;get entry char
+	ANI	7FH		;less attributes
+	MOV	M,A		;store in table
+	INX	D
+	INX	H
+	DCR	B		;more?
+	JNZ	TMOVE
+	SHLD	NEXTT		;save updated table addr
+	LHLD	COUNT		;get prev count
+	INX	H
+	SHLD	COUNT
+	RET
+;
+;		COPY CONSOLE TO DISK FILE FOR HEADER/TRAILER
+;
+CONCOPY	PUSH	H		;save prompt location
+COPC10	POP	D		;write prompt
+	PUSH	D
+	CALL	WRCON
+	LXI	D,TBUF		;read reply
+	MVI	C,RCBUF
+	CALL	BDOS
+	CALL	TYPECR
+	LDA	TBUF+1		;length of reply
+	ORA	A		;test length
+	JZ	COPC99		;return null line
+	LXI	H,TBUF+2	;not so write entry to file
+	MOV	B,A
+COPC20	MOV	A,M		;this one
+	CALL	FILCHR		;write it
+	INX	H		;next
+	DCR	B		;until
+	JNZ	COPC20
+	MVI	A,CR		;write CRLF to file
+	CALL	FILCHR
+	MVI	A,LF
+	CALL	FILCHR
+	JMP	COPC10		;repeat
+COPC99	POP	H		;clean up stack
+	RET
+;
+;		MATCH DIR ENTRY TO FN.FT SPECIFIED 
+;
+;		    AND POSSIBLY INVERT MATCH
+FNFTMTC	LHLD	SVEPOS		;entry to check
+	LXI	D,FNFTMAT	;master entry
+	MVI	B,ELEN		;number bytes to compare
+FNFT10	MOV	A,M
+	ANI	7FH		;remove flag bit
+	MOV	C,A		;for compare
+	LDAX	D		;next byte from master
+	CMP	C		;to dir entry
+	JZ	FNFT30		;jmp ok
+	CPI	'?'		;master = ?
+	JNZ	FNFT40		;no - match not equal
+FNFT30	INX	H		;repeat for next byte
+	INX	D
+	DCR	B		;until
+	JNZ	FNFT10
+;				;nz=no match, z=match
+FNFT40	LDA	OPTNOT		;invert option flag
+	PUSH	PSW		;save compare results
+	ORA	A		;nz = invert
+	JZ	FNFT50		;not so leave intact
+	POP	PSW		;get back result
+	JNZ	FNFT45		;was zero so make it NZ
+	ORI	1		;by ORI
+	RET			;and leave
+FNFT45	XRA	A		;was NZ so make it Z
+	RET			;and leave
+FNFT50	POP	PSW		;no invert so restore
+	RET			;return nz=no, z = yes
+;
+;		CONFIRM ENTRY REQUIRED OR NOT
+; 
+CONFIRM	LHLD	SVEPOS
+	MVI	B,8	
+	CALL	TYPENB
+	MVI	A,'.'
+	CALL	TYPE
+	MVI	B,3
+	CALL	TYPENB
+	MVI	A,'?'
+	CALL	TYPE
+	MVI	C,RDCHR		;read reply
+	CALL	BDOS
+	PUSH	A
+	CALL	TYPECR		;get to newline
+	POP	A
+	CPI	CR		;look for ans
+	JNZ	CONF10
+	MVI	A,'Y'		;CR=YES
+CONF10	ORI	020H		;make lower case
+	CPI	'y'		;affirmative
+	RZ			;return yes=z
+	CPI	'n'		;must be n
+	JNZ	CONFIRM		;not so try again
+	ORI	1		;set nz = no
+	RET
+;
+;		WRITES ENTRY MAKING FN.FT SUBSTITUTION
+;	
+WENTRY	SHLD	SVEPOS		;save position
+	PUSH	B
+	PUSH	D
+	PUSH	H		;and caller regs
+	LHLD	FSKEL		;first pos of skeleton
+WENT10	MOV	A,M		;process next char
+	CPI	FNFTMRK		;special marker for FN.FT substitute
+	JZ	WENT20		;yes - do that
+	CALL	FILCHR		;no -write character to file
+WENT15	INX	H		;next byte
+	PUSH	H		;save status
+	CALL	FLEND		;test end of skeleton
+	POP	H		;and back again
+	JNZ	WENT10		;there is more
+	JMP	WENT99		;done
+WENT20	PUSH	H		;save where we are
+	MVI	C,0		;type of subst sw. 0=FN.FT, 1=FN, 2=FT
+	INX	H		;see if nxt byte is .
+	MVI	A,'.'
+	CMP	M
+	JNZ	WENT22
+	MVI	C,1		;it is so only do FN substitute
+	JMP	WENT25
+WENT22	DCX	H
+	DCX	H		;try previous
+	CMP	M
+	JNZ	WENT25
+	MVI	C,2		;FT only
+WENT25	POP	H		;reload ptr to skeleton
+	PUSH	H
+	MOV	A,C		;sw
+	CPI	2
+	JZ	WENT30		;do FN
+	LHLD	SVEPOS
+	MVI	B,8
+	CALL	FILCHRNB	;write FN but no blanks
+WENT30	MOV	A,C		;sw again
+	ORA	A		;see if need period
+	JNZ	WENT35		;jmp no
+	MVI	A,'.'
+	CALL	FILCHR		;write period
+WENT35	MOV	A,C		;see if need FN.FT
+	CPI	1
+	JZ	WENT40		;no
+	MVI	B,3
+	LHLD	SVEPOS
+	LXI	D,8
+	DAD	D
+	CALL	FILCHRNB	;write filetype
+WENT40	POP	H		;reload current ptr &
+	JMP	WENT15		;return to mainline
+WENT99	POP	H		;exit
+	POP	D
+	POP	B
+	RET	
+;
+;		TYPE CHAR IN A
+;
+TYPE	PUSH	B
+	PUSH	D
+	PUSH	H
+	MOV	E,A
+	MVI	C,WRCHR
+	CALL	BDOS
+	POP	H
+	POP 	D
+	POP	B
+	RET
+;
+;		WRITE MESSAGE ON CONSOLE
+;		  (D->msg $)
+;
+WRCON	MVI	C,PRINT
+	JMP	BDOS
+;
+;		TYPE MSG HL POINTS TO, B HAS LENGTH
+;
+
+TYPEIT	MOV	A,M
+	CALL	TYPE
+	INX	H
+	DCR	B
+	JNZ	TYPEIT
+	RET
+;
+;		ERROR EXIT
+;
+ERXIT	POP	D	;GET MSG
+	MVI	C,PRINT
+	CALL	BDOS
+	JMP	EXIT
+;
+;		WRITE CHAR IN A TO FILE
+;		(SAVES ALL REGS INCLUDING A)
+FILCHR	PUSH	PSW
+	PUSH	H
+	LHLD	BUFAD		;current buffer adr
+	MOV	M,A
+	INX	H
+	SHLD	BUFAD
+	MOV	A,H		;see if full buffer
+	DCR	A
+	CZ	WRSEC		;yes so write sector
+	POP	H
+	LDA	OPTLOG		;test if log chosen
+	ORA	A
+	JZ	FILC80		;not so do not type
+	POP	PSW
+	PUSH	PSW		;get char and type
+	CALL	TYPE
+FILC80	POP	PSW		;restore char
+	RET
+;
+;		WRITE A SECTOR
+;
+WRSEC	PUSH	B
+	PUSH	D
+	LXI	D,MYFCB
+	MVI	C,FWRTE
+	CALL	BDOS
+	ORA	A
+	JZ	WROK
+	CALL	ERXIT
+	DB	CR,LF
+	DB	'>> WRITE ERROR$'
+WROK	CALL	FORMBUF		;clean up buffer
+	POP	D
+	POP	B
+	RET
+;
+;		TYPE ALL BUT SPACES
+;		(HL -> msg, B has length)
+;
+TYPENB	MOV	A,M		;ignore spaces
+	CPI	' '
+	JZ	TPNB10
+	CALL	TYPE
+TPNB10	INX	H
+	DCR	B
+	JNZ	TYPENB
+	RET
+;
+;		TYPE CRLF
+;
+TYPECR	PUSH	A
+	MVI	A,CR
+	CALL 	TYPE
+	MVI	A,LF
+	CALL	TYPE
+	POP	A
+	RET
+;
+;		WRITE ALL BUT SPACES TO FILE
+;		(HL -> msg, B has length)
+;
+FILCHRNB
+	MOV	A,M		;ignore spaces
+	CPI	' '
+	JZ	FILB10
+	CALL	FILCHR
+FILB10	INX	H
+ 	DCR	B
+	JNZ	FILCHRNB
+	RET
+;
+;		FORMAT A BUFFER AND SET UP CONTROL WORDS
+;
+FORMBUF	PUSH	H
+	PUSH	A
+	LXI	H,080H		;address of buffer
+	SHLD	BUFAD		;save it
+	MVI	A,128
+FBUF10	MVI	M,'Z'-040H	;set to EOF
+	INX	H
+	DCR	A
+	JNZ	FBUF10
+	POP	A
+	POP	H
+	RET
+;
+;		COMPARE ROUTINE FOR SORT
+;		(A has number bytes to compare)
+;
+COMPR	PUSH	H		;save table addr
+	MOV	E,M		;load lo
+	INX	H
+	MOV	D,M		;load hi
+	INX	H
+	MOV	C,M
+	INX	H
+	MOV	B,M
+;BC, DE now point to entries to be compared
+	XCHG
+	MOV	E,A		;better reg
+CMPLP	LDAX	B
+	CMP	M
+	INX	H
+	INX	B
+	JNZ	CMPL80		;out with not equal status
+	DCR	E
+	JNZ	CMPLP
+	XRA	A		;ensure zero cc
+CMPL80	POP	H
+	RET			;cond code tells all
+;
+;		SWAP ENTRIES IN THE ORDER TABLE
+SWAP	MVI	A,1
+	STA	SWITCH		;show a swap was made
+	MOV	C,M
+	INX	H
+	PUSH	H		;save table addr+1
+	MOV	B,M
+	INX	H
+	MOV	E,M
+	MOV	M,C
+	INX	H
+	MOV	D,M
+	MOV	M,B
+	POP	H
+	MOV	M,D
+	DCX	H		;back pointer to correct position
+	MOV	M,E
+	RET
+;
+;		 Print	HL in decimal with leading zero	suppression
+;
+;				 (Found in SD-41, Author unknown)
+;
+DECPRT:	SUB	A		;Clear leading zero flag
+	STA	LZFLG
+	LXI	D,-1000		;Print 1000's digit
+	CALL	DIGIT
+	LXI	D,-100		;Etc.
+	CALL	DIGIT
+	LXI	D,-10
+	CALL	DIGIT
+	MVI	A,'0'		;Get 1's digit
+	ADD	L
+	JMP	TYPE
+DIGIT:	MVI	B,'0'		;Start off with	ASCII 0
+DIGLP:	PUSH	H		;Save current remainder
+	DAD	D		;Subtract
+	JNC	DIGEX		;Quit on overflow
+	POP	PSW		;Throw away remainder
+	INR	B		;Bump digit
+	JMP	DIGLP		;Loop back
+DIGEX:	POP	H		;Restore pointer
+	MOV	A,B
+	CPI	'0'		;Zero digit?
+	JNZ	DIGNZ		;No, type it
+	LDA	LZFLG		;Leading zero?
+	ORA	A
+	MVI	A,'0'
+	JNZ	TYPE		;Print digit
+	RET			;no leading spaces for 0s
+DIGNZ:	STA	LZFLG		;Set leading zero flag so next zero prints
+	JMP	TYPE		;And print digit
+LZFLG	DB	0
+;===================================================================
+;		VARIABLES  AND   CONSTANTS
+;===================================================================
+;
+NEXTT	DW	TABLE		;NEXT TABLE ENTRY
+COUNT	DW	0		;ENTRY COUNT
+BUFAD	DW	80H		;OUTPUT ADDR
+OPTTAB	EQU	$		;OPTIONS-nonzero mean selected
+OPTP	DB	DEFP,'P'	;prompt for selection yae/nae
+OPTH	DB	DEFH,'H'	;ask for header
+OPTT	DB	DEFT,'T'	;ask for trailer
+OPTNOT	DB	DEFNOT,'-'	;invert selection criteria
+OPTLOG	DB	DEFLOG,'L'	;log results to console
+OPTTABE	EQU	$
+;
+PRSKEL	DB	'Skeleton? $'
+PRHDR	DB	'Header? $'
+PRTRLR	DB	'Trailer? $'
+;
+FSKEL	DW	0		;Position of first skel rec byte
+LSKEL	DW	0		; last byte+1
+MYFCB	DB	0,'SUBGEN  SUB',0
+	DS	19
+	DB	0
+TBUF	DB	127	;CONSOLE INPUT BUFFER
+	DS	127
+FNFTMAT	DS	11		;match mask
+SCOUNT	DS	2		;# TO SORT
+SVEPOS	DS	2		;save position
+AORDER	DS	2		;ORDER TABLE ADDRESS
+TEMP	DS	2	;SAVE DIR ENTRY
+SWITCH	DS	1		;SWAP SWITCH FOR SORT
+	DS	80	;STACK AREA
+STACK	DS	2	;SAVE OLD STACK HERE
+TABLE	EQU	$	;READ ENTRIES IN HERE
+	END	100H
+
+1		;SWAP SWITCH FOR SO

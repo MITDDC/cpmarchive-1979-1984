@@ -1,0 +1,66 @@
+UNERA15.DOC - 11/20/82
+
+                 RECOVERING ERASED CP/M FILES
+
+     This program appeared in INTERFACE AGE for December 1981 (pg.96)
+and was written by Gene Cotton.  
+
+     When a file is erased, all that happens is an E5 byte is placed at
+the start of that file name in the disk directory area.  This releases
+the sectors used by that file for future use.  If you notice you erased
+the wrong file, you can immediately recover it by using this program:
+
+
+       A)UNERA HELLO.ASM      (name of recently erased file)
+
+
+     Since the file allocation table usually proceeds sequentially
+through the sectors remaining, you can often recover an erased file even
+after some additional disk activity, particularly on a partially-used
+disk.  Normally by that time you would have forgotten the name of the
+file you wanted to recover, anyway.
+
+     If you do recover the file immediately, it should be back to nor-
+mal.  If things have been added to the disk in the meanwhile, the file
+might be recovered intact, or sections may have been overwritten.  In
+that case, examine it carefully, and with luck it will again be a normal
+file.  In any case portions can likely be recovered.  
+
+     This program does not support "wild cards" such as  ?  or  *.  It
+automatically adjusts for current CP/M 2.2 or for older CP/M 1.4.  It
+can be used with Micropolis drives but in that case you need to edit
+one byte at the start of the program and reassemble.
+
+
+COMMENT1:  Using ERAA.COM or ERAQ.COM with which to erase files rather
+           than the ERA command will minimize accidently erasing incor-
+           rect files -- those programs show the name of the file to be
+           erased and asks if you want to then erase that file?  (They
+           work with wild cards).
+
+COMMENT2:  Files may also be recovered using programs such as DU, DUU,
+           DUUP, DU-V79, etc.  Those require some talent to use and do
+           not compare with UNERA for simplicity.  They are very power-
+           ful multi-purpose disk-handling utilties.
+
+
+                           Notes by:     Irvin M. Hoff
+                                         Los Altos Hills, CA  94022
+
+------------------------------------------------------------------------
+
+UNERAse version 1.4 adds some "cosmetic" features and also a couple of
+nice additions to previous versions.
+
+1)  If you erase a file then run UNERA, it now restores  the file to the
+	current user area and not user area 0.  This is handy when you
+	are in user area 8, kill a file, want to revive it, and the pro-
+	gram puts it in user area 0 instead -- meaning you have to run
+	another program to move it back to 8.
+
+2)  "Short messages" are now implemented.  If you don't like L--O--N--G
+	warning messages, (i.e., you are an experienced hacker), then
+	set this option TRUE.
+
+                           Additions by: Paul S. Traina
+                                         Saratoga, CA  95070

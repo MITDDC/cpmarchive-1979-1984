@@ -1,0 +1,71 @@
+****************************************************************
+
+PATCH TO MAKE ZSID.COM THE SAME DUMP DISPLAY AS DDT AND SID
+
+	RESEARCH BY DATAFACS SYSTEMS, INC.
+
+****************************************************************
+
+
+DO THE FOLLOWING:
+
+ZSID ZSID.COM
+
+S125F 5F AF  <--- PUT THIS IN HIT RETURN
+ 1260 ?? .   ""
+
+S12C0 CD 00  <---- PUT THIS IN HIT RETURN
+ 12C1 ?? 00  ""
+ 12C2 ?? 00  ""
+ 12C3 06 ??  <---- LEAVE THIS ALONE
+ 12C4 06 01  <---- PUT THIS IN HIT RETURN
+ 12C5 ?? .   ""
+
+*	S12E1 CD 00  <---- PUT THIS IN HIT RETURN
+*  	 12E2 ?? 00  "" 
+*	 12E3 ?? 00  ""
+*	 12E4 CD 00  ""
+*	 12E5 ?? 00  ""
+*	 12E6 ?? 00  ""
+ 12E7 13 .   <-- **** DONE **** 
+
+CONTROL C OR G0 ZERO AND SAVE THE PROPER AMOUNT 
+
+
+IF YOU DON'T TRUST THIS SAVE IT AS A DIFFERENT NAME FIRST
+
+	*******  HAVE FUN AND ENJOY ******
+
+* CALLS THE SAME ADDRESS
+
+-----------------------------------------------------------------
+
+Addendum by Bob Fisher - De Paul University
+
+The above patch MAY work, but it depends on what address your cpm 
+runs at. Try instead the following:
+
+     S125F
+      125F 5F AF        (SAME AS ABOVE)
+      1260 ?? .
+
+     S12C0 CD 18        (PUT IN A RELATIVE JUMP)
+      12C1 ?? 01
+      12C2 ?? 00        (THIS DOESN'T MATTER)
+      12C3 06 06        (DON'T CHANGE)
+      12C4 06 01
+      12C5 ?? .
+
+     S12E1 
+      12E1 CD 18	(ANOTHER RELATIVE JUMP)
+      12E2 ?? 04
+      12E3 ?? ??
+      12E4 CD 18	(YET ANOTHER RELATIVE JUMP)
+      12E5 ?? 01
+      12E6 ?? .
+
+When ZSID relocates itself an offset is added to bytes 12c2, 12e3, and
+12e6. The previous patch left this offset to be interpreted as an opcode.
+The result can be benign or disastrous depending on the size of your 
+cpm.
+

@@ -1,0 +1,2441 @@
+OTERM.DOC -- OTERM Terminal Simulator                page   1
+
+
+Copyright 1981, 1982  Michael M Rubenstein
+Version 4.00 (4 Oct 82)
+
+
+Credits.
+
+The  modem  protocol used for file transmission  was 
+developed by Ward Christensen.
+
+The modem protocol was extended to use the  cyclical 
+redundancy code by John Mahr.
+
+The  subprogram  to compute the cyclical  redundancy 
+code was written by Paul Hansknecht.
+
+The window manager is based on one written by Robert 
+Lansdale.
+
+All  four  gentlemen  have made  their  work  freely 
+available for noncommercial purposes.
+
+Ideas for many the features of OTERM have come  from 
+other terminal programs.   The authors of these pro-
+grams must share the credit for OTERM.
+
+Most of OTERM is now written in C.   It was compiled 
+with the Software Toolworks C/80 compiler.
+
+A  large  number of people have offered  suggestions 
+and  encouragement in developing  this  program.   I 
+thank all of them.
+
+The CompuServe CP/M Interest Group (CP-MIG) has been 
+a  valuable  forum for discussion and a source of  a 
+great many ideas used in OTERM.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   2
+
+
+Description.
+
+OTERM allows the user to communicate with time shar-
+ing  services,  computerized  bulletin  boards,  and 
+other computers.  Special features of OTERM include:
+
+        - a  circular  log of the session  is  kept.  
+          This log is under the control of the user.  
+          It may be browsed without exiting OTERM.
+
+        - an  optional warning is provided when  the 
+          log is almost full.   If the remote device 
+          supports it,  transmission will be  halted 
+          with  a  control S.   If a file  is  being 
+          sent,  the transmission is interrupted (it 
+          can be restarted.)
+
+        - a file may be received without a protocol.  
+          If  the remote supports ^s/^q to stop  and 
+          start transmission, the file may be larger 
+          than main memory.
+
+        - files  may be sent to the remote  computer 
+          without  a  special  protocol  for  trans-
+          mission.
+
+        - any  command which can be entered from the 
+          keyboard  may also be entered from a  file 
+          or from a function key.
+
+        - file  tranmission may be interrupted  from 
+          the  keyboard or from a command  contained 
+          in  the  file.   Transmission may  be  re-
+          started without loss of data.
+
+        - the  Ward  Christensen modem  protocol  is 
+          implemented.   This allows error free com-
+          munications  with  remote CP/Ms  or  other 
+          computers.
+
+        - the CIS A protocol is  implemented.   This 
+          allows   error  free  communications  with 
+          CompuServe Information Services.
+
+        - optionally  lines may be wrapped so as  to 
+          keep words on a single line (word wrap)
+
+        - commands   to  OTERM  are  entered   using 
+          function key 1.   Help menus are available 
+          by entering ? in response to any prompt.
+
+        - extended  function  keys  are   available.  
+          names  of extended function keys may be up 
+          to 127 characters long and data sent by  a 
+          function key may be up to 4094 characters.
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   3
+
+
+
+        - the directory of a disk may be viewed from 
+          OTERM.
+
+        - files may be deleted from OTERM.
+
+        - files may be typed from OTERM.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   4
+
+
+Limitations.
+
+OTERM  will run only on an Osborne 1 computer.   The 
+revision  level must be 1.2 or higher (the  original 
+rev A is no longer supported).
+
+No printer support is provided.
+
+OTERM  is primarily designed for  operator  attended 
+communications.   There  is  no provision  for  auto 
+answer.
+
+OTERM  contains  no  provision for  special  modems.  
+However with some modems,  function keys can be used 
+for autodialing or other functions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   5
+
+
+New features/corrections in version 4.
+
+Note: Version  4.00 is almost a complete rewrite  of 
+      the program.   Much of it has be rewritten  in 
+      C.
+
+Browsing of the log has been implemented.
+
+The CIS A protocol has been implemented.
+
+Access  to the directory ,  typing and  deletion  of 
+files have been implemented.
+
+Extended function keys have been implemented.
+
+A  window manager is now used to allow prompting for 
+commands, display of messages from OTERM  and of the 
+log  and directory.   Escape sequences are not  used 
+except from a file.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   6
+
+
+Using OTERM (summary).
+
+
+The  modem should always be in full duplex mode  for 
+use with OTERM.  Follow the modem manufacturer's and 
+the  Osborne instructions for connecting the  modem.  
+Note than almost all modem's will require that pin 2 
+on  the modem be connected to pin 3 on the  computer 
+and pin 3 on the modem be connected to pin 2 on  the 
+computer.
+
+On  exiting OTERM the RS232 interface will be  reset 
+to the same options as at entry.
+
+The  setting of the rs232 rate and the line size  on 
+the disk have no effect on OTERM.  OTERM always uses 
+it's internal settings.
+
+As  distributed,  on startup OTERM is set to commun-
+icate with most time sharing services.   The default 
+characteristics may be changed temporarily or  OTERM 
+can  easily  be modified to start up with  different 
+characteristics.
+
+Establish  communications following the modem  manu-
+facturer's and the remote service's instructions.
+
+Commands  to  OTERM are preceded by function  key  1 
+(control 1).  Other function keys are used for OTERM 
+functions.
+
+Several OTERM functions require significant time for 
+disk  access  during which OTERM  cannot  check  the 
+modem.   If the remote responds to control s to stop 
+and  control  q to restart and OTERM is informed  of 
+this through the delay command,  OTERM will stop the 
+remote  during these operations and no data will  be 
+lost.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   7
+
+
+Function Keys.
+
+OTERM  takes over the function keys.   The  function 
+keys have the following meanings:
+
+      -------------------------------------------
+      |      7      |      8      |      9      |
+      |             |             |             |
+      | scroll up   | scroll up   |   cancel    |
+      |   half      |   full      |   file      |
+      |             |             |   or fk     |
+      |             |             |             |
+      -------------------------------------------
+      |      4      |      5      |      6      |
+      |             |             |             |
+      | scroll down | scroll down |   cancel    |
+      |   half      |   full      |   special   |
+      |             |             |   display   |
+      |             |             |             |
+      -------------------------------------------
+      |      1      |      2      |      3      |
+      |             |             |             |
+      |   command   |  extended   |  standard   |
+      |             |  function   |  function   |
+      |             |    key      |    key      |
+      |             |             |             |
+      -------------------------------------------
+
+A  display  similar to the above may  be  viewed  by 
+entering the fkhelp command.
+
+Use of function keys:
+
+Key   Use
+---   ----------------------------------------------
+ 1    Signals OTERM that a command is to be entered.
+
+ 2    Signals OTERM that an extended function key is 
+      to be entered.  OTERM will prompt for the name 
+      of the function key.   Extended function  keys 
+      are   installed  in  OTERM  with  the  program 
+      OTSETUP.   Note,  that  if  the  name  of  the 
+      function  key is a single digit,  the  Osborne 
+      function  key (installed with SETUP)  will  be 
+      used.   This  function  may not be used  while 
+      entering an OTERM command.
+
+ 3    Signals  OTERM that an Osborne function key is 
+      to be entered.   OTERM does not prompt for the 
+      name  of  the function key,  which must  be  a 
+      single digit or a single letter.   If a single 
+      letter, the extended function key installed by 
+      OTSETUP  will be used.   This function may  be 
+      used at any time,  including while entering an 
+      OTERM command.
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   8
+
+
+
+  4   Scrolls  the special display down by half  the 
+      size of the window.
+
+  5   Scrolls  the special display down by the  size 
+      of the window.
+
+  6   Clears special display (browse log, directory, 
+      typed file or the function key display).
+
+  7   Scrolls  the  special display up by  half  the 
+      size of the window.
+
+  8   Scrolls  the special display up by the size of 
+      the window.
+
+  9   Cancels  a  protocol  file transfer  or  halts 
+      transmission  without protocol of a  file.   A 
+      transmission without protocol may be continued 
+      without loss.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   9
+
+
+Extended function keys.
+
+Extended or Osborne function keys may be nested to a 
+depth  of 16.   There is no checking for  recursion.  
+All  function keys are canceled when a file read  is 
+started,  but a file read may contain function keys.  
+That  is,  if  a function key contains a  file  read 
+command,   nothing  in  the  function  key  will  be 
+processed after the command.
+
+Extended  function keys are installed in OTERM  with 
+the program otsetup.  See otsetup.doc for details.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   10
+
+
+OTERM Commands.
+
+When function key 1 is entered, OTERM opens a window 
+at the top of the screen and prompts for a  command.  
+You  may then enter a command with or without  argu-
+ments.   In most cases, if no arguments are entered, 
+OTERM  will  then prompt for them.   In a few  cases 
+(e.g.  dir) a default will be used.   At any  prompt 
+you may enter a ? (followed by return) to see a list 
+of  possible  operands or a description of the  com-
+mand.
+
+In  scanning commands,  OTERM allows abbreviation to 
+the minimum number of letters needed to identify the 
+command  or  operand.    Commands  are  checked   in  
+alphabetic   order  so  the  line  command  may   be 
+abbreviated  "l",  but  the log command requires  at 
+least "lo".  Commands and operands may be be entered 
+in upper or lower case.
+
+In  some cases (e.g.  log) if no operand is entered, 
+the current status is displayed.
+
+Examples:
+
+      cmd: log on     (will turn log on)
+
+      cmd: log        (will  display log status  and 
+                      prompt for operands)
+
+      cmd: quit       (will exit OTERM)
+
+Several  commands require the entry of a file  name.  
+OTERM uses a generalized file system which does  not 
+permit  the  use  of "/" or "\" in a file  name  (of 
+course the usual illegal characters are not  allowed 
+either).   The slashes are used to set flags for the 
+file system.  The only flag which is of use in OTERM 
+is  \b,  which causes an old file with the same name 
+to  be deleted,  rather than renamed to  <name>.bak.  
+Simply  append  this  flag to the end  of  the  name 
+(after  the extension) with no  intervening  spaces.  
+The old file will only be deleted after the new file 
+is successfully written.
+
+All  file  names  may be entered in upper  or  lower 
+case.
+
+A new disk may be mounted whenever there are no open 
+files.   A new disk may also be mounted on any drive 
+except  the default drive (the drive which is  shown 
+in the CP/M prompt,  e.g.  A>) whenever there are no 
+files open on it.   Remember, halting the reading of 
+a file with function key 9 does not close the file.
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   11
+
+
+To  modify OTERM to use new defaults,  simply  enter 
+the desired commands,  exit with the quit  command, 
+and  save  the program with the CP/M  save  command.  
+Remember  to  check the current size of  OTERM  with 
+stat before entering OTERM.
+
+The following sections describe in detail the  OTERM 
+commands.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   12
+
+
+log command.
+
+A log of the session is kept in memory.   As distri-
+buted,  this log is enabled at start up.  The log is 
+circular;  that  is,  when the log is filled,  char-
+acters  at  the beginning are deleted as  new  char-
+acters  are added.   The size of the log depends  on 
+the version.   The log is always cleared when  OTERM 
+is entered.
+
+If  this  command is entered without  operands,  the 
+status of the log will be displayed.
+
+In full duplex mode,  only characters received  from 
+the  remote device are entered in the log.   In half 
+duplex  mode  all characters sent  or  received  are 
+entered.   In  host  mode only characters  sent  are 
+entered in the log.
+
+Since  OTERM  does not recognize deletion  of  char-
+acters  or lines,   it usually will be necessary  to 
+edit  the log after writing it to disk to  eliminate 
+errors.   The log may be edited with WordStar or ED.  
+This  is  also  useful  for  eliminating  extraneous 
+material  from  the log (e.g.  commands or  messages 
+when a program source file is listed and logged.)
+
+The following operands are recognized:
+
+  Operand      Function
+-----------    -------------------------------------
+clear          Clears  the log and  starts  entering 
+               data into it.
+
+endfile        Stops automatic saving of the log.
+
+file           Starts automatic saving of the log in 
+               a  file.   The file name  is  entered 
+               after the word "file".  If not enter-
+               ed,  you will be prompted.  This must 
+               be the last operand on the line.
+
+nowarn         Turns off warning of log being almost 
+               full.
+
+off            Turns off the log.  Data currently in 
+               the log is not lost.
+
+on             Turns on the log.   Data currently in 
+               the log is not lost.
+
+warn           Turns on warning of log being  almost 
+               full.   When  the log is almost full, 
+               you will be informed with three bells 
+               and,   if  the  remote  responds   to                
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   13
+
+
+               control s and control q (and OTERM is 
+               informed  of  this through the  delay 
+               command) a control s will be sent.  A 
+               control q will not be sent  automati-
+               cally.   Warning  is not effective if 
+               the log is being automatically saved.
+
+write          Writes  the  current log to  a  file.  
+               The file name is be entered after the 
+               word "write".   If not  entered,  you 
+               will  be prompted.   This must be the 
+               last operand on the line.
+
+
+A common (and the simplest) method of using the  log 
+is  to simply ignore it until something is  received 
+which one wants to save.   The log is then saved and 
+later edited to eliminate unwanted material.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   14
+
+
+browse command.
+
+The browse command is used to view the  log.   While 
+active,  the  screen is split with the log displayed 
+in  the upper half and the terminal display  in  the 
+lower.  The scrolling function keys (4, 5, 7, and 8) 
+are active while the log is being displayed.
+
+To turn off the log, use function key 6.
+
+The following operands are recognized:
+
+  Operand      Function
+-----------    -------------------------------------
+down           Followed  by a number.   Scrolls  the 
+               log  down  the  specified  number  of 
+               lines.  Note: during scrolling, input 
+               from the remote cannot be  completely 
+               processed  and some data may be  lost 
+               if the number of lines is larger than 
+               about 400 (at 300 baud).   This  must 
+               be the last operand on the line.
+
+end            Starts browsing the log,  showing the 
+               last data entered.
+
+start          Starts browsing the log,  showing the 
+               oldest data entered. 
+
+up             Followed  by a number.   Scrolls  the 
+               log up the specified number of lines.  
+               Note:  during  scrolling,  input from 
+               the remote cannot be completely  pro-
+               cessed  and some data may be lost  if 
+               the  number  of lines is larger  than 
+               about  400 (at 300 baud).   This must 
+               be the last operand on the line.
+
+If no operand is entered, "end" will be assumed.
+
+The display of the log will not be usable if the log 
+does  not contain line feeds.   This will  occur  if 
+line  feeds are supplied on the console rather  than 
+by   the  remote  service  or  by  the  transmission 
+routines.
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   15
+
+
+cis command.
+
+Used to turn recognition of CompuServe A protocol on 
+or off.  Usually, recognition of CompuServe protocol 
+will cause no problems, but there is a slight chance 
+that some other service will send control  sequences 
+which  make OTERM think it is engaged in an exchange 
+with  CompuServe.   If this happens,  turn  off  cis 
+protocol.
+
+The possible operands are "on" or "off".
+
+If entered without operands,  the status of cis mode 
+will be displayed.
+
+CIS  file  transfers are initiated by the remote  by 
+sending  a special sequence  of  characters.   OTERM 
+will notify you of the transfer.  If it is an upload 
+(transmission  to  the  remote) the  file  size  and 
+estimated transmission time will be shown.
+
+The progress of the transmission will be  displayed.  
+Under this protocol blocks are variable length,  but 
+are  normally  either  128 characters or  256  char-
+acters.  When sending,  all blocks except, possibly, 
+for the last are 256 characters.
+
+A  file transfer may be cancelled with function  key 
+9.   The  other  system is notified of  the  cancel-
+lation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   16
+
+
+clear command.
+
+This  command clears the screen.   This is  a  local 
+operation.  Nothing is transmitted or logged.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   17
+
+
+console command.
+
+The console command controls the display of informa-
+tion sent or received.   It has no effect on the log 
+or on the data transmitted:
+
+If entered without operands,  the status of the con-
+sole will be displayed.
+
+The following operands are recognized:
+
+  Operand      Function
+-----------    -------------------------------------
+autolf         Treats a carriage return as the start 
+               of a new line (i.e displays as if  it 
+               were a carriage return line feed).
+
+bsdel          Deletes the previous character when a 
+               backspace is received.
+
+control        Control characters are passed to  the 
+               screen  output  routines and  act  as 
+               defined in the Osborne user's manual.
+
+ffclr          Clears the screen when a form feed is 
+               received.
+
+ignorectl      Control characters are ignored.
+
+maskctl        Control  characters are displayed  as 
+               periods.
+
+noautolf       Turns off autolf.   A carriage return 
+               moves  the  cursor to the  left,  but 
+               does not start a new line.
+
+nobsdel        Turns off bsdel.   A backspace  moves 
+               the  cursor left one  character,  but 
+               does not delete the character.
+
+nowwrap        Turns off word wrap.  On reaching the 
+               end of the line on the screen,  a new 
+               line is started immediately.
+
+showctl        Control  characters are displayed  as 
+               "^" followed by a printing character.  
+               Rubout is displayed as "^?".
+
+wwrap          Turns on word wrap.   On reaching the 
+               end of a line,  the line is broken at 
+               a word boundary.  For the purposes of 
+               OTERM,  a word boundary is a carriage 
+               return,    line   feed,    space   or 
+               horizontal tab.   Note:  word wrap is 
+               done  at the end of the logical  line 
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   18
+
+
+               as specified in the line command, not 
+               necessarily   at   the  end  of   the 
+               physical  screen.   This option  will 
+               probably  not  be too useful  if  the 
+               line size is set to greater than 52.
+
+The four options to control display of control codes 
+apply   to  most  nondisplayable  codes.    Carriage 
+return,  line feed,  back space,  and horizontal tab 
+are  not  affected.   Form feed is not  affected  if 
+ffclr  is  on.    Nulls  are  displayed  only  under 
+showctl.
+
+Control  z,  which normally clears the screen on the 
+Osborne,  will  be ignored if control and ffclr  are 
+both set on.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   19
+
+
+delay command.
+
+When  sending  a file or a function key to a  remote 
+computer,  it  may be necessary to give  the  remote 
+some time to process the data.  This is accomplished 
+with the delay command.
+
+Except  for "usectls",  the delay mode commands  not 
+meaningful  except  when a file or function  key  is 
+being sent.
+
+If no operands are given,  the delay status will  be 
+displayed.
+
+The following operands are recognized:
+
+  Operand      Function
+-----------    -------------------------------------
+char           Sets delay mode to character.  When a 
+               delay  is  required,   it  will   end 
+               whenever a character is received from 
+               the remote.   This is the opposite of 
+               time.
+
+chdelay        Causes  a delay after each  character 
+               sent.
+
+delay=         Followed  immediately by a digit  (no 
+               space).   Specifies  the length of  a 
+               character or line delay.   If 0,  the 
+               delay   will   always  be   until   a 
+               character is received.
+
+delctls        Causes  transmission  to  stop   when 
+               control   s  is  received  from   the 
+               remote.    Transmission  will  resume 
+               when  a control q is received.
+
+lndelay        Causes a delay after each line sent.
+
+nochdly        Turns off chdelay.
+
+nodelctls      Turns off delctls.
+
+nolndly        Turns off lndelay.
+
+noprompt       Turns  off  waiting for prompt  after 
+               each line.
+
+nousectls      Turns off usectls.
+
+prompt=        Followed immediately (no space) by  a 
+               character.   After  each  line  sent, 
+               OTERM  will  wait until the  specifed 
+               character  is  received.   A  control 
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   20
+
+
+               character  may  be  specified  as   ^ 
+               followed by a character (e.g.  ^@ for 
+               NUL).
+
+time           Causes  character and line delays  to 
+               last the specified  time,  regardless 
+               of   characters  received  from   the 
+               remote.  The opposite of char.
+
+usectls        Informs   OTERM   that   the   remote 
+               responds  to  control s to  stop  and 
+               control q to restart.  This should be 
+               specified   whenever   possible    to 
+               prevent   loss   of  data   on   disk 
+               accesses.
+
+Use  of  delays for file transmission can be  a  bit 
+tricky.   Usually,  a combination of line prompt and 
+short  character  delay (1 or 2) works well  if  the 
+remote  provides a suitable prompt.   In other cases 
+fairly  long (4-7) time delays may be needed.   With 
+half  duplex systems,  a line prompt or  long  (5-9) 
+time delays will be needed.
+
+Some   time   sharing  services  (most   using   DEC 
+equipment)   will   send  a  control   s   to   stop 
+transmission and a control q to restart.  If delctls 
+is  set,  the transmission will work well,  but  the 
+display  will probably be incoherrant if the  remote 
+is  sending during the transmission.   If  a  proper 
+display  is required,  use a line prompt a character 
+delay also.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   21
+
+
+directory command.
+
+The  directory  of any disk may be viewed  with  the 
+directory  command.   The  only operand is the  disk 
+drive letter.  If omitted the default disk is used.
+
+The directory is displayed in a window at the top of 
+the screen.   If there are more files than will  fit 
+in the window, the scrolling function keys (4, 5, 7, 
+and  8)  may be used to view the  entire  directory.  
+The display is turned off with function key 6.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   22
+
+
+diskspace command.
+
+The  diskspace  command may be used to  display  the 
+disk  space  used and remaining on any  drive.   The 
+only operand is the disk drive letter.   If omitted, 
+the default disk is used.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   23
+
+
+erase command.
+
+The  erase command is used to delete a file  from  a 
+disk.   It  takes a single operand,  the name of the 
+file to be deleted.
+
+It is possible to delete a file which is being used, 
+such  as  the file being typed or read.   The  erase 
+command will be accepted,  but actual deletion  will 
+be defered until the file is closed.
+
+If  the  file specified is the name of  a  temporary 
+file   generated  for  output  (for  the  log   file 
+command),  the  erase command will be accepted,  but 
+will  be ineffective.   Such files are of  the  form 
+TEMPnnnn.$$$, where nnnn are digits.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   24
+
+
+file command.
+
+The  file  command is used to read a file as  if  it 
+were  typed  at the console.   The file may  contain 
+commands  as  an escape character  followed  by  the 
+digit  for the function key desired.   The responses 
+to the prompts if any must follow in the file.   All 
+responses  to prompts must be terminated by  a  car-
+riage return and line feed.  An escape character may 
+be  sent  by entering two escape characters  in  the 
+file.  This same technique is used to enter commands 
+from function keys.   Control characters may be ent-
+ered  into the file,  or may be specified as  escape 
+followed by a character (e.g. esc @ for NUL).
+
+Thus  a file may contain either Osborne or  extended 
+function  key calls.   Reading of a file  terminates 
+any  active  function keys.   If a file  contains  a 
+command  to read another file,  control will pass to 
+that file, but will not return at the end (files are 
+chained not nested).
+
+Reading  of  a  file may be  temporarily  halted  by 
+entering function key 9 from the console.  It may be 
+restarted with the file read command.
+
+If  this command is entered  without  operands,  the 
+file status will be displayed.
+
+The following operands are recognized:
+
+  Operand      Function
+-----------    -------------------------------------
+endfile        Terminates  reading of a  file.   The 
+               file is closed.
+
+halt           Temporarily stops reading of a  file.  
+               The  file  may be restarted with  the 
+               read operand.   This command is  only 
+               useful if entered from a file.
+
+lf             Allows  transmission  of  line  feeds 
+               contained in the file.   Note:   this 
+               also applies to function keys.
+
+nolf           Ignores  line feeds contained in  the 
+               file.   Note:  this  also applies  to 
+               function keys.
+
+read           Followed  by the name of the file  to 
+               be  read.   This  must  be  the  last 
+               operand on the line.  If reading of a 
+               file  was halted with function key  9 
+               or  by a file halt command,  the file 
+               name may be * to continue the file.
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   25
+
+
+fkhelp command.
+
+Displays the standard OTERM function key usage.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   26
+
+
+line command.
+
+Sets  the  logical line size to any  length  from  1 
+through 128.  The only operand is the line size.
+
+NOTE:   The line size affects only the display.  The 
+        log and the transmission are not affected.
+
+If entered without an operand, the current line size 
+will be displayed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   27
+
+
+modem command.
+
+Used to set the characteristics of the transmission. 
+
+If entered without operands,  the current  transmis-
+sion status will be displayed.
+
+The following operands are recognized:
+
+  Operand      Function
+-----------    -------------------------------------
+300            Sets 300 baud.
+
+1200           Sets 1200 baud.
+
+7bits          Sets 7 bits transmitted.
+
+8bits          Sets 8 bits transmitted.
+
+autolf         Sets  automatic transmission of  line 
+               feed  after  carriage  return.   This 
+               option  is usually required with host 
+               mode.
+
+even           Sets even parity.
+
+full           Sets full duplex operation.
+
+half           Sets half duplex operation.
+
+host           Sets  host  mode.    All   characters 
+               received   are  echoed  back  to  the 
+               remote.    Use  host  mode  when  the 
+               remote  is a terminal (or a  computer 
+               acting as a terminal).
+
+noautolf       Turns off autolf
+
+noparity       Sets no parity transmitted.
+
+odd            Sets odd parity.
+
+rs232          Sets   operation  through  the  rs232 
+               connector.   Because of hardware  re-
+               strictions,  this  setting will  send 
+               data  to both the rs232 connector and 
+               the serial connector.
+
+serial         Sets  operation  through  the  serial 
+               (modem) connector.   Data is not sent 
+               to the rs232 connector.
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   28
+
+
+receive command and crcrecv command.
+
+The  receive command is used to receive a file  with 
+the  Ward  Christensen  modem  protocol.    This  is 
+compatible  with  the  various  versions  of   modem 
+(single file transfers only), xmodem and yam.
+
+The  only  operand  is the name of the  file  to  be 
+received  (as  it will appear on your  system  -- it 
+need not be the same as on the remote).
+               
+The  crcrecv  command  is the same  as  the  receive 
+command,  but  crc checking will be used.   This  is 
+superior  to the standard checksum if the remote can 
+handle it.
+
+The file transmission may be canceled with  function 
+key  9.   The  other  end  is not  notified  of  the 
+cancellation.
+
+If  the other system sends a cancel (control  x)  in 
+place of the normal block header,  OTERM will inform 
+you of this.  This can be useful when one end wishes 
+to  halt a transmission.   Don't cancel on the first 
+one though, it may just be a transmission error.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   29
+
+
+quit command.
+
+This command returns to CP/M.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   30
+
+
+send command.
+
+The  send  command is used to send a file  with  the 
+Ward Christensen modem protocol.  This is compatible 
+with  the  various versions of  modem  (single  file 
+transfers only), xmodem and yam.
+
+The  only operand is the name of the file to be sent 
+(as it appears on your system -- it need not be  the 
+same  as on the remote).
+
+crc checking is implemented.  In this protocol it is 
+requested by the receiver.
+
+The file transmission may be canceled with  function 
+key  9.   The  other  end  is not  notified  of  the 
+cancellation.
+
+If  the other system sends a cancel (control  x)  in 
+place of the normal block header,  OTERM will inform 
+you of this.  This can be useful when one end wishes 
+to  halt a transmission.   Don't cancel on the first 
+one though, it may just be a transmission error.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   31
+
+
+type command
+
+Used  to  display  a file.   A  single  operand,  an 
+unambiguous  file name,  is accepted.   The file  is 
+displayed  as a secondary  display.   The  scrolling 
+function keys (4 and 5 only) are active.
+
+The  file must be a standard CP/M text file,  except 
+that  a  file  with  lines  terminated  by  carriage 
+return,   but  no  line  feed,   will  be  displayed 
+properly.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   32
+
+
+wait command
+
+This  command delays transmission for from 1 through 
+60 seconds.   This is sometimes useful in sending  a 
+file  without  protocol to allow for some action  by 
+the  remote.   The  only operand is  the  number  of 
+seconds to wait.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   33
+
+
+Protocol file transfers.
+
+This  section contains information on using OTERM to 
+send and receive files.   The information on use  of 
+other  programs is,  of course,  not to be taken  as 
+absolute.   There  are  many different  versions  of 
+other programs which will communicate with OTERM and 
+details   vary.     When   in   doubt,   check   the 
+documentation  of  the other program.   Most  rcpm's 
+have help files or documentation files available.
+
+To  communicate  with another  system,  one  of  the 
+systems  must have an originate modem,  the other an 
+answer  modem  (not necessarily auto  answer  -- the 
+term  answer  here refers only  to  the  frequencies 
+used).   Most moderately priced to expensive  modems 
+can operate in either originate or answer mode.
+
+
+Transfers from OTERM to OTERM
+
+It  is  usually best to first  establish  communica-
+tions.   One of the systems is set to host mode  and 
+auto  line feed transmission (modem host autolf) and 
+the other to full duplex (modem full).   It is  then 
+possible to communicate through OTERM.   Once commu-
+nications have been established, the receiver enters 
+the  crcrecv command and the sender enters the  send 
+command.  The transfer will then begin.
+
+One  may  use the receive command,  but the  crcrecv 
+command gives greater assurance of correct  transfer 
+at no measurable cost.
+
+
+Transfers with other systems
+
+The same method as for OTERM-OTERM transfers  should 
+be used,  if possible.   Some programs,  however, do 
+not  allow establishing communications as a terminal 
+first.   In  that case,  once the modems have  esta-
+blished carriers,  enter the required  commands.  If 
+the  other system allows crc checking,  it should be 
+used.
+
+Some programs are set up for automatic selection  of 
+crc checking.   If sending a file to such a program, 
+issue  the  send command to OTERM before  the  other 
+system issues the receive command.
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   34
+
+
+Receiving from an rcpm.
+
+Most rcpm's use the following method.
+
+Type (to the rcpm, not as an OTERM command)
+
+               xmodem s <filename>
+
+followed by return.   <filename>  is the name of the 
+file as it appears on the rcpm.   The xmodem program 
+will type a message telling you that it can transfer 
+the file or that there is an error.  Usually, if the 
+file  can  be transferred it will tell you the  size 
+and  the  estimated  transmission  time.   When  the 
+message is complete, enter the OTERM command
+
+               crcrecv <filename>
+
+where  <filename> is the file name you wish to  use.  
+Usually it should be the same as on the rcpm, except 
+that  files with type .OBJ should be  received  with 
+type .COM.   These are really COM files, but are put 
+on the rcpm with a different type so you will not be 
+able to run them.  Usually, you cannot receive files 
+with type .COM on the rcpm.
+
+A few systems do not support crc checking.   In that 
+case, use the receive command.
+
+
+Sending to an rcpm
+
+This is similar to receiving.   The command for  the 
+rcpm is
+
+               xmodem rc <filename>
+
+for  sending with crc checking.   If crc checking is 
+not available, the command is
+
+               xmodem r <filename>
+
+The OTERM command is
+
+               send <filename>
+
+Rcpm's  will not accept files with a type  of  .COM.  
+Use  the  type  .OBJ  in the  xmodem  command  (many 
+systems will automatically change it if you forget.)
+
+Some  systems  will automatically put the  file  you 
+send to a special area.   Others ask that you put it 
+in  some special area yourself.   A few  don't  care 
+where you put it.
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   35
+
+
+
+
+Transferring files with CompuServe
+
+Make  sure  cis protocol is on in  OTERM  (cis  on).  
+You  may generally leave it on.   It will seldom  do 
+any harm.
+
+There are no OTERM commands directly associated with 
+CompuServe  file transfers.   You enter commands  to 
+CompuServe,   and  the  system  sends  the  required 
+instructions to OTERM.
+
+To  send or receive a file from your user  area,  or 
+from  another user area which is accessable to  you, 
+enter the (CompuServe) command
+
+               r xftran
+
+You will be prompted for details.
+
+To   receive   a  file  from   access,   enter   the 
+(CompuServe) command
+
+               dow <filename>
+
+where <filename> is the name of the file you wish to 
+receive.  Again, you will be prompted for details.
+
+
+Display during transfers
+
+During the transfer,  OTERM displays the block being 
+sent  or received and the number of retries.   If  a 
+retry  is  required,   OTERM  displays  the  reason.  
+Retries are made if either end discovers an error in 
+the  transmission.   If there are a great number  of 
+retries required, the phone line is probably bad.  A 
+few retries are no cause for concern.  In some cases 
+transmission errors may cause the transmission to be 
+halted.   OTERM will always inform you of this,  and 
+if  a  file is being received will delete the  file.  
+In this case,  an old file of the same name will  be 
+retained.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   36
+
+
+Common problems.
+
+Protocol file transfers.
+
+The most common problem in making protocol transfers 
+is failure to use a program in the remote which uses 
+a  compatible protocol or using the wrong  protocol.  
+OTERM  can communicate with programs using the  Ward 
+Christensen  modem  protocol,  with or  without  crc 
+checking,  or  with programs using the CompuServe  A 
+protocol.
+
+Versions of modem (a terminal program) are available 
+for  most  CP/M systems at no cost.   Some  versions 
+(modem 7) also support a batch transmission protocol 
+for sending multiple files.   This batch protocol is 
+not supported by OTERM.
+
+The modem protocol is also supported by xmodem (used 
+by remote CP/M (rcpm) systems), by yam (available at 
+no  charge from CompuServe CP/M Interest Group  (CP-
+MIG), or from many rcpm systems), and by a number of 
+commercial terminal programs.
+
+The  CompuServe A protocol is primarily  useful  for 
+uploading  and  downloading from  CompuServe.   This 
+protocol  is controled by the remote  (OTERM  cannot 
+act as host for this protocol).  Programs are avail-
+able from CompuServe CP-MIG to allow CP/M systems to 
+act  as host,  but it usually will be better to  use 
+the modem protocol.
+
+
+Double spacing
+
+Line feeds may be supplied by the remote or by OTERM 
+or may be supplied on the screen only.  If more than 
+one source is supplying line feeds, the display will 
+be double spaced.   For most time sharing systems or 
+bulletin boards,  line feeds will be supplied by the 
+remote and OTERM should be set to 
+
+               console noautolf
+               modem noautolf
+               file nolf
+
+When  communicating  with a terminal (or a  terminal 
+program)  OTERM  will usually have  to  supply  line 
+feeds and should be set to
+
+               console noautolf
+               modem autolf
+               file nolf
+
+In this case, OTERM will usually be in host mode.
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   37
+
+
+
+Characters not displayed or 
+Characters displayed twice
+
+In full duplex mode, characters typed are not shown 
+on the screen and must be echoed by the "host".   In 
+half  duplex  mode,  each  side is  responsible  for 
+displaying  characters  it  sends,   but  most  time 
+sharing  services  and bulletin boards  will  supply 
+"free"  line  feed.    When  communicating  with   a 
+terminal, OTERM may act as the host.
+
+OTERM  and the remote must be in agreement with  the 
+remote  as  to whether the transmission is  full  or 
+half  duplex.   Most bulletin boards operate only in 
+full  duplex mode.   Most time sharing  systems  may 
+operate  in either full or half duplex  mode.   Full 
+duplex is generally best as the echo gives assurance 
+that  characters were received properly.   A notable 
+exception  is  that  time  sharing  systems  on  IBM 
+mainframes usually operate in half duplex mode only.
+
+If  OTERM  is in half duplex mode while  the  remote 
+thinks it is host to full duplex,  anything you type 
+will  be  displayed  twice.   If OTERM  is  in  full 
+duplex, while the remote thinks it is in half duplex 
+mode,  nothing you type will be displayed.   If both 
+OTERM  and  the remote are acting as hosts  to  full 
+duplex, a character will be repeated indefinitely.
+
+
+Unable to establish communications.
+
+This is usually due to incompatibility of the modems 
+being  used (there are two incompatible  "standards" 
+for  1200  baud modems.   If you and the remote  are 
+using different standards, you will get nowhere.) or 
+by  incompatibility of the  transmissions  settings.  
+The two sides should be in agreement as to data rate 
+(OTERM  supports 300 baud or 1200 baud),  number  of 
+stop bits,  number of data bits,  and parity.   Most 
+systems will work with 8 data bits,  1 stop bit,  no 
+parity.
+
+
+Problems with nonprotocol file sending.
+
+A  good  deal of playing around may be necessary  to 
+get  the transmission to work properly.   If at  all 
+possible,  a line prompt should be used.   In  other 
+cases, it may be necessary to set the delay to time.  
+When  all  else fails,  try long time delays  (5-9).  
+The transmission will be painfully slow, but in most 
+cases this will work.
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   38
+
+
+Remember  that with nonprotocl transfers there is no 
+error checking.   Line noise may garble a  character 
+and  the  error  will be  undetected.   Do  not  use 
+nonprotocol  transfers if the other system  supports 
+the modem or CIS protocol.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   39
+
+
+        Browse.................................. 12
+        Characters displayed twice.............. 33
+        Characters not displayed................ 33
+        Cis command............................. 13
+        Clear command........................... 14
+        Commands................................  5
+        Common problems......................... 33
+        CompuServe A protocol................... 13
+        Console command......................... 15
+        Control q...............................  5
+        Control s...............................  5
+        Crcrecv command......................... 25
+        Credits.................................  1
+        Delay command........................... 17
+        Description.............................  2
+        Directory command....................... 19
+        Diskspace command....................... 20
+        Display during transfers................ 32
+        Double spacing.......................... 33
+        Erase command........................... 21
+        Extended function keys..................  8
+        File command............................ 22
+        File name...............................  9
+        Fkhelp command..........................  6,22
+        Function key............................ 17
+        Function key 1..........................  5, 9
+        Function key 6.......................... 12,19
+        Function key 9..........................  9,13,22,25,27
+        Function Keys...........................  6, 6
+        Limitations.............................  3
+        Line command............................ 15,23
+        Log command............................. 10
+        Modem...................................  5
+        Modem command........................... 24
+        Modify OTERM............................  9
+        New disk................................  9
+        New features/corrections................  4
+        OTERM Commands..........................  9
+        Printer.................................  3
+        Problems with nonprotocol file sending.. 34
+        Protocol file transfers................. 30,33
+        Quit command............................ 26
+        Receive command......................... 25
+        Receiving from an rcpm.................. 31
+        Revision level..........................  3
+        RS232 interface.........................  5
+        Scrolling function keys................. 12,19,28
+        Send command............................ 27
+        Sending a file.......................... 17
+        Sending to an rcpm...................... 31
+        Transferring files with CompuServe...... 31
+        Transfers from OTERM to OTERM........... 30
+        Transfers with other systems............ 30
+        Type command............................ 28
+        Unable to establish communications...... 34
+
+
+
+OTERM.DOC -- OTERM Terminal Simulator                page   40
+
+
+        Using OTERM (summary)...................  5
+        Using the log........................... 11
+        Wait command............................ 29
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

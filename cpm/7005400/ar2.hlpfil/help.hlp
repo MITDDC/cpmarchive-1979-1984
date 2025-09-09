@@ -1,0 +1,126 @@
+Welcome to the HELP Command
+How to use the HELP Command
+How to write .HLP Files
+Help on CP/M in general
+:HELP: Welcome to the HELP Command
+     Welcome  to the HELP Command!   The HELP Command is designed to assist 
+you,  the  CP/M  user,  in  the use of CP/M in general  and  specific  CP/M 
+commands  in  particular.   It  is  designed  as  an  interactive,  on-line 
+assistance system.
+     HELP pulls in files named <FILENAME>.HLP from disk and displays  these 
+to the user in a paged mode.  These files are of two basic types -- indexed 
+and non-indexed.
+
+     Indexed files are those .HLP files which start with an index.  This is 
+an  example  of  an indexed file.   When HELP loads  an  indexed  file,  it 
+displays  this index to the user and allows him to select entries from  it.  
+The  user may select as many entries as he desires in any order he  desires 
+by  simply typing the letter of his selection.   Once the user has made his 
+selection, help will look up the body of text he selected and display it to 
+him  in a paged mode.   When the user has finished reading  his  selection, 
+HELP  then returns him to the index menu.   Typing a Control-C  will return 
+the user to CP/M.
+     Non-indexed  files  are  those .HLP files which do not start  with  an 
+index.   In such cases,  HELP will immediately display the contents of  the 
+file to the user and,  when the user has finished looking at it,  HELP will 
+return to CP/M.
+     HELP is menu-driven, and all the commands available to the user at any 
+given time are displayed to him.  
+
+     HELP can be a very useful tool for on-line reference to the user.  It, 
+in conjunction with the many HLP files now available, has already proven to 
+be of significant value.
+                                             Richard Conn
+:HELP: How to use the HELP Command
+     The HELP Command is executed in one of three ways:
+          (1) by just typing 'HELP'
+          (2) by typing 'HELP FILENAME', where FILENAME
+              is the name of a disk file named FILENAME.HLP
+          (3) by typing 'HELP FILENAME.EXT', where
+              FILENAME.EXT is the name of a file created in
+              the format of a help file
+
+     If the user types just 'HELP',  he will receive the HELP.HLP help file 
+(now being displayed to you).  For all other forms of the HELP command, the 
+user will see the specified help file information.  Generally speaking, the 
+name  of the help file should be indicative of its  subject,  like  CPM.HLP 
+should contain help information on CP/M.
+:HELP: How to write .HLP files
+     Files  used by the HELP program are either simple CP/M-standard  files 
+of   ASCII   text  or  ASCII  files  generated  by  the  Word   Star   text 
+editor/formatter.  These files, as mentioned above, are of two basic types: 
+indexed  and non-indexed,  and each type is related to the other and is  of 
+the same basic format.
+
+
+                          Grouping of Information
+
+     Information  displayed to the user is grouped by the index in  indexed 
+HLP  files  and may also be grouped by lines beginning with Form Feed  (^L) 
+characters.  Grouping is an effective way to logically organize information 
+so  that  meaning will be more clear to the user and units  of  information 
+will not pass between screen displays.
+
+
+                          Non-Indexed .HLP Files
+
+     Non-indexed .HLP files are simple ASCII files which start with a colon 
+(:) as the first character of the file and consist of ASCII text (with each 
+line terminated by a carriage return/line feed character combination).  The 
+information  in  such  a help file consists of all text after  the  leading 
+colon  up to either the terminating end-of-file mark (control-Z) or  a  new 
+line which starts with a colon.
+
+
+                            Indexed .HLP Files
+
+     Indexed  .HLP  files are simple ASCII files which do not start with  a 
+colon  (:)  as the first character of the file.   This type  of  .HLP  file 
+consists  of one or more normal ASCII text lines as the first lines of  the 
+file  followed by information sections which begin with a line whose  first 
+character  is  a  colon  and end with either the first  line  of  the  next 
+information section or the end of the file.
+:HELP: General Information on CP/M
+     CP/M is a monitor control program for microcomputer system development 
+which  uses IBM-compatible flexible disks (floppy disks) for mass  storage.  
+Using  a  microcomputer  mainframe  based on Intel's 8080  or  Zilog's  Z80 
+microprocessor,   CP/M   provides   a  general  environment   for   program 
+construction,  storage,  and editing, along with assembly and program debug 
+facilities.   An important feature of CP/M is that it can be easily altered 
+to  execute  with any computer configuration which uses an  Intel  8080  or 
+Zilog  Z80 Microprocessor and has at least 16K bytes of main memory with up 
+to four IBM-compatable diskette drives.
+     The  CP/M monitor provides access to programs through a  comprehensive 
+file  management  system.    The  file  subsystem  supports  a  named  file 
+structure,  allowing dynamic allocation of file space as well as sequential 
+and  random  file access.   Using this file system,  a up  to  64  distinct 
+programs can be stored in both source and machine-executable form.
+     Digital  Research,  the  designer of CP/M,  has provided a set of  six 
+manuals which describe the use and operation of CP/M in detail.
+
+
+
+
+
+
+     These manuals are:
+          1.  An Introduction to CP/M Features and Facilities
+          2.  ED:  A Context Editor for the CP/M Disk System
+          3.  ASM:  CP/M Assembler User's Manual
+          4.  DDT:  CP/M Dynamic Debugging Tool User's Manual
+          5.  CP/M Interface Guide
+          6.  CP/M System Alteration Guide
+
+     As the reader can see,  CP/M supports a context editor,  an  assembler 
+(Intel-compatable),  and  a  debugger system.   These are available in  the 
+basic CP/M package.   There is a large variety of other software  available 
+which  can  run under CP/M with little or no modification.   Such  software 
+includes  several  assemblers (both 8080 and  Z80),  a  symbolic  debugger, 
+several  high-level  languages (including FORTRAN  IV  {compiler},  BASIC-E 
+{translator},  CBASIC {translator}, many interpretive BASICs, ALGOL, FOCAL, 
+and  C),  and  several special-purpose applications programs (such as  text 
+formatting systems and accounting systems).
+
+     Refer  to the indicated manuals and/or the CP/M help file for  further 
+information.
+

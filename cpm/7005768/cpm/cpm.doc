@@ -1,0 +1,887 @@
+        --------- CP/M Documentation as of 1-July-80 ---------
+
+
+  Although CP/M is  not the  ultimate in  operating systems  it is  an
+extremely useful software development tool which is implementable on a
+wide variety of  8080 and  Z80 based computers.   As a  result it  has
+become, by default if  not by design, the  standard of users of  these
+microprocessors.
+
+     CP/M's implementability lays mainly  in the portability  afforded
+to it through the use of the BIOS (Basic I/O System).  This concept is
+a simple  but  very effective  solution  to the  problem  of  hardware
+variability inherent  in microprocessor-based  computer systems.   The
+S-100 bus  not  withstanding,  there  seems to  be  as  many  hardware
+configurations as there are designers (as an example, my own  computer
+has  a  56-pin  backplane  and  uses  memory-mapped  I/O).   It  is  a
+surprising and welcome gesture for  a software manufacturer to  supply
+the exact procedures necessary to bring  up its software.  By the  way
+of contrast, I know a very compulsive programmer who spent the  better
+part of a  month bringing up  ISIS on a  non-MDS hardware, whereas  it
+took less than a week for this same programmer to bring up CP/M on the
+same hardware.
+
+     The  other  major   factor  in   CP/M's  success   must  be   the
+configurability.  How many microcomputer  users start with 64K  (which
+ISIS requires to do anything useful)?  With the ability to turn a  16K
+toy into a "real" computer, CP/M has ensured a very large following of
+devotees.
+     As mentioned  in the  users  manual, CP/M  is divided  into  four
+logically distinct but interacting parts:
+ 
+  BDOS (Basic Disk Operating System)
+  BIOS (Basic Input/Output System)
+  CCP (Console Command Processor)
+  TPA (Transient Program Area)
+
+     As there isn't a whole lot to  say about the TPA other than  that
+is where the transient programs are executed, and the users manual  is
+very explicit on the use of the CCP, I will deal mainly with the  BDOS
+and BIOS, which I consider to be the heart of the system.
+
+
+     THE BASIC DISK OPERATING SYSTEM (BDOS)
+
+     The BDOS is the file manager  of CP/M.  Though it an  application
+program can:
+
+     o Open a file
+     o Close a file
+     o Search for the first and subsequent entries in the
+       directory for a file
+     o Erase a file from the directory
+     o Read and Write logical records
+     o Create entries in the directory
+     o Rename entries in the directory
+
+
+as well as various  support functions.  These  functions mainly add  a
+level of abstraction to the disk  hardware as implemented in the  BIOS
+allowing the application  program(mer) to  deal with  the stored  data
+without having to know where it is physically located.  The BDOS  also
+acts as a conduit  between the application  program and the  character
+I/O entry points in the BIOS as well as providing some macro-functions
+for string I/O to and from the  console.  Thus through the use of  the
+BDOS, CP/M is able to transform a computer and its peripherals into  a
+generalized system with no particular hardware characteristics machine
+language itself.  (and through the use  of one of the many  "hi-level"
+languages which have been implemented to run under CP/M, it is possibe
+to solve problems with out even knowing or caring what kind of CPU  is
+running  the  show).   To  my  way  of  thinking,  this  is  a  rather
+significant development in micro-computing.
+
+     The BDOS functions  are listed and  explained quite throughly  in
+the programmer's guide so I will not bore the reader (and make  myself
+type anyone than  I have  to) by  reiterating them  here.  However,  I
+would like  to  address  myself  to  a  couple  of  points  which  are
+associated with the BDOS.   First, while monkeying  around one day,  I
+discovered that there are some  strange locations at the beginning  of
+the BDOS which  can be  (and most  definitely are)  used by  transient
+programs even though they are  supposedly secure inside the  operating
+system.  Here is an outline of these locations:
+ 
+         ORG     BDOS
+SERNUM:  DS      6
+ENTRY:   JMP     COMMAND
+         DW      BADIO
+         DW      SELERROR
+         DW      ROERROR
+MAP:     LXI     H,MAPTABLE     ; POINT HL AT LOG TO PHYS MAPPING
+         MVI     B,0            ; SET BC TO LOGICAL SECTOR (IN C)
+         DAD     B              ; INDEX INTO MAPPING TABLE
+         MOV     C,M            ; CONVERT LOGICAL TO PHYSICAL SECTOR
+         JMP     SETSECTOR      ; DO BIOS SET SECTOR FUNCTION
+         NOP
+
+MAPTABLE:
+     DB     1,7,13,19
+     DB     25,5,11,7           ; THIS TABLE MAPS LOGICAL ONTO
+     DB     23,3,9,15           ; PHYSICAL DISK SECTORS
+     DB     21,2,8,14
+     DB     20,26,6,12
+     DB     18,24,4,10
+     DB     16,22,0,0
+     DB     0,0,0,0             ; THE NULLS ARE ADDRESS ALINGMENT
+CONFIG:
+     DB     SECPT               ; SECTORS PER TRACK(26 ON IBM DISKS)
+     DB     LASTDIR             ; NUMBERS OF LAST DIRECTORY ENTRY (63)
+     DB     RPB                 ; 2**RPB=RECORDS PER BLOCK (3)
+     DB     LASTSEC             ; LAST SECTOR IN BLOCK (7)
+     DB     LASTBLOCK           ; LAST BLOCK ON THE DISK (242)
+     DB     DIRALLOC            ; DIRECTORY ALLOCATION MASK (C0 HEX)
+     DB     DIRTACK             ; TRACK THAT DIRECTORY BEGINS ON (2)
+ 
+     The first 6 bytes  of the BDOS contain  the serial numbers  which
+supposedly prevent  copyright infringments.   The next  3 contain  the
+actual entry point to the BDOS command decoder.  The next 9 bytes  are
+the addresses of routines inside the BDOS which are executed when  one
+of the three fatal errors occur.  Following the error addresses is the
+routine which the BDOS uses to stagger its data on a track followed by
+the mapping table.  After the  mapping table are some constants  which
+define the particular implementation of CP/M on specific size disks.
+
+     The error address can  be modified by  an application program  to
+recover somewhat more gracefully from a fatal error (I ran across this
+in a  screen-oriented text  editor  which made  possible to  save  the
+memory image of the  program after an  I/O error).  The  configuration
+table data can be used  (and is used by STAT  in version 1.4) to  find
+out what's going on with disk space.
+
+     As far  as  I  can  tell, it  is  not  serendipitious  that  this
+information exists and  is located  where it  is.  It  seems that  the
+people at Digital  Research left room  for certain easy  modifications
+and enhancements to CP/M.
+
+     The second point I  would like to address  is the technique  CP/M
+uses to do  housekeeping on  its files.   All of  the file  management
+functions in the BDOS use the  address of an FCB (file control  block)
+as their parameter.  Like  the concept of  the I/O byte  the FCB is  a
+rather  elegant  solution  to  the  housekeeping  problem  in  a  file
+management system.   It accomplishes  two  things for  the  operations
+system.  First  it  "decentralizes"  the process  of  maintaining  and
+second, it gives application programs  access to the same  information
+about a file that the BDOS uses.  These two factors together allow  an
+application to get  as close  as it  requires to  the file  management
+process.  There are some problems with the FCB, as implemented.  First
+there is the question of whether  or not an application OUGHT to  have
+access to housekeeping information as  it is possible to louse  things
+up pretty badly if things are not  done correctly.  This I think is  a
+matter of taste.  Since CP/M, as implemented, is a single-user  system
+there isn't the problem of messing other people's files up and it is a
+foolish programmer  indeed  who  messes with  something  that  is  not
+understood.
+
+     The other  problem is  a  bit more  serious  (rumor has  it  that
+Digital Research is dealing with  it).  Since the largest number  that
+an allocated block  can have (see  below) is 255(D)  and with a  block
+size of an even 2k,  the maximum number of  bytes of bytes of  storage
+CP/M can address  on one  disk is approximately  510 kilobytes.   This
+presents serious  impediments  (due  to  program  standardization)  to
+implementing the operating system on the larger disk systems  becoming
+available.
+
+     Be that as it may, within the scope of single (or perhaps double)
+density floppy disks, the  FCB is in my  opinion, a stroke of  genius.
+Because  an  application,  through  the  use  of  the  FCB,  has  such
+flexibility it behooves the assembly language programmer to understand
+as best he or she can how to use it.  The programmer's guide describes
+the format and I'll elaborate a bit on it.
+
+     The FCB consists  of seven  fields of information  each having  a
+mnemonic associated with it.  They are:
+ 
+         FIELD           FCB POSITIONS
+         ET              0
+         FN              1-8
+         FT              9-11
+         EX              12
+         NOT USED        13-14
+         RC              15
+         DM              16-31
+         NR              32
+ 
+     The FN and FT fields are only logically distinct.  The BDOS  uses
+all eleven bytes as  a fundamental unit  of information when  opening,
+closing, creating,  erasing, searching  and renaming  files.  (The  EX
+field is included during OPEN,  CLOSE, CREATE and SEARCH  operations).
+It is the CCP and transient programs which make a distinction  between
+file name and file type.
+
+     Since a file can be of any length up to the capacity of the  disk
+and since a single FCB describes only 16k bytes of a file, there  must
+be a way to link multiple sections of a file each described by its own
+FCB.  This is done via the EX  field.  The first extent of a file  has
+an EX value of 0, the second a value of 1 and so on.
+
+     The  ET  field  is  an  interesting  mixture  of  usefulness  and
+ambiguity.  When the FCB is stored  in the directory the ET filed  may
+contain a  0,  indicating  that  the  entry  is  used,  or,  an  E5(H)
+indicating that the entry has been deleted (or never used).   However,
+when the FCB  is used as  a parmeter  for one of  the file  management
+functions, the ET field serves an entirely different purpose.  If ET=0
+then then  the BDOS  will  assume that  the  command pertains  to  the
+currently selected disk.  If  the ET field is  not zero then the  BDOS
+assumes that  it contains  the  disk number+1  to which  the  function
+pertains.  In this case the  BDOS will temporarily select disk  number
+ET-1 and then clear  ET to zero before  proceeding with the  requested
+function.  When the file operation is complete, the BDOS will  restore
+ET to its  original value.   Thus, an application  program need  never
+concern itself with remembering or  selecting specific disks as  these
+values are retained throughout processing  from the time that the  CCP
+sets them up in the default FCBs.
+
+    The RC field  is essentially an  "end of extent"  pointer.  It  is
+"pushed" along by the NR  field when writing is  used to limit the  NR
+field during reading to prevent the reading unwritten data.
+
+     The DM field is an array of 16 bytes, each representing a logical
+block of data  within the extent.   The value of  each of these  bytes
+represents the physical area  of disk space  allocated to the  logical
+block unless the  value is 0,  in which  case the block  has not  been
+allocated any disk space.
+
+     Together, the RC and  DM fields form  a "current" description  of
+the locations on the disk used by the data contained with the  extent.
+
+     The NR field  is used to  specify which record,  relative to  the
+beginning of the  extent, is  to be read  or written.   The BDOS  will
+automatically increment this number during read and write  operations,
+making sequential file access virtually automatic.
+
+
+                     The BASIC I/O SYSTEM (BIOS)
+                     ===========================
+
+     This section  of the  system concerns  itself with  the  hardware
+dependent aspects of I/O.  There are two types:
+
+         1) Disk I/O, which is block oriented
+         2) Character I/O, which is byte oriented
+
+It is convenient to consider these  two aspects seperately as they  do
+not interact directly.
+
+     Looking at  the  BIOS  jump  table  (as  described  in  the  CP/M
+documentation),  the   first  two   entries   are  paths   to   system
+initialization routines.   The  next  six  are  entry  points  to  the
+character I/O routines and the rest  are entry points to disk I/O  and
+disk support routines.  The section called "BIOS Entry Points" in  the
+System Alteration Guide  describes the  function of each  of these  15
+entry points better than I could.  However, what the guide does not do
+(as it is only a manual) is point out the importance of the I/O  byte.
+I consider this to be deserving of special attention.
+
+     Experience (mostly  my  own)  has  shown  that  until  one  makes
+concrete use of the  I/O byte concept, it  is difficult to  appreciate
+the elegance of this  technique.  It does have  its limits, but it  is
+very simple  and effective  solution to  CP/M's character  I/O  device
+standardization problems.
+
+     I first ran  across this  concept on the  MDS MOD-80  development
+system which did  not have  disk drives and  used paper  tape for  its
+off-line storage.  The Intel Monitor used a standard jump table  which
+allowed programs to  do character  I/O without  necessarily having  to
+worry about the actual hardware devices.  Perhaps you've seen it,  but
+in case you haven't here it is.
+ 
+        ORG     MOINTOR
+        JMP     MAINLINE
+        JMP     CI              ; CONSOLE INPUT
+        JMP     RI              ; READER INPUT
+        JMP     CO              ; CONSOLE OUTPUT
+        JMP     PO              ; PUNCH OUTPUT
+        JMP     LO              ; LIST OUTPUT
+        JMP     CSTS            ; RETURN CONSOLE STATUS
+        JMP     IOCHK           ; RETURN I/O BYTE
+        JMP     IOSET           ; CHANGE I/O BYTE (NEW VALUE IN C)
+        JMP     MEMCK           ; RETURN TOP OF USER MEMORY IN A AND B
+
+     As you can see, this does  basically the same that the BIOS  jump
+table does.  IOCHK, IOSET and MEMCHK are not needed in the BIOS  since
+the information returned  by these  routines are located  in the  zero
+page of CP/M's memory.
+
+     As the  alteration  guide  is  not explicit  on  the  subject  of
+implementing an I/O byte, I'll  outline in assembly language code  the
+techniques I've found useful for a generalized implementation.
+
+     But first notice that each of the six character I/O routines must
+decode out the path to  the specific I/O device "currently  assigned".
+The way  this  is done  (in  English) is  as  follows.  The  I/O  byte
+contains four fields, each as consisting  of low bits.  Each field  is
+associated with one of  the four "logical"  I/O devices (List,  Punch,
+Reader and  Console) and  may take  on the  value of  (in binary)  00,
+01,10, or 11.  Thus, up to four different physical I/O devices may  be
+associated with each of the four "logical" devices.  For example,  the
+logical device  "List."  By  manipulating the  value of  these 2  bits
+(presumably) without affecting the rest of the byte) one may  "assign"
+a specific hardware driver (and the device itself) to the list device.
+In PASCALese this is the decoder:
+
+         VAR IOBYTE(4): PACKED ARRAY OF (0..3)
+         DO CASE IOBYTE(4)
+         0:  TTYOUT;
+         1:  LPTOUT;
+         2:  CRTOUT;
+         3:  USERLIST;
+         END
+
+     The alteration guide and documentation  on PIP and STAT  describe
+what these physical device might be.  The command:
+
+       STAT VAL:
+
+produces essentially a menu of the nominal physical devices assignable
+in the CP/M system.
+
+     Here is some software:
+
+        IOBYTE  EQU     3       ; LOCATION OF IOBYTE
+        CMASK   EQU     03H     ; CONSOLE MASK
+        RMASK   EQU     0CH     ; READER MASK
+        PMASK   EQU     30H     ; PUNCH MASK
+        LMASK   EQU     0C0H    ; LIST MASK
+        RD2     EQU     08H     ; READER DEVICE 2 MASK
+        PD2     EQU     40H     ; PUNCH DEVICE 2 MASK
+CONTIN:
+        LDA     IOBYTE          ; GET IOBYTE
+        ANI     CMASK           ; LOOK AT CONSOLE FIELD
+        JZ      TTYIN           ; CONSOLE 0:
+        JPE     UCIN1           ; CONSOLE 3:
+        RAR                     ; CONSOLE1:
+        JC      KBDIN           ; CONSOLE 1:
+        JMP     BACHIN          ; CONSOLE 2
+ONOUT:
+        LDA     IOBYTE          ; GET IO BYTE
+        ANI     CMASK           ; LOOK AT CONSOLE FIELD
+        JZ      TTYOUT          ; CONSOLE 0:
+        JPE     UCOUT1          ; CONSOLE 3:
+        RAR                     ; LOOK FOR CONSOLE 1
+        JC      CRTOUT          ; CONSOLE 1:
+        JMP     BACHOUT         ; CONSOLE 2
+CONSTAT:
+        LDA     IOBYTE
+        ANI     CMASK
+        JZ      TTYSTAT         ; CONSOLE STATUS 0
+        JPE     UCSTAT1         ; CONSOLE STATUS 3
+        RAR
+        JC      KBDSTAT         ; CONSOLE STATUS 3
+        RET                     ; DON'T KNOW WHAT STATUS 2 IS
+READER:
+        LDA     IOBYTE
+        ANI     RMASK           ; LOOK AT READER BITS ONLY
+        JZ      TTYIN           ; READER 0
+        JPE     UR2             ; READER 3:
+        ANI     RD2             ; SEE IF EITHER READER 1 OR 2
+        JZ      PT              ; READER 1 IF ZERO
+        JMP     UR1             ; READER 2 IF NOT
+PUNCH:
+        LDA     IOBYTE
+        ANI     PMASK
+        JZ      TTYOUT          ; PUNCH 0
+        JPE     UP2             ; PUNCH 3
+        ANI     PD2             ; SEE IF EITHER READER 1 OR 2
+        JZ      PTP             ; PUNCH 1 IF ZERO
+        JMP     UP1             ; PUNCH 2 IF NOT
+LIST:
+        LDA     IOBYTE
+        ANI     LMASK
+        JZ      TTYOUT          ; LIST 0:
+        JPE     UL1             ; LIST 3:
+        JM      LPTOUT          ; LIST 2:
+        JMP     CRT             ; LIST 1:
+
+     The logical device "BATCH" is a hangover from the Intel I/O  byte
+definition.  It was originally intended  to allow console input to  be
+some continuous input device, such as papertape, tape, and the console
+output be a hard copy device such as a line printer.  This was to make
+it possible to create "jobs" offline and then run them unattended.
+     CP/M's SUBMIT  command is  the counterpart  of this  function  in
+floppy  disk  land,  though  it  seems  to  have  lost  a  little   in
+translation.
+
+     What all this buys us  as CP/M users is  this: If you can  figure
+out how to make a piece of  hardware accept or produce data, one  byte
+at a time, then  it can be  assigned to one or  more of these  logical
+devices.  You are then able to treat it in application software as you
+would any  of the  standard character  I/O devices  such as  a CRT  or
+keyboard.
+
+     As for the  disk I/O,  things are not  quite as  elegant but  are
+standarized so as not  to ruin CP/M's  implementability.  It looks  as
+though Digital Research asked themselves,  "What does all floppy  disk
+hardware need  from the  processor to  perform disk  I/O?"  Again  the
+alteration guide is a better place than here to answer that  question.
+However, I'd like to discuss something that was discovered during  the
+implementation of CP/M on my hardware.
+
+     By the way  of background, the  disk hardware on  my computer  is
+totally bizarre.  It uses a 256 byte,  hard sectors.  16 of them on  a
+track, and  writes  the  bytes  bitwise,  backwards  with  respect  to
+literally everyone else.  I did everything short of making a pact with
+Methistopheles (the devil's agent.  Ed.) in order to make my equipment
+look like  IBM compatible  hardware.   In experimenting  with  various
+techniques, both  my own  and from  suggestions of  others, I  finally
+implemented a  full-track (26  IBM  sectors) buffering  concept  which
+works very well  for me.   I can provide  listings of  this if  anyone
+cares to see it.
+
+     The  important   thing   that   I  discovered   was   that   most
+implementations of  the BIOS  do not  have provisions  for read  after
+write, or similar way of verifing that the data was written correctly.
+Obviously, with  the  low  error rate  floppy  disks  supposedly  have
+(something 1 in 6 million bytes) the overhead of doing a verify  after
+write may not be justified.  Since I was writing software which, if  a
+bit were  dropped, could  unpleasantly affect  all future  development
+(including modifications  to CP/M  itself)  I felt  that I  could  not
+afford even that small chance of  error or at least not knowing  about
+the error  if it  should occur.   But here's  the catch:  In order  to
+verify one sector after writing you  have absolutely no choice but  to
+wait for the disk to bring it around again.  This means that in  order
+to write one whole track this way, it will take 26 revolutions of  the
+disk!  At a sixth of a second per revolution (on 8 inch floppy drives)
+that amounts  to 4  1/3 seconds  which is  obviously unacceptable  and
+totally unjustifiable.  Using a full track buffer, I was able to solve
+that problem very neatly.   It took one revolution  to write the  data
+and one revolution to verify that  it was written correctly.  This  is
+approximately 300 milliseconds or a savings of over 400 percent.
+
+     The following is a detailed explanation of disk space  allocation
+and what the BDOS does with the FCB during file I/O.
+
+                        Disk Space Allocation
+                        =====================
+
+     First number  all of  the sectors  on  the disk  from 1  to  2002
+starting at sector  1 track zero.   I'll refer to  this number as  the
+"INTEGER SECTOR  NUMBER"  or ISECTOR.   CP/M  reserves the  first  two
+tracks (ISECTOR 1-52) for holding image  of the system as well as  the
+bootstrap program  (see  the  Alteration Guide  section  of  the  CP/M
+documentation).  Thus there  are 1950  sectors available  on a  single
+density dsk starting at ISECTOR 53.
+
+     For reasons which should become apparent, space is not  allocated
+on a sector-by-sector basis.  Instead, space is allocated in 8  sector
+blocks (I'm  told that  the  double density  version allocates  in  16
+sector blocks).  That means there are  1950/8 or 243 (remainder of  6)
+allocatable blocks of disk space.  Blocks zero and 1 are pre-allocated
+(when a disk is logged on) for the directory and the 6 sectors in  the
+partial block  are not  used.   Thus there  are 241  blocks  (241*1024
+bytes) of disk space available on the disk for data, starting at block
+2.
+
+     In order to keep  track of which blocks  have been allocated  and
+which have not,  the BDOS  maintains an "allocation  VECTOR" for  each
+logged-on disk.  This data structure is  an array of 256 bits  (packed
+into 32 bytes),  where each  bit is  associated by  position with  the
+corresponding block of disk space.  For example the first two bits  in
+the array are always  turned on indicating that  the first two  blocks
+are allocated to the directory.  The allocation vector is created when
+a disk is  selected for the  first time (logged  on) after  re-booting
+(booting), by  examining the  DM  (Disk Map)  field of  all  non-empty
+(ET=0) FCBs  (File Control  Blocks) in  the directory.   Since the  DM
+field of an extent  contains the numbers of  all the blocks  belonging
+(allocated) to the  extent, the  collection of  all DM  fields in  the
+directory describe all space that is  currently used on the disk.   It
+is a relatively simple task to look at  a byte in a DM field and  turn
+on its associated bit in the allocation vector, which is exactly  what
+the BDOS does.
+
+     After the allocation vector is created, it is updated whenever  a
+new block is allocated, as are the DM byes for the extent.  It  should
+be noted, I think that this  technique for space management does  away
+with specific  file  and free  space  linking  as well  as  having  to
+explicitly store a bit map on the disk.
+
+     It is  an  easy  task  to  translate  block  numbers  into  their
+corresponding physical  track  and sector  numbers  on the  disk.   By
+including in the process, a relative record number (from the beginning
+of an extent) it is not much more work to map the logical records of a
+file onto  exact physical  disk locations.   This is,  I believe,  the
+virtue of CP/M's file structure.
+
+
+11.5  Disk Mapping Process
+
+     There are three steps to the mapping process:  let:
+
+     ISECTOR = integer sector number
+     TRACK   = track containing sector
+     LSECTOR = logical sector (before staggering)
+     PSECTOR = physical sector (after staggering)
+     BLOCK   = block containing logical record
+
+     1.  The first  step is  to calculate the  integer sector  number.
+         This is done using:
+
+              ISECTOR = (BLOCK*8) + (NR MOD 8) +52
+
+              We multiply BLOCK by 8  because there are 8 sectors  per
+         block.  NR MOD  8 produces the  displacement into the  block,
+         and 52 must be added because block zero begins at ISECTOR  52
+         (remember that the  System image  is stored in  the first  52
+         disk sectors).   Note: if  you're  unfamiliar with  the  term
+         "MOD", it means "Use the remainder produced by the division".
+         E.G.:
+
+              25 MOD 5  =  0 (5*5=25 remainder 0)
+              25 MOD 7  =  4 (3*7=21 remainder 4)
+              25 MOD 27 = 25 (27*0=0 remainder 25)
+
+     2.  Next we calculate the physical track and logical sector.
+
+              TRACK = ISECTOR/26
+              LSECTOR = ISECTOR MOD 26
+
+         (26 because there are 26 sectors on a track.)
+
+     3.  Finally we map the logical sector using the routine "MAP"  at
+         the beginning of the BDOS:
+
+              PSECTOR = MAPTABLE(LSECTOR)
+
+         There is an algorithm which will produce "MAPTABLE":
+
+              DIMENSION MAPTABLE(26)
+              MAP(1)=1
+              FOR N=2 TO 26
+              IF N > 13 THEN J=1
+                   ELSE J=0
+              MAP(N)=((MAP(N-1)+6 MOD 26) +J
+              NEXT N
+              END
+
+         What this really does is  stagger the logical sectors  around
+         the track so that they are actually 5 physical sectors apart.
+         This allows CP/M  five sectors  or about  35 milliseconds  of
+         processing time between  disk accesses  in order  to keep  up
+         with disk latency.
+
+
+11.6  FILE CONTROL BLOCK USAGE DURING I/O
+
+     In general the  following explains  what happens when  a read  or
+write operation is requested by an application.  There are a series of
+exceptions which the BDOS  checks for, including  "READ PAST EOF"  and
+"DISK FULL"..  Foor the sake of  this discussion let us assume that  a
+write operation is being requested.  Reading is very similar.
+
+     The BDOS will first increment the NR field and determine  whether
+or not the next record is within a previously allocated block.
+
+          NR := NR+1
+          IF DM(NR/8) = 0
+            THEN BLOCK NOT ALLOCATED
+            ELSE BLOCK IS ALLOCATED
+
+"NR/8" determines which of the DM bytes (logical blocks) contains  the
+logical  record  in  question.   If  a  physical  block  needs  to  be
+allocated, the BDOS will search through the allocation vector to  find
+an unallocated block  (which can be  anywhere on the  disk).  If  none
+exists (i.e.  no  zero bits in  map) then a  "DISK FULL" condition  is
+returned to the application  (calling program).  If  a block is  found
+its bit is turned on and its number is deposited at location DM(NR/8).
+
+     After this, the  absolute sector is  determined and is  converted
+into the physical track and sector numbers.  Then the data is written.
+
+     The read operation is similar except that no space allocation  is
+performed.  Instead,  if  the record  being  requested to  read  falls
+within an unallocated block a "READ PAST EOF" condition is returned to
+the application (Calling program).
+
+     For both the read and write  operations, if the NR field goes  to
+128 decimal when incremented, the BDOS will close the current  extent,
+increment the EX  field and  attempt to open  the next  extent of  the
+file.  If the operation was a write and the next extent doesn't exist,
+the BDOS will create it and then open it.  If the operation was a read
+and the next  extent doesn't  exist, a  "READ PAST  EOF" condition  is
+generated as it will in the case that either NR is greater that 128 or
+NR is greater than RC is true.
+
+     Here is an example:
+
+          LET:
+          NR = 12
+          RC = 17
+          DM(0) = 50
+          DM(1) = 51
+          DM(2)-DM(15) = ANYTHING.
+
+          1.     NR := NR+1      (NR=13)
+
+          2.     LBLOCK  = NR/8
+                         = 12/8
+                         = 1
+
+          3.     BLOCK   = DM(LBLOCK)
+                         = DM(1)
+                         = 51
+
+          4.     ISECTOR = (BLOCK*8)+(NR MOD 8) + 52
+                         = (51*8)+(13 MOD 8) + 52
+                         = 408+4+52
+                         = 464
+
+          5.     TRACK   = ISECTOR/26
+                         = 464/26
+                         = 17
+
+          6.     LSECTOR = ISECTOR MOD 26
+                         = 464 MOD 26
+                         = 22
+
+     7.     PSECTOR = MAPTABLE(LSECTOR)
+                         = MAPTABLE(22)
+                         = 24
+
+Thus the sector being accessed is 24 on track 17.
+
+
+                         Miscellaneous Stuff
+
+     To conclude, there are some interesting tid-bits which the reader
+may (or may not for that matter) find useful.
+
+     The SUBMIT processor in the CCP (Console Command Processor)  uses
+a very  interesting programming  technique  which I  found  worthwhile
+understanding.  Recall that the transient program "SUBMIT" uses as its
+input a text file of CP/M commands and produces a file called  $$$.SUB
+which the CCP will  use as a command  file.  For example consider  the
+following submit file:
+
+     A:PIP B:PROG.ASM=B:PO.SRC,B:P1.SRC(CR)(LF)
+     A:ASM PROG.BBB(CR)(LF)
+     A:LOAD B:PROG(CR)(LF)
+     A:PIP LST:=B:PROG,PRN(T8P50)(CR)(LF)
+
+     The Submit  program turns  the file  into a  series of  128  byte
+records arranged such that the first line of the original file is  the
+last record of the new  file, the second line  the second to the  last
+record and so on.  Each record has the following form:
+
+     byte 1:             length
+     bytes 2-length+1:   command string
+     bytes length+2-128: undefined
+
+     The above file  would look  like this when  converted to  $$$.SUB
+(the numbers  in  decimal and  brackets  are included  here  just  for
+clarity):
+
+     record 1:  (28)A:PIP LST:=B:PROG,PRN(T8P50)
+     record 2:  (13)A:LOAD B:PROG
+     record 3:  (14)A:ASM PROG.BBB
+     record 4:  (33)A:PIP B:PROG.ASM=B:PO.SRC,B:P1.SRC
+
+     Why, you  ask, is  $$$.SUB backwards?   Well that's  part of  the
+trick.  Remember that  the RC field  in the  FCB is an  end of  extent
+pointer.  If the $$$.SUB file is on the disk the CCP will open it  and
+set the NR field of the FCB to RC-1 and read the file.  What this does
+is read  in the  last record  of the  file (as  determined by  the  RC
+field).  After the read the BDOS will decrement the RC field and close
+the file, which will cause the FCB and specifically the RC field to be
+updated.  The CCP will use  the data just read as  a command as if  it
+had been typed  in from the  console.  The next  time around, the  CCP
+will do the same thing except that the RC field is now pointing at the
+record whose number is one less  than that of the previous  operation.
+In other words, the  RC field is used  as an implicit record  pointer.
+Very neat and it works too!
+
+     Sometimes it is  desirable to  bypass the  BDOS and  communicated
+directly with certain BIOS  functions.  For example MICROSOFT's  BASIC
+interpreter does not use the BDOS  character I/O functions as it  does
+its own line editing  and the USCD  Pascal system completely  overlays
+the BDOS.  There is a technique for accessing the BIOS that is general
+enough so as not to be considered a kludge.  An application can always
+find the page boundary on which the BIOS begins by examining the  high
+order address byte of  the warm boot entry  point.  Using that as  the
+high order byte of the address the low order byte is set to an  offset
+into that pags determined by:
+
+     OFFSET=FUNCTION * 3
+
+as each entry  is three bytes.   For example here  is a short  routine
+which causes data to be written to the list device:
+
+LOFF     EQU     0FH            ; BIOS+LOFF=LIST ENTRY
+
+LIST:
+        PUSH    H               ; SAVE HL
+        LHLD    1               ; GET ADDRESS OF WARM BOOT
+        MVI     L,LOFF          ; SET LOW ORDER BYTE TO LIST OFFSET
+        XTHL                    ; RESTORE HL, LIST ADDRESS ON STACK
+        RET                     ; EXECUTE LIST ROUTINE IN BIOS
+
+This technique works as  long as the BIOS  begins on a page  boundary.
+The more general technique would be:
+
+LOFF     EQU     0FH-3          ; OFFSET FROM WARM BOOT ENTRY
+
+LIST:
+        PUSH    H               ; SAVE HL
+        LHLD    1               ; GET ADDRESS OF WARM BOOT
+        PUSH    D               ; SAVE DE
+        LXI     D,LOFF
+        DAD     D               ; GET TO LIST ENTRY POINT
+        POP     D               ; RESTORE DE
+        XTHL                    ; RESTORE HL
+        RET                     ; EXECUTE LIST ROUTINE
+
+     There is one more thing and then I'll quit.  If you remember from
+above, I mentioned that while  poking around inside a  screen-oriented
+text editor, I found that it modified the error address fields at  the
+beginning of the  BDOS.  It also  does another clever  thing.  In  the
+editor there is  a command  to save  the rest  of the  file, exit  the
+editor  and  automatically  process  it  with  an  entirely  different
+program, such  as  an  assembler  or  text  formatter.   There  is  an
+interesting technique  here which  could  be generally  useful.   What
+happens is  this:  First, modify  the  address of  the  console  input
+routine in  the  BIOS  jump  table  to  cause  a  routine  inside  the
+application program  to supply  data  to the  CCP.   This is  done  as
+follows:
+
+        LHLD    1               ; GET THE BIOS PAGE ADDRESS IN H
+        MVI     L,CI+1          ; HL IS THE ADDRESS OF THE ADDRESS
+                                ; OF CONSOLE INPUT ROUTINE
+        MOV     E,M             ; GET THE DEVICE ADDRESS IN DE
+        INX     H
+        MOV     D,M
+        XCHG
+        SHLD    SAVE            ; SAVE IT OR LATER
+        LXI     D,ALT           ; DE IS ADDRESS OF ALTERNATE ROUTINE
+        MOV     M,D             ; POKE JUMP ADDRESS IN BIOS JUMP TABLE
+        DCX     H
+        MOV     M,E
+        JMP     0               ; AND RE-BOOT
+SAVE:   DS      2               ; LOCATION USED TO SAVE
+                                ; CONSOLE INPUT DEVICE ADDRESS
+
+     After doing this,  everytime the  CCP requests  a character  from
+what it  thinks is  the console  input  device, it  will be  handed  a
+character from inside the  original application program.  Just  before
+handing the CCP a  carriage return, the  application will restore  the
+original address of the console input routine:
+
+        LHLD    SAVE            ; GET ORIGINAL DEVICE ADDRESS
+        XCHG                    ; PUT IN DE
+        LHLD    1               ; GET ADDRESS OF ADDRESS FIELD OF
+                                ; CONSOLE INPUT ENTRY
+        MVI     L,CI+1
+        MOV     M,D             ; RESTORE ORIGINAL ADDRESS
+        INX     H
+        MOV     M,E
+                                ; ... AND CONTINUE
+
+The routine that does character handling is essentially this:
+
+        LHLD    POINTER         ; GET ADDRESS OF NEXT CHARACTER
+        MOV     A,M             ; GET NEXT CHARACTER
+        INX     H               ; ADVANCE POINTER
+        SHLD    POINTER         ; SAVE POINTER
+        CPI     CR              ; END OF DATA?
+        RNZ                     ; IF NOT THEN JUST RETURN IT
+                                ; ELSE RESTORE CONSOLE
+                                ; INPUT ADDRESSES
+
+     This works for two reasons: obviously the BIOS jump table can  be
+considered data as well as code  (hail to John Von Neumann) and  since
+the original  program will  remain intact  until the  next program  is
+actually loaded on top of it, the routine simulating the console  will
+function normally.   This  technique  suggests  a  viable  method  for
+chaining a series of programs together without having to  specifically
+build a submit file for each chain.
+
+
+
+        CP/M QUICK REFERENCE; compiled by Steve Stolen
+===========================================================================
+I Func. I  Func. I  Function          I Entry Parameter  I Return Value    I 
+I Code  I  Code  I        (C)         I (DE)  (E)        I (A)             I 
+I (Dec) I  (Hex) I                    I                  I                 I 
+==========================================================================
+I    1  I     1  I  Read Console      I       -          I ASCII Char.     I 
+---------------------------------------------------------------------
+I    2  I     2  I  Write Console     I  ASCII Char.     I        -        I 
+----------------------------------------------------------------------------
+I    3  I     3  I  Read Console      I       -          I ASCII Char.     I 
+----------------------------------------------------------------------------
+I    4  I     4  I  Write Punch       I  ASCII Char.     I        -        I 
+----------------------------------------------------------------------------
+I    5  I     5  I  Write List        I  ASCII Char.     I        -        I 
+---------------------------------------------------------------------------
+I    6  I     6  I       -            I       -          I        -        I 
+----------------------------------------------------------------------------
+I    7  I     7  I  Get I/O Status    I       -          I I/O Status Byte I 
+----------------------------------------------------------------------------
+I    8  I     8  I  Set I/O Status    I  I/O Status Byte I        -        I 
+----------------------------------------------------------------------------
+I    9  I     9  I  Print Buffer      I  Buffer Address  I        -        I 
+----------------------------------------------------------------------------
+I   10  I     A  I  Read Buffer       I  Buffer Address  I        -        I 
+----------------------------------------------------------------------------
+I   11  I     B  I  Check Console Rdy I       -          I        -        I 
+----------------------------------------------------------------------------
+I   12  I     C  I  Lift Head         I       -          I        -        I 
+----------------------------------------------------------------------------
+I   13  I     D  I  Initialize BDOS   I       -          I        -        I 
+----------------------------------------------------------------------------
+I   14  I     E  I  Log in Drive      I  0...N           I        -        I 
+----------------------------------------------------------------------------
+I   15  I     F  I  Open File         I  FCB             I 255=not present I 
+----------------------------------------------------------------------------
+I   16  I    10  I  Close File        I  FCB             I 255=not present I 
+--------------------------------------------------------------------------
+I   17  I    11  I  File Search       I  FCB             I 255=no match    I 
+----------------------------------------------------------------------------
+I   18  I    12  I  File Search Next  I  FCB             I Adr.next entry  I 
+----------------------------------------------------------------------------
+I   19  I    13  I  Delete File       I  FCB             I       -         I 
+----------------------------------------------------------------------------
+I   20  I    14  I  Read Next Record  I  FCB +           I 0=OK 1=EOF 2=ND I 
+----------------------------------------------------------------------------
+I   21  I    15  I  Write Next Record I  FCB +           I See Notes       I 
+----------------------------------------------------------------------------
+I   22  I    16  I  Make File         I  FCB             I 255=DIR Full    I 
+----------------------------------------------------------------------------
+I   25  I    19  I  Drive Number ?    I        -         I  Drive Number   I 
+----------------------------------------------------------------------------
+I   26  I    1A  I  Set DMA Address   I  DMA Address     I        -        I 
+----------------------------------------------------------------------------
+============================================================================
+
+
+               HOW TO PATCH CP/M TO BACKSPACE ON RUBOUT
+               ----------------------------------------
+
+The patches listed below will allow  CP/M to echo the delete  function
+as a backspace.  Since one of the patches takes advantage of the  jump
+relative capability of the Z80, THE PATCHES WILL NOT WORK AS DESCRIBED
+ON AN 8080 SYSTEM.  However with the info given it will be simple  for
+an 8080 user to make the appropriate patch that will function.
+
+      CAUTION: I am  currently using  this patch  and to  date it  has
+proven to work well.  It does not work within the 'Insert' mode of the
+Editor, but it does work at  command level.  I'll leave it to  someone
+else to figure out why.  Anyway use it at your own risk.
+
+PATCH ONE: The console  input routine (12F3H) gets  a char and,  after
+testing for carriage return, tests for 'delete'.  If the test for  7FH
+is successful, CP/M gets the counter from Reg B and tests it for zero.
+If true (i.e. we're at start of buffer) a jump is executed back to the
+console input routine.
+
+If we are not at the start of the buffer, CP/M loads the previous char
+(pointed to by HL) into the Acc  and jumps to the CONOUT rout.   Since
+we want to echo a backspace instead of the previous char, replace  the
+MOV A,M with MVI A,08 (or whichever character it is that your terminal
+treats as a backspace).  The extra memory location required by the MVI
+instruction is recovered by replacing the JZ XX73 with JR Z,E9.   More
+precisely:
+
+LOC IN TPA AFTER        ORIGINAL MACHINE CODE      REPLACED BY
+     SYSGEN
+----------------        ---------------------      -----------
+    1308                    CA XX 73 7E            28 E9 3E 08
+
+PATCH TWO: CP/M  will convert any  character less than  20 hex to  its
+Ascii equivalent preceeded by  '^'.  All except CR,  LF, and that  is.
+To enable our backspace character to be echoed unchanged, we insert  a
+patch at the start of the conversion routine to test for '08' and exit
+if true.  Again in the TPA:
+
+LOC IN TPA AFTER        ORIGINAL MACHINE CODE       REPLACED BY
+     SYSGEN
+----------------        ---------------------       -----------
+    12B0                     F5 3E 5E               C3 <PATCH>
+AND:
+  <PATCH, LOC                  N/A                  FE 08 CA 3A
+    YOUR CHOICE>                                    XX F5 3E 5E
+                                                    C3 XX 33
+
+NOTE: The  'XX's  above  must  be replaced  by  the  appropriate  page
+boundaries if  your operating  CP/M system.   Also since  we are  only
+echoing one backspace, the control characters which CP/M echoed as two
+characters will not be completely removed (we leave the '^').  Again I
+will leave it to you to come up with a more glamorous fix.
+
+---  EOF ---

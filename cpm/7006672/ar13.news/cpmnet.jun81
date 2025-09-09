@@ -1,0 +1,762 @@
+
+>>>>>>>>>>>>>>>>>>>>> CP/M-Net News <<<<<<<<<<<<<<<<<<<<<<<<
+
+============================================================
+Number 6               June, 1981          Volume 1, Issue 6
+============================================================
+
+                      In This Issue
+                      =============
+
+              DU - THE Universal Disk Utility
+                     by: Eddie Currie
+
+Communications Standards and Protocols: Let's Get Together!
+             by: Wally A. Linstruth,  WA6JPR 
+
+                     DDT WITH B: !!!
+                  by: Michael J. Karas
+
+       Running Submit Files from Disks other than A:
+                     by: Leor Zolman
+
+     A Simple Program to Calculate Modem Transfer Time
+             by: Kelly Smith, CP/M-Net "SYSOP"
+
+                 CP/M-Net "Tip-of-the-Month"
+  Patch to CP/M 2.x to Display User Number in Drive Prompt
+             by: Bruce Kendall and Bruce Ratoff
+           (additional comments by: Kelly Smith)
+
+ Printed  monthly  (at worst quarterly) to inform user's  of 
+RCPM Systems to the latest software news,  information,  and 
+updates   of   public   domain   software   accessible   via 
+telephone/modem transfer.  Yearly subscription for copies of 
+the  CP/M-Net News may be obtained by mailing $18.00  (check 
+or money orders only) to Kelly Smith,  CP/M-Net,  3055  Waco 
+Street,  Simi Valley,  California 93063.  CP/M-Net is a non-
+profit  orginization and all money received on subscriptions 
+are utilized for the sustaining and enhancments of the CP/M-
+Net System.
+
+ If  you  would  like to contribute an  article,  include  a 
+column  containing your area of interest and  expertise,  or 
+participate  in an open forum for conversation and  transfer 
+of  ideas,  feel free to send it to the CP/M-Net System  and 
+indicate that you would like it to be included in the  CP/M-
+Net  News...if possible,  use WordStar (trademark,  MicroPro 
+International)  or  Electric  Pencil   (trademark,   Micheal 
+Shrayer) in 60 column format.
+ 
+NOTE:  CP/M is a registerd trademark of Digital Research
+============================================================
+
+                       On the Stack
+                       ============
+
+ Many  thanks to the following supporting subscribers to the 
+CP/M-Net News:
+
+Stanley B. Fowler, Envirotech Corporation, El Monte, CA.
+Paul Kelley, Waban, Mass.
+Walter A. Linstruth - WA6JPR, Redondo Beach, CA.
+Albert L. Ponaman, World Wide Search, Inc., Canoga Park, CA.
+Dick Rice, American Management Consultants, N.Hollywood, CA.
+Joseph C. Sharp, Micro Science Assoc., San Luis Obispo, CA.
+Sandy's Shoppe, El Segundo, CA.
+Donald s. Tork, Thousand Oaks, CA.
+
+ Note:   Back  issues  for  the  CP/M-Net  News  Letter  are 
+available  for  two  dollars  each.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+              DU - THE Universal Disk Utility
+              ===============================
+
+                     by: Eddie Currie
+
+ Ward  Christensen has done it again ...  with the advent of 
+DU ,  his universal disk utility, an extremely powerful disk 
+maintenance  and  repair facility is provided  to  the  CP/M 
+user.  Version  7.5  is  menu driven and Any  valid  command 
+string  may  be  placed as an operand  of  the  original  DU 
+command, e.g.
+
+A>DU G0;D;G2;=OK<D><A><1A>;D
+
+Functions supported:
+
+	Tnn	Seek to track nn (no read)
+	Snn	Position to sector nn, and read
+	Gnn	Position to group nn and read.
+	G	Shows current position
+	V	Views the current sector.
+		(assumes ASCII data)
+	Vnn	Views nn sectors
+	Fname	print directory for file "name",
+		then positions to it's directory 
+		sector. (Won't position under
+		CP/M 2.x, but see = command below.)
+
+	=string	Ascii search, starting at current
+		sector. <xx> hex may be imbedded,
+		or used alone:  To find "IN 0FEH":
+		=<db><fe>
+		Ignores bit 7 unless <xx> is used.
+
+	L	Re-logs in the current disk. You may pull
+		out a disk, put in a new, and "L" just
+		to log it in.
+
+	Lx	Logs in disk 'x', such as: LB
+
+	Ux	Logs user 'x' for next F command.  Gives
+		'?' error if not CP/M version 2.x.
+
+	D	Dump sector, hex + ASCII
+	A	Dump sector, ASCII only
+	H	Dump sector, hex only
+
+ Note  that all dump commands (D,  A,  H) may be  optionally 
+followed by a starting and ending address:
+
+
+ 	D0,7F	is the same as just D
+	D3,5
+	A20,3F
+
+	CHaddr,val,val,val... change hex in sector
+	CAaddr,char string... change ASCII in sector
+
+		NOTE that <xx> may be hex imbedded
+		in the Ascii:  ca0,OK<d><a><1a>
+
+		----> Use W to write changes to disk.
+		Note that the C command echoes
+		the overlaid data for verification.
+
+	CHaddr-addr,byte
+ or	CAaddr-addr,byte	repeats a change
+
+	+	advance 1 sector (if below track 2,
+		this advances to next numerical, if
+		2 or >, advances based on CP/M's normal
+		sector scrambling algorithm, i.e. so +
+		will get the next logical sector of the file
+
+	-	backs up 1 logical sector
+
+		Note + and - may take an amount:
+		for example, +F steps in 15 sectors.
+
+		Note also that "-" issued at the first logical
+		sector of the disk will wrap back to the last.
+		Further, "+" issued at the last sector will
+		wrap forward to the first.
+
+	?	Gives command summary
+
+	#	Prints the disk parameters
+
+	M	Dumps a map of the group allocations
+		for files.
+	Mn	Shows which file is allocated to
+		group "n".
+
+	N	Resets CP/M via the BDOS.  This may
+		make it possible under some implementations
+		of CP/M to change the disk format (e.g., density,
+		sides, etc)
+
+	R	Reads the sector currently positioned to
+		into memory.  Note R (Read) is implicit in
+		the G, +, and - commands, but N-O-T in the
+		S and T commands (I did it because I was
+		tired of disk reading after T command before
+		I had a chance to issue the S command)
+
+	W	Write back the current sector (N-O-T-E may
+		not be used after an F command, as CP/M was
+		used to find the file in the directory
+
+	X	Exit back to CP/M (Must press return).  Ctl-c
+		was too easy to hit over modem lines, so I
+		decided on 2-byte (X, CR) to exit.
+
+	P	Toggle printer switch on/off
+
+	Z	Sleep - causes the program to pause, such
+		as to look at a dump.  Z is 1 sec.  Znn
+		is nn tenths of a second on a 2 MHz 8080.
+
+	<	Saves current sector in a save buffer
+
+	>	Gets saved buffer.  < and > may be used
+		to move a sector to another place.
+
+	/	Repeats entire command.  Defaults
+ or	/nn	to "forever".  NN may be 2 to 65535.
+
+
+
+ Multiple  commands  are separated by ";" when given on  the 
+same command line, for example,  the following commands will 
+erase the b disk directory to all E5's:
+
+	lb		log in b drive
+	g0		position to dir.
+	ch0-7f,e5	fill with e5
+	<		save the sector
+	>;w;+;/16	restore, write, next,
+			repeat 16
+
+----This could be shortened to:
+
+	lb;g0;ch0-7f,e5;<
+	>;w;+;/16
+
+ The menu is displayed as 24 lines (or other suitable number 
+of  lines of text as determined by the associated equate  in 
+the  source)  and the next page is displayed  following  the 
+typing of any key on the terminal. 
+
+ It  is  important  to  understand  the  format  of  a  CP/M 
+directory entry as provided by DU when using either the  "F" 
+(find  file) command,or "D" (dump) of the directory sectors, 
+which  are  located in groups 0 and 1 on  a  single  density 
+disk.
+
+Sample result of "FSID.COM" command:
+
+40  00534944 20202020  20434F4D 0000003A  *.SID     COM...:*
+50  33343536 3738393A  00000000 00000000  *3456789:........*
+
+First line -
+
+40  00534944 20202020  20434F4D 0000003A  *.SID     COM...:*
+||  |||                      |  ||    ||    |         |
+||  ||^----hex file name-----^  ||    ||    ^file name^
+||  ||                          ||    ||     in ASCII
+||  ||                   extent-^^    ||
+||  ||                                ||
+||  ||           file size in sectors-^^
+||  ||
+||  ^^-00 = file active
+||     E5 = file erased
+^^-displacement of line in directory sector
+
+Second line -
+
+50  33343536 3738393A  00000000 00000000  *3456789:........*
+    |				       |
+    |				       |
+    ^---allocation group numbers-------^
+
+
+A trivial example of how to read a given sector is given by:
+
+
+:T0;S1                           Track zero , sector one please.
+ T=0, S=1, PS=1
+ T=0, S=1, PS=1
+
+:R                               Read the sucker ...
+
+:D                               Now let me read will ya ???
+
+
+00  3100D0F3 AFD308DB  08E608C2 07003E04  *1.Ps/S.[.f.B..>.*
+10  D309C320 00DB08E6  02C21500 3E02D309  *S.C .[.f.B..>.S.*
+20  DB08E640 C2150001  00012180 CECD5000  *[.f@B.....!.NMP.*
+30  DB08E602 C230003E  01D30901 01012180  *[.f.B0.>.S....!.*
+40  DECD5000 3A59EBE6  10CA00E6 FBC300E6  *^MP.:Ykf.J.f{C.f*
+50  C5E57CFE D0DA6700  3AFF003E FFBCDA67  *Ee|.PZg.:..>.<Zg*
+60  00CD8300 C20000E1  11000119 C178C602  *.M..B..a....AxF.*
+70  47FE21DA 5000D61F  1180F019 FE0347C2  *G.!ZP.V...p...GB*
+
+Yet another example: 
+
+:g0;+;d;z#20;/
+
+ This  would cause the system to go to block zero,  step  in 
+one  track,read a sector,  dump it to the console,  sleep  2 
+sec, and repeat this cycle until a control-c is typed.
+
+ DU  is designed to  be installed with a minimum of trouble.  
+In  fact,  typically,  no  changes to the  source  file  are 
+required.DU   uses  the  disk  parameter block  of  CP/M  to 
+determine the  characteristics of the disk environment.
+
+ The  only  parameter that may need changing  is  the  clock 
+speed flag at 103H. Set zero if you have a 2 mhz clock, non-
+zero  for   4  mhz.   This is affects only the  "Z"  (sleep) 
+command.
+
+ This  powerful utility should have been dedicated to  every 
+poor  soul who ever violated a directory or wished  in  vain 
+for the ability to search a disk (reminds me of the cretin's 
+song  ,  "On a clear disk you can search forever),  for some 
+sacred phrase which tho' he knew twas on the disk , knew not 
+where ???  Does thou know this dreaded plight(s)??? If so be 
+of  good cheer.  One has merely to enter the sacred  phrase, 
+e.g.,
+
+:=Wherefor art thou? (cr)
+ 
+...and retire to the refrigerator for a brief repast  whence 
+upon return he is met with, wonder of  wonders, the location 
+of poor Romeo.
+
+:=Wherefor art thou? (cr)
+= AT 07
+G=00:0B, T=2, S=12, PS=29
+
+ Not  even Merlin himself could perform greater wonders than 
+this  most  excellent utility and be of good cheer  for  the 
+source may be easily "equated" to support 1.4 ... 
+
+And Having Thus Spake We Exeunt Stage Left ... Farewell !!!
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Communications Standards and Protocols: Let's Get Together!
+===========================================================
+
+               by: Wally A. Linstruth,  WA6JPR 
+                      2413 Burritt Avenue 
+                    Redondo Beach, CA 90278 
+                        (213) 542-3290 
+            Micronet: 70250,272 or Source: TCC427 
+
+[Editors Comment: This is an 'open letter' to all interested 
+parties  that Wally sent to myself (and others) in hopes  of 
+organizing  a forum for discussion...the original letter was 
+to  Bob Carpenter,  W3OTC,  in response to his article  that 
+appeared in the AMRAD Newsletter, May 1980. Wally will be at 
+Cape  Canaveral for ten weeks starting in June,  so  if  you 
+have  difficulty  in getting in touch with  him,  leave  any 
+correspondence  with me on the CP/M-Net CBBS and I will  see 
+that he gets your comments. Best regards, Kelly Smith]
+ 
+ "I  am  working with the group (AMICON) which is  designing 
+protocol  standards for use on the  computer  communications 
+channel  which is included in the AMSAT Phase III  satellite 
+bandplan.  I  am also very interested in terrestrial  packet 
+radio (and land-line) techniques as a hobby pursuit."
+
+ "My  task for AMICON is to build a bibliography of articles 
+regarding  protocol design for use by the group.  The  AMRAD 
+paper [Editors Note: AMRAD, May 1980; 'Protocol' by David W. 
+Borden with an article by Bob Carpenter] was,  in fact, sent 
+to  me by the AMICON chairman so that I might  include  your 
+references in my bibliography.  As a result of this task,  I 
+have  been  doing quite a bit of reading in the  field.  The 
+thing that strikes me as odd is the fact that so many people 
+are  involved  in  this pursuit but  everyone  seems  to  be 
+working  in  a  vacuum,  or at least  with  little  feedback 
+between  groups.  This is partly due to the fact that we are 
+all trying to design communications networks,  for  whatever 
+purpose,  without  first having a common system,  or medium, 
+with which to compare notes."
+
+ "I  have been doing my "low profile" bit to try  to  cross-
+pollinate  or cross-reference the people and groups who  are 
+most active in amateur packet switching techniques. It is in 
+this spirit that I am writing to you. I would like to inform 
+you that we are out here (which you may already know) and to 
+invite  you to help me with my self-appointed task of trying 
+to get those of us most serious about packet  communications 
+talking to one another."
+
+ "Please  write or call if this interests you in any way and 
+I'll see to it that your interest is made known to the  rest 
+of the AMICON group and to anyone else who will listen. I am 
+particularly   interested  in  learning  of  any  reasonably 
+inexpensive  means by which we might correspond as  a  group 
+(Telenet,  EIES  computer conference group  discount,  etc.) 
+which you may be familiar with."
+
+                                          Sincerely, 
+
+                                          Wally Linstruth 
+
+Bob Carpenter, W3OTC 
+12708 Circle Drive 
+Rockville, MD 20850 
+
+cc: 
+Vern 'RIP' Riportella, WA2LQQ, AMICON chairman 
+David W. Borden, K8MMO, AMRAD Newsletter - PROTOCOL column 
+Dave Caulkins, PCNET committee 
+Hank Magnuski, KA6M, AMICON protocol committee 
+Kelly Smith, SIG/M coordinator, CP/M-Net owner 
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+                      DDT WITH B: !!!
+                      ===============
+
+                   by: Michael J. Karas
+
+ About a year ago I wrote an article for the Valley Computer 
+Club  newsletter that explained how to use Digital  Research 
+DDT in a mode to permit accessing alternate disk drives with 
+the  "I"  command.  The scheme consisted of poking a  number 
+into  memory  location 005CH to key the BDOS  to  the  drive 
+where  the  desired file would be found.  The number  scheme 
+followed like this:
+
+005CH = 00H  -->  use logged drive to find file
+005CH = 01H  -->  use drive A: to find file
+005CH = 02H  -->  use drive B: to find file
+005CH = 03H  -->  use drive C: to find file
+005CH = 04H  -->  use drive D: to find file
+etc., etc., ....  etc.
+
+ A few months later Kelly Smith,  publisher of the CP/M  Net 
+News,  Simi Valley,  CA, placed a similar item in a CP/M tip 
+of  the  month  column so that more people  could  gain  the 
+knowledge  of  how to use DDT more efficiently.  Since  that 
+time I have seen published documentation of the same idea in 
+several  other  computer club newsletters  and  even  Doctor 
+Dobbs  Journal.  I  don't know how many people  have  really 
+discovered the use of the "poke a number into 05CH" idea but 
+I  have gradually decided that it was somewhat of a pain  to 
+do it all the time.  Therefore I decided to fix DDT in a way 
+that  makes  drive referencing possible in a  direct  manner 
+with CP/M style syntax.
+
+ The intended goal was to get two things out of the effort:
+
+(1) Make DDT easier to use, and
+
+(2)  Put  a new CP/M tip into the public domain for all  you 
+    computer people to chew on for a awhile!!
+
+ The following parts of this article describe a procedure to 
+patch  DDT  Version 1.4 to permit use of the  CP/M  DDT  "I" 
+command in any of the following typical formats:
+
+A>
+A>DDT<cr>
+DDT VERS 1.4
+-IPROG.HEX               <== Reference file "PROG.HEX" on
+                             default drive A:
+or,
+
+-IB:PROG2.ASC            <== Reference file "PROG2.ASC" on
+                             file B:
+
+etc., etc.
+
+ One may ask why DDT was not written to be used in the above 
+manner  in the first place when it only takes 37 more  bytes 
+to  make it work.  Well,  Digital Research has already  made 
+their buck on the copy that you bought,  so if you think you 
+would  like "B:" in the "I" command,  then you will have  to 
+follow  the  following implementation procedure.  Note  that 
+this  patch has not been tried with CP/M DDT version 2.2  so 
+its not known if the following patch instructions will  work 
+for versions other than 1.4.
+
+ To implement the patch the first thing to do is to edit the 
+following  short program into a file called  "DDTPATCH.ASM". 
+You  may  use any editor as long as you carefully  keep  all 
+those  funny  little  numbers in the equates  "EXACTLY"  the 
+same.  The  program should then be assembled into  a  ".HEX" 
+file using an assembler. 
+
+;
+;+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;  PATCH TO GIVE "I" COMMAND DRIVE SELECT CAPABILITY IN DDT
+;+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;
+;	PATCH FOR DDT VERSION 1.4
+;
+TPA	EQU	00100H	;START OF TRANSIENT PROGRAM AREA
+;
+PATCH	EQU	00904H	;LOCATION OF INTERNAL DDT PATCH
+			;(IN ABSOLUTE DDT IMAGE)
+;
+FETCHR	EQU	00BD7H	;LOCATION FOR FETCH CHARACTER ROUTINE
+			;(IN ABSOLUTE DDT IMAGE)
+;
+ENDCHK	EQU	0091CH	;LOCATION IN DDT TO ENTER "I" CMD LOOP
+			;(IN ABSOLUTE DDT IMAGE)
+;
+ENDDDT	EQU	00FD0H	;END LOCATION OF DDT 1.4
+			;(IN ABSOLUTE DDT IMAGE)
+;
+FCB	EQU	0005CH	;LOCATION OF DEFAULT FCB
+;
+	ORG	TPA+1	;FIX OLD DDT MODULE SIZE
+;
+        DW	0FB6H+063  ;NEW MODULE SIZE WITH END PATCH
+;
+	ORG	PATCH+200H ;OFFSET ASSEMBLY FOR INTERNAL PATCH
+;
+	JMP	COLNCK-200H;JUMP TO PROCESS COLON CHECK
+;
+DRDONE:
+	XRA	A
+	STA	FCB+020H   ;CLEAR FCB RECORD COUNT
+;
+;CODE TO BE PATCHED IN AT END OF DDT IMAGE. THIS ROUTINE CHECKS
+;FOR A ":" AS THE SECOND CHARACTER IN THE "I" COMMAND STRING.
+;IF PRESENT THE LOWER FOUR BITS OF FIRST CHARACTER ARE USED AS
+;A DRIVE SELECT DESIGNATOR.
+;
+	ORG	ENDDDT+0200H
+;
+COLNCK:
+	CALL	FETCHR		;GET FIRST CMMAND CHARACTER
+	MOV	B,A		;SAVE FIRST IN (B)
+	CALL	FETCHR		;GET SECOND CHARACTER
+	CPI	':'		;CHECK IF SECOND IS COLON
+	JZ	SETDRV-0200H	;IF SO THEN GO SETUP DRIVE SELECT
+	LXI	H,FCB+1		;SET PARAMETERS FOR NORMAL
+	MOV	M,B		;PUT FIRST CHARACTER INTO FCB
+	INX	H
+	MVI	C,08H		;SET OTHER PARAMETERS FOR NORMAL
+	MOV	B,A		;SAVE SECOND CHAR AWHILE
+	XRA	A		;CLEAR TO DEFAULT DRIVE
+	STA	FCB
+	MOV	A,B		;GET SECOND CHARACTER BACK AGAIN
+	JMP	ENDCHK		;GO BACK INTO NORMAL DDT "I" LOOP
+;
+SETDRV:
+	MOV	A,B		;USE FIRST CHARACTER AS DRIVE
+	ANI	0FH		;LOWER FOUR BITS ONLY
+	STA	FCB		;SET SELECTED DRIVE NUMBER
+	JMP	DRDONE-0200H	;BACK TO BEGIN NORMAT "I" COMMAND
+;
+	END
+;
+
+ Once  you have made the ".HEX" file,  then put a copy of it 
+on  a CP/M system disk along with your copy of  DDT  version 
+1.4.  Boot  up  the system disk on drive  A:  and  carefully 
+follow  the  installation procedure below.  If you  are  not 
+currently  familiar with the operation of DDT now would be a 
+good  time  to get the manual out and read it.  We  will  be 
+using DDT to make the patched copy of itself.  The  sequence 
+below  must be followed exactly in order.  The notation <cr> 
+below  indicates that you should type carriage  return.  The 
+part of the text that the system types versus what you  type 
+will  become  obvious  as you fire up DDT to  do  the  patch 
+process.
+
+A>
+A>DDT<cr>		<== Invoke DDT
+DDT VERS 1.4
+-IDDT.COM<cr>		<== Read in copy of DDT.COM
+-R<cr>
+NEXT  PC
+1400 0100
+-S12D6<cr>		<== Change bit map for patch
+12D6 90 92<cr>
+12D7 04 .<cr>
+-S13B0<cr>		<== Add new bytes to bit map
+13B0 00 22<cr>
+13B1 00 10<cr>
+13B2 00 00<cr>
+13B3 00 10<cr>
+13B4 00 08<cr>
+13B5 00 .<cr>
+-M11B6,1400,1A00<cr>	<== Move bit map out of way
+-IDDTPATCH.HEX<cr>
+-R<cr>			<== Overlay DDT.COM with patch
+NEXT  PC
+1400 0000
+-M1A00,2000,11F5<cr>	<== Move bit map into place
+-^C			<== Exit DDT to system with ctl-C
+A>SAVE 19 DDTP.COM	<== Save patched DDT.COM
+A>
+
+ You  now  have a copy of DDT that is patched to permit  the 
+use  of drive designators in the DDT "I"  command.  For  the 
+patch  to  work  a  colon  must be  entered  as  the  second 
+character  of the file name field of the normal "I"  command 
+syntax.   The  drive  designatior  can  be  most  any  ASCII 
+character  except "." or "cr".  The patch simply strips  out 
+the  lower four bits of your entered ASCII character to  use 
+as the drive code in FCB location 05CH.  This permits any of 
+16  drives to be selected.  If the colon does not appear  as 
+the  second input character then the "I" command works  just 
+like it always used to. Have fun !!!!
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+       Running Submit Files from Disks other than A:
+       =============================================
+
+                      by: Leor Zolman
+
+ For  a long time,  I have been frustrated by "accidentally" 
+submitting  a  submit file while being logged in to  a  disk 
+other than A:, and having a magical "$$$.SUB" appear instead 
+of  having my submit file processed.  Having gotten my  hard  
+disk up, and being forced to leave my system on floppies and 
+use  the  hard disk  as C:  and D:,  I found  myself  really 
+missing the ability to do submits...
+
+ As a first solution to the problem, I tried going to A: and 
+writing  a submit file that started with C:,  just to see if 
+it would take it.  Yes!  It did let me log in to C:  as  the 
+first thing in a submit file, but I still had to go to A: to 
+submit  it.  Could there possibly be a way to do a submit on 
+C: without ever leaving C: ?
+
+                      --- YES !! ---
+
+ If  you DDT or SID SUBMIT.COM,  you'll notice that the  FCB 
+area  for   the   temporary  file  that  SUBMIT.COM  creates 
+($$$.SUB) has its first byte set to 00.  That means that the 
+$$$.SUB  file will always be written to the currently logged 
+disk,   EVEN THOUGH IT HAS NO MEANING UNLESS IT IS   WRITTEN 
+TO  A:  (smart move,  Digital Research...another of  many!). 
+SOOOO...my  simple  solution was to change that  00  leading 
+byte  of  the FCB to 01.  This causes $$$.SUB to  always  be  
+written to A:,  no matter which disk the submit is submitted  
+from.  Now I can be on C: and do a  submit as easily as if I 
+were on A:.
+
+ I  hope  this  helps  some of you  out  there  who've  been 
+frustrated by the same problem.  Incidentally,  the location 
+to patch in the 2.2 SUBMIT.COM program is:  05BB hex (change 
+from 00h to 01h).
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+     A Simple Program to Calculate Modem Transfer Time
+     =================================================
+
+             by: Kelly Smith, CP/M-Net "SYSOP"
+
+ Here's  a simple program to determine the transfer time  in 
+minutes, to or from a RCPM system. Very handy in determining 
+the charges from Ma' Bell (or whatever telephone system  you 
+use) when transferring some really huge files...
+
+10 REM  File Transfer Rate Program for RCPM's, by Kelly Smith
+20 REM 
+30 REM  This  program may be used by a RCPM user to  determine 
+40 REM the  total time in minutes to transfer files to or from 
+50 REM a  RCPM  system.  Time  is rounded down to the  nearest 
+60 REM minute,  but  detailed information may be  obtained  by 
+70 REM removing the 'REM's in the following code. This program 
+80 REM is compatible with Microsoft BASIC, and will compile to 
+90 REM a 11 kilobyte (Gag!) file utilizing BASCOM.
+100 REM
+110 PRINT:INPUT "What is the Baud Rate (60 to 1200)";B
+120 IF B<>60 AND B<>110 AND B<>300 AND B<>450 THEN GOTO 140
+130 GOTO 180
+140 IF B<>600 AND B<>710 AND B<>1200 THEN GOTO 160
+150 GOTO 180
+160 PRINT:PRINT"+++ Invalid Baud Rate +++":PRINT
+170 PRINT"Must be 60, 110, 300, 450, 600, 710, or 1200 Baud!":GOTO 110
+180 INPUT "What is the File Size in kilobytes";S
+190 IF S<1 THEN GOTO 180
+200 S=S*1024:T=S/(B/10):TM=T/60
+210 REM PRINT:PRINT"Total number of characters in this file is";S
+220 REM PRINT"This file will take";T;"seconds"
+230 REM PRINT"Which equals";TM;"minutes"
+240 PRINT:PRINT"Transfer time will be approximately";
+250 T=INT(TM):IF T>1 THEN PRINT T "minutes" ELSE PRINT" 1 minute""
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+                 CP/M-Net "Tip-of-the-Month"
+                 ===========================
+
+  Patch to CP/M 2.x to Display User Number in Drive Prompt
+  ========================================================
+
+             by: Bruce Kendall and Bruce Ratoff
+           (additional comments by: Kelly Smith)
+
+ Are you annoyed with CP/M 2.x's USER command, that there is 
+no way of indicating which USER area you are currently in?
+
+ This  patch  solves  this problem by  displaying  the  USER 
+number in hex ( a single character since user number 0  - 15 
+are  valid) between the drive name letter and the '>'.  That 
+is,  a  user  logged into user area number 4 would  see  the 
+standard CP/M prompt (modified by this patch) as:
+
+	        A4>       ...instead of just A>
+
+ Enter  the following listing with your favorite  flavor  of 
+editor,  assemble, and then 'GEN' a new CP/M system image as 
+you normally would with DDT...for example:
+
+A>ddt cpm56.com<cr> <--- load system image you made with MOVCPM
+DDT VER 2.2         <--- DDT announcing itself...
+NEXT  PC
+2300 0100
+-iboot56.hex<cr>    <--- your disk boot loader
+-r900<cr>           <--- read it in at 900 hex
+-ibios56.hex<cr>    <--- your system BIOS
+-r5580<cr>          <--- offset required for a 56k system
+-iuser#.hex<cr>     <--- the USER NUMBER patch
+-r5580<cr>          <--- offset required for a 56k system
+-g0<cr>             <--- exit DDT, and return to CP/M
+A>sysgen<cr>        <--- SYSGEN the disk
+SYSGEN VER 2.0      <--- SYSGEN announcing itself...
+SOURCE DRIVE NAME (OR RETURN TO SKIP)<cr> <--- return
+DESTINATION DRIVE NAME (OR RETURN TO REBOOT)A<cr> <--- A: disk
+DESTINATION DRIVE NAME (OR RETURN TO REBOOT)<cr>  <--- reboot
+A>
+
+ Now 'cold boot' your system,  and you will see the new USER 
+number prompt:
+
+A0>
+
+ Here's  the USER NUMBER patch,  and be sure and set 'msize' 
+for  YOUR  CP/M system size and use YOUR offset  value  when 
+setting this up!
+
+msize	equ	56	; CP/M system size in kilobytes
+                        ;
+                        ; You MUST set this value to your
+                        ; CP/M system size
+   
+delta	equ	000h	; offset from standard CP/M size:
+                        ;
+                        ; This would be set to 400h if
+			; the 20k CP/M was actually a 19k
+			; CP/M (when compared to the std
+			; 20k CP/M described in the CP/M
+			; manuals from Digital Research).
+
+bias	equ	(msize-20)*1024-delta ; offset from 20k CP/M
+ccp	equ	3400h+bias
+
+offset	equ	980h-ccp; offset used with  DDT in system
+			; configuration (assumes that the
+			; 'CCP' occures at 980h in the
+			; sysgen memory image)
+
+cout	equ	ccp+8ch ; CCP console output routine
+gtusr	equ	ccp+113h; CCP get user number routine
+
+	org	ccp+38dh
+;
+	call	patch	; this was a CALL COUT
+;
+	org	ccp+15f0h	; patch area at end of BDOS
+;
+patch:	call	cout	; output character in A to console
+	call	gtusr	; get user number
+	adi	90h	; use Intel Hex/ASCII trick
+	daa
+	aci	40h
+	daa
+	jmp	cout	; print out and return
+;
+	end
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+

@@ -1,0 +1,146 @@
+Output HL as 4 Hexadecimal Characters
+Output HL as 5 Decimal Characters
+Output HL as Up to 5 Decimal Characters with Leading Spaces
+Output A as 2 Hexadecimal Characters
+Output A as 3 Decimal Characters
+Output A as Up to 3 Decimal Characters with Leading Spaces
+:PHL4HC, LHL4HC, MHL4HC
+     Routine Names:  PHL4HC, LHL4HC
+     Function:
+          Print  HL  as four (4) hexadecimal characters  on  CON: 
+(PHL4HC) or LST: (LHL4HC).
+     Inputs:  HL = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  PA2HC (for PHL4HC);
+                              LA2HC (for LHL4HC)
+     Special Error Conditions:  -None-
+
+
+     Routine Name:  MHL4HC
+     Function:
+          Store  HL as four (4) hexadecimal characters in the  4-
+byte memory buffer pointed to by DE.  On return, DE points to the 
+byte following this buffer.
+     Inputs:  HL = value to be converted and stored
+              DE points to 4-byte buffer
+     Outputs:  DE points to byte after buffer
+     Registers Affected:  DE
+     SYSLIB Routines Called:  MA2HC
+     Special Error Conditions:  -None-
+:PHL5DC, LHL5DC, MHL5DC
+     Routine Names:  PHL5DC, LHL5DC
+     Function:
+          Print  HL  as  five  (5)  decimal  characters  on  CON: 
+(PHL5DC) or LST: (LHL5DC).
+     Inputs:  HL = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  POUT (for PHL5DC); LOUT (for LHL5DC)
+     Special Error Conditions:  -None-
+
+
+     Routine Name:  MHL5DC
+     Function:
+          Store  HL at five (5) decimal characters in  memory  in 
+the 5-byte buffer pointed to by DE.   On return, DE points to the 
+byte after this buffer.
+     Inputs:  HL = value to be converted and stored
+              DE points to a 5-byte buffer
+     Outputs:  DE points to the byte following the buffer
+     Registers Affected:  DE
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+:PHLDC, LHLDC, MHLDC
+     Routine Names:  PHLDC, LHLDC
+     Function:
+          Print  HL  as  up to five (5) decimal  characters  with 
+leading spaces (<SP>) on CON: (PHLDC) or LST: (LHLDC).
+     Inputs:  HL = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  POUT (for PHLDC); LOUT (for LHLDC)
+     Special Error Conditions:  -None-
+
+
+     Routine Name:  MHLDC
+     Function:
+          Store  HL  as up to five (5)  decimal  characters  with 
+leading spaces in the 5-byte memory buffer pointed to by DE.
+     Inputs:  HL = value to be converted and printed
+              DE points to the 5-byte buffer
+     Outputs:  DE points to the byte after the buffer
+     Registers Affected:  DE
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+:PA2HC, LA2HC, MA2HC
+     Routine Names:  PA2HC, LA2HC
+     Function:
+          Print  A  as  two (2) hexadecimal  characters  on  CON: 
+(PA2HC) or LST: (LA2HC).
+     Inputs:  A = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB  Routines Called:  EN (for both);  POUT (for PA2HC);  LOUT (for 
+LA2HC)
+     Special Error Conditions:  -None-
+
+
+     Routine Name:  MA2HC
+     Function:
+          Store A as two (2) hexadecimal characters in the 2-byte 
+memory  buffer pointed to by DE.   On return,  DE points to  byte 
+after buffer.
+     Inputs:  A = value to be converted and stored
+              DE points to 2-byte buffer
+     Outputs:  DE points to byte after this buffer
+     Registers Affected:  DE
+     SYSLIB Routines Called:  EN
+     Special Error Conditions:  -None-
+:PA3DC, LA3DC, MA3DC
+     Routine Names:  PA3DC, LA3DC
+     Function:
+          Print A as three (3) decimal characters on CON: (PA3DC) 
+or LST: (LA3DC).
+     Inputs:  A = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  POUT (for PA3DC); LOUT (for LA3DC)
+     Special Error Conditions:  -None-
+
+
+     Routine Name:  MA3DC
+     Function:
+          Store  A as three (3) decimal characters in the  3-byte 
+memory buffer pointed to by DE.  On return, DE points to the byte 
+after the buffer.
+     Inputs:  A = value to be converted and stored
+              DE points to the 3-byte buffer
+     Outputs:  DE points to the byte after the buffer
+     Registers Affected:  DE
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+:PADC, LADC, MADC
+     Routine Names:  PADC, LADC
+     Function:
+          Print  A  as  up to three (3) decimal  characters  with 
+leading spaces (<SP>) on CON: (PADC) or LST: (LADC).
+     Inputs:  A = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  POUT (for PADC); LOUT (for LADC)
+     Special Error Conditions:  -None-
+
+
+     Routine Name:  MADC
+     Function:
+          Store  A  as up to three (3)  decimal  characters  with 
+leading spaces in the 3-byte memory buffer pointed to by DE.   On 
+return, DE points to the byte after the buffer.
+     Inputs:  A = value to be converted and stored
+              DE points to the 3-byte memory buffer
+     Outputs:  DE points to the byte after the buffer
+     Registers Affected:  DE
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+

@@ -1,0 +1,59 @@
+Sig/M volume 21		miscellaneous Pascal Z utilities
+
+	(original materials from Pascal Z User Group volume 3)
+	
+	-CATALOG.021		contents of Sig/M volume 21
+	ABSTRACT.021		comments on Sig/M volume 21	
+	CRCKFILE.021		CRC of Sig/M volume 21
+
+	Name		Size	Description
+
+21.1	AUTHOR.PAS	10K	general purpose "keyword in text"
+21.2	AUTHOR.COM	11K	   /
+21.2a	ADDRESS		 1K	  /
+21.2b	BYTE.MAG	 1K	 /
+21.2c	S100.MAG	 1K	/
+21.3	CALC.PAS	12K	calculator mode program
+21.4	CALC.COM	16K	/
+21.5	CPLOT.PAS	 2K	simple banner program
+21.6	CPLOT.COM	 5K	/
+21.7	DELAY.PAS	 1K	general Pascal Z utilities
+21.8	DELAY.REL	 1K	       /
+21.9	DELAY.SRC	 1K	      /
+21.10	INPORT.REL	 1K	     /
+21.11	INPORT.SRC	 1K	    /
+21.12	OUTPORT.REL	 1K	   /
+21.13	OUTPORT.SRC	 1K	  /
+21.14	KEYIN.REL	 1K	 /
+21.15	KEYIN.SRC	 1K	/
+21.16	NAD.PAS		10K	permuted keyword index program
+21.17	NAD.COM		11K	/
+21.18	TDIABLO.MAC	 6K	driver for Diablo w/Teletek FDC-1
+21.19	TDIABLO.COM	 1K	/
+21.20	DIABLO.Z80	 5K	driver for Diablo w/SD Systems S100
+21.21	DIABLO.COM	 1K	/
+21.22	RANDOM.PAS	 2K	Fibonacci random number generator
+21.23	RANDOM.REL	 1K	 /
+21.24	RANDOM.SRC	 4K	/
+21.25	REBOOT.COM	 1K	rebooting desired file  
+21.26	STRLIB.LIB	12K	Pascal Z library
+21.27	WUMPUS.PAS	12K	Wumpus game in Pascal Z
+21.28	WUMPUS.COM	15K	      /
+21.29	WUMPUS.DOC	 4K	     /
+21.30	CAVE0		 1K	    /
+21.31	CAVE1		 1K	   /
+21.32	CAVE2		 1K	  /
+21.33	CAVE4		 1K	 /
+21.34	CAVE5		 1K	/
+21.35	ENTRY.PAS	 6K	creating SRC files
+21.36	ENTRY.COM	 9K	 /
+21.37	ENTRY.DOC	 6K	/
+21.38	PEEK.PAS	 2K	peek and poke in Pascal Z
+21.39	POWERI.PAS	 1K	demo program on powers of numbers
+21.40	POWERI.COM	 7K	 /
+21.41	POWERI.REL	 2K	/
+21.42	RDR.PAS		 7K	an alpha-numeric numbers conversion program
+21.43	DU.Z80		29K	updated disk utility using Z80 code
+21.44	DU.COM		 4K	 /
+21.45	DU.DOC		 1K	/
+

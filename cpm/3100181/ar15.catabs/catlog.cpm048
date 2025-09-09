@@ -1,0 +1,55 @@
+VOLUME 48	National CP/M Users Group
+		(CP/M is a trademark of Digital Research, Inc)
+
+DESCRIPTION:	The BDS C Sampler Disk
+		November 29, 1980
+
+	Compiled by Leor Zolman, BD Software
+
+-  Manual for BDS-C to give you a "flavor" of the compiler
+-  Good programming examples in C
+-  Interesting games to play
+-  Good use of H19-H89 (Programs with <H> are H19-H89 only)
+
+Most files are included in .COM form to allow you to execute
+them without having BDS-C.  Be careful of RALLY.COM as it needs
+to do hard-coded I/O to detect console OUT status.
+
+NUMBER	SIZE	NAME		COMMENTS
+
+	 3K	-CATALOG.048	CONTENTS OF CP/M VOL. 48
+	 6K	ABSTRACT.048	Abstracts of the programs
+48.1	17K	BDS-C.DOC	BDS-C users manual (*)
+48.2	 7K	BDSCIO.H	The standard library used to
+					compile the programs
+48.3	 8K	BUGS.C		<H> makes things crawl
+48.4	11K	BUGS.COM		around on your screen
+48.5	 9K	HLIFE.C		<H> H19/H89 version of 48.9
+48.6	 8K	HLIFE.COM	<H> 	"	"	".10
+48.7	13K	HSTONE.C	<H> "Awari" game program -
+48.8	12K	HSTONE.COM	"	"
+48.9	 9K	LIFE.C		Good implementation of Conway's
+48.10	 8K	LIFE.COM		LIFE algorithm
+48.11	 5K	MM.C		Mastermind interesting guessing
+48.12	 7K	MM.COM			game.  Try it and see
+48.13	11K	OTHELLO.C	Game program
+48.14	12K	OTHELLO.COM	  "
+48.15	 7K	PPONG.C		<H> "Polish Pong" bounce the
+48.16	 7K	PPONG.COM		ball off "/" and "\"
+48.17	 8K	PRESSUP.C	Game program
+48.18	 8K	PRESSUP.COM	"	"
+48.19	 1K	R2.MAP		<H> map for rally game
+48.20	10K	RALLY.C		<H> road rally arcade game
+48.21	10K	RALLY.COM	<H> .COM of 48.20, but...
+		========= --->	Caution!! Hard-coded I/O req'd
+48.22	 2K	RALLY.MAP	<H> another map for 48.21
+48.23	10K	STONE.C		"Awari" game with "very smart
+48.24	 9K	STONE.COM		computer" opponent
+48.25	 2K	TABIFY.C	Turn multiple spaces into
+48.26	 6K	TABIFY.COM		proper CP/M tabs
+48.27	 7K	TTT.C		Tic-Tac-Toe that "exhaustively"
+48.28	 6K	TTT.COM			tests for best move
+48.29	 3K	VOLUME48.DOC	Leor's own comments
+
+(*) The original was 22K, but "TABIFY" deleted 5K of spaces!!
+

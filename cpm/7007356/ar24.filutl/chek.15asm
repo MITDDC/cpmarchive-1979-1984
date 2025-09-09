@@ -1,0 +1,1027 @@
+
+; CHEK v1.5         CYCLIC REDUNDANCY CHECK               04/11/83
+;
+; CHEK can read any CP/M file then print a CRC (CYCLIC-REDUNDANCY-CHECK)
+; number based on the CCITT standard polynominal for asynchronous use:
+;
+;                    X^16 + X^12 + X^5 + 1
+;
+; Useful for checking accuracy of file transfers.  Far more accurate
+; than a simple checksum.  It will optionally write an output file to
+; the default drive, listing the CRC's of all files requested.
+;
+; =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
+;
+; COMMANDS:  CHEK [drive:]<filename.filetype> [F]
+;
+; Examples:
+;            CHEK B:HELLO.ASM    check only HELLO.ASM
+;            CHEK *.ASM          check all .ASM  files
+;            CHEK *.*            check all files, check disk quality
+;            CHEK *.* F          makes disk file named CHEKLIST.CRC
+;            CHEK *.* FF         makes disk file named FF.CRC
+;            CHEK *.* FILE       makes disk file named FILE.CRC
+;            CHEK *.* HELLO.ABC  makes disk file named HELLO.ABC
+;
+; NOTE:  If 0103H is 0, no disk file is made regardless of request.
+;
+; NOTE TO SYSOPS:   Set FILEOK: and SYSOK: (0103 and 0104) both to '0'
+;                   to prevent remote users from creating a file or to
+;                   find restricted '.SYS' files.
+;
+;		    (If 0103H is 0, no disk file is made, regardless of
+;		    request.)
+;
+; *     *     *     *     *     *     *     *     *     *     *     *
+;
+; 04/11/83  Message added if disk attempt is made with disk system dis-
+;   v1.5    abled.  (Most RCPM systems will put 0103H and 0104H to 0 to
+;	    prevent disk copy).  This lets the user know immediately if
+;	    he cannot make a disk copy. - Irv Hoff
+;
+; 04/09/83  Minor changes.  Assembled .COM file is now 17 records long
+;   v1.4    instead of 23.  Buffer size now divisible by 1024 vice 128.
+;					- Irv Hoff
+;
+; 04/07/83  Introduced a version of the table-driven CRC look-up table
+;	    developed by Dave Barker.  Speed is similar to earlier ap-
+;   v1.3    proach of Keith Petersen but with full security of an 8-bit
+;	    algorithm.  The resultant 2-byte CRC value is identical to
+;	    that produced by CHEK11 and CHEK12.  CRC copyright notice
+;	    removed as a different approach has been implemented for the
+;	    public domain algorithm.	-Frank Gaude'
+;
+; 03/30/83  Restored the character count.  A series of tests were made
+;	    using 14 files totalling 2596 records.  With character count
+;   v1.2    it took 5:02, with 1.1 version took 5:01.  The difference in
+;	    time is too trivial to abandon an informative feature.  Re-
+;	    stored the heading line to any disk file, which was always
+;	    my intent.  Numerous trivial changes to improve the appear-
+;	    ance of the source code.	- Irv Hoff
+;
+; 03/26/83  Fixed bug in register usage.  Upon completion of the program
+;	    FINCRC was making the ending calculation with the character
+;   v1.1    in the wrong register.  Restored the copyright notice to the
+;	    CRC area.  Removed the character count as redundant and time-
+;	    consuming.  Removed the heading from the disk file to make
+;	    the file easily machine-readable.
+;					- Gary Novosielski
+;
+; 02/02/83  Started this program.  It is similar to the CRCK series but
+;	    with a different algorithm (as shown above).  This one has
+;   v1.0    been accepted as the standard by a number of programs, such
+;	    as the COMM700, MDM700, MODEM200, MODEM700 and XMODEM series.
+;	    Packet radio and other SDLC networking systems use the same
+;	    algorithm.  This now standardizes CHEK with these other pro-
+;	    programs.
+;		Added total records in file for additional check.  Also
+;	    show the total character count for general information.  Re-
+;	    formatted the dipsplayed results.  The heading and version
+;	    number now appear in any disk file.  Minor additional changes.
+;		Optional disk file named CHEKLIST.CRC by default with a
+;	    "F", or whatever name you prefer if you type something dif-
+;	    ferent, such as FILE.CHK.  See examples.
+;						- Irv Hoff
+;
+; 06/27/79 CRCK v4.2 by Keith Petersen, W8SDZ
+;
+; *     *     *     *     *     *     *     *     *     *     *     *
+;
+;
+; DEFINE TRUE AND FALSE
+;
+TRUE:	EQU	0FFH
+FALSE:	EQU	0
+;
+;
+; CONDITIONAL ASSEMBLY SWITCHES
+;
+STDCPM:	EQU	TRUE		;TRUE FOR STANDARD CP/M
+ALTCPM:	EQU	FALSE		;TRUE FOR H8 OR TRS-80
+;
+;
+; SYSTEM EQUATES
+;
+	 IF	STDCPM
+BASE:	EQU	0000H		;FOR STANDARD CP/M USERS
+	 ENDIF
+;
+	 IF	ALTCPM		;FOR H8 OR TRS-80
+BASE:	EQU	4200H
+	 ENDIF
+;
+; 
+; BDOS EUATES
+; 
+RDCON:	EQU	1
+WRCON:	EQU	2
+PRINT:	EQU	9
+CSTAT:	EQU	11
+OPEN:	EQU	15
+CLOSE:	EQU	16
+SRCHF:	EQU	17
+SRCHN:	EQU	18
+DELET:	EQU	19
+READ:	EQU	20
+WRITE:	EQU	21
+MAKE:	EQU	22
+RENAM:	EQU	23
+STDMA:	EQU	26
+;
+;
+; FILE HANDLING EQUATES
+;
+BUFSIZ:	EQU	80H		;BUFFER SIZE (128 BYTES)
+BDOS:	EQU	BASE+5
+FCB:	EQU	BASE+5CH 
+FCB2:	EQU	BASE+6CH
+FCBEXT:	EQU	FCB+12
+FCBRNO:	EQU	FCB+32
+TBUF:	EQU	BASE+80H	;TEMPORARY BUFFER (DEFAULT) ADDRESS
+;
+;
+; CONTROL CHARACTERS
+;
+CTLC:	EQU	'C'-40H		;CONTROL-C CHARACTER
+EOF:	EQU	'Z'-40H		;END-OF-FILE CHARACTER
+LF:	EQU	'J'-40H		;LINE FEED CHARACTER
+CR:	EQU	'M'-40H		;CARRIAGE RETURN CHARACTER
+TAB:	EQU	'I'-40H		;TAB CHARACTER
+BELL	EQU	7		;BELL CHARACTER
+;
+;
+; *   *   *   *   *   *   *   *   *   *   *   *  *   *   *   *   *   *
+;
+;
+	  ORG	BASE+100H
+;
+;
+CHEK:	  JMP	BEGIN		;JUMP AROUND PATCH PARAMETERS
+;
+;
+FILEOK:	  DB	TRUE	;TRUE TO ALLOW DISK FILE OF RESULTS
+SYSOK:	  DB	TRUE	;TRUE TO ALLOW HANDLING '.SYS' FILES
+;
+;
+;***********************************************************************
+;                                                                      ;
+;                     PROGRAM STARTS HERE                              ;
+;                                                                      ;
+;***********************************************************************
+;
+;
+BEGIN:	POP	H		;GET CCP RETURN ADDRESS
+	SHLD	EXIT+1
+	LXI	SP,STACK	;INITIALIZE LOCAL STACK
+	MVI	A,1
+	STA	MFFLG1		;INIT 1ST TIME SWITCH
+	STA	NFLAG		;NO FILES FOUND YET
+	MVI	A,' '		;NO OUTPUT FILE YET
+	STA	FFLAG		;'CRC' DISK FILE FLAG
+	LDA	FCB+1
+	CPI	' '		;SEE IF NAME THERE
+	JNZ	BEGIN2		;YES, CONTINUE
+;
+	CALL	ERXIT		;PRINT MSG, THEN EXIT
+	DB	CR,LF,LF,LF,'     ++ No file name specified ++'
+	DB	CR,LF,LF,LF,LF,'     '
+	DB	'COMMANDS:  CHEK [drive:]<filename.filetye> FILE'
+	DB	CR,LF,LF,LF,'     '
+	DB	'Examples:  CHEK B:HELLO.ASM     check only HELLO.ASM'
+	DB	CR,LF,'                '
+	DB	'CHEK *.ASM           check only .ASM files'
+	DB	CR,LF,'                '
+	DB	'CHEK *.*             check all files, check disk quality'
+	DB	CR,LF,'                '
+	DB	'CHEK *.* F           makes disk file named CHEKLIST.CRC'
+	DB	CR,LF,'                '
+	DB	'CHEK *.* FF          makes disk file named FF.CRC'
+	DB	CR,LF,'                '
+	DB	'CHEK *.* FILE        makes disk file named FILE.CRC'
+	DB	CR,LF,'                '
+	DB	'CHEK *.* HELLO.ABC   makes disk file named HELLO.ABC'
+	DB	CR,LF,LF,LF,'     '
+	DB	'NOTE:  If byte 0103 is 0, no disk file is made regard'
+	DB	'less of request'
+	DB	CR,LF,LF,'$'
+;
+;
+; FIND AMOUNT OF SPACE FOR BUFFER
+;
+BEGIN2:	CALL	INITCRC		;GENERATE TABLE FOR FAST CRC CALCULATIONS
+	LXI	D,FILADR	;START OF BUFFER ADDRESS
+	LDA	BDOS+2		;GET 'BDOS' ADDRESS
+	SUI	8		;PROTECT 'CCP'
+	MOV	H,A		;GET THE MAIN PAGE
+	XRA	A		;CLEAR CARRY IF SET
+;
+;
+; CALCULATE THE DIFFERENCE TO GET SPACE AVAILABLE
+;
+	SUB	E
+	MOV	L,A
+	MOV	A,H
+	SBB	D
+	ANI	0FCH
+	MOV	H,A
+	MVI	L,0
+;
+;
+; FREE SPACE AVAILABLE NOW IN 'HL', SO STORE FOR BUFFER SIZE
+;
+	SHLD	FILLEN		;STORE BUFFER LENGTH
+;
+;
+; DECLARE 'FCB' FOR  OUTPUT FILE (TEMPORARILY NAMED CHEKLIST.$$$)
+;
+	LDA	FCB2+1		;GET OPTION
+	STA	FFLAG		;'CRC' DISK FILE FLAG
+	CPI	' '		;FILE WANTED?
+	JZ	AGAIN		;NO, SKIP FILE INITIALIZATION
+	LDA	FILEOK		;OK TO MAKE A '.CRC' DISK FILE?
+	ORA	A
+	JNZ	BEGIN3		;EXIT, IF NOT
+	CALL	ILPRT
+	DB	CR,LF,BELL,'++ Disk file disabled ++',CR,LF,0
+	JMP	EXIT
+;
+BEGIN3:	XRA	A
+	STA	FCBFIL+12	;CLEAR EXTENT
+	STA	FCBFIL+32	;CLEAR CURRENT RECORD COUNT
+	LXI	H,0
+	SHLD	FILEPTR		;RESET FILE POINTERS
+	MVI	C,DELET		;'DELETE FILE' FUNCTION
+	LXI	D,FCBFIL	;DELETE 'OLD' CHEKLIST FILE
+	CALL	BDOS
+	MVI	C,MAKE		;'MAKE FILE' FUNCTON
+	LXI	D,FCBFIL	;MAKE 'NEW' CHEKLIST FILE
+	CALL	BDOS
+	INR	A		;MAKE THE NEW FILE OK?
+	JNZ	CPYNAM		;COPY THE FILE NAME REQUESTED
+	MVI	C,PRINT		;PRINT STRING FUNCTION
+	LXI	D,DIRFUL	;INDICATE THAT DIRECTORY IS FULL
+	CALL	BDOS
+	JMP	FILERR
+;...
+;
+;
+CPYNAM:	LDA	FCB2+1		;CHECK FOR FILE NAME
+	CPI	'F'		;SEE IF "QUICK NAME FOR CHEKLIST.CRC
+	JNZ	CPYN1		;IF NOT, USE FILE NAME ASKED FOR   
+	LDA	FCB2+2		;IF "F" CHECK NEXT COLUMN
+	CPI	' '		;BLANK?
+	JZ	AGAIN		;IF YES, LEAVE NAME CHEKLIST.CRC
+;
+CPYN1:	LDA	FCB2+9		;EXTENT REQUESTED BY OPERATOR?
+	CPI	' '
+	JZ	CPYN2		;IF NOT USE OUR '.CRC' BY DEFAULT
+	MVI	A,12		;OTHERWISE USE THE ONE REQUESTED
+	STA	CPYN3+1
+;
+CPYN2:	LXI	H,FCB2		;TRANSFER THE REQUESTED NAME
+	LXI	D,FCBFIN
+;
+CPYN3:	MVI	C,9 		;FILENAME IS 1+8 LENGTH
+;
+CPYN4:	MOV	A,M
+	STAX	D
+	INX	H
+	INX	D
+	DCR	C
+	JNZ	CPYN4
+;...
+;
+;
+AGAIN:	LXI	SP,STACK	;RE-INIT STACK POINTER
+	CALL	MFNAME		;SEARCH FOR NAMES
+	JNC	NAMTST		;ANOTHER FOUND, PRINT NAME
+	LDA	NFLAG		;NOTHING FOUND, CHECK...
+	ORA	A		;... FIRST TIME FLAG
+	JZ	DONE		;AT LEAST ONE WAS FOUND
+	CALL	ABEXIT		;PRINT MSG, THEN EXIT
+	DB	CR,LF,'++ File not found ++$'
+;
+DONE:	LDA	FFLAG		;MAKING A '.CRC' DISK FILE?
+	CPI	' '
+	JZ	DONE1		;NO, SKIP THE FILE STUFF
+;
+;
+; CLOSE CHEKLIST.$$$
+;
+CLSFIL:	LHLD	FILEPTR
+	MOV	A,L
+ 	ANI	07FH
+	JNZ	CLSF1
+	SHLD	FILLEN
+;
+CLSF1:	MVI	A,EOF
+	PUSH	PSW
+	CALL	PTFIL
+	POP	PSW
+	JNZ	CLSFIL
+	MVI	C,CLOSE
+	LXI	D,FCBFIL
+	CALL	BDOS
+	INR	A
+	JNZ	ERASE
+	MVI	C,PRINT
+	LXI	D,NOCLOS
+	CALL	BDOS
+;
+;
+; ERASE ANY EXISTING OLD FILE
+;
+ERASE:	MVI	C,DELET
+	LXI	D,FCBFIN
+	CALL	BDOS
+;
+; 
+; RENAME CHEKLIST.$$$ TO CHEKLIST.CRC
+;
+	LXI	H,FCBFIL
+	LXI	D,FCBFIN
+	PUSH	H
+	LXI	B,16
+	DAD	B
+;
+MOVNAM:	LDAX	D
+	MOV	M,A
+	INX	D
+ 	INX	H
+	DCR	C
+	JNZ	MOVNAM
+	POP	D
+	MVI	C,RENAM
+	CALL	BDOS
+;
+; 
+; NOW EXIT TO CP/M
+;
+DONE1:	CALL	MSGXIT		;PRINT 'DONE' THEN EXIT
+	DB	CR,LF,'Done',CR,LF,'$'
+;.....
+;
+; 
+; TEST FOR NAMES TO IGNORE
+; 
+NAMTST:	LDA	SYSOK		;SEE IF '.SYS' FILES ALLOWED
+	ORA	A
+	JNZ	DOSYS		;IF ALLOWED, EXIT
+	LDA	FCB+10		;GET 'SYS' ATTRIBUTE
+	ANI	80H		;IS IT 'SYS'?
+	JNZ	AGAIN		;YES, IGNORE THIS FILE
+;
+;
+; IGNORE FILES WITH .$$$ FILETYPE (THEY ARE USUALLY ZERO-LENGTH AND
+; CLUTTER UP OUR DISPLAY.  WE ALSO WANT TO IGNORE OUR CHEKLIST.$$$
+; TEMPORARY FILE).
+; 
+DOSYS:	LXI	H,FCB+9		;POINT TO FILETYPE IN 'FCB'
+	CALL	TSTBAD		;CHECK FOR .$$$ FILES
+	JZ	AGAIN		;IF ZERO FLAG, IGNORE THEM
+	XRA	A		;FOUND SOME NAMES
+	STA	NFLAG
+	CALL	SIGNON
+;
+;
+; MOVE 8 CHARACTERS FROM FCB+1 TO FNAME
+;
+	LXI	H,FCB+1
+	LXI	D,FNAME
+	LXI	B,8
+	CALL	MOVER
+;
+;
+; MOVE 3 CHARACTERS FROM FCB+9 TO FNAME+9
+;
+	LXI	H,FCB+9
+	LXI	D,FNAME+9
+	LXI	B,3
+	CALL	MOVER
+;
+;
+; NOW PRINT FILENAME.TYPE
+;
+	CALL	ILPRT		; PRINT:
+;
+FNAME:	DB	'XXXXXXXX.XXX     ',0
+;
+;
+; OPEN THE FILE
+;
+	LXI	D,FCB
+	MVI	C,OPEN
+	CALL	BDOS
+	INR	A
+	JNZ	RDINIT
+;
+	CALL	ABEXIT
+	DB	'++ OPEN FAILED ++$'
+;
+; 
+; INITIALIZE 'CRC' TO ZERO AND SET 'BUFAD' TO CAUSE INITIAL READ
+;
+RDINIT:	LXI	H,0
+	SHLD	CRCVAL		;RESET VALUE TO ZERO FOR NEW CHECK
+	LXI	H,BASE+100H
+	SHLD	BUFAD		;INIT BUFFER ADRRESS
+;
+;
+; INITIALIZE CHARACTER COUNT TO ZERO
+;
+	LXI	H,COUNTN	;CLEAR THE CHARACTER COUNTER
+	MVI	B,6
+	CALL    RDIN1
+;
+;
+; INITIALIZE RECORD COUNT TO ZERO
+;
+	LXI	H,COUNTR	;CLEAR THE RECORD COUNTER
+	MVI	B,3
+	CALL	RDIN1
+	JMP	READIT
+;
+RDIN1:	MVI     M,' '
+	INX	H
+	DCR	B
+	JNZ	RDIN1
+	MVI	M,'0'		;USE A DECIMAL '0' FOR EMPTY FILE
+	RET
+;...
+;
+;
+; THIS IS THE READ LOOP
+;
+READIT:	LHLD	BUFAD
+	MOV	A,H		;TIME TO READ?
+	CPI	BASE SHR 8
+	JZ	NORD		;NO READ
+	MVI	C,CSTAT
+	CALL	BDOS		;CHECK FOR OPERATOR ABORT
+	ORA	A
+	JZ	READ1		;NOTHING TO READ, EXIT
+	MVI	C,RDCON
+	CALL	BDOS		;GET CHARACTER INPUTTED
+	CPI	CTLC		;CONTROL-C?
+	JZ	ABEXT1		;YES EXIT
+;
+READ1:	LXI	D,FCB
+	MVI	C,READ		;READ ANOTHER SECTOR OF FILE
+	CALL	BDOS
+	ORA	A		;CHECK RETURN CODE
+	JNZ	FINISH		;ERROR OR 'EOF'
+	CALL	COUREC		;INCREMENT THE RECORD COUNT
+	LXI	H,TBUF		;BUFFER LOCATION
+;
+NORD:	MOV	A,M		;GET FILE CHARACTER
+	INX	H
+	SHLD	BUFAD
+	CALL	UPDCRC		;UPDATE THE 'CRC' VALUE
+	CALL	COUCHR		;INCREMENT THE CHARACTER COUNT
+	JMP	READIT		;GO READ MORE CHARACTERS
+;.....
+;
+;
+FINISH:	CPI	1		;NORMAL END-OF-FILE?
+	JNZ	FILERR		;NO, IT WAS A READ ERROR
+;
+	LDA	CRCVAL+1	;GET 'MSP' OF 'CRC'
+	CALL	HEXO		;PRINT IT
+	MVI	A,' '		;SEPARATE 'LSP' AND 'MSP'
+	CALL	TYPE
+	LDA	CRCVAL		;GET 'LSP' OF 'CRC'
+	CALL	HEXO		;PRINT IT
+	CALL	ILPRT		;PRINT FOLLOWING MESSAGE
+	DB	'   '
+;
+COUNTN:	DB	'       '	;GIVES CHARACTER COUNT
+	DB	'    '
+;
+COUNTR:	DB	'    ',0	;GIVES RECORD COUNT
+	CALL	CRLF		;TURN UP NEW LINE
+	JMP	AGAIN		;SEE IF MORE FILES TO DO
+;.....
+;
+; 
+FILERR:	CALL	ABEXIT		; ABORT BECAUSE OF FILE READ ERROR
+	DB	'++ File read error ++$'
+;.....
+;
+; HEX OUTPUT
+; 
+HEXO:	PUSH	PSW		;SAVE FOR RIGHT DIGIT
+	RAR			;RIGHT..
+	RAR			;..JUSTIFY..
+	RAR			;..LEFT..
+	RAR			;..DIGIT..
+	CALL	NIBBL		;PRINT LEFT DIGIT
+	POP	PSW		;RESTORE RIGHT
+;
+NIBBL:	ANI	0FH		;ISOLATE DIGIT
+	CPI	10		;IS IS LESS THAN 10?
+	JC	ISNUM		;YES, NOT ALPHA
+	ADI	7		;ADD ALPHA BIAS
+;
+ISNUM:	ADI	'0'		;CONVERT FROM BINARY TO ASCII
+	JMP	TYPE		;PRINT IT, THEN RETURN
+;.....
+;
+;
+; INLINE PRINT ROUTINE
+;
+ILPRT:	XTHL			;SAVE 'HL', GET MSG
+;
+ILPLP:	MOV	A,M		;GET CHAR
+	CALL	TYPE		;OUTPUT IT
+	INX	H		;POINT TO NEXT
+	MOV	A,M		;TEST
+	ORA	A		;..FOR END
+	JNZ	ILPLP
+	XTHL			;RESTORE 'HL', RETURN ADDRESS
+	RET			;RETURN PAST MSG
+;.....
+;
+;
+; COUNT RECORDS CHECKED
+;
+COUREC:	PUSH	H		;SAVE THE CURRENT ADDRESS
+	LXI	H,COUNTR+3
+	MVI	C,4
+	JMP	COUNT		;COUNTS UP TO 9,999 RECORDS
+;...
+;
+;
+; COUNT CHARACTERS CHECKED
+;
+COUCHR:	PUSH	H
+	LXI	H,COUNTN+6	;CHARACTER COUNT STORAGE
+	MVI	C,7		;COUNTS UP TO 9,999,999 CHARACTERS
+;
+;
+; COUNTER FOR CHARACTERS / RECORDS CHECKED
+;
+COUNT:	PUSH	D		;SAVE THE REGISTER VALUES
+	PUSH	B
+;
+COUNT1:	CALL	COUNT2		;INCREMENT THE STORAGE COUNT
+	JNZ	COUNT4		;FINISHED IF NOT GOING ANY FURTHER
+	DCX	H		;DECREMENT STORAGE LOCATION
+	DCR	C		;ONE COLUMN LESS TO DO
+	JNZ	COUNT1		;IF NOT ZERO, PROCESS NEXT COLUMN
+	JMP	COUNT4		;FINISHED IF ALL COLUMNS PROCESSED
+;...
+;
+;
+COUNT2:	MOV	A,M		;SET DIGIT TO "1" IF NOW A SPACE
+	CPI	' '		;SEE IF A SPACE
+	JNZ	COUNT3		;EXIT IF NOT
+	MVI	A,'0'		;OTHERWISE CALL IT A DECIMAL '0'
+;
+COUNT3:	INR	A		;INCREMENT THE DIGIT
+	MOV	M,A		;STORE NEW VALUE
+	CPI	'9'+1		;READY TO GO PAST DECIMAL '9'?
+	RNZ			;FINISHED IF NOT
+	MVI	A,'0'		;OTHERWISE CALL IT A ZERO
+	MOV	M,A		;STORE NEW VALUE
+	RET			;RETURN TO AND INCREMENT NEXT COLUMN
+;...
+;
+;
+COUNT4:	POP	B		;RESTORE THE REG. VALUES
+	POP	D
+	POP	H
+	RET			;ALL DONE
+;.....
+;
+;
+; SEND CARRIAGE RETURN, LINE FEED TO OUTPUT
+;
+CRLF:	MVI	A,CR		;CARRIAGE RETURN
+	CALL	TYPE
+	MVI	A,LF		;LINE FEED, FALL INTO 'TYPE'
+;
+;
+; SEND CHARACTER IN 'A' REGISTER TO OUTPUT
+; 
+TYPE:	PUSH	B
+	PUSH	D
+	PUSH	H
+	ANI	7FH		;STRIP OFF ANY PARITY
+	MOV	E,A
+	PUSH	D
+	CALL	WRFILE		;WRITE TO FILE IF REQUESTED
+	POP	D
+	MVI	C,WRCON		;SEND CHARACTER TO CONSOLE
+	CALL	BDOS
+	POP	H
+	POP	D
+	POP	B
+	RET
+;.....
+;
+;
+PTFIL:	PUSH	PSW		;SAVE OUTPUT CHARACTER
+	LHLD	FILLEN		;GET CURRENT BUFFER LENGTH
+	XCHG			;'DE' HAS LENGTH
+	LHLD	FILEPTR		;LOAD NEXT TO GET/PUT TO 'HL'
+	MOV	A,L		;COMPUTE CURRENT LENGTH
+	SUB	E 	
+	MOV	A,H
+	SBB	D		;CARRY IF NEXT < LENGTH
+	JC	PTCRC4		;CARRY IF LENGTH > CURRENT
+	LXI	H,0		;END OF BUFFER, FILL (EMPTY) BUFFERS	
+	SHLD	FILEPTR		;CLEAR NEXT TO GET/PUT
+;
+PTCRC1:	XCHG			;FILE POINTER TO 'DE'
+	LHLD	FILLEN		;'HL' IS MAXIMUM BUFFER LENGTH
+	MOV	A,E		;COMPUTE NEXT LENGTH
+	SUB	L		;TO GET CARRY, IF MORE FILL
+	MOV	A,D
+	SBB	H		
+	JNC	PTCRC3
+	LXI	H,FILADR	;GOT CARRY, MORE TO FILL YET
+	DAD	D		;'HL' IS NEXT BUFFER ADDRESS
+	XCHG
+	MVI	C,STDMA		;SET 'DMA' ADDRESS
+	CALL	BDOS
+	LXI	D,FCBFIL	;'FCB' ADDRESS TO 'DE'
+	MVI	C,WRITE		;FILE WRITE
+	CALL	BDOS
+	ORA	A		;CHECK RETURN CODE
+	JNZ	PTCRC2		;END-OF-FILE YET?
+	LXI	D,BUFSIZ	;NOT 'EOF', INCREMENT LENGTH BY 128
+	LHLD	FILEPTR		;NEXT TO FILL
+	DAD	D
+	SHLD	FILEPTR		;SAVE NEW POINTER
+	JMP	PTCRC1		;PROCESS ANOTHER SECTOR
+;...
+;
+;
+PTCRC2:	MVI	C,PRINT		;PRINT STRING FUNCTION
+	LXI	D,DSKFUL	;DISK IS FULL
+	CALL	BDOS
+	POP	PSW		;CLEAN STACK
+	JMP	FILERR		;FILE ERROR, EXIT
+;...
+;
+;
+PTCRC3:
+	LXI	D,TBUF		;POINT TO TEMPORARY BUFFER
+	MVI	C,STDMA		;SET 'DMA' FUNCTION
+	CALL	BDOS
+	LXI	H,0		;RESET POINTER FOR NEXT TO GET
+	SHLD	FILEPTR
+;
+PTCRC4:	XCHG			;INDEX TO GET/PUT IN 'DE'
+	LXI	H,FILADR		;BASE OF BUFFER
+	DAD	D		;ADDRESS OF CHARACTER IN 'HL'
+	XCHG			;AND SWAP TO 'DE'
+	POP	PSW		;GET SAVE CHARACTER
+	STAX	D		;CHARACTER TO BUFFER
+	LHLD	FILEPTR		;INDEX TO GET/PUT
+	INX	H		;AND UPDATE FOR NEXT CHARACTER
+	SHLD	FILEPTR
+	RET
+;.....
+;
+;
+; PRINT SIGNON MESSAGE, AND INCLUDE ON DISK FILE
+;
+SIGNON:	DB	0		;GETS OVERWRITTEN TO "RET"
+	CALL	ILPRT		;PRINT THE MESSAGE
+;
+SOM:	DB	CR,LF,'----CHEK--------ver 1.5-------04/11/83----',CR
+	DB	LF,LF,'    FILE          CRC      CHARS   RECORDS'
+	DB	CR,LF,LF,0
+	MVI	A,0C9H		;'RET' TO ALLOW ONLY ONE SIGNON
+	STA	SIGNON
+	RET
+;.....
+;
+;
+; WRITE CHARACTER IN 'E' REGISTER TO OUTPUT FILE
+;
+WRFILE:	LDA	FFLAG		;MAKING A 'CRC' DISK FILE?
+	CPI	' '		;IS IT SET?
+	RZ			;NO, RETURN
+	MOV	A,E		;GET CHARACTER BACK
+	CALL	PTFIL
+	RET
+;.....
+;
+; 
+; MULTI-FILE ACCESS SUBROUTINE.  ALLOWS PROCESSING OF MULTIPLE FILES
+; (I.E., *.ASM) FROM DISK.  THIS ROUTINE BUILDS THE PROPER NAME IN THE
+; FCB EACH TIME IT IS CALLED.  CARRY IS SET IF NO MORE NAMES CAN BE
+; FOUND.
+; 
+MFNAME:	MVI	C,STDMA		;INIT 'DMA' ADDRESS AND 'FCB'
+	LXI	D,TBUF
+	CALL	BDOS
+	XRA	A
+	STA	FCBEXT
+	STA	FCBRNO
+;
+;
+; IF FIRST TIME
+;
+	LDA	MFFLG1
+	ORA	A
+	JZ	MFN01
+;
+;
+; SAVE THE REQUESTED NAME - SAVE ORIGINAL REQUEST
+;
+	LXI	H,FCB
+	LXI	D,MFREQ
+	LXI	B,12
+ 	CALL	MOVER
+	LDA	FCB
+	STA	MFCUR		;SAVE DISK IN CURRENT 'FCB'
+;
+; SEARCH FOR THE FIRST REQUESTED NAME
+;
+	LXI	H,MFREQ
+	LXI	D,FCB
+	LXI	B,12
+	CALL	MOVER
+	MVI	C,SRCHF		;SEARCH FOR FIRST NAME
+	LXI	D,FCB
+	CALL	BDOS
+	JMP	MFN02
+; 
+MFN01:	LXI	H,MFCUR
+	LXI	D,FCB
+	LXI	B,12
+	CALL	MOVER
+	MVI	C,SRCHF		;SEARCH FOR FIRST NAME
+	LXI	D,FCB
+	CALL	BDOS
+;
+;
+; SEARCH FOR NEXT REQUESTED NAME
+;
+	LXI	H,MFREQ
+	LXI	D,FCB
+	LXI	B,12
+	CALL	MOVER
+	MVI	C,SRCHN		;SEARCH FOR NEXT NAME
+	LXI	D,FCB
+	CALL	BDOS
+;
+MFN02:	INR	A
+	STC
+	RZ
+;
+;
+; MOVE NAME FOUND TO CURRENT NAME
+;
+	DCR	A
+	ANI	3
+	ADD	A
+	ADD	A
+	ADD	A
+	ADD	A
+	ADD	A
+	ADI	128+1
+	MOV	L,A
+	MVI	H,BASE SHR 8
+	PUSH	H		;SAVE NAME POINTER
+	LXI	D,MFCUR+1
+	LXI	B,11
+	CALL	MOVER
+;
+;
+; MOVE NAME FOUND TO FCB
+;
+	POP	H
+	LXI	D,FCB+1
+	LXI	B,11
+	CALL	MOVER
+;
+;
+; SETUP FCB
+;
+ 	XRA	A
+	STA	FCBEXT
+	STA	FCBRNO
+	STA	MFFLG1		;TURN OFF 1ST TIME SWITCH 
+	RET
+;.....
+;
+; 
+; CHECK FOR .$$$ FILES
+; 
+TSTBAD:	CALL	TESTIT		;CHECK FIRST ONE FOR '$'
+	RNZ			;NO, RETURN
+	CALL	TESTIT		;CHECK SECOND ONE
+	RNZ			;NO, RETURN
+;...
+;
+;
+TESTIT:	MOV	A,M
+	ANI	7FH		;STRIP ATTRIBUTE
+	CPI	'$'		;CHECK FOR $ FILETYPE
+	INX	H
+	RET
+;.....
+;
+; 
+; MOVE (BC) BYTES FROM (HL) TO (DE)
+; 
+MOVER:	MOV	A,M
+	STAX	D
+	INX	H
+	INX	D
+	DCX	B
+	MOV	A,B
+	ORA	C
+	JNZ	MOVER
+	RET
+;..... 
+;
+;
+; ABORTED - PRINT REASON.  IF MAKING OUTPUT FILE, CLOSE THE INCOMPLETE
+; FILE TO UPDATE CP/M'S BIT MAP, THEN ERASE IT.
+; 
+ABEXIT:	POP	D		;GET MSG ADRS
+	MVI	C,PRINT
+	CALL	BDOS		;PRINT MSG
+;
+ABEXT1:	LDA	FFLAG		;SEE IF WE ARE MAKING A DISK FILE
+	CPI	' '
+	JZ	ABEXT4		;IF NOT, EXIT
+;
+ABEXT2:	LHLD	FILEPTR
+	MOV	A,L
+	ANI	07FH
+	JNZ	ABEXT3
+	SHLD	FILLEN
+;
+ABEXT3:	MVI	A,EOF
+	PUSH	PSW
+	CALL	PTFIL
+	POP	PSW
+	JNZ	ABEXT2
+ 	MVI	C,CLOSE
+	LXI	D,FCBFIL
+	CALL	BDOS
+	INR	A
+	JNZ	ERACRC
+	MVI	C,PRINT
+	LXI	D,NOCLOS
+	CALL	BDOS
+;
+;
+; ERASE INCOMPLETE FILE
+;
+ERACRC:	MVI	C,DELET
+	LXI	D,FCBFIL
+	CALL	BDOS
+;
+ABEXT4:	CALL	ERXIT		;PRINT MSG, EXIT
+	DB	CR,LF,LF,'++ ABORTED ++',CR,LF,'$'
+;
+;
+; EXIT WITH MESSAGE
+; 
+MSGXIT:	DS	0		;EXIT WITH "INFORMATIONAL" MESSAGE
+;
+ERXIT:	POP	D		;GET MSG
+	MVI	C,PRINT
+	CALL	BDOS
+;
+; 
+; EXIT, RESTORING STACK AND RETURN TO 'CCP'
+; 
+EXIT:	JMP	0000H		;OVERWRITTEN WITH 'CCP' RETURN
+;.....
+;
+;
+DIRFUL:	DB	CR,LF
+	DB	'++ NO DIRECTORY SPACE FOR CRC FILE ++',CR,LF,'$'
+;
+DSKFUL:	DB	CR,LF
+	DB	'++ NO DISK SPACE FOR CRC FILE ++',CR,LF,'$'
+;
+NOCLOS:	DB	CR,LF
+	DB	'++ CANNOT CLOSE CRC FILE ++',CR,LF,'$'
+;.....
+;
+;
+;-----------------------------------------------------------------------
+;
+; CRCSUBS (Cyclic Redundancy Code Subroutines) for 8080 Mneumonics
+;
+; These subroutines compute and check a true 16-bit Cyclic Redundancy
+; Code for a message of arbitrary length.
+;
+;       This algorithm produces the same results as obtained in COMM700,
+;	DISK7, MDM700, and MODEM700 programs.
+;
+;
+; Builds the 512-byte look-up table
+;
+INITCRC:
+	LXI	H,CRCTBL	;ADDRESS OF THE 512-BYTE LOOK-UP TABLE
+	MVI	C,0		;TABLE INDEX
+;
+GLOOP:	XCHG
+	LXI	H,0		;INITIALIZE 'CRC' REGISTER PAIR
+	MOV	A,C
+	PUSH	B		;SAVE THE INDEX IN 'C' REG.
+	MVI	B,8
+	XRA	H
+	MOV	H,A
+;
+LLOOP:	DAD	H
+	JNC	LSKIP
+	MVI	A,10H		;GENERATOR IS x^16 + x^12 + x^5 + x^0 AS
+	XRA	H		;RECOMMENDED BY 'CCIT' FOR ASYNCHRONOUS
+	MOV	H,A		;COMMUNICATIONS
+	MVI	A,21H
+	XRA	L
+	MOV	L,A
+;
+LSKIP:	DCR	B
+	JNZ	LLOOP
+	POP	B
+	XCHG			;'DE' PAIR NOW HAS 'CRC', 'HL' POINTING
+	MOV	M,D		;INTO TABLE.  STORE HIGH BYTE OF 'CRC'
+	INR	H
+	MOV	M,E		;STORE LOW BYTE
+	DCR	H
+	INX	H		;MOVE TO NEXT TABLE ENTRY
+	INR	C		;NEXT INDEX
+	JNZ	GLOOP
+	RET
+;.....
+;
+;
+; Updates the CRC value.  Finds its value by indexing into the look-up
+; table.  Character arrives in the 'A' register.
+;
+UPDCRC:	LHLD	CRCVAL		;PICK UP PARTIAL REMAINDER
+	XCHG			;'DE' PAIR NOW HAS PARTIAL
+	MVI	B,0
+	XRA	D
+	MOV	C,A
+	LXI	H,CRCTBL	;INDEX INTO THE 512-BYTE 'CRC' TABLE	
+	DAD	B
+	MOV	A,M
+	XRA	E
+	MOV	D,A
+	INR	H
+	MOV	E,M
+	XCHG
+	SHLD	CRCVAL		;STORE THE CURRENT 'CRC' VALUE
+	RET
+;.....
+;
+;
+;-----------------------------------------------------------------------
+;
+; PROGRAM STORAGE AREA
+; 
+BUFAD:	DB	0,0		;READ BUFFER ADDRESS
+CRCVAL:	DB	0,0		;'CRC' VALUE STORAGE
+FFLAG:	DB	0		;FILE WRITE REQUEST FLAG
+MFCUR:	DB	'            '	;CURRENT NAME
+MFFLG1:	DB	1		;1ST TIME SWITCH
+MFREQ:	DB	'            '	;REQUESTED NAME
+NFLAG:	DB	0		;SET TO ZERO IF FILE(S) FOUND
+FILLEN:	DB	0,0		;FILLED AUTOMATICALLY
+FILEPTR:
+	DB	0,0
+;
+;
+; BUILD FCB FOR FINAL NAME OF CHEKLIST.CRC
+;
+FCBFIN:
+	DB	0,'CHEKLISTCRC'
+	DB	0
+	DS	20
+;
+;
+; OUTPUT FILE (TEMPORARILY NAMED CHEKLIST.$$$)
+;
+FCBFIL:	DB	0,'CHEKLIST$$$'
+	DB	0
+	DS	20
+	DS	24		;MINIMUM STACK AREA
+;
+SETEVN: EQU	($+127)/128*128	;SET BUFFER TO EVEN PAGE
+;
+;
+	ORG	SETEVN
+;
+STACK:	DS	0
+;
+CRCTBL:	DS	512		;CRC DOUBLE-TABLE STORAGE
+;
+FILADR:	DS	0		;BUFFER ALL 'CRC' FILE DATA HERE
+;.....
+;
+;
+	END	BEGIN
+  

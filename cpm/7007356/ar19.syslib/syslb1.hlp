@@ -1,0 +1,276 @@
+Directory Manipulation Routines
+Generalized Routines -- DIRF and DIRFS
+Buffer Allocation Routine -- DBUFFER
+Disk Parameter Information Extraction Routine -- DPARAMS
+Free Space Computation Routine -- DFREE
+File Size Computation Routine -- FSIZE
+Directory Load Routines -- DIRLOAD and DIRSLOAD
+Directory Alphabetization Routine -- DIRALPHA
+Directory Entry Selection Routine -- DIRSEL
+Directory Pack Routine -- DIRPACK
+:Directory Manipulation Routines
+     This set of SYSLIB routines concerns itself with the loading 
+of and access of a disk directory for the general purposes of the 
+user.  Included in this set of routines are the functions of:
+          1.  Preallocation of buffer space for the routines
+          2.  Two routines which load all undeleted directory
+               entries into a buffer, constantly checking for
+               memory overflow as they go
+                    DIRLOAD loads the first entry for each file
+                         (this is the faster of the two)
+                    DIRSLOAD loads the last entry for each file
+                         (this routine is required if the
+                              user wishes to compute file sizes)
+          3.  A routine to determine the amount of free space on
+               the disk
+          4.  A routine to compute the size of a file in K
+          5.  A routine to sort a loaded directory by file name
+               and type or by file type and name
+          6.  A routine to select (by marking) a set of directory
+               entries which match a given ambiguous file spec
+          7.  A routine to pack the loaded directory, leaving in
+               it only those entries marked by the select routine
+:Generalized Routines -- DIRF and DIRFS
+     Routine Name: DIRF and DIRFS
+     Function:
+          This routine initializes the buffer area,  loads a disk 
+directory,  selects  a  set  of files from the  loaded  directory 
+specified  by  the user's ambiguous file name and a  passed  flag 
+(which indicates if System files are selected,  Non-system  files 
+are  selected,  all  user  areas  are to  be  covered,  and  what 
+particular  user area is to be covered if all user areas are  not 
+selected), packs the directory, and alphabetizes the directory by 
+file name and file type.
+     If  DIRF is used,  the processing proceeds faster since only 
+the  first entry of each file is loaded into the  memory  buffer.  
+File sizing information is not included in this load, however.
+     If DIRFS is used, the processing is somewhat slower, but the 
+last  entry for each file is loaded rather than the first.   File 
+sizing  information  is  contained  in  this  entry,   and   this 
+information can be used by the FSIZE routine.
+     Inputs:  HL points to a dynamic buffer which extends from
+               after the user's code and buffer areas to the
+               end of the TPA
+              DE points to the first byte of the FCB used to
+               specify the ambiguous file name; only the chars
+               in the FN and FT fields are significant, so this
+               need not be a true FCB and may be as short as 12
+               bytes
+              A is the selection flag, structured as follows:
+               Bit 7 - If Set, Select Non-System Files
+               Bit 6 - If Set, Select System Files
+               Bit 5 - If Set, Select All User Areas
+               Bits 4-0 - If Bit 5 is Cleared, contains number
+                    of User Area to Select
+     Outputs:  HL points to the first file entry in the buffer;
+                each file entry is 16 bytes long
+               BC contains the number of files selected
+               A contains an error flag; A=0 and Zero Flag Set
+                (Z) indicates TPA overflow error during load of
+                directory entries; A<>0 and NZ indicates load OK
+
+     Registers Affected:  HL, BC, PSW
+     SYSLIB Routines Called:  DBUFFER, DIRLOAD, DIRSEL, DIRPACK,
+                              DIRALPHA
+     Special Error Conditions:  As outline for the A register
+          above.
+
+
+:Buffer Allocation Routine -- DBUFFER
+     Routine Name: DBUFFER
+     Function:
+          This  routine allocates the buffer space necessary  for 
+the  set of directory functions in general.   In  particular,  it 
+allocates the necessary space for the alphabetization function as 
+well as the loaded directory itself.   This routine must be  used 
+if  the  DIRALPHA  routine  is  to be  later  used  to  sort  the 
+directory;  this  routine  allocates all the space  necessary  by 
+DIRALPHA to sort the routine (pointer space).  If this routine is 
+called, it is not necessary to call the DPARAMS routine.
+     Inputs:  HL points to the beginning address of a dynamic
+               buffer area which extends to under the CCP
+     Outputs:  HL points to the first byte at which the directory
+                entries are to be loaded
+               A=0 and Zero Flag is Set (Z) if the CCP is
+                already overrun; else, A<>0 and NZ
+     Registers Affected:  HL, PSW
+     SYSLIB Routines Called:  DPARAMS
+     Special Error Conditions:  As indicated by A reg and Z flag
+:Disk Parameter Information Extraction Routine -- DPARAMS
+     Routine Name:  DPARAMS
+     Function:
+     This  routine  extracts necessary information from the  Disk 
+Parameter  Block (DPB) and stores it away in some global  buffers 
+used by other Disk Directory Routines.  The information extracted 
+is not of general concern by the programmer.   ALL THE PROGRAMMER 
+NEEDS  TO KNOW IS THAT THIS ROUTINE MUST BE CALLED AT LEAST  ONCE 
+BEFORE THE DIRLOAD OR DIRSLOAD ROUTINE IS CALLED.  If the DBUFFER 
+routine  is  called,  then it is not necessary  to  call  DPARAMS 
+again.
+     For the information of the reader, the following information 
+is extracted:
+               BLKSHF <-- Block Shift Factor (1 Byte)
+               BLKMSK <-- Block Mask (1 Byte)
+               EXTENT <-- Extent Mask (1 Byte)
+               BLKMAX <-- Max Number of Blocks on Disk (2 Bytes)
+               DIRMAX <-- Max Number of Dir Entries (2 Bytes)
+     This  routine automatically adjusts for versions 1.4 and 2.2 
+of CP/M and is compatable with both versions of CP/M.
+
+     Inputs:  None
+     Outputs:  None (Information Extracted into Buffers)
+     Registers Affected:  None
+     SYSLIB Routines Called:  None
+     Special Error Conditions:  None
+:Free Space Computation Routine -- DFREE
+     Routine Name: DFREE
+     Function:
+          This  routine  computes the amount of free space (in  K 
+bytes) left on disk.
+     The  routine  DPARAMS  (or  DBUFFER,  since  it  also  calls 
+DPARAMS)  must be called before this routine is used so that  the 
+correct disk parameter information is loaded for it.
+     Inputs:  None
+     Outputs:  DE = Amount of Free Disk Space in K Bytes
+     Registers Affected:  DE
+     SYSLIB Routines Called:  None
+     Special Error Conditions:  None
+:File Size Computation Routine -- FSIZE
+     Routine Name: FSIZE
+     Function:
+          This  routine  computes the size of a file whose  entry 
+(which  MUST be loaded by DIRSLOAD) is pointed to  by  HL.   This 
+routine will work, but generally return incorrect results, if the 
+entry pointed to was loaded by DIRLOAD instead.
+     The  routine  DPARAMS  (or  DBUFFER,  since  it  also  calls 
+DPARAMS)  must be called before this routine is used so that  the 
+correct disk parameter information is loaded for it.
+     Inputs:  HL points to first byte of file entry
+     Outputs:  DE contains the file size in K Bytes
+     Registers Affected:  DE
+     SYSLIB Routines Called:  None
+     Special Error Conditions:  None
+:Directory Load Routines -- DIRLOAD and DIRSLOAD
+     Routine Name: DIRLOAD and DIRSLOAD
+     Function:
+          DIRLOAD  and  DIRSLOAD load entries for  all  undeleted 
+files  on  the  currently logged in disk into the  memory  buffer 
+pointed to by HL.  All entries are 16 bytes long.
+     DIRLOAD  is faster than DIRSLOAD.   It loads just the  first 
+entry of each file on disk.   DIRLOAD,  however,  should be  used 
+only   if  file  sizing  information  is  not  required  by   the 
+applications program.
+     DIRSLOAD  loads  just the LAST entry of each file  on  disk.  
+This  entry contains the necessary file sizing information  which 
+may be used by FSIZE to compute the size of the loaded file.
+     If  the  TPA is filled during DIRLOAD or DIRSLOAD and  there 
+are still more file entries to load,  the load will be halted and 
+an error return will be made to the caller.   On return,  if  A=0 
+and  the  Zero  Flag  is Set (Z),  then a  load  error  occurred; 
+otherwise, the load was OK.
+
+
+     Inputs:  HL points to the first byte of the directory buffer
+               area; this area extends from after the last buffer
+               used by the applications program to the page
+               before the CCP.  If alphabetization is to be done,
+               the value returned in HL by DBUFFER is a correct
+               input for DIRLOAD or DIRSLOAD
+              A=0 and Zero Flag is Set (Z) if TPA Overflow;
+               A<>0 and NZ if load OK
+     Outputs:  BC is the number of files loaded into the buffer
+     Registers Affected:  BC
+     SYSLIB Routines Called:  None
+     Special Error Conditions:  If TPA is filled and load is
+          incomplete, A=0 and Zero Flag is Set (Z) as error indic
+:Directory Alphabetization Routine -- DIRALPHA
+     Routine Name: DIRALPHA
+     Function:
+          To alphabetize the files in the directory pointed to by 
+HL  by either file name and type (STEST.ASM goes before TEST.AAA) 
+or by file type and name (TEST.AAA goes before STEST.ASM).
+     Inputs:  HL points to first directory entry
+              BC contains the number of files to sort
+              A is the sort flag; A=0 means sort by file name and 
+               then file type, A<>0 means by file type and name
+     Outputs:  None (directory list is sorted)
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  PRINT
+     Special Error Conditions:
+          It  is possible,  altho highly unlikely from all  tests 
+     given  so  far,  that  DIRALPHA may experience  an  internal 
+     error.  If this happens, the message:
+               DIRALPHA -- Pointer Error
+     will be printed and the routine will abort to CP/M.  If this 
+     happens,  please  report  this problem and  be  prepared  to 
+     duplicate the exact situation which caused this error to the 
+     author, Richard Conn.
+:Directory Entry Selection Routine -- DIRSEL
+     Routine Name: DIRSEL
+     Function:
+          DIRSEL  selects  all  entries in the  directory  buffer 
+which  match the ambiguous file name specified in the FN  and  FT 
+fields  of  the  FCB pointed to by DE upon entry  to  DIRSEL.   A 
+selection  flag is also passed to DIRSEL in the A  register,  and 
+this flag tells DIRSEL whether or not to include Non-System files 
+and System files in the selection and whether to select files  in 
+all user areas or in a particular user area.
+     DIRSEL  identifies the selected file entries by setting  the 
+Most  Significant Bit of the first byte of each of these  entries 
+to 1 if the entry is selected.   DIRSEL makes no other changes to 
+the file entries in the directory buffer.
+
+     Inputs:  HL points to the directory buffer
+              DE  points to the FCB containing the  ambiguous  FN 
+               and FT fields; only the first 12 bytes are needed
+              BC contains the number of files in the directory
+              A contains a selection flag, organized as follows:
+               Bit 7 - Select Non-System Files
+               Bit 6 - Select System Files
+               Bit 5 - Select Files in All User Areas
+               Bits 4-0 - If Bit 5 is 0, indicates number of
+                    User Area to select files from
+     Outputs:  None (MSBs of selected entries are set)
+     Registers Affected:  None
+     SYSLIB Routines Called:  None
+     Special Error Conditions:  None
+:Directory Pack Routine -- DIRPACK and DIRNPACK
+     Routine Name:  DIRPACK
+     Function:
+          DIRPACK  restructures the directory buffer  to  contain 
+only those entries marked by DIRSEL.   In this way, those entries 
+NOT  marked  by DIRSEL are discarded from the  buffer  (actually, 
+just  taken out of consideration,  but the contents of the buffer 
+after  the  last  selected entry is  not  guaranteed  to  contain 
+anything significant).
+     The  Most  Significant Bit of the first byte of all  entries 
+remaining in the directory buffer is reset to 0 as a side  effect 
+of DIRPACK.
+     Inputs:  HL points to the directory buffer
+              BC contains the number of files in the buffer
+     Outputs:  BC contains the number of files (those selected by
+                DIRSEL) remaining in the directory buffer
+     Registers Affected:  BC
+     SYSLIB Routines Called:  None
+     Special Error Conditions:  None
+     Routine Name:  DIRNPACK
+     Function:
+          DIRNPACK  restructures the directory buffer to  contain 
+only  those  entries NOT marked by DIRSEL.   In this  way,  those 
+entries marked by DIRSEL are discarded from the buffer (actually, 
+just taken out of consideration,  but the contents of the  buffer 
+after  the  last  selected  entry is not  guaranteed  to  contain 
+anything significant).
+     The  Most Significant Bit of the first byte of  all  entries 
+remaining  in the directory buffer is reset to 0 as a side effect 
+of DIRNPACK.
+     The  routine  DIRSEL MUST be called before DIRNPACK is  used 
+since  DIRNPACK uses an internal flag set by DIRSEL  (for  SYSTEM 
+and R/O information).
+     Inputs:  HL points to the directory buffer
+              BC contains the number of files in the buffer
+     Outputs:  BC contains the number of files (those NOT selected
+                by DIRSEL) remaining in the directory buffer
+     Registers Affected:  BC
+     SYSLIB Routines Called:  DIRPACK
+     Special Error Conditions:  None

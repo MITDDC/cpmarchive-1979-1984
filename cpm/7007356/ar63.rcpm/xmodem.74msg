@@ -1,0 +1,22 @@
+   XMODEM74 is now on this system.  Some of its features:
+  
+A1>XMODEM                                (1)
+A1>XMODEM L MDM705.LBR MDM705.AQM        (2)
+A1>XMODEM L CATALOG CAT2.DOC             (3)
+A1>XMODEM S CHEK.OBJ                     (4)
+A1>XMODEM S B6:HELLO.DOC                 (5)
+A1>XMODEM R NEW.MSG                      (6)
+A1>XMODEM RC COPY.TXT                    (7)
+A1>XMODEM RP TYPE14.OBJ                  (8)
+A1>XMODEM RPC LOOK.ASM                   (9)
+  
+   1) will display the "help menu" of acceptable commands
+   2) will send a file from a library group.
+   3) (.LBR not needed for a library group but may be used)
+   4) will send a file from the current drive and user area
+   5) can send a file in another drive/user area
+   6) normal way to receive a file, uses CRC checking
+   7) receives a file but with checksum verification
+   8) normal way to receive into a private area using CRC
+   9) receives a file into a private area using checksum
+                                  - Irv Hoff

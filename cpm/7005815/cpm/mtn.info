@@ -1,0 +1,90 @@
+Date: 22 September 1982 19:30-EDT
+From: Keith Petersen <W8SDZ at MIT-MC>
+Subject:  [RIZZI: CP/M <-> ARPAnet transfers]
+To: INFO-MTN at MIT-MC
+
+Sounds like a job for "Superman" (otherwise known as MTN 3.0)...
+
+---forwarded message---
+
+Date: 22 Sep 1982 1124-PDT
+From: Bill Rizzi <RIZZI at USC-ISIB>
+To:   W8SDZ
+Re:   CP/M <-> ARPAnet transfers
+
+Keith -
+	What exists on MIT-MC is great for us technical types who feel
+comfortable with assemblers and debuggers.  However, there are a lot
+of people out there who feel happy that they know how to use WordStar.
+They want to use their machines locally, sending files off to be
+printed or to check their mail.  They want a menu driven program that
+does not have to be assembled or patched to be used.  A good example
+is the modem2 program for the IBM PC that utilizes function keys and
+does not require setting up MODEM on the remote end to send/receive.
+Everything can be done by touching a key on the local machine.  What I
+am doing is esentially putting a "marketing" layer on top of existing
+"product", ie. making the modem2 program more accessible to
+non-sophisticated users for use in the ARPAnet community.  I will be
+driven by the requests of potential users for a package for their
+particular system.  The problem of distribution can be handled by
+mailing a floppy, if necessary. I understand your concern that effort
+not be needlessly duplicated.  However, the person who got me involved
+on this project did so at the request of ARPA higher-ups who wanted
+the CP/M machines able to communicate with the net via file transfer.
+The fact that they didn't know about MC was the basis for my comment
+on not reaching all interested users. The range of computer ability is
+widening incredibly, from the large number of first-time users who
+have been led to believe one must be a genius to use a computer, to
+the geniuses who are trying to make it easier for them via standards,
+portability, and intelligent software.  Unfortunately, the large
+amount of work that must go into making a highly technical project
+work is often unmatched by the perhaps even greater effort needed to
+make it usable by the "masses".
+
+	I hope I have cleared up what it is I am attempting to do.
+I have personally profited from the MIT-MC setup, although I have had
+some difficulties in assembling some of the software (particularly the
+modem.221asm which seems to have undefined symbols).  Even so, once I
+had gotten the modem program running on a dial-up to ISI, I still had
+problems running it either way through a TAC.  I have to get this
+solved before doing much else.  I would like to be able to send off a
+program virtually guaranteed to work thru TIPs, TACs, dial-ups ,
+Ascii/binary, etc.  Thanks for your concern and help.
+
+		Bill
+
+Date: 11 Feb 1982 1630-EST
+From: Mike S. Schiller <G.MIKES at MIT-EECS>
+Subject: add me please
+To: info-mtn at MIT-MC
+
+	Please add my name to the list.  G.MIKES@MIT-EECS
+thanks in advance...	-Mike
+-------
+
+Date: 8 January 1982 16:56-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  MTN 2.2A DCHayes Bug Fix
+To: INFO-CPM at MIT-MC
+cc: INFO-MTN at MIT-MC
+
+With the help of Ron Fowler (RGF@MC), we tracked down the bug using an
+old listing of MTN 2.1.  (My listing and disk for MTN 2.2A are
+apparently permanently and irretrievably archived...)  I have just now
+found a machine with a DCHayes modem in it and tested the following
+patch - and it worked!  With this patch installed in a copy of the
+uncustomized MTN22A.COM, REName it to MTN22B.COM.  My apologies to all
+for not finding and fixing this rather elusive bug much sooner...
+
+This patch will prevent a reentered MTN from hanging up the phone when
+there is a carrier already present:
+
+21B4 -> 3E A5 00 (LD A,0A5H)
+27ED -> 42 ("B")
+
+For those who still have 2.2, this upgrades it to 2.2A:
+
+2.2 -> 2.2A  11E4 to 11E7 -> 00
+
+--Frank
+

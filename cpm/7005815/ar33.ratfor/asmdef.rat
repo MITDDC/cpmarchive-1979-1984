@@ -1,0 +1,14 @@
+#The following Cromemco ASMLIB functions are callable as
+#FUNCTION or CALLed subroutines
+	INTEGER ADEC,AHEX
+# AHEX(0,0,'0hhhhH')
+# CALL BINH2(STRING,CHAR(n)) ; CHAR sets A reg.
+# CALL FNAME('aaaaaaaaeee',XFCB,ICLEAR.XOR.ICLEAR)
+# CALL ZOPN(ERMSG,XFCB) or ZNEW or ZCLOS
+	INTEGER*1 GCHAR,PFNAM,ICLEAR
+# GCHAR(0,XFCB)
+	LOGICAL IOER
+# CALL ZIOER(ERMSG,XFCB)
+# CHARACTER*1 FNAME(14)
+# PFNAM(FNAME,XFCB) is actual length of FNAME
+

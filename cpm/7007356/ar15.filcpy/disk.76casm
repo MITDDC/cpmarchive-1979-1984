@@ -1,0 +1,1789 @@
+; title 'disk7 -- cp/m file manipulation program'
+
+VERS	EQU	7$6		;version number..
+MONTH	EQU	07		;..month..
+DAY	EQU	01		;..day..
+YEAR	EQU	83		;..and year.
+
+; copyright (c) 1983 by frank gaude'.  all rights reserved.  released to the
+; public domain for non-commercial use.  monetary gain in not permitted under
+; any circumstance by individual, partnership, or corporation.
+
+; 'disk7' is based on common ideas presented in 'cleanup', 'wash', and 'sweep',
+; written by ward christensen, michael karas, and robert fisher, respectively.
+; existence of these programs generated impetus for writing 'disk7'.
+
+; a single-screen menu is provided after entering 'disk7' followed by cursor
+; return.  wildcard filenames and optional drive declaration are permitted.
+; disk7 [d:]*.asm shows only 'asm' files on [selected] or current drive.
+; any other than a command key causes the menu to reappear.  full error
+; trapping and command cancellation recovery is provided.  cancellation occurs
+; by entering a <return>, if no other entry has been made and execution has
+; not begun.
+
+; display is circular, single-file columnar, with crt console cursor moved
+; 'forward' with <space> or <return>, and 'reverse' with 'b'.  drive
+; remaining storage in kilobytes is automatically displayed whenever disks
+; are logged-in or menu recalled.  if a user area with no files is logged-in,
+; new drive/user area prompt is presented.
+
+; command functions of 'disk7' are:
+
+;     c - copy file to another drive/user with automatic 'crc' verification.
+;         format is --> to drive/user: 'd[nn]<return>' where 'd' is drive and
+;         'n' is optional user area.  a 'colon' after the drive or user area
+;         is optional.  d, d:, dn, dn:, dnn, dnn: are all valid entries.
+;         (system reset occurs for disk change.)  prompts to erase already
+;         existing file on other drive or in other user area.
+;     d - delete file from disk, prompts for certainty.
+;     f - file size in kilobytes, rounded up to next disk allocation block.
+;     j - jump 'forward' 22 file names.  used to quickly scan through lengthy
+;         disk directories.
+;     l - log-in new drive/user for display and reset system for disk changes.
+;         format is same as 'c' for copy.
+;     m - mass copy of tagged files to another drive/user area.  auto-erase
+;         occurs if file(s) already exist(s).  prompts for desired drive/user
+;         area as with 'c' and 'l'.  mass copy function can be repeated
+;         without re-tagging files.  simply enter 'm' again to copy previously
+;         tagged files to another drive/user area.  (entering 'm' without any
+;         files tagged causes cursor to move to directory beginning.)
+;     p - print text file to cp/m list device (printer), any keypress cancels.
+;     r - rename file on current drive, only cp/m convention names permitted.
+;     s - stat of requested drive, shows remaining disk storage in kilobytes.
+;     t - tag file for inclusion for mass copy to another drive/user area.
+;         file remains tagged until either a disk log-in or 'u' is used to
+;         untag it.  a '*' marker is placed on the tagged filename cursor
+;         line as a reminder the file is tagged for mass copy.  tagged file
+;         size is shown, totals accumulated and presented in parentheses.
+;     u - untag file previously tagged for mass copy.  'u' can be used to move
+;         cursor 'forward' for quick untagging of files.  logging-in drive
+;         again with 'l' also quickly untags all files.
+;     v - view text file on console, with pagination and single-line turn-up.
+;         <crtl-x> or <esc> cancels function.  only 'ascii' characters are
+;         processed.
+;     w - write ascii file to cp/m logical punch device, any keypress cancels.
+;     x - exit to cp/m (to ccp without rebooting, or optionally warmboot if
+;         program assembled with 'warmboot' equate set true.)  <esc> can be
+;         used also to exit to cp/m.
+
+; 'disk7' is an alternative to 'pip' and 'sweep'.  conveniently, it can be
+; added as a subroutine to application programs that require file manipulation
+; but without returning to the cp/m operating system.  'disk7' loads fast and
+; copies files at near theoretical speed using an 8-bit 'crc' table-driven
+; ccitt recommended routine.  the compact menu makes operation essentially
+; self-documenting.  the program occupies less than 4k bytes of memory.
+
+; installation requires setting maximum allowed drive to be logged-in or
+; copied to, and deciding if to warmboot or not on returning to cp/m.  these
+; equate options plus several others are at program 'starting definitions'
+; below.
+
+; disk7 works with cp/m 2.2 only, with 24k or more of ram.  file copy
+; functions are faster with large amounts of ram.
+
+; please report bugs noted or improvements incorporated to frank gaude'
+; at 10925 stonebrook drive, los altos hills, ca 94022.  telephone is
+; 415/941-2219, 6pm to 10pm daily, pacific time.
+
+; latest changes
+
+; 07/01/83  updated menu to reflect new commands.  doc file combined with
+; asm file.  (76c)  fg
+
+; 06/19/83  tagged file summation displayed right-justified.  added new
+; command ('j') to jump forward 22 files.  (76a/b)  fg
+ 
+; 06/04/83  added 'ani 7fh' to 'v' read function to force text to ascii.
+; also added 'w' command to output ascii text to cp/m punch device (tnx to
+; bill silvert for recommending these changes).  file size now accumulated
+; as tagged ('t') and presented in parentheses on cursor line.  (76)  fg
+
+; starting definitions
+
+TRUE	 EQU	0FFH		;define true and..
+FALSE	 EQU	0       	;..false.
+WARMBOOT EQU	FALSE		;set true to warmboot on exit
+CPM$BASE EQU	000H		;cp/m system base..
+TPA	 EQU	100H		;..'transient program area' start..
+CCP	 EQU	800H		;..and 'ccp' length in bytes.
+LPS	 EQU	24-2		;lines-per-screen for 'view' pagination
+GET	 EQU	0FFH		;get user area e-reg value
+
+; ascii definitions
+
+BELL	EQU	07H		;ascii bell character..
+BS	EQU	08H		;..backspace..
+LF	EQU	0AH		;..linefeed..
+CR	EQU	0DH		;..carriage return..
+CAN	EQU	18H		;..cancel..
+EOFCHAR	EQU	1AH		;..end-of-file..
+ESC	EQU	1BH		;..and escape character.
+
+; even-page base of filename ring storage
+
+RING	SET	LAST+100H AND 0FF00H
+
+; assembly origin (load address) and program beginning
+
+SOURCE	ORG	CPM$BASE+TPA
+	JMP	DISK7
+
+; highest disk drive letter in system (at 103h in 'com' file)
+
+MAXDR	DB	'C'		; 'a', 'b', 'c', etc.
+
+; concealed copyright notice
+
+	DB	' Copyright (c) 1983 by Frank Gaude'''
+	DB	' All Rights Reserved'
+ 
+; start of program
+
+DISK7	 IF	NOT WARMBOOT
+	LXI	H,0		;clear hl-pair then..
+	DAD	SP		;..add cp/m's stack address.
+	SHLD	STACK
+	 ENDIF			;not warmboot
+
+	LXI	SP,STACK	;start local stack
+	CALL	HELP		;show 'menu'
+	MVI	E,GET		;determine..
+	CALL	GET$USR		;..user area then..
+	STA	C$U$A		;..store as current and..
+	STA	O$USR		;..as original for exit.
+	LDA	FCB		;default drive?
+	ORA	A
+	JZ	EMBARK		;if so, branch.
+	DCR	A
+	STA	C$DR		;store 0 --> 'a', 1 --> 'b',etc.
+	CALL	SET$DR		;select requested drive as current
+
+; determine if specific file(s) requested -- show remaining storage
+
+EMBARK	CALL	FRESTOR		;get bytes remaining on drive (decode default)
+	LDA	FCB+1		;check if a filename was entered
+	CPI	' '		;filename a space?
+	JNZ	PLUNGE		;no, name was entered.
+	LDA	FCB+9		;filetype also space?
+	CPI	' '		;if so, then..
+	JNZ	PLUNGE
+	LXI	H,JOKER		;..treat as '*.*' with 'joker'..
+	LXI	D,FCB+1		;..loaded here.
+	MVI	B,11		; # of characters to move
+	CALL	MOVE		;set field to *.*
+
+; build 'ring' with filename positioned in default 'fcb' area
+
+PLUNGE	MVI	C,SETDMA	;initialize dma address..
+	LXI	D,TBUF		;..to default buffer.
+	CALL	BDOS
+	XRA	A		;clear search 'fcb'..
+	STA	FCBEXT		;extent byte..
+	STA	FCBRNO		;..and record number.
+	CMA
+	STA	CANFLG		;make cancel flag true
+	LXI	D,FCB		;default 'fcb' for search..
+	MVI	C,SRCHF		;..of first occurrence.
+	CALL	BDOS
+	INR	A		; 0ffh --> 00h if no file found
+	JNZ	SETRING		;if found, branch and build ring.
+	STA	CANFLG		;make log-cancel toggle false
+	CALL	ILPRT		;else say none found, fall thru to log.
+	DB	CR,LF,'++ NO FILE FOUND ++',CR,LF,LF,' --->  ',0
+
+; l o g
+
+; select drive and user area (system reset for disk change on-the-fly)
+
+LOG	CALL	ILPRT		;prompt to get drive/user selection
+	DB	BS,'Log-in drive/user: ',0
+	CALL	DEF$D$U
+	LDA	R$U$A		;establish requested area..
+	STA	C$U$A		;..as current area.
+	CALL	SET$USR
+	CALL	RESET		;reset disk system, make requested current.
+	MVI	A,' '		;set default 'fcb' to look like *.*
+	STA	FCB+1
+	STA	FCB+9
+	LXI	H,0		;initialize tagged..
+	SHLD	TAG$TOT		;..file size accumulator.
+	CALL	ILPRT
+	DB	CR,LF,LF,0	;fresh line and..
+	JMP	EMBARK		;..restart.
+
+; routine to define current drive and user area with full error trapping.
+; (check validity of user area entry first, then drive validity, then proceed
+; with implementation.)
+
+DEF$D$U	LXI	H,CMDBUF+2
+	MVI	B,7		; # of blanks to..
+	CALL	FILL		;..clear 'cmdbuf'.
+	LXI	D,CMDBUF	;get drive/user selection from..
+	MVI	C,RDBUF		;..console buffer read.
+	CALL	BDOS
+	CALL	CONVERT		;make sure alpha is upper case
+ 	XRA	A		;initialize..
+	STA	R$U$A		;..user area to zero.
+	LDA	CMDBUF+3	; 1st digit of user area?
+	CPI	':'		;allow ':' after drive declaration
+	JZ	SETEXIT
+	CPI	'0'		;if no valid user area request..
+	JC	SETEXIT		;..then to new drive and ring list.
+	CPI	'9'+1
+	JNC	ERRET		;error, not a user area.
+	SUI	30H		;convert to binary and..
+	CPI	1		;..test if 10's digit.
+	JNZ	SETUSER		;if none, then set user area now.
+	LDA	CMDBUF+4	;a second user area digit?
+	CPI	':'		;allow ':' here
+	JZ	SETUONE
+	CPI	'0'		;test for 1's digit
+	JC	SETUONE
+	CPI	'5'+1		;if user area >15, go..
+	JNC	ERRET		;..error msg, show file line.
+	SUI	30H-10		;make 1 --> 11, 2 --> 12, etc.
+	STA	R$U$A		;save as 'requested user area' here..
+	JMP	SETEXIT
+
+SETUONE	MVI	A,1		;set to user area 'one'
+SETUSER	MOV	B,A
+	LDA	CMDBUF+4
+	CPI	':'		;double dot (colon)?
+	JZ	DDPASS
+	CPI	'0'		;if >19 user area, go error msg.
+	JNC	ERRET
+DDPASS	MOV	A,B
+	STA	R$U$A		;..and here.
+SETEXIT	LDA	MAXDR		;check if system maximum and..
+	INR	A
+	MOV	B,A
+	LDA	CMDBUF+2	;..requested drive are compatible.
+	CMP	B		;if input too big..
+	JNC	ERRET		;..or..
+	MVI	B,'A'-1		;..too..
+	CMP	B		;..small, show..
+	JC	ERRET		;..error msg.
+	SUI	'A'-1		;ready for fcb use
+	STA	FCB		;store 1 --> a:, 2 --> b:, etc.
+	DCR	A
+	STA	R$DR		;ready for 'login' request
+	RET
+
+; error return and recovery from command cancellation
+
+ERRET	CALL	ILPRT
+	DB	CR,LF,'++ Drive/User Entry Error ++',BELL,0
+COMCAN	LXI	SP,STACK	;reset stack..
+	LDA	CANFLG
+	ORA	A		;..from..
+	CZ	CRLF
+	JZ	PLUNGE
+	JMP	NEUTRAL		;..error/command abort.
+
+; e x i t
+
+; return to cp/m ccp
+
+CPM$CCP	LDA	O$USR		;get and set original..
+	CALL	SET$USR		;..user area and..
+	LXI	D,TBUF		;..tidy up..
+	MVI	C,SETDMA	;..before going home.
+	CALL	BDOS
+	CALL	CRLF
+
+	 IF WARMBOOT
+	JMP	CPM$BASE
+	 ENDIF			;warmboot
+
+	 IF	NOT WARMBOOT
+	LHLD	STACK		;put cp/m's pointer..
+	SPHL			;..back to 'sp'.
+	RET			;return to cp/m ccp
+	 ENDIF			;not warmboot
+
+; h e l p  (menu)
+
+HELP	CALL	CLS		;show menu but 'clear-screen' first
+	CALL	ILPRT
+	DB	CR,'              DISK '
+	DB	VERS/10+'0','.',VERS MOD 10+'0'
+	DB	' -- File Manipulation Program -- '
+	DB	MONTH/10+'0',MONTH MOD 10+'0','/'
+	DB	DAY/10+'0',DAY MOD 10+'0','/'
+	DB	YEAR/10+'0',YEAR MOD 10+'0'
+	DB	CR,LF
+	DB	'   C - Copy file   | D - Delete file  | F - File size  | J '
+	DB	'- Jump 22 files',CR,LF
+	DB	'   L - Log-in      | M - Mass copy    | P - Print text | R '
+	DB	'- Rename file',CR,LF
+	DB	'   S - Stat drive  | T - Tag file     | U - Untag file | V '
+	DB	'- View text file',CR,LF
+	DB	'   W - Write punch | X - Exit to CP/M | <space> advances '
+	DB	'cursor -- B backs up',CR,LF,LF,0
+  	RET
+
+; establish ring (circular list) of filenames
+
+SETRING	LXI	H,RING		;initialize ring pointer
+	SHLD	RINGPOS		;start --> current position of ring
+
+; put each found name in ring.  a-reg --> offset into 'tbuf' name storage
+
+TO$RING	DCR	A		;un-do 'inr' from above and below
+	ADD	A		;times 32 --> position index
+ 	ADD	A
+	ADD	A
+	ADD	A
+	ADD	A
+	ADI	TBUF		;add page offset and..
+	MOV	L,A		;..put address into..
+	MVI	H,0		;..hl-pair.
+	LDA	FCB		;get drive/user designator and..
+	MOV	M,A		;..put into 'fcb' buffer.
+	XCHG
+	LHLD	RINGPOS		;pointer to current load point in ring
+	XCHG
+	MVI	B,12		;move drive designator and name to ring
+	CALL	MOVE
+	XCHG			;de-pair contains next load point address
+	MVI	M,' '		;space for potential..
+	INX	H		;..tagging of files for mass copy.
+	SHLD	RINGPOS		;store and search..
+	MVI	C,SRCHN		;..for next occurrence.
+	LXI	D,FCB		;filename address field
+	CALL	BDOS
+	INR	A		;if all done, 0ffh --> 00h.
+	JNZ	TO$RING		;if not, put next name into ring.
+
+; all filenames in ring -- setup ring size and copy-buffer start point
+
+	LHLD	RINGPOS		;next load point of ring is start of buffer
+	SHLD	RINGEND		;set ring end..
+	SHLD	BUFSTART	;..and copy-buffer start.
+	LXI	D,RING+13	;compare 'ringend' (tab base+13)
+	CALL	CMPDEHL
+	JZ	CMDLOOP		;go to command loop, if no sort.
+
+; sort ring of filenames
+
+SORT	LXI	H,RING		;initialize 'i' sort variable and..
+	SHLD	RINGI
+	LXI	D,13		;..also 'j' variable.
+	DAD	D
+	SHLD	RINGJ
+SORTLP	LHLD	RINGJ		;compare names 'i & j'
+	XCHG
+	LHLD	RINGI
+	PUSH	H		;save position pointers..
+	PUSH	D		;..for potential swap.
+	MVI	B,13		; # of characters to compare
+
+; left to right compare of two strings (de-pair points to 'a' string;
+; hl-pair, to 'b'; b-reg contains string length.)
+
+CMPSTR	LDAX	D		;get an 'a' string character and..
+	CMP	M		;..check against 'b' string character.
+	JNZ	NOCMP		;if not equal, set flag.
+	INX	H		;bump compare..
+	INX	D		;..pointers and..
+	DCR	B		; (if compare, set as equal.)
+	JNZ	CMPSTR		;..do next character.
+NOCMP	POP	D
+	POP	H
+	MVI	B,13
+	JNC	NOSWAP
+
+; swap if 'j' string larger than 'i'
+
+SWAP	MOV	C,M		;get character from one string..
+	LDAX	D		;..and one from other string.
+	MOV	M,A		;second into first
+	MOV	A,C		;first into second
+	STAX	D
+	INX	H		;bump swap pointers
+	INX	D
+	DCR	B		;all bytes swapped yet?
+	JNZ	SWAP
+NOSWAP	LHLD	RINGJ		;increment 'j' pointer
+	LXI	D,13
+	DAD	D
+	SHLD	RINGJ
+	XCHG			;see if end of 'j' loop
+	LHLD	RINGEND
+	CALL	CMPDEHL
+	JNZ	SORTLP		;no, so more 'j' looping.
+	LHLD	RINGI		;bump 'i' pointer
+	LXI	D,13
+	DAD	D
+	SHLD	RINGI
+	DAD	D		;set start over 'j' pointer
+	SHLD	RINGJ
+	XCHG			;see if end of 'i' loop
+	LHLD	RINGEND
+	CALL	CMPDEHL
+	JNZ	SORTLP		;must be more 'i' loop to do
+
+; sort done -- initialize tables for fast crc calculations
+
+	CALL	INITCRC
+
+; calculate buffer maximum available record capacity
+
+B$SIZE	LXI	B,0		;count records
+	LHLD	BDOS+1		;get 'bdos' entry (fbase)
+
+	 IF	NOT WARMBOOT
+	LXI	D,-(CCP)
+	DAD	D
+	 ENDIF			;not warmboot
+
+	DCX	H
+	XCHG			;de-pair --> highest address of buffer
+	LHLD	BUFSTART	;start address of buffer (end of ring list)
+B$SIZE2	INX	B		;increase record count by one
+	PUSH	D
+	LXI	D,128		; 128-byte record
+	DAD	D		;buffer address + record size
+	POP	D
+	CALL	CMPDEHL		;compare for all done
+	JNC	B$SIZE2		;more will fit?
+	DCX	B		;set maximum record count less one
+	MOV	A,B		;memory available for copy?
+	ORA	C
+	JNZ	B$SIZE3		;yes, buffer memory space available.
+	CALL	ILPRT
+	DB	CR,LF,BELL,'++ NO MEMORY FOR COPY BUFFER ++',0
+	JMP	NEUTRAL
+
+B$SIZE3	MOV	L,C		;store..
+	MOV	H,B		;..maximum..
+	SHLD	REC$MAX		;..record count.
+
+; buffer size suitable -- process file/display loop
+
+CMDLOOP	LXI	H,RING		;set start point of listing
+	SHLD	RINGPOS
+LOOP	CALL	ILPRT
+	DB	CR,LF,'   ',0
+LOOP2	LHLD	RINGPOS		;ring filename location
+	MOV	A,M		;move 'fcb' to a-reg and..
+	ADI	'A'-1		;..make drive printable (a - p).
+	CALL	TYPE
+	LDA	C$U$A		;get current (last requested) user area
+	ORA	A		;branch if 'user..
+	JZ	UAZ		;..area zero'.
+	CPI	10		;less then ten?
+	JC	LT$TEN		;if yes, branch.
+	SUI	10		;if not, suppress leading 10's digit.
+	PUSH	PSW
+	MVI	A,'1'		;print 10's digit as 'one'
+	CALL	TYPE
+	POP	PSW
+LT$TEN	ADI	'0'		;make 1's digit printable
+	CALL	TYPE
+UAZ	CALL	ILPRT		;fence between 'drive/user' and..
+	DB	': ',0		;..'fn.ft'.
+	INX	H		;beginning of 'fn.ft' string
+	MVI	B,8		; 8 filename characters
+PRT$FN	MOV	A,M
+	CALL	TYPE
+	INX	H
+	DCR	B
+	JNZ	PRT$FN
+	MVI	A,'.'		;period between 'fn' and 'ft'
+	CALL	TYPE
+	MVI	B,3		; 3 filetype characters
+PRT$FT	MOV	A,M
+	CALL	TYPE
+	INX	H
+	DCR	B
+	JNZ	PRT$FT
+	MOV	A,M		;get tag (*) and..
+	STA	TAG+2		;..put after colon.
+	INX	H
+	SHLD	RINGPOS		;save ring position
+	CALL	ILPRT
+TAG	DB	' : ',0		;space, colon, space or * before cursor.
+	LDA	J$FLG		;jump..
+	ORA	A		;..forward?
+	JZ	PRE$FOR
+K$WAIT	CALL	KEYIN		;wait for character from keyboard
+	CPI	' '		;if 'space' or..tract one ring position.
+	JZ	FORWARD
+	CPI	CR		;..'cursor return', move to next file.
+	JZ	FORWARD
+	CPI	'B'		;if reverse, subtract one ring position.
+	JZ	REVERSE
+	CPI	'C'		;copy file to another disk?
+	JZ	COPY
+	CPI	'D'		;delete a file?
+	JZ	DELETE
+	CPI	'F'		;show file size?
+	JZ	FIL$SIZ
+	CPI	'J'		;jump forward?
+	JZ	JUMP22
+	CPI	'L'		;log-in another drive?
+	JZ	LOG
+	CPI	'M'		;tagged multiple file copy?
+	JZ	MASS
+	CPI	'P'		;output file to 'list' device?
+	JZ	LSTFILE
+	CPI	'R'		;if rename, get to work.
+	JZ	RENAME
+	CPI	'S'		;free bytes on..
+	JZ	R$DR$ST		;..requested drive?
+	CPI	'T'		;if tag, put '*' in..
+	JZ	TAG$EM		;..front of cursor.
+	CPI	'U'		;remove '*' from..
+	JZ	UNTAG		;..in front of cursor?
+	CPI	'V'		; 'view' file at console?
+	JZ	VIEW
+	CPI	'W'		;file to punch?
+	JZ	PUNFILE
+	CPI	'X'		;if exit, then to cp/m ccp.
+	JZ	CPM$CCP
+	CPI	ESC		; 'esc' exits to cp/m ccp also.
+	JZ	CPM$CCP
+	CALL	HELP  		;get help message (menu) and..
+	CALL	FRESTOR		;..show free storage remaining.
+NEUTRAL	LHLD	RINGPOS		;stay..
+	LXI	D,-13		;..in..
+	DAD	D		;..the..
+	SHLD	RINGPOS		;..same..
+	JMP	LOOP		;..position.
+
+; jump forward 22 files
+
+PRE$FOR	LDA	J$CNT		;adjust jump..
+	INR	A		;..counter..
+	STA	J$CNT		;..until..
+	CPI	22		;..at top limit.
+	JNZ	FORWARD
+	MVI	A,TRUE		;at top, so..
+	STA	J$FLG		;..turn off jump switch and..
+	JMP	K$WAIT		;..wait for next keyboard input.
+
+; u n t a g
+
+UNTAG	XRA	A		;set tag/untag..
+	STA	T$UN$FG		;..flag to untag.
+	LHLD	RINGPOS		;move back one..
+	LXI	D,-1		;..character position..
+	DAD	D		;..and check tagging status.
+	MOV	A,M		;if file previously tagged, remove..
+	CPI	'*'		;..size from..
+	MVI	M,' '		; (untag character, to next ring position.)
+	JZ	FS2		;..summation.
+	JMP	FORWARD
+ 
+; t a g
+
+TAG$EM	LHLD	RINGPOS
+	LXI	D,-1		;move back one..
+	DAD	D		;..position..
+	MOV	A,M		; (if file
+	CPI	'*'		; already tagged, skip
+	JZ	FORWARD		; to next file.)
+	MVI	M,'*'		;..and store a '*' tag character.
+	MVI	A,TRUE		;set..
+	STA	T$UN$FG		;..tag/untag and..
+	STA	FS$FLG		;..file size flags to tag.
+	JMP	FS2		;get file size
+
+; f i l e   s i z e
+
+; determine and display file size in kilobytes -- round up to next disk
+; allocation block -- accumulate tagged file summation
+
+FIL$SIZ	XRA	A		;set file size/tagged..
+	STA	FS$FLG		;..file flag to file size.
+FS2	MVI	A,BS		;backspace over..
+	CALL	TYPE		;..command character.
+	CALL	RINGFCB		;move name to 's$fcb'
+
+; determine file record count and save in 'rcnt'
+
+	MVI	C,COMPSZ
+	LXI	D,S$FCB
+	CALL	BDOS
+	LHLD	S$FCB+33
+	SHLD	RCNT		;save record count and..
+	LXI	H,0
+	SHLD	S$FCB+33	;..reset cp/m.
+
+; round up to next disk allocation block
+
+	LDA	B$MASK		;sectors/block - 1
+	PUSH	PSW		;save 'blm'
+	MOV	L,A
+	XCHG
+	LHLD	RCNT		;..use here.
+	DAD	D		;round up to next block
+	MVI	B,3+1		;convert from..
+	CALL	SHIFTLP		;..records to kilobytes.
+	POP	PSW		;retrieve 'blm'
+	RRC			;convert..
+	RRC			;..to..
+	RRC			;..kilobytes/block.
+	ANI	1FH
+	CMA			;finish rounding
+	ANA	L
+	MOV	L,A		;hl-pair contains # of kilobytes
+	LDA	FS$FLG
+	ORA	A
+	JZ	D$F$SIZ		;branch if 'f' function
+
+; tagged file size summation
+
+	XCHG			;file size to de-pair
+	LDA	T$UN$FG
+	ORA	A
+	JZ	TAKE		;if untag, take size from total.
+	LHLD	TAG$TOT		;accumulate..
+	DAD	D		;..sum of..
+	SHLD	TAG$TOT		;..tagged file sizes.
+	XCHG			;file size to hl-pair
+	JMP	D$F$SIZ		;branch to display sizes
+
+TAKE	LHLD	TAG$TOT		;subtract..
+	MOV	A,L		;..file..
+	SUB	E		;..size..
+	MOV	L,A		;..from..
+	MOV	A,H		;..summation..
+	SBB	D		;..total.
+	MOV	H,A		;then put..
+	SHLD	TAG$TOT		; (save total)
+	XCHG			;..file size in hl-pair.
+
+; display file size in kilobytes -- right justify tagged file total
+
+D$F$SIZ	CALL	DET$BCD		;determine # of bcd digits in hl-pair
+	MVI	A,9		;limit of right margin (good for max cp/m 2.2)
+	SUB	B		; # of digits returned in b-reg from det$bcd
+	STA	TEST$RT		;save intermediate right-justify data
+	CALL	DECOUT          ;print individual file size
+	CALL	ILPRT
+	DB	'k',0
+	LDA	FS$FLG
+	ORA	A
+	JZ	FORWARD         ;show next file if not tagging
+
+; determine # of digits in tagged summation
+
+	LHLD	TAG$TOT		;get present summation
+	CALL	DET$BCD
+
+; insert necessary spaces (blanks) to right justify display
+
+	LDA	TEST$RT		;get intermediate right-justify data
+	SUB	B
+	MOV	B,A
+	MVI	A,' '		;adjust..
+ADD$SP	CALL	TYPE		;..to..
+	DCR	B		;..achieve..
+	JNZ	ADD$SP		;..right justification.
+	MVI	A,'('
+	CALL	TYPE
+	CALL	DECOUT          ;print tagged file summation
+	CALL	ILPRT
+	DB	'k)',0          ;to next file..
+	JMP	FORWARD		;..cursor line.
+
+; j u m p
+
+JUMP22	XRA	A		;clear..
+	STA	J$FLG		;..jump forward flag and..
+	STA	J$CNT		;..file counter.  fall-thru to next filename.
+
+; f o r w a r d
+
+FORWARD	LHLD	RINGPOS		;at end of loop yet?
+	XCHG
+	LHLD	RINGEND
+	CALL	CMPDEHL		;compare 'present' to 'end'
+	JNZ	LOOP		;to next print position
+	CALL	CRLF		;end-of-directory shows with fresh line
+	LXI	H,RING		;set position pointer to beginning and..
+	SHLD	RINGPOS
+	JMP	LOOP		;..redisplay start entry.
+
+; r e v e r s e
+
+REVERSE	LHLD	RINGPOS		;see if at beginning of ring
+	LXI	D,RING+13
+	CALL	CMPDEHL
+	JNZ	REV1		;skip position pointer reset if not..
+	CALL	CRLF		;..at beginning.  skip line at junction.
+	LHLD	RINGEND		;set to end +1 to backup to end
+	LXI	D,13
+	DAD	D
+	SHLD	RINGPOS
+REV1	CALL	ILPRT		;indicate reverse
+	DB	CR,LF,'<- ',0
+	LHLD	RINGPOS
+	LXI	D,-(13*2)	;one ring position..
+	DAD	D		;..backwards.
+	SHLD	RINGPOS
+ 	JMP	LOOP2		;display without 'crlf'
+
+; s t a t
+
+; determine remaining storage on requested drive
+
+R$DR$ST	CALL	ILPRT
+	DB	'torage remaining on drive: ',0
+	CALL	DEF$D$U		;determine drive requested and..
+	CALL	RESET		;..login as current.
+	CALL	ILPRT
+	DB	CR,LF,LF,0
+	CALL	FRESTOR		;determine free space remaining
+	LDA	C$DR		;login original as..
+	CALL	SET$DR		;..current drive.
+	JMP	NEUTRAL
+
+; d e l e t e
+
+; set up to delete filename at cursor position
+
+DELETE	CALL	RINGFCB		;move name from ring to 'rename fcb'
+	CALL	ILPRT
+	DB	'elete? (Y/N): ',0
+	CALL	KEYIN
+	CPI	'Y'
+	JNZ	NEUTRAL	
+
+; delete file
+
+	LXI	D,S$FCB		;point at delete 'fcb'
+	MVI	C,ERASE		;erase function
+	CALL	BDOS
+	INR	A
+	JNZ	DEL2		;file deleted okay
+FNF$MSG	CALL	ILPRT		;show error message
+	DB	CR,LF,'++ NO FILE FOUND ++',0
+	JMP	NEUTRAL
+
+; reverse ring to close up erased position
+
+DEL2	LHLD	RINGPOS		;prepare move up pointers
+	PUSH	H
+	LXI	D,-13
+	DAD	D
+	SHLD	RINGPOS		;reset current position for move
+	XCHG			;de-pair = 'to' location
+	POP	H		;hl-pair = 'from' location
+MOVUP	XCHG
+	PUSH	H		;check if at end
+	LHLD	RINGEND		;get old end pointer
+	CALL	CMPDEHL		;check against current end location
+	POP	H
+	XCHG
+	JZ	MOVDONE		;must be at end of ring
+	MVI	B,13		;one name size
+	CALL	MOVE		;move one name up
+	JMP	MOVUP		;go check end parameters
+
+MOVDONE	XCHG
+	SHLD	RINGEND		;set new ring end if all moved
+	LXI	D,RING		;see if ring is empty..
+	CALL	CMPDEHL		;..(listend --> listpos --> ring)
+	JNZ	FORWARD
+	LHLD	RINGPOS
+	CALL	CMPDEHL
+	JNZ	FORWARD		;neither equal so not empty
+	CALL	ILPRT
+	DB	CR,LF,LF,'    ++ List Empty ++',CR,LF,LF,' --->  ',0
+	JMP	LOG		;go to drive/user area with files
+
+; r e n a m e
+
+; set-up to rename file at cursor position -- scan keyboard buffer and
+; move filename to 'rename' destination 'fcb' (dfcb)
+
+RENAME	LHLD	RINGPOS		;move name from ring to rename 'fcb'
+	LXI	D,-13
+	DAD	D		;point to name position
+	LXI	D,D$FCB		;place to move name
+	MVI	B,12		;amount to move
+	CALL	MOVE
+	CALL	ILPRT		;new name prompt
+	DB	'ename file to: ',0
+	LXI	D,CMDBUF	;command line location
+	MVI	C,RDBUF		;console read-buffer function
+	CALL	BDOS
+	CALL	CONVERT		;capitalize alpha
+	LXI	H,D$FCB+16	;set drive to null as..
+	MVI	M,0		;..required by 'bdos'.
+	INX	H
+
+; initialize new filename field with spaces
+
+	PUSH	H		;save start pointer
+	MVI	B,11		; # of spaces to 'blank'
+	CALL	FILL
+	POP	H
+	XCHG
+	LXI	H,CMDBUF+1	;put length..
+	MOV	C,M		;..in c-reg.
+	INX	H
+	XCHG			;de-pair --> buffer pointer and hl-pair..
+	CALL	UNSPACE		;..--> 'fcb' pointer.  remove leading spaces.
+
+; extend buffer to spaces beyond command length
+
+EXTEND	PUSH	H
+	MOV	L,C		;double-byte remaining length
+	MVI	H,0
+	DAD	D		;to buffer end +1
+	MVI	M,' '		;force illegal character end
+	POP	H
+
+; start filename scan
+
+SCAN	MVI	B,8		; 8 characters in filename
+SCAN1	CALL	CKLEGAL		;get and see if legal character
+	JC	COMCAN		;all of command line?
+	CPI	' '		;see if end of parameter field
+	JZ	CPYBITS		;rename file
+	CPI	'.'		;at end of filename
+	JZ	SCAN2		;process filetype field
+	MOV	M,A		;put character into destination 'fcb'
+	INX	H
+	DCR	B		;check name character count
+	JNZ	SCAN1
+
+; entry if eight characters without a 'period'
+
+SCAN1A	CALL	CKLEGAL		;scan buffer up to period or end
+	JC	CPYBITS		;no extent if not legal
+	CPI	' '		;end of parameter field?
+	JZ	CPYBITS
+	CPI	'.'
+	JNZ	SCAN1A		;do till end or period
+
+; build filetype field
+
+SCAN2	MVI	B,3		;length of filetype field
+	LXI	H,D$FCB+25	;destination 'rename' filetype start
+SCAN3	CALL	CKLEGAL		;get and check character
+	JC	SCAN4		;name done if illegal
+	CPI	' '		;end of parameter field?
+	JZ	SCAN4
+	CPI	'.'		;check if another period
+	JZ	SCAN4
+	MOV	M,A
+	INX	H
+	DCR	B
+	JNZ	SCAN3		;get next character
+SCAN4	LXI	H,D$FCB+28	;set pointer to 'rename' filetype end
+	CALL	INITFCB		;..and zero counter fields.
+
+; copy old file status bit ($r/o or $sys) to new filename
+
+CPYBITS	LXI	D,D$FCB+1	;first character of old name..
+	LXI	H,D$FCB+17	;..and of new name.
+	MVI	C,11		; # of bytes with tag bits
+CBITS1	LDAX	D		;fetch bit of old name character
+	ANI	128		;strip upper bit and..
+	MOV	B,A		;..save in b-reg.
+	MVI	A,7FH		;mask for character only
+	ANA	M		;put masked character into a-reg
+	ORA	B		;add old bit
+	MOV	M,A		;copy new byte back
+	INX	H		;bump copy pointers
+	INX	D
+	DCR	C		;bump copy counter
+	JNZ	CBITS1
+
+; check if new filename already exists.  if so, say so.  then go
+; to command loop without moving ring position
+
+	LDA	D$FCB		;copy new name to source 'fcb'
+	STA	S$FCB
+	MVI	B,11
+	LXI	H,D$FCB+17	;copy new name to..
+	LXI	D,S$FCB+1	;..source 'fcb' for existence check.
+	CALL	MOVE
+	LXI	H,S$FCB+12	;clear cp/m 'fcb' system..
+	CALL	INITFCB		;..fields.
+	LXI	D,S$FCB		;search to see if this file exists
+	MVI	C,SRCHF		;search first function
+	CALL	BDOS
+	INR	A		; 0ffh --> 00h if file not found
+	JZ	RENFILE		;to rename, if duplicate doesn't exists.
+	CALL	ILPRT		;announce the situation
+	DB	CR,LF,'++ FILE ALREADY EXISTS ++',CR,LF,BELL,'   ',0
+	JMP	NEUTRAL		;try again?
+
+; copy new name into ring position
+
+RENFILE	LHLD	RINGPOS		;get ring position pointer
+	LXI	D,-12		;back 12 leaves drive designation intact
+	DAD	D
+	XCHG
+	LXI	H,D$FCB+17	;point at new name and..
+	MVI	B,11
+	CALL	MOVE		;..move.
+	LXI	D,D$FCB		;rename 'fcb' location
+	MVI	C,REN		;rename function
+	CALL	BDOS
+	INR	A		; 0ffh --> 00h if rename error
+	JNZ	NEUTRAL		;if okay, proceed, else..
+	JMP	FNF$MSG		;..show no-file msg.
+
+; v i e w
+
+; type file to console with pagination set to 'lps' -- single-line scroll
+; using <space> bar , <ctrl-x> to cancel, any other key to page screen.
+
+VIEW	CALL	ILPRT
+	DB	CR,LF,'<CTRL-X> cancels, <space> turns up one line, '
+	DB	'other keys page screen.',CR,LF,LF,0
+	MVI	A,1		;initialize..
+	STA	LPSCNT		;..lines-per-screen counter.
+	STA	VIEWFLG		; 'view' paginate if not zero
+	MVI	A,WRCON		;write console out function
+	JMP	CURRENT		;to common i/o processing
+
+; p r i n t e r
+
+; send file to logical list device -- any keypress cancels
+
+LSTFILE	XRA	A		;zero for..
+	STA	VIEWFLG		;..output to printer.
+	MVI	A,LIST		;out to 'list' device function
+	JMP	CURRENT
+
+; p u n c h
+
+; write file to cp/m logical punch device
+
+PUNFILE	XRA	A
+	STA	VIEWFLG
+	MVI	A,PUNCH		;put to 'punch' device function
+
+; output character for console/list/punch processing
+
+CURRENT	STA	CON$LST		;save bdos function
+
+; output file to console/printer/punch
+
+	CALL	RINGFCB		;position name to 'fcb'
+	LXI	D,TBUF		;set to use default cp/m dma buffer
+	MVI	C,SETDMA	;address set function
+	CALL	BDOS
+	LXI	H,S$FCB+12	;set pointer to source extent field
+	CALL	INITFCB		;fix-up 'fcb' before use
+	LXI	D,S$FCB		;open file for reading
+	MVI	C,OPEN		;file open function code
+	CALL	BDOS
+	INR	A		; 0ffh --> 00h if open okay
+	JNZ	ZEROCR		;if not okay, show error message.
+	CALL	ILPRT
+	DB	'++ UNABLE TO OPEN FILE ++',0
+	JMP	NEUTRAL
+
+ZEROCR	XRA	A		;zero file 'current record' field
+	STA	S$FCB+32
+READMR	LXI	D,S$FCB		;point at file 'fcb' for reading
+	MVI	C,READ		;record read function
+	CALL	BDOS
+	ORA	A		;check if read okay
+	JNZ	NEUTRAL		;eof?
+	LXI	H,TBUF		;point at record just read
+	MVI	B,128		;set record character counter to output
+READLP	MOV	A,M		;get a character
+	ANI	7FH		;force to 'ascii'
+	CPI	EOFCHAR		;see if end-of-file
+	JZ	NEUTRAL		;back to ring loop if 'eof'
+	MOV	E,A		;put character for 'bdos' call
+	PUSH	B
+	PUSH	H
+	PUSH	D		; (character in e-reg)
+	LDA	CON$LST		;get function for punch/list/console output
+	MOV	C,A
+	CALL	BDOS		;send character
+	LDA	VIEWFLG		;if 'view'..
+	ORA	A
+	POP	D
+	CNZ	PAGER		;..check for 'lf'.
+	MVI	C,CONST		;console status function
+	CALL	BDOS		;status?
+	POP	H
+	POP	B
+	ORA	A		;if character there, then abort..
+	JNZ	NEUTRAL 	;..to same ring position.
+	INX	H		;if not, bump buffer pointer.
+	DCR	B		;all bytes of record sent yet?
+	JNZ	READLP		;no, more in present record.
+	JMP	READMR		;yes, get next record.
+
+PAGER	MOV	A,E		; (character in e-reg)
+	CPI	LF
+	RNZ
+	LDA	LPSCNT		;is counter..
+	INR	A		;..at..
+	STA	LPSCNT		;..limit..
+	CPI	LPS		;..of lines-per-screen?
+	RC			;no, return.
+	XRA	A		;yes, initialize..
+	STA	LPSCNT		;..for next screen full.
+	CALL	ILPRT
+	DB	'  [more...]',CR,0	;show msg line
+	CALL	DKEYIN		;wait for keyboard input
+	CPI	' '		;see if <space> bar..
+	PUSH	PSW
+	CALL	ILPRT
+	DB	'           ',CR,0	;clear above msg line
+	POP	PSW
+	JNZ	CANVIEW		;..if not, see if cancel.
+	MVI	A,LPS-1		;if so, set up for single-line..
+	STA	LPSCNT		;..scroll and..
+	RET			;..return for one more line.
+
+CANVIEW	CPI	ESC		;escape?
+	JZ	COMCAN
+	CPI	CAN		;cancel?
+	JZ	COMCAN		;retain ring position
+	RET			;return for another page
+
+; m a s s   c o p y
+
+; copy files tagged using the 't' command.  auto-erase if file exists
+; on requested destination drive or in user area.
+
+MASS	LXI	H,RING+12	;get 1st possible tag location
+	SHLD	RINGPOS
+MASS$LP	MVI	A,'*'
+	CMP	M
+	INX	H		;get in filename synchronization
+	SHLD	RINGPOS
+	JZ	MCOPY		;copy filename with tag character (*)
+M$LP	LHLD	RINGPOS		;re-entry point for next file mass-copy
+	XCHG			;at ring..
+	LHLD	RINGEND		;..end yet?
+	CALL	CMPDEHL		; (compare present position with end)
+	JZ	MF$EXIT		;yes, jump to beginning of ring.
+	LHLD	RINGPOS
+	JMP	MASS$LP		;no, loop 'till thru ring list.
+
+MF$EXIT	XRA	A		;reset flags..
+	STA	FIRST$M		;..for..
+	CMA			;..next..
+	STA	MFLAG		;..mass-copy request.
+	JMP	CMDLOOP		;jump to 'ring' beginning
+
+; c o p y
+
+; copy source file at current 'ring' position to another drive.  set-up
+; fcb's and buffer area and check for correct keyboard inputs.  contains
+; auto-crc file copy verification.
+
+MCOPY	XRA	A		;zero flag to..
+	STA	MFLAG		;..mass copy.
+COPY	LXI	H,0		;initialize storage for..
+	SHLD	CRCVAL		;..'crc' working value.
+	CALL	RINGFCB		;move from 'ring' to 'sfcb'
+	LXI	H,S$FCB+12	;set pointer to source extent field
+	CALL	INITFCB
+	XRA	A		;zero fcb 'cr' field
+	STA	S$FCB+32
+	MVI	B,32		;copy source 'fcb' to destination 'fcb'
+	LXI	H,S$FCB+1	;from point..
+	LXI	D,D$FCB+1	;..to point..
+	CALL	MOVE		;..move across.
+	LXI	D,S$FCB		;open file for reading
+	MVI	C,OPEN		;open function
+	CALL	BDOS
+	INR	A		; 0ffh --> 00h if bad open
+	JNZ	COPY2		;if okay, skip error message.
+	CALL	ILPRT
+	DB	CR,LF,'++ UNABLE TO OPEN SOURCE ++',0
+	JMP	NEUTRAL
+
+COPY2	LDA	FIRST$M		;by-pass prompt, drive/user compatibility..
+	ORA	A		;..test, and disk reset after..
+	JNZ	COPY3M		;..1st time thru in mass-copy mode.
+	CALL	ILPRT		;prompt for drive selection
+	DB	BS,'Copy to drive/user: ',0
+	CALL	DEF$D$U
+
+; either drives or user areas must be different
+
+	LDA	FCB		;get requested drive from 'fcb' and..
+	MOV	B,A		;..put into b-reg for..
+	LDA	S$FCB		;..comparison.
+	CMP	B
+	JNZ	COPY3		;branch if different
+	LDA	R$U$A		;requested user area --> rua
+	MOV	B,A
+	LDA	C$U$A		;current user area --> cua
+	CMP	B
+	JNZ	COPY3
+	CALL	ILPRT		;if not, show error condition:
+	DB	CR,LF,BELL
+	DB	'++ Drives or User Areas must be different ++',0
+	JMP	NEUTRAL		;try again?
+
+COPY3	CALL	RESET		;make sure disk is read/write
+COPY3M	LDA	FCB		;put requested drive into..
+	STA	D$FCB		;..place in destination fcb.
+	LDA	R$U$A		;toggle to..
+	CALL	SET$USR		;..requested user area.
+	LDA	MFLAG		;auto-erase..
+	ORA	A		;..if..
+	JZ	COPY4M		;..in mass-copy mode.
+	LXI	D,D$FCB		;search for duplicate
+	MVI	C,SRCHF		; 'search first' function
+	CALL	BDOS
+	INR	A		;if not found, 0ffh --> 00h.  then..
+	JZ	COPY5		;go to 'make' function for new file.
+	CALL	ILPRT		;if found, ask to replace:
+	DB	CR,LF,' ---> Copy exists, erase? (Y/N): ',0
+	CALL	KEYIN		;get answer
+	CPI	'Y'		;if yes, then..
+	JZ	COPY4M		;..delete and overlay.
+	LDA	C$U$A		;reset to..
+	CALL	SET$USR		;..current user area.
+	JMP	FORWARD		;if re-copy not wanted, to next position.
+
+COPY4M	LXI	D,D$FCB		;delete file already existing
+	MVI	C,ERASE		;erase function
+	CALL	BDOS
+COPY5	LXI	D,D$FCB		;create new file and open for writing
+	MVI	C,MAKE		;make function
+	CALL	BDOS
+	INR	A		;if directory full, 0ffh --> 00h.
+	JNZ	COPY6		;if not, branch.
+	CALL	ILPRT
+	DB	CR,LF,'++ Destination Directory Full ++',0
+	JMP	NEUTRAL		;if error, back to ring processor.
+
+COPY6	MVI	B,8		;show filename and..
+	LXI	H,D$FCB+1
+	LXI	D,COPYMFN
+	CALL	MOVE
+	INX	D
+	MVI	B,3		;..filetype during copy.
+	CALL	MOVE
+	LDA	FIRST$M		;if 1st time thru mass-copy..
+	ORA	A		;..mode, add..
+	MVI	A,LF		;..a line feed.
+	CZ	TYPE
+	CALL	CLR$L		;clear line
+	CALL	ILPRT
+	DB	CR,' ---> Copying file '
+COPYMFN	DB	'        .    ',0
+	XRA	A		;clear 'eof'..
+	STA	EOFLAG		;..flag.
+COPY6A	LDA	C$U$A		;reset user area..
+	CALL	SET$USR		;..to current.
+	LXI	H,0		;clear current-record..
+	SHLD	REC$CNT		;..counter.
+	LHLD	BUFSTART	;set buffer start pointer..
+	SHLD	BUF$PT		;..to begin pointer.
+
+; read source file -- fill buffer memory or stop on 'eof' -- update 'crc'
+; on-the-fly
+
+COPY7	LHLD	BUF$PT		;set dma address to buffer pointer
+	XCHG			; de-pair --> dma address
+	MVI	C,SETDMA
+	CALL	BDOS
+	LXI	D,S$FCB		;source 'fcb' for reading
+	MVI	C,READ		;record read function
+	CALL	BDOS
+	ORA	A		; 00h --> read okay
+	JZ	S$RD$OK
+	DCR	A		;eof?
+	JZ	COPY8		;yes, end-of-file, set 'eof' flag.
+	CALL	ILPRT
+	DB	CR,LF,'++ SOURCE READ ERROR ++',BELL,0
+	JMP	NEUTRAL
+
+S$RD$OK	LHLD	BUF$PT
+	MVI	B,128
+COPY7A	MOV	A,M		;get character and..
+	CALL	UPDCRC		;..add to 'crc' value.
+	INX	H
+	DCR	B
+	JNZ	COPY7A		;loop 'till record read finished
+	LHLD	BUF$PT		;bump buffer pointer..
+	LXI	D,128		;..by..
+	DAD	D		;..one..
+	SHLD	BUF$PT		;..record.
+	LHLD	REC$CNT		;bump buffer..
+	INX	H		;..record count and..
+	SHLD	REC$CNT		;..store.
+	XCHG			;ready to compare to..
+	LHLD	REC$MAX		;..maximum record count (full-buffer).
+	CALL	CMPDEHL		;compare
+	JNZ	COPY7    	;if not full, get next record.
+	JMP	COPY9		;full, start first write session.
+
+; indicate end-of-file read
+
+COPY8	MVI	A,TRUE		;set 'eof' flag
+	STA	EOFLAG
+
+; write 'read-file' from memory buffer to destination 'written-file'
+
+COPY9	LDA	R$U$A		;set user to requested..
+	CALL	SET$USR		;..area.
+	LHLD	BUFSTART	;adjust buffer pointer..
+	SHLD	BUF$PT		;..to start address.
+COPY10	LHLD	REC$CNT		;buffer empty?
+	MOV	A,H
+	ORA	L
+	JZ	COPY11		;buffer empty, check 'eof' flag.
+	DCX	H		;dec buffer record count for each write
+	SHLD	REC$CNT
+	LHLD	BUF$PT		;set up dma address
+	PUSH	H		;save for size bump
+	XCHG			;pointer in de-pair
+	MVI	C,SETDMA
+	CALL	BDOS
+	POP	H
+	LXI	D,128		;bump pointer one record length
+	DAD	D
+	SHLD	BUF$PT
+	LXI	D,D$FCB		;destination file 'fcb'
+	MVI	C,WRITE		;write record function
+	CALL	BDOS
+	ORA	A   		; 00h --> write okay
+	JZ	COPY10		;okay, do next record.  else..
+	CALL	ILPRT		;..say disk write error.
+	DB	CR,LF,'++ COPY DISK FULL ++',BELL,0
+C$ERA	LXI	D,D$FCB		;delete..
+	MVI	C,ERASE		;..partial..
+	CALL	BDOS		;..from directory.
+	XRA	A      		;reset 1st-time-thru tag flag..
+	STA	FIRST$M		;..for continuation of mass copying.
+	JMP	NEUTRAL		;back to ring
+
+COPY11	LDA	EOFLAG		;buffer all written, check for 'eof'.
+	ORA	A
+	JZ	COPY6A		;branch to read next buffer full
+	LXI	D,D$FCB		;point at 'fcb' for file closure
+	MVI	C,CLOSE
+	CALL	BDOS
+	INR	A		;if no-close-error then..
+	JNZ	CRC$CMP		;..compare file crc's.
+	CALL	ILPRT
+	DB	CR,LF,'++ COPY CLOSE ERROR ++',BELL,0
+	JMP	C$ERA
+
+; read destination 'written-file' and compare crc's
+
+CRC$CMP	LHLD	CRCVAL		;transfer 'crc' value to..
+	SHLD	CRCVAL2		;..new storage area.
+	LXI	H,0		;clear working storage..
+	SHLD	CRCVAL		;..to continue.
+	LXI	D,TBUF
+	MVI	C,SETDMA
+	CALL	BDOS
+	LXI	H,D$FCB+12
+	CALL	INITFCB
+	LXI	D,D$FCB
+	MVI	C,OPEN
+	CALL	BDOS
+	INR	A		; 0ffh --> 00h if bad open
+	JZ	BADCRC		;if bad open, just say 'bad-crc'.
+	XRA	A		;zero 'fcb'..
+	STA	D$FCB+32	;..'cr' field.
+CRCWF1	LXI	D,D$FCB
+	MVI	C,READ
+	CALL	BDOS
+	ORA	A		;read okay?
+	JZ	D$RD$OK		;yes, read more.
+	DCR	A		;eof?
+	JZ	FINCRC		;yes, finish up and make 'crc' comparison.
+	CALL	ILPRT
+	DB	CR,LF,'++ COPY READ ERROR ++',BELL,0
+	JMP	NEUTRAL
+
+D$RD$OK	LXI	H,TBUF
+	MVI	B,128
+CRCWF2	MOV	A,M		;get character to..
+	CALL	UPDCRC		;..add to 'crc' value. 
+	INX	H
+	DCR	B
+	JNZ	CRCWF2
+	JMP	CRCWF1
+
+; crc subroutines
+
+; initialize tables for fast crc calculations
+
+INITCRC	LXI	H,CRCTBL
+	MVI	C,0		;table index
+GLOOP	XCHG
+	LXI	H,0		;initialize crc register pair
+	MOV	A,C
+	PUSH	B		;save index in c-reg
+	MVI	B,8
+	XRA	H
+	MOV	H,A
+LLOOP	DAD	H
+	JNC	LSKIP
+	MVI	A,10H		;generator is x^16 + x^12 + x^5 + x^0 as..
+	XRA	H		;..recommended by ccitt for asynchronous..
+	MOV	H,A		;..communications.  produces the same..
+	MVI	A,21H		;..results as public domain programs..
+	XRA	L		;..chek, comm7, mdm7, and modem7.
+	MOV	L,A
+LSKIP	DCR	B
+	JNZ	LLOOP
+	POP	B
+	XCHG			;de-pair now has crc, hl pointing into table.
+	MOV	M,D		;store high byte of crc..
+	INR	H
+	MOV	M,E		;..and store low byte.
+	DCR	H
+	INX	H		;move to next table entry
+	INR	C		;next index
+	JNZ	GLOOP
+	RET
+
+UPDCRC	PUSH	B		;update 'crc'..
+	PUSH	H		;..accumulator..
+	LHLD	CRCVAL		;pick up partial remainder
+	XCHG			;de-pair now has partial
+	MVI	B,0
+	XRA	D
+	MOV	C,A
+	LXI	H,CRCTBL
+	DAD	B
+	MOV	A,M
+	XRA	E
+	MOV	D,A
+	INR	H
+	MOV	E,M
+	XCHG
+	SHLD	CRCVAL
+	POP	H
+	POP	B
+	RET
+
+FINCRC	LDA	C$U$A		;reset user from 'requested'..
+	CALL	SET$USR		;..to 'current' area.
+	LHLD	CRCVAL		;put written-file 'crc' into..
+	XCHG			;..de-pair.
+	LHLD	CRCVAL2		;put read-file 'crc' and..
+	CALL	CMPDEHL		;..compare 'de/hl' for equality.
+	JNZ	BADCRC		;if not zero, show copy-error message.
+	CALL	ILPRT		;if zero, show 'verified' message.
+	DB	CR,' ---> Copy CRC verified         ',0
+	LDA	MFLAG		;if not mass-copy mode, return..
+	ORA	A		;..to next 'ring' position.
+	JNZ	FORWARD		;else..
+	CMA			;..set 1st-time-thru flag..
+	STA	FIRST$M		;..and..
+	JMP	M$LP		;..get next file to copy, if one.
+ 
+BADCRC	CALL	ILPRT
+	DB	CR,LF,BELL,'++ Error on CRC compare ++',0
+	JMP	FORWARD		;move to next 'ring' position
+
+; w o r k h o r s e   r o u t i n e s
+
+; inline print of message
+
+ILPRT	XTHL			;save hl, get msg pointer.
+ILPLP	MOV	A,M		;get character
+	ANI	7FH		;strip type bits
+	CALL	TYPE		;show on console
+	INX	H		;point to the next character and..
+	MOV	A,M
+	ORA	A		;..test for end-of-text.
+	JNZ	ILPLP
+	XTHL			;set hl-pair and..
+	RET			;..return past message.
+
+; clear console crt screen
+
+CLS	MVI	B,17		;output lf's
+LFLP	MVI	A,LF
+	CALL	TYPE
+	DCR	B		;count-down b-reg --> zero
+	JNZ	LFLP
+	RET
+
+; output 'crlf' to console
+
+CRLF	MVI	A,CR
+	CALL	TYPE
+	MVI	A,LF
+
+; conout routine (re-entrant)
+
+TYPE	PUSH	PSW
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	MOV	E,A
+	MVI	C,WRCON
+	CALL	BDOS
+	POP	H
+	POP	D
+	POP	B
+	POP	PSW
+	RET
+
+; crt clear-line function
+
+CLR$L	MVI	A,CR
+	CALL	TYPE
+	MVI	B,30		;blank # of characters on line
+	MVI	A,' '
+CL$LP	CALL	TYPE
+	DCR	B
+	JNZ	CL$LP
+	RET
+
+; conin routine (waits for response)
+
+KEYIN	MVI	C,RDCON
+	CALL	BDOS
+
+; convert character in a-reg to upper case
+
+UCASE	CPI	61H		;less than small 'a'?
+	RC			;if so, no convert needed.
+	CPI	7AH+1		; >small 'z'?
+	RNC			;if so, ignore.
+	ANI	5FH		;otherwise convert
+	RET
+
+; direct console input w/o echo (waits for input)
+
+DKEYIN	MVI	C,DIRCON	;cp/m function 6
+	MVI	E,0FFH
+	CALL	BDOS
+	ORA	A
+	JZ	DKEYIN
+	RET
+
+; convert keyboard input to upper case
+
+CONVERT	LXI	H,CMDBUF+1	; 'current keyboard buffer length'..
+	MOV	B,M		;..to b-reg.
+	MOV	A,B
+	ORA	A		;if zero length, skip conversion.
+	JZ	COMCAN
+CONVLP	INX	H		;point at character to capitalize
+	MOV	A,M
+	CALL	UCASE
+	MOV	M,A		;put back into buffer
+	DCR	B
+	JNZ	CONVLP
+	RET
+
+; fill buffer with 'spaces' with count in b-reg
+
+FILL	MVI	M,' '		;put in space character
+	INX	H
+	DCR	B		;count done?
+	JNZ	FILL		;no, branch.
+	RET
+
+; ignore leading spaces (ls) in buffer, length in c-reg.
+
+UNSPACE	LDAX	D		;get character
+	CPI	' '
+	RNZ			;not blank, a file is entered.
+	INX	D		;to next character
+	DCR	C
+	JZ	COMCAN		;all spaces --> command recovery error
+	JMP	UNSPACE
+
+; check for legal cp/m filename character -- return with carry set if illegal
+
+CKLEGAL	LDAX	D		;get character from de-pair
+	INX	D		;point at next character
+	CPI	' '		;less than space?
+	RC			;return carry if unpermitted character
+	PUSH	H
+        PUSH	B
+	CPI	'['		;if greater than 'z', exit with..
+	JNC	CKERR		;..carry set.
+	MVI	B,8
+	LXI	H,CHR$TBL
+CHR$LP	CMP	M  
+	JZ	CKERR
+	INX	H
+	DCR	B
+	JNZ	CHR$LP
+	ORA	A		;clear carry for good character
+	POP	B
+	POP	H
+	RET
+
+CKERR	POP	B
+	POP	H
+	STC	     		;error exit with carry set
+	RET
+
+CHR$TBL	DB	'*',',',':',';','<','=','>','?'	;invalid character table
+
+; filename from 'ring' to 'sfcb'
+
+RINGFCB	LHLD	RINGPOS		;move name from ring to source 'fcb'
+	LXI	D,-13		;subtract 13 to..
+	DAD	D		;..point to name position.
+	LXI	D,S$FCB		;place to move filename and..
+	MVI	B,12		;..amount to move.
+
+; move subroutine -- move b-reg # of bytes from hl-pair to de-pair
+
+MOVE	MOV	A,M		;get hl-pair referenced source byte
+	ANI	7FH		;strip cp/m 2.x attributes
+	STAX	D		;put to de-pair referenced destination
+	INX	H		;fix pointers for next search
+	INX	D
+	DCR	B		;dec byte count and see if done
+	JNZ	MOVE
+	RET
+
+; initialize 'fcb' cp/m system fields (entry with hl-pair pointing to 'fcb')
+
+INITFCB	MVI	B,4		;fill ex, s1, s2, rc counters with zeros.
+INITLP	MVI	M,0		;put zero (null) in memory
+	INX	H
+	DCR	B
+	JNZ	INITLP
+	RET
+
+; disk system reset -- login requested drive
+
+RESET	MVI	C,INQDISK	;determine and..
+	CALL	BDOS		;..save..
+	STA	C$DR		;..current drive.
+	MVI	C,RESETDK	;reset system
+	CALL	BDOS
+	LDA	R$DR		;make requested drive..
+SET$DR	MOV	E,A		;..current.
+	MVI	C,LOGIN
+	JMP	BDOS		;return to caller
+
+; set/reset (or get) user area (call with binary user area in a-reg)
+
+SET$USR	MOV	E,A		; 0 --> 0, 1 --> 1, etc.
+GET$USR	MVI	C,SGUSER
+	JMP	BDOS		;return to caller
+
+; compare de-pair to hl-pair and set flags accordingly
+
+CMPDEHL	MOV	A,D		;see if high bytes set flags
+	CMP	H
+	RNZ			;return if not equal
+	MOV	A,E
+	CMP	L		;low bytes set flags instead
+	RET
+
+; shift hl-pair b-reg bits (-1) to right (divider routine)
+
+SHIFTLP	DCR	B
+	RZ
+	MOV	A,H
+	ORA	A
+	RAR
+	MOV	H,A
+	MOV	A,L
+	RAR
+	MOV	L,A
+	JMP	SHIFTLP
+
+; decimal pretty print (h-reg contains msb; l-reg, the lsb.)
+
+DECOUT	PUSH	PSW
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	LXI	B,-10		;radix
+	LXI	D,-1
+DECOU2	DAD	B		;sets..
+	INX	D
+	JC	DECOU2		;..carry.	
+	LXI	B,10
+	DAD	B
+	XCHG
+	MOV	A,H
+	ORA	L
+	CNZ	DECOUT		; (recursive)
+	MOV	A,E
+	ADI	'0'		;make ascii
+	CALL	TYPE
+	POP	H
+	POP	D
+	POP	B
+	POP	PSW
+	RET
+
+; determine # of bcd digits in hl-pair -- place # in b-reg
+
+DET$BCD	LXI	D,9		;test for less than 10
+	CALL	CMPDEHL		;compare and..
+	MVI	B,1		; (one bcd digit)
+	RNC    			;..return if not carry.
+	MVI	E,99		;less than 100?
+	CALL	CMPDEHL
+	MVI	B,2
+	RNC
+	LXI	D,999		; <1000?
+	CALL	CMPDEHL
+	MVI	B,3
+	RNC
+	MVI	B,4		;assume >999  (4 digits)
+	RET
+
+; determine free storage remaining on selected drive
+
+FRESTOR	MVI	C,INQDISK	;determine current drive
+	CALL	BDOS		;returns 0 as a:, 1 as b:, etc.
+	INR	A		;make 1 --> a:, 2 --> b:, etc.
+	STA	FCB
+	ADI	'A'-1		;make printable and..
+	STA	DRNAME		;..use as drive designator.
+	MVI	C,GETPARM	;current disk parameter block
+	CALL	BDOS
+	INX	H		;bump to..
+	INX	H
+	MOV	A,M		;..block shift factor.
+	STA	BSHIFTF		; 'bsh'
+	INX	H		;bump to..
+	MOV	A,M		;..block mask.
+	STA	B$MASK		; 'blm'
+	INX	H		;bump to..
+	INX	H		;..get..
+	MOV	E,M		;..maximum block number..
+	INX	H		;..double..
+	MOV	D,M		;..byte.
+	XCHG
+	SHLD	B$MAX		; 'dsm'
+	MVI	C,INQALC	;address of cp/m allocation vector
+	CALL	BDOS
+	XCHG			;get its length
+	LHLD	B$MAX
+	INX	H
+	LXI	B,0		;initialize block count to zero
+GSPBYT	PUSH	D		;save allocation address
+	LDAX	D
+	MVI	E,8		;set to process 8 bits (blocks)
+GSPLUP	RAL			;test bit
+	JC	NOT$FRE
+	INX	B
+NOT$FRE	MOV	D,A		;save bits
+	DCX	H
+	MOV	A,L
+	ORA	H    
+	JZ	END$ALC		;quit if out of blocks
+	MOV	A,D		;restore bits
+	DCR	E		;count down 8 bits
+	JNZ	GSPLUP		;branch to do another bit
+	POP	D		;bump to next count..
+	INX	D		;..of allocation vector.
+	JMP	GSPBYT		;process it
+
+END$ALC	POP	D		;clear alloc vector pointer from stack
+	MOV	L,C		;copy # blocks to hl-pair
+	MOV	H,B
+	LDA	BSHIFTF		;get block shift factor
+	SUI	3		;convert from sectors to thousands (k)
+	JZ	PRT$FRE		;skip shifts if 1k blocks
+FREK$LP	DAD	H		;multiply blocks by k-bytes per block
+	DCR	A		;multiply by 2, 4, 8, or 16.
+	JNZ	FREK$LP
+PRT$FRE	CALL 	DECOUT		; # of free k-bytes in hl-pair
+	CALL	ILPRT
+	DB	'k bytes free on drive '
+DRNAME	DB	' :',CR,LF,'   ',0
+	RET
+
+; s t o r a g e
+
+; initialized
+
+JOKER	 DB	'???????????'	; *.* equivalent
+J$FLG	 DB	TRUE		;default jump 22-files command flag
+FIRST$M	 DB	FALSE		; 1st time thru in mass-copy mode
+MFLAG	 DB	TRUE		;multiple file copy flag --> 0 for mass copy
+TAG$TOT	 DW	0		;summation of tagged file sizes
+CMDBUF	 DB	32,0		;command buffer maximum length, usage, and..
+
+; uninitialized
+
+	 DS	100		;..storage for buffer and local stack.
+STACK	 DS	2		;cp/m's stack pointer stored here
+B$MAX	 DS	2		;highest block number on drive
+B$MASK	 DS	1		;sec/blk - 1
+BSHIFTF	 DS	1		; # of shifts to multiply by sec/blk
+BUF$PT	 DS	2		;copy buffer current pointer..
+BUFSTART DS	2		;..and begin pointer.
+CANFLG	 DS	1		;no-file-found cancel flag
+C$DR	 DS	1		; 'current drive'
+CON$LST	 DS	1		;bdos function storage
+CRCTBL	 DS	512		;tables for 'crc' calculations
+CRCVAL	 DS	2		; 2-byte 'crc' value of working file and..
+CRCVAL2	 DS	2		;..of finished source read-file.
+C$U$A	 DS	1		; 'current user area'
+D$FCB	 DS	33		;fcb for destination file/new name if rename
+EOFLAG	 DS	1		;file copy loop 'eof' flag
+FS$FLG	 DS	1		;tag total versus file size flag
+J$CNT	 DS	1		;jump forward file counter
+LPSCNT	 DS	1		;lines-per-screen for 'view'
+O$USR	 DS	1		;store initial user area for exit
+R$DR	 DS	1		; 'requested drive'
+RCNT	 DS	2		; # of records in file and..
+REC$CNT	 DS	2		;..currently in ram buffer.
+REC$MAX	 DS	2		;maximum 128-byte record capacity of buffer
+RINGI	 DS	2		;ring sort pointer
+RINGJ	 DS	2		;another ring sort pointer
+RINGEND	 DS	2		;current ring end pointer
+RINGPOS	 DS	2		;current ring position in scan
+R$U$A	 DS	1		; 'requested user area'
+S$FCB	 DS	36		;fcb for source (random record) file
+TEST$RT	 DS	1		;intermediate right-justify data
+T$UN$FG	 DS	1		;tag/untag file summation switch
+VIEWFLG	 DS	1		; 00h --> to list/punch else to crt 'view'
+ 
+; cp/m system functions
+
+RDCON	EQU	1		;console input function
+WRCON	EQU	2		;write character to console..
+PUNCH	EQU	4		;..punch and..
+LIST	EQU	5		;..to list logical devices.
+DIRCON	EQU	6		;direct console i/o
+RDBUF	EQU	10		;read input string
+CONST	EQU	11		;get console status
+RESETDK	EQU	13		;reset disk system
+LOGIN	EQU	14		;log-in new drive
+OPEN	EQU	15		;open file
+CLOSE	EQU	16		;close file
+SRCHF	EQU	17		;search directory for first..
+SRCHN	EQU	18		;..and next occurrence.
+ERASE	EQU	19		;erase file
+READ	EQU	20		;read and..
+WRITE	EQU	21		;..write 128-record.
+MAKE	EQU	22		;make file
+REN	EQU	23		;rename file
+INQDISK	EQU	25		;get current (default) drive
+SETDMA	EQU	26		;set dma address
+INQALC	EQU	27		;allocation vector
+GETPARM	EQU	31		;current drive parameters address
+SGUSER	EQU	32		;set or get user area
+COMPSZ	EQU	35		; # of records in file
+
+; system addresses
+
+BDOS	 EQU	CPM$BASE+05H	;bdos function entry address
+FCB	 EQU	CPM$BASE+5CH	;default file control block
+FCBEXT	 EQU	FCB+12      	;extent byte in 'fcb'
+FCBRNO	 EQU	FCB+32		;record number in 'fcb'
+TBUF	 EQU	CPM$BASE+80H	;default cp/m buffer
+
+; assembled 'com' and 'ram-loaded' file size (0c00h = 3k)
+
+COMFILE	 EQU	(CMDBUF+2)-256	; 'prn' listing shows 'com'..
+LAST	 END	SOURCE		;..and loaded file size.
+

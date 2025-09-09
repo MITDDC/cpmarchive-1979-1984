@@ -1,0 +1,83 @@
+NSTOCPM.DOC as of 12-06-82
+
+Changes in version 2:
+
+-	Commands can now be lower case
+-	NSTOCPM will not run on a 8080
+-	NSTOCPM checks the OEM code of CP/M to see if it is running on
+	a North Star implementation.
+
+NSTOCPM.COM is a utility for copying North Star DOS files onto a CP/M disk.
+Special features of North Star CP/M make this program independent of the
+disk controller address. In order to run this program your system has
+to meet the following requirements:
+1. You have to have North Star CP/M on a Z-80
+2. At least 2 drives
+3. The DOS diskette and the files you want to copy MUST be double density.
+
+If you do not have CP/M as delivered by North Star, NSTOCPM *MAY* work.
+NSTOCPM will inform you if it can't run in your CP/M environment.
+
+USE OF NSTOCPM
+
+To execute the utility, simply enter NSTOCPM. Please note that all
+commands typed to NSTOCPM will execute immediately! NSTOCPM will now
+announce its presence and give you a brief rundown on your choices.
+You will then be asked to input the DOS drive number. The number
+must be between 1 and 4 or it will be rejected.
+Next, you will be asked for the CP/M drive number, and both numbers
+will be rejected if you enter any number other than 1,2,3, or 4, OR
+if the CP/M drive is specified to be the same as the DOS drive.
+
+Now you will be in command mode, with a "+" sign as prompt. You can
+enter one of three commands:
+D = display the DOS directory in DOS fashion
+C = copy a file
+Q = quit (warm-boot CP/M)
+
+If you specify the <C>opy command, you will be asked for a DOS file name.
+Enter the file name ONLY (without disk designator) and terminate with a
+carriage return. The file name will be rejected if it is longer than 8
+characters, empty, or if the file is not on the DOS disk.
+
+After successful entry of the DOS file name you will be asked for a CP/M
+file name. You can choose any CP/M file name you like, if the file name
+is longer than 12 characters or empty it will be rejected. If the file
+name is longer than 8 characters, everything after the 8th character is
+treated as file type, i.e. "TOOLONGNAME" will become "TOOLONGN.AME."
+
+After entering a valid CP/M file name, the CP/M file will be created,
+overwriting any file already on disk by that name, and copying will
+start. The DOS file is copied 512 bytes at a time. When finished, control
+will return to the command prompt in anticipation of another copy.
+
+When finished copying, type a "Q" at the prompt to return to CP/M.
+
+Please note that file names in NSTOCPM MUST be made in UPPER CASE!
+NSTOCPM will accept lower case COMMANDS. Use lower case for the DOS
+file name, if the directory shows it in lower case. If you use lower
+case for the CP/M file, you will have to run a disk utility to convert
+the file name to upper case in order to use the file. NSTOCPM does not
+perform any error checking on file names; it allows all characters to
+be used, so be careful!
+
+If the DOS disk is dual sided, but inserted into a single sided drive
+and an attempt is made to copy a file on the back side, the results
+are unpredictable, since the drive is not checked for DS operation.
+The resulting CP/M file will most likely contain blanks.
+
+IMPORTANT!
+
+If you have a CP/M other than the one distributed by North Star,
+NSTOCPM will tell you so and offer you a chouce to go ahead or
+abort. It will do this only if the BIOS jump table has 18 entries!
+In that case, WRITE-PROTECT all disks and go ahead. If you do a
+<D>irectory and it comes up, you're fine. If not, NSTOCPM won't
+work. You may now go ahead and determine the OEM code in your CP/M.
+This code is located at BDOS+0 and BDOS+1. Using DDT, place the OEM
+code into the following locations:
+BDOS+0 into NSTOCPM 011DH
+BDOS+1 into NSTOCPM 0123H
+This will inhibit the "go-ahead" question when running NSTOCPM.
+
+

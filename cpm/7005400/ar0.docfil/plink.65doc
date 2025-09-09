@@ -1,0 +1,108 @@
+			PLINK65.DOC
+
+ PLINK is a CP/M transient command which allows the user to
+communicate with a remote computer that is not running a special
+program.  It allows the user to selectively copy received text
+into memory and to later write the text onto a CP/M disk file.
+It also allows text to be transmitted from a disk file to the
+remote computer a line at a time, suppressing the line feeds and
+waiting for a trigger character such as a line feed from the
+remote computer before sending the next line of text.  Optionally
+the trigger character may be a BELL code, an X-ON, or text may
+be sent without pause including line feeds after the carriage
+return.  Note that none of these options work for sending to a
+DEC which uses an X-OFF, X-ON protocol when it gets more input than
+it can handle.
+
+ This program currently supports the following modems or computers
+via conditional assembly:
+
+1. PMMI modem
+2. Any serial I/O board (TUART included)
+3. TRS-80 model 1
+4. TRS-80 model 2
+5. Heath H8 with 8251 UART at port 330q
+6. D.C. Hayes 80-103A or Micromodem 100
+7. MITS 2SI/O board, ports 10h &11h = console, 12h & 13h = modem
+8. Intel SBC or National BLC multi-bus boards using 8251 USART
+
+
+Originally written by L.E. Hughes (EDCAM) in July, 1977.  Many
+modifications have been made since this time, as shown in the
+following summary.
+
+Fixes/updates (in reverse order to minimize reading time):
+
+June 26, 1981. Added message when exiting if last buffer was
+not saved.  Ted Shapin.
+
+June 14, 1981, by Keith Petersen, W8SDZ.  Changed port
+equate to 'equ' instead of 'set'.  ASM doesn't like 'set'
+when later conditionals are based on a label defined that
+way.
+
+June 7, 1981, by Tom Jorgenson (CP-MIG).  Changed CP/M 
+origin from being via SETs to referenced to BASE, added
+TRUE/FALSE rather than numeric values (for readability),
+changed ^Q function to ^W (write) because some systems
+(notably Micronet) use ^S/^Q to suspend/resume output,
+changed page 0 references in TRS routines to use
+BASE equate properly, changed PORT equates to default
+to TRUE, reinserted Heath equates, and cleaned up code
+in several places.
+
+June 7, 1981, by Keith Petersen, W8SDZ.  Fixed problem with
+equates which prevented assembly by 'ASM' when TUART option
+was selected.
+
+June 6, 1981, by Keith Petersen, W8SDZ.  Added version number,
+cleaned up file.
+
+May 12, 1981, by T. Shapin.  Added code for 8251 USART on Intel 
+SBC or National BLC multibus board with modified CP/M origin.  
+Added prompt to signon. Added toggle to ^Y to save or ignore 
+incoming text. Added ^C abort on file name response.
+
+(for earlier update info, see PLINK65.ASM).
+
+
+PLINK currently supports two way transfer of text files between
+the  CP/M disk and the remote computer.  The following control
+codes may be initiated from the console keyboard:
+
+Control-E      Exit PLINK to CP/M "warm-boot".
+
+Control-T      Transmit ASCII file to remote system, asks for
+               drive (A, B, etc.) and filename.typ.
+
+Control-C      Aborts transmition of file to remote system.
+
+Control-Y      Switches between saving and ignoring incoming
+	       ASCII data in RAM buffer, for later transfer
+	       to disk.
+
+Control-Q      Writes RAM buffer to disk, and asks for drive
+               and filename.typ.
+
+Del (delete)   Backspace when in command mode (e.g. ^T or ^Q).
+
+Control-U      Aborts current line when in command mode.
+
+(Note: all other control codes are passed to modem output, and
+may be interpreted by the remote system as various control
+functions.)
+
+When sending to another computer, PLINK waits for a trigger
+response after sending each line before it will send the next.
+The following "trigger" equate is set to "lf" (linefeed)
+by default.  An optional trigger char may be passed via fcb1
+
+ ie:  PLINK B		will set trigger to "bell"
+
+The following options are allowed:
+
+	1. B = bell  07h
+	2. X = xon   11h
+	3. U = upload no trigger check at all and send line feeds
+
+any other ascii character may be passed through fcb1.

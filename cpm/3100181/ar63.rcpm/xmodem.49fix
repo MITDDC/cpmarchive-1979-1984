@@ -1,0 +1,48 @@
+			       5/14/82
+
+Just thought I should show this to somebody to prevent their having
+to search for it.  The H8 equates for MODDCDB and MODDCDA (MSR-CTS)
+should be 10H as shown here, rather than 20H.  I've noticed this
+in several versions of this file:  Believe me, it works better this
+way!   --Skip Gilbrech 212-685-0551
+
+
+;
+;	XMODEM.ASM V4.9, by Keith Petersen, W8SDZ
+;		   (revised 04/18/82)
+;
+;	REMOTE CP/M - CP/M FILE TRANSFER PROGRAM
+;
+;Based on MODEM.ASM V2.0, by Ward Christensen.
+;This program is intended for use on remote CP/M
+;systems where it is important that the initialization
+;of the modem not be changed, such as when using
+;the PMMIBYE program. The baud rate and number of bits
+;remains the same as whatever was set previously.
+;There is no disconnect, terminal or echo option.
+
+
+    //////////////////////////////////////
+    //////////////////////////////////////
+    //////////////////////////////////////
+
+
+
+	IF	H8
+MODCTLP EQU	0DDH	;H8/H89 VALUES (LSR-LINE STATUS REG.)
+MODSNDB EQU	20H	;TEST FOR SEND (LSR-THRE)
+MODSNDR EQU	20H	;VALUE WHEN READY
+MODRCVB EQU	01H	;TEST FOR RECIEVE (LSR-DR)
+MODRCVR EQU	01H	;VALUE WHEN READY
+MODDCDB EQU	10H	;CARRIER DETECT BIT (MSR-CTS) (WAS 20H -S.G.)
+MODDCDA EQU	10H	;VALUE WHEN ACTIVE	      ( "   "	 "  )
+MODPARE EQU	04H	;VALUE FOR PARITY ERROR (LSR-PE)
+MODOVRE EQU	02H	;VALUE FOR OVERRUN ERROR (LSR-OR)
+MODFRME EQU	08H	;VALUE FOR FRAMING ERROE (LSR-FE)
+MODDATP EQU	0D8H	;DATA PORT, RECIEVE
+MODDATO EQU	0D8H	;DATA PORT, SEND
+BAUDRP	EQU	0DDH	;BAUD RATE PORT (DALB IN LCR MUST=1)
+MODCTL2 EQU	0DEH	;MODEM STATUS REGISTER (MSR)
+MODCTL1 EQU	0DBH	;LINE CONTROL REGISTER (LCR)
+	ENDIF
+

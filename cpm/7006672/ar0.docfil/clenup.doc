@@ -1,0 +1,6 @@
+CLEANUP.COM helps clean up a full disk by typing each
+selected name, and allowing you to erase the file, skip
+the file, type the file, or quit out of CLEANUP.COM.
+Allows ambiguous file names, such as *.ASM.  A generally
+useful utility by Ward Christensen.
+

@@ -1,0 +1,1567 @@
+Date:  3 DEC 1980 0605-EST
+From: GZ at MIT-MC (Gail Zacharias)
+Subject: up/down loading programs
+To: INFO-CPM at MIT-MC
+CC: GZ at MIT-MC
+
+At FJW's request I have placed 3 files in the CPM directory:
+	CPM;DOWN   LOAD  - a lisp program for simple down-loading
+	CPM;UP     LOAD  - a lisp program for simple up-loading
+        CPM;UPDOWN DOC   - documentation on using the programs
+These have not been tested at non-ITS sites - if you can get them
+to work somewhere else, you should probably let people know (they are
+meant to be run as LISP init files).  Please send any comments directly
+to me as I am not on this list.
+
+Date:  1 DEC 1980 0113-EST
+From: ELMO at MIT-MC (Eliot R. Moore)
+Subject: Losing
+To: INFO-MICRO at MIT-MC, INFO-CPM at MIT-MC
+
+Is there a way (does someone have software on-line) to make ITS work
+with standard handshaking? (X-On, X-Off)
+Thanks--
+Eliot Moore
+(Elmo @ MC)
+
+MITTON@MIT-AI 11/30/80 23:06:43 Re: Cp/M Users Group Software
+To: Info-CPM at MIT-MC
+I have Vols 1-42 of the CP/M UG on a DEC RK06 in my office.
+I also have a few Fortran programs that allowed me to archive this stuff
+and to create copies back to floppies.  I will be offering copies under
+the auspice of the New England Computer Society.  There will probably
+be a 25 or 50 cent coping charge to keep the requests resonable and to
+finance further acqusitions.
+
+HOWEVER, I am willing to try to arrange to give away a copy of the entire
+collection to anyone that can read it in its current form.  It is on a
+DEC RK06 written under Files-11 on RSX-11M-Plus.  The diskettes are stored
+as Fixed length (128 byte records in squential order (all disk interleaving
+as been un-interleaved.  I could write it to mag tape, but it would be
+DEC DOS, "ANSI standard" or other more obscure DEC formats.
+I could also arrange to transfer it over the DEC DECnet Engineering Network,
+if someone in Marlboro is willing to work with it.
+
+Anyone who is serious about picking this stuff up, Please contact me direct.
+My turn-around on this mailing list is about once a month!
+Dave Mitton, 617-493-9362 work, 876-8718 home, 864-3819 CBBS/Cambridge.
+
+
+Date: 30 November 1980 18:06-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  N* Skew Table for FAST and SPEED
+To: INFO-CPM at MIT-MC, NORTH-STAR-USERS at MIT-MC
+
+The patch file I use for FAST on a NorthStar is in MC:CPM;NSSKEW ASM.
+It was derived using a modified version of RSPEED which accessed my
+Mountain Computer Clock card to give the relative timings for the
+various skews.  It is interesting to note that the static timing for
+the normal CP/M skew table supplied from Lifeboat is 1.3 seconds; no
+skew, as in NS DOS, is 2.2; and the table in that file is 0.4!  What
+this means, I guess, is that the one derived by Lifeboat is indeed
+better than DOS', but it is not the best that could have been...
+
+(Startup timings were 2.5, 3.4, and 1.4, respectively.)
+
+--Frank
+
+Date: 29 November 1980 16:59-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  More Files
+To: INFO-CPM at MIT-MC
+
+More from W8SDZ:
+
+A new SD.ASM - the old one has been replaced: MC:CPM;SD ASM.
+
+COPYFILE.ASM - this is the one that I mistakenly described as MOVE.
+(MOVE does single file copies like FILECOPY, but may be to more than
+one disk, ala SYSGEN.)
+
+    ;This program will copy files of any length from one drive to
+    ;another, with up to 16k buffering.  It was created for very
+    ;long files (megabyte length), which are not properly handled
+    ;by CP/M 2.x PIP.  This version offers selective copying of
+    ;files - something not available with PIP.  The destination
+    ;files will have NO attributes set, which is useful for
+    ;copying from CP/M 2.x to 1.4 disks.
+
+This is in MC:CPM;CPYFIL ASM.
+
+And finally, there is an edited collection of CBBS messages commenting
+on various user's experiences with several disk controllers in
+MC:CPM;DSKCMP DOC.  (After reading that, I am glad I have a "stock"
+system!)
+
+--Frank
+
+P.S.  For those of you looking to download (only) to get started, a
+simple-minded ASCII capture program is forth-coming, one that will be
+short enough to key in.  Stay tuned!
+
+Date: 29 November 1980 00:07-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  More files
+To: INFO-CPM at MIT-MC
+
+Again courtesy of Keith Petersen (W8SDZ@MC):
+
+MC:CPM; SD   ASM  - source for SD, a sorted directory program
+MC:CPM; D    DOC  - Doc for D below
+MC:CPM; D    HEX
+MC:CPM; MOVE ASM - like FILECOPY and PIP for multiple files.
+                   Difference is that it asks to copy or skip.
+
+Now a question:  anybody besides Lauren and myself downloading these
+files and using them?  What's holding you up?  No software to download
+or the programs are not what you're looking for (if not what then), or
+what?
+
+--Frank
+
+Date: 27 Nov 1980 0042-PST (Thursday)
+From: Lauren at UCLA-SECURITY (Lauren Weinstein)
+Subject: speed deleted
+To: INFO-CPM at MC
+
+SPEED.HEX has been deleted from MC:CPM; -- while this appears on
+a CP/M user's group disk which claims it is public domain, I have
+my doubts, and have decided that it is not appropriate for 
+open access on MC.  If there was someway to verify people's CP/M
+licenses... but there isn't.  I don't think that MC wants to
+take responsibility for such verifications, so I think this
+is better for everyone concerned.  SPEED is available on CP/M
+User's Group disk #38, by the way.
+
+--Lauren--
+-------
+
+
+Date: 27 November 1980 00:41-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  SPEED Files Available
+To: INFO-CPM at MIT-MC
+
+Courtesy of LAUREN, there are two more new files in MC:CPM;
+
+SPEED DOC
+SPEED HEX
+
+--Frank
+
+Date: 26 November 1980 07:18-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  [W8SDZ: BDOS PROBLEM]
+To: INFO-CPM at MIT-MC
+
+Date: 11/26/80 06:34:05
+From: W8SDZ
+
+Frank, the problem is caused by mixing direct console input with BDOS
+console output.  CP/M tests for console input during all BDOS console
+outputs to allow CTL-S and CTL-C pause and abort.  In the process of
+doing this, it cancels any pending keyboard character.  The solution
+is to use direct console output to print your messages.
+   Further re CP/M's printing via BDOS - when it sees a character
+typed, it sets a reminder byte inside CP/M itself which says that the
+console status is true, and attempts to fetch that character without
+first doing another status test.  Because you have already fetched the
+character in your loop, there is none, and it just sits there waiting
+for the next one.
+
+Date: 25 November 1980 23:34-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  BDOS Question
+To: INFO-CPM at MIT-MC
+
+The following situation occurs with both CP/M 1.45 and 2.2 and I want
+to know why:
+
+LOOP:	CALL	RDTIME		; Reads clock ports and displays time
+				; using direct I/O to the console
+				; serial port.
+	CALL	CONST		; Checks console input status only
+	CALL	NZ,GKC		; If input, read console for command
+	JR	LOOP
+
+GKC:	CALL	CONIN		; Gets the pending character and does
+				; nothing with it.
+	CALL	PRINT		; Prints a msg using BDOS
+	CALL	GNC		; Waits for a response
+				; then jumps to appropriate subroutine
+				; based on character
+
+The subroutine in question prints another message and waits for
+confirmation, and then prints another prompt and waits for string
+input using the READ BUFFER BDOS call.
+
+Now here is the strange part:  it takes TWO characters (not one) to
+break out of the LOOP, and that first character shows up in the read
+buffer.  It can even be edited!
+
+How did it end up in the read buffer?
+
+Any clues to this mystery would be appreciated.
+
+--Frank
+
+(I have this sinking feeling that, as usual, I'm doing something
+wrong, but I can't figure it out for the life of me.  If so, I
+apologize for taking up your time.  If not, and it turns out to be a
+bug in CP/M - however obscure, I think we should all know.)
+
+Date: 24 November 1980 16:16-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  New Files in MC:CPM;
+To: INFO-CPM at MIT-MC
+
+There are two new files in the CPM directory, courtesy of Keith
+Petersen (W8SDZ@MC).
+
+The first is the previously mentioned MBOOT ASM program to get you
+started downloading files using the MODEM2 program on the remote host.
+The idea here is to keyin this code, tailoring it to suit, and then
+use it to download MODEM2.  MODEM2 is used from then on to exchange
+files between systems.  (Hopefully, some industrious soul will
+volunteer to code up a mainframe version of MODEM2, suitable for use
+on TOPS-20, TENEX, and ITS machines - DEVON@MC is working on a Lisp
+version... - the specs can be made available upon request.)
+
+The second program is an UNLOADed (HEX) copy of SD.COM (MC:CPM;SD HEX)
+and is similar to XD, which in turn is similar to LIST.  Comments on
+it are at the front of the file, including the CRC of the resulting
+COM file.
+
+--Frank
+
+Date: 23 Nov 1980 1851-PST (Sunday)
+From: Gray at UCLA-SECURITY (Terry Gray)
+Subject: Bigger BIOS
+To: info-cpm at mc
+
+CPM 1.4 allows 9 sectors for BIOS;
+CPM 2.2 allows 6 sectors for BIOS.
+
+When I tried to incorporate a driver for a TDL video board (with
+software scrolling and cursor positioning) in my CPM 1.4 BIOS,
+I found I had exceeded the 9 sector limit.  And I was thinking
+of going to 2.2 soon.  Any way to get around these limits
+(other than putting the drivers in ROM) ??
+
+Terry Gray
+-------
+
+
+Date: 23 Nov 1980 1848-PST (Sunday)
+From: Gray at UCLA-SECURITY (Terry Gray)
+Subject: SPEED/FAST for CPM 2.2?
+To: info-cpm at mc
+
+Are SPEED and FAST applicable to CPM 2.2?
+If so, has anyone done the work yet?
+
+Terry Gray
+-------
+
+
+Date: 20 November 1980 01:17-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  New Mailing Lists
+To: INFO-CPM at MIT-MC
+
+There is now a BUG-MTN and INFO-MTN (both at MIT-MC) for mail
+concerning MicroTELNET.  Right now, BUG-MTN mail goes to me and
+MC:CPM;MTN BUGS, INFO-MTN goes to a list of known users of MTN and
+MC:CPM;MTN INFO.  If you wish to be added to either list (or both),
+send a msg to me.  --Frank
+
+Date: 13 November 1980 02:46-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Another file in CPM;
+To: INFO-CPM at MIT-MC
+
+This time it is the documentation file that goes with MTN13.  The file
+is MC:CPM;MTNMSG HEX and is very long (44K), but reduces to 16K after
+LOADing.  The resulting COM file must be renamed to MTNMSGS.OVR to be
+used by MTN13.  CRC of the .OVR file is 8B F6.
+
+Perhaps I should have made it clear that the CPM directory on MC is
+NOT proposed to be the permanant net home for the entire CPMUG
+library.  There just simply isn't that much room available for all of
+the files themselves, nor is there enough room to hold all of the
+directory entries for that many files.
+
+However, selected files of general and popular interest should
+eventually find their way to this home.  I would hope that at least
+the ABSTRACT files for each of the CPMUG disks will eventually get
+uploaded and live in an INFO-formatted file for quick lookup.
+
+(For those of you outside of the EMACS/TECO community, INFO is an
+TECO-based program which reads tree-structured sequential files which
+are usually menu-ized and footnoted.)
+
+--Frank
+
+Date: 12 November 1980 04:42-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  A (temporary) home for CPMUG files
+To: INFO-CPM at MIT-MC
+
+CP/M, CPMUG files, and micros are very closely related to my official
+work.  Thus, to cut the clutter in my directory, I have asked for a
+CPM directory to be created on MC and have moved all my CPM files to
+that directory, including the archive file for this mailing list.
+
+In that directory (which can be accessed via FTP without login) there
+are a number of HEX, ASM, and ASMPAT files, courtesy of Keith Petersen
+(W8SDZ@MC).  All of the HEX files have been successfully downloaded
+and LOADed into COM files and checked by either running them or
+matching the CRCs.  Most of these files are short, except for MTN HEX,
+which is 28K bytes.  All HEX files have, or will have text at the
+front (which LOAD will ignore) indicating what the CRC of the COM file
+produced from that HEX file should be.  Of course, to get the CRC, you
+should download CRCK HEX, LOAD it, and run it on itself.  Its CRC is
+2D47.
+
+Here is a short abstract of what is current in CPM:
+
+ ASMPAT ASM	The UPPER/lower case patch for ASM on CPM 1.4 patched
+ BBS    NOS	The latest list (as of 11/04/80)
+ BDOS22 PATCH	ASM Patch file for using USER 0 as "system" files
+ CP/M   AUTO	A Babyl file of replies to the AUTO startup query
+ CP/M   LIST	A Babyl file of requests to be added to INFO-CPM
+ CPM    ARCHIV	The INFO-CPM archives
+ CPM    DOC	A re-edit of the two-part msg on CP/M internals
+ CRCK   HEX	Produces 16-bit CRChecksums of files (CRC: 2D 47)
+ FAST   DOC	How to install FAST and SPEED
+ FMAP   HEX	FMAP updated for use under CP/M 2.x (CRC: 1A 2C)
+ MAKSUB ASM	Source for a SUBMIT-like program, MAKESUB.
+ MENU   MAC	Z80 source fore a working MENU program
+ MTN    DOC	Lastest DOC for MicroTELNET (1.3)
+ MTN13  HEX	MicroTELNET 1.3, an intelligent terminal program for
+		Z80's only (sorry)  (CRC: A1 53)
+ RSPEED ASM	Source for RSPEED (see FAST DOC)
+ RSPEED HEX	HEX for RSPEED - checks skew factors (CRC: )
+ SKEW2  ASMPAT	Sample patch file for FAST
+ SKEW3  ASMPAT	Sample patch file for FAST
+ UNLOAD ASM	Source for UNLOAD... in HEX format
+ UNLOAD HEX	Converts ANY file to HEX  (CRC:  )
+ UNLOD2 ASM	Source for UNLOAD2
+ UNLOD2 HEX	HEX for UNLOAD2 (presumably the same as UNLOAD)
+ XD     HEX	Another directory lister  (CRC: C7 B7)
+
+Comments to the list, please.
+
+--Frank
+
+Date: 9 November 1980 15:35-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  [W8SDZ: BDOS-PAT.ASM]
+To: INFO-CPM at MIT-MC
+
+Date: 11/09/80 13:56:12
+From: W8SDZ
+Re:   BDOS-PAT.ASM
+
+	title	'BDOS patch for CP/M 2.2 to make USER 0 public'
+;
+;5/15/80
+;
+;patch courtesy of Andy Johnson-Laird
+;
+;******************************CAUTION******************************
+;
+;This patch is for grown-ups who know what they are doing.
+;Note that if files of the same name are present on both USER 0 and
+;the logged-in USER number, the OPEN, SEARCH for FIRST, SEARCH for NEXT
+;and READ SEQUENTIAL functions will match directory entries on a first-come
+;first-served basis.  This will cause exciting results if multiple extent
+;files of the same name are present on both USER 0 and logged-in USER.
+;
+;Recommended use:
+;
+;	1) Keep on USER 0 only commonly used programs (Files.COM)
+;	2) Set these programs to $SYS to reduce directory clutter.
+;	3) Set these programs to $R/O to avoid accidental erasure of
+;	   invisible programs.
+;	4) NEVER place on any other USER number programs of the same name.
+;	5) Have turn-key applications cold-boot directly into the assigned
+;	   USER number.  The USER number is the high nibble of address 4.
+;
+;
+msize	equ	20		;set your memory size here
+;
+bdos	equ	(msize-20)*1024+3C00h
+;
+patch$area	equ	??????	;this will depend on YOUR system, and
+				;should probably be in your BIOS area
+;
+	org	bdos+075eh
+	jmp	patch		;overlays:	mov	a,b
+;						cpi	0dh
+;
+;
+	org	patch$area
+patch:	mov	a,b
+	ora	a
+	jnz	patch2
+	ldax	d
+	cpi	0e5h
+	jz	patch2
+	mov	a,m
+	ora	a
+	jz	bdos+077ch
+patch2:	mov	a,b
+	cpi	0dh
+	jmp	bdos+0761h
+;
+	end
+
+Date:  5 Nov 1980 at 2222-CST
+From: wilcox at UTEXAS-11 
+Subject: USER x
+To: info-cpm at mit-mc
+
+Digital Research has done an excellant job of creating a 'standard' system
+for micros, but when the added the USER feature for 2.x they missed the boat.
+All they did was set up an otherwise unused field in the FCB for a user number.
+But that means a users normally sees ONLY his one files.  What ever happened
+to the concept of SYSTEM files.
+
+What I feel should have been done is to make a small mod to BDOS such that
+if the initial file search fails, it makes a new search with the USER number
+set to 0 (or F as we choose).  We then declare that number (0 or F, whichever)
+to be the SYSTEM account.  Just like the big systems do! References are first
+satisfied in our own account, and then if necessary, by the system files.
+
+Problem?  No source to make even these relatively simple patches.  Does anyone
+have (or sell) a source (listing, not necessarily machine readable) to BDOS
+and CCP (ver. 2.2 preferrably) that is not too expensive?
+
+               --Jim
+-------
+
+Date: 5 November 1980 05:47-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  The SIG/M Report
+To: INFO-CPM at MIT-MC
+
+                        The SIG/M Report
+                          November 1980
+                            edited by
+                   Bruce Ratoff and Bill Chin
+
+     SIG/M has now been in full operation for the past two months 
+and  things  are really starting to happen.  As Sol announced  in 
+this  column  last  month,  our  first  three  software  volumes, 
+containing  source and object of two souped-up  Adventure  games, 
+are now available.  Since that announcement, we have collected an 
+additional four volumes of software,  which will be available for 
+the first time at the November meeting of SIG/M (at the 808X/Z80, 
+CP/M,  N*,  TRS-80 users' meeting) at UCTI on Friday, November 7.  
+The new volumes are:
+
+         SIG/M004 - miscellaneous CP/M utilities
+         SIG/M005 - 8080/8085 diagnostics package
+         SIG/M006 - 6502 monitor and simulator (on Z80!)
+         SIG/M007 - modem and BBS utilities
+
+     Another  disk  of  games has been started but does  not  yet 
+contain sufficient material for release.  Expected future volumes 
+include more CP/M utilities, and a set of cross-development tools 
+for the TI9900 processor.   These and all future volumes will  be 
+announced  in  this column,  and on our participating BBS's  (see 
+below).
+
+     We  are  of  course  always  seeking  software contributions  
+in all areas of interest.    Remember that the "quickie" that you 
+threw  together to solve some  minor problem may be  a  lifesaver 
+for  another user, no matter how trivial you may consider it.
+
+     For those who have not yet heard about SIG/M, its purpose is 
+to promote the exchange of programs and information on/about CP/M 
+and  related systems.  It is our goal to provide this exchange in 
+as open and non-commercial an environment as  possible.   Besides 
+providing  software exchange,  we would like to serve as a  forum 
+for  sharing ideas/comments on CP/M related topics.  This is your 
+organization, and can only succeed with everyone's participation. 
+SIG/M was jointly founded by CP/M proponents in ACGNJ and the New 
+York Amateur Computer Club (NYACC).
+
+
+                        WHERE TO FIND US
+
+     There are many ways to contact/locate SIG/M for  information 
+or  to  exchange software.  We can always be found at the  "first 
+Friday"  ACGNJ  users'  group  meeting at  UCTI  or  the  "second 
+Tuesday"  NYACC  users' group meeting at  Computer  Emporium  (in 
+NYC). You may also contact one of the four coordinators directly.  
+We are:
+
+           Bruce Ratoff   Iselin, NJ      201-283-2724
+           Bill Chin      Clifton, NJ     201-778-5140
+           Marty Nichols  Dover, NJ       201-361-7180
+           Henry Kee      Flushing, NY    212-539-3202
+
+     Written correspondence and diskettes may be mailed to:
+
+                              SIG/M
+                           P.O. Box 97
+                        Iselin, NJ  08830
+
+     If  you  have  a modem at your disposal,  you  may  wish  to 
+contact  us  and/or  obtain programs by  calling  Bruce  Ratoff's 
+Remote  Iselin  Bulletin  Board System (RIBBS).  In  addition  to 
+normal BBS functions,  it is possible to go into CP/M and send or 
+receive programs using the Ward Christensen MODEM program.  Plans 
+are currently underway,  although not yet implemented, to support 
+Apple CP/M and TRS-80 CP/M on this system.  To reach the  system, 
+dial Bruce's number (listed above), let it ring once, hang up and 
+call  back within 40 seconds.  The system will answer the  second 
+call.  A number of other BBS owners and potential BBS owners have 
+expressed  interest  in  providing  the  same  service  on  their 
+systems.  Their  numbers will be published in future columns.  We 
+are especially looking for participants in other regions (both in 
+and  out  of  the  NY/NJ  area).   Contact  us  if  you  wish  to 
+participate.
+
+
+                       LOCAL COORDINATORS
+
+     We  are looking for people to coordinate local  distribution 
+of  the  SIG/M  software collection.  This is in  line  with  our 
+general  policy  of keeping both user costs and club costs  to  a 
+minimum.   If  you  are the 8080 or CP/M coordinator of  a  local 
+club,  or  wish to act as the "dropping off point" for the  other 
+CP/M  users in your area,  please contact us.   The point of  all 
+this  is  to minimize the number of disk copies that we  have  to 
+produce,  while providing the widest possible distribution of the 
+software  collection.  Clubs  and area  coordinators  may  obtain 
+copies  of  the SIG/M volumes for a donation of $4 per  diskette, 
+plus  $2  to  cover mailing costs.   These diskettes  are  to  be 
+redistributed locally on a non-profit basis.  Funds collected  by 
+the  local  coordinator  should go back into the support  of  the 
+local  club or group.  All commercial use of these diskettes  and 
+their contents is expressly forbidden.
+
+
+                        PROGRAM SUBMITTAL
+
+     All programs/files for submittal to SIG/M should be provided 
+on 8" single-density  soft-sectored "standard CP/M" format, along 
+with our standard  submittal form.   A copy of this form  appears 
+on  each  SIG/M  volume  as  the  file  SIG/M.LIB.   It  is  also 
+reproduced  in this issue of the newsletter.   Contributions  and 
+forms  may also be sent via modem to a participating BBS,  but  a 
+signed  copy  of the submittal form must be received  before  the 
+program  can  be  distributed.   This  protects all  of  us  from 
+copyright  problems,  and assures a consistent method of  program 
+documentation and cataloging.
+
+
+                        UPCOMING RELEASES
+
+     The  NYACC S-100 users' group has published a  directory  of 
+public-domain  software.   It contains the catalogs and abstracts 
+from  all  current CPMUG and SIG/M releases.   The  directory  is 
+available for $5 (subject to change) from NYACC.
+
+     Digital  Research has released the first version of  CP/NET, 
+their distributed-processing system.   This release allows up  to 
+16  modified CP/M systems to share disks and printers residing on 
+an MP/M system.   Each disk drive may be either locally supported 
+or mapped into the network (controlled by the MP/M system).   The 
+communication method is left up to the installer,  making this  a 
+very  general  and powerful  tool for applications requiring  too 
+much "crunch" per terminal to be served with a single  processor.  
+The  cost  is $200,  and the license is linked to a  single  MP/M 
+system license.
+
+     A  new  version of MP/M is scheduled for release before  the 
+end of the year.   The main enhancement will be the inclusion  of 
+file interlocks between users, making multi-terminal file updates 
+much  easier   to  implement.   This version of  MP/M  will  also 
+support the next release of CP/NET, which allows the inclusion of 
+slave  processors that do not contain any local disk storage.   A 
+further update of MP/M and CP/NET,  which allows MP/M systems  to 
+function  as  slaves to other MP/M systems,  is expected  at  the 
+beginning of next year.
+
+     Questions about the much-delayed release of CP/M-86 were met 
+with a reply that it should be released "any week now".   It will 
+consist  of 8086/8088-resident versions of all the standard  CP/M 
+programs, plus a cross-assembler that will allow the installer to 
+use an existing 8-bit CP/M system to bring up the 16-bit system.
+
+
+                      CP/M TIP-OF-THE-MONTH
+
+     This "department" will hopefully appear on a regular  basis.  
+Its  purpose is to provide answers to common technical  questions 
+about CP/M and MP/M.   Please send your questions, ideas and tips 
+to Bruce for inclusion in this column.
+
+
+Date: 23 OCT 1980 0704-EDT
+From: POURNE at MIT-MC (Jerry E. Pournelle)
+To: INFO-MICRO at MIT-MC, INFO-CPM at MIT-MC
+
+
+Subject:INFO-MICRO Digest   V2 #46
+I have the first 25 or so CPM User Group disks, plus a few of
+the higher numbers.  What can I do with them (that's useful)
+
+Date: 15 October 1980 03:39-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  The BSTAM Connection
+To: INFO-CPM at MIT-MC
+cc: FJW at MIT-MC
+
+Does anyone have BSTAM available?  I'd like to try a file transfer
+across the net using a TIP-to-TIP connection under BSTAM.  If you
+don't know how to make a TIP-to-TIP connection, don't let that stop
+you from replying.  --Frank
+
+Date: 14 Oct 1980 1119-PDT (Tuesday)
+From: Lauren at UCLA-SECURITY (Lauren Weinstein)
+Subject: speed/fast
+To: INFO-CPM at MC
+
+I highly recommend the SPEED and FAST programs to CP/M 1.4 users.
+Once you have those things, you won't care about your sector 
+layouts anymore.  They speed up all disk-I/O bound programs by
+a factor of about 3.  They are on the user's group distribution
+number 38.
+
+--Lauren--
+-------
+
+
+Date: 12 October 1980 12:22-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Sector Interleaving and other things
+To: INFO-CPM at MIT-MC
+cc: FJW at MIT-MC
+
+I visited a firm on Thursday that is heavily into using NorthStar
+machines as a base for their product: a multi-user machine.  I
+discovered that their OS lets you run whatever you want, such as CP/M,
+but you must convert to their file format.  One of the changes
+required in being able to run CP/M in that system is to change CP/M's
+sector interleaving back to sequential!  Why, I asked.  Because it is
+faster, I was told.  Apparently the newer disk controllers that have
+come on the market since CP/M was first written take up the slack.
+N*'s DOS in fact uses sequential sectors and so does the N* version of
+UCSD's Pascal.
+
+Has anyone played with CP/M BDOS from this angle and have any facts
+and figures to back up either position?  I plan to try it out in a few
+days myself and see what happens with my six minute assembly (which is
+heavily I/O bound - it seems).
+
+Meanwhile CP/M-86 is well on the way since it has been announced.
+MP/M and CP/Net were somewhat premature in release (that's a rumor).
+It still bothers me that software is released to let the users debug
+it, but that must be a fact of life...
+
+You CAN BUY the source for CP/M 1.4 from Digital Research at some
+"reasonable" price.  You can also BUY the source for 2.2, but you must
+be an OEM, and pay $5K for the priviledge ($10K for MP/M 1.1).
+
+Indeed, parts of 1.4 was written in PL/M, but I am told that all of
+2.0 and up is in assembler...
+
+--Frank
+
+Date: 14 September 1980 02:07-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  CP/M Article (Updated)
+To: INFO-CPM at MIT-MC
+cc: FJW at MIT-MC
+
+In the last pair of messages you received a copy of an article on the
+insides of CP/M.  I have now placed online an updated version of that
+article (as of July 1, 1980), courtesy of Bruce Tompson (WB3ETS@AI),
+which was uploaded off of a disk file and re-edited.  Due to its
+length, I will not retransmit it, but will send it to you by net mail
+upon specific request, or you can FTP the file yourself (MC:FJW;CPM
+DOC).
+
+Please keep in mind that the article was written before CP/M2, i.e.,
+it applies to CP/M 1.4...
+
+--Frank
+
+BLUE@MIT-AI 09/10/80 04:10:06
+To: info-cpm at MIT-MC
+<part two of previous message>
+
+ 
+CPM/TIPS Part 2
+ 
+                CP/M, A VIEW FROM INSIDE BY CARL ADLER
+ 
+         Reprinted from NORTHWEST COMPUTER SOCIETY/July 1979
+ 
+ 
+                    The BASI I/O SYSTEM (BIOS)
+ 
+  This section of the system concerns itself with the hardwar
+dependent aspects of I/O.  There are wo types:        1) Disk I/O, which is block oriented
+        2) Character I/O, which is byte oriented
+ 
+  It is convenient to consider these two aspects seperately as they
+do not interact directly.
+ 
+  Looking at the BIOS jump table (as described in the CP/M docu-
+mentation), the first two entries are paths to system initialization
+routines.  The next six are entry points to the character I/O rou-
+tines and the rest are entry points to disk I/O and disk support
+routines.  The section called "BIOS Entry Points" in the System
+Alteration Guide describes the function of each of these 15 entry
+points better than I could.  However, what the guide does not do (as
+it is only a manual) is point out the importance of the I/O byte.  I
+consider this to be deserving of special attention.
+ 
+  Experience (mostly my own) has shown that until one makes concrete
+use of the I/O byte concept, it is difficult to appreciate the ele-
+gance of this technique.  It does have its limits, but it is very
+simple and effective solution to CP/M's character I/O device
+standardization problems.
+ 
+  I first ran across this concept on the MDS MOD-80 development
+system which did not have disk drives and used paper tape for its
+off-line storage.  The Intel Monitor used a standard jump table
+which allowed programs to do character I/O without necessarily
+having to worry about the actual hardware devices.  Perhaps you've
+seen it, but in case you haven't here it is.
+ 
+ ORG    MOINTOR
+ JMP    MAINLINE
+ JMP    CI      ;COSOLE INPUT
+ JMP    RI      ;READER INPUT
+ JMP    CO      ;CONSOLE OUTPUT
+ JMP    PO      ;PUNCH OUTPUT
+ JMP    LO      ;LIST OUTPUT
+ JMP    CSTS    ;RETURN CONSOLE STATUS JMP    IOCHK   ;RETURN I/O BYTE
+ JMP    IOSET   ;CHANGE I/O BYTE (NEW VALUE IN C)
+ 
+ 
+  As you can see thes basically the same that the BIOS jump
+table does.  IOCHK, IOSET and MEMCHK art needed in the BIOS
+since the information returned by these rones are located in the
+zero page of CP/M's memory.
+ 
+  As the alteration guide is not explicit on the bject of imple-
+menting an I/O byte, I'll outline in assembly language code the
+techniques I've found useful for a generized implation.
+ 
+  But first notice that each of the six character I/O routines must
+decode out the path to the specific I/O device "currently assign-
+ed".  The way this is done (in English) is as follows.  The I/O byte
+contains four fields, each as consisting of low bits.  Each field is
+associated with one of the fo"logical" I/O devices (Lnch,
+Reader and Console) and may take on the value of (in binary) 00,
+01,10, or 11.  Thus up to four different physical I/O devices may be
+associated with each of the four "logical" devices. For example, the
+logical device "List." By manipulating the value of these 2 bits
+(presumably) without affecting the rest of the byte) one may
+"assign" a specific hardware driver (and the device itself) to a
+specific hardware driver (and the device itself) to the list
+device.  In PASCALese this is the decoder:
+ 
+        VAR IOBYTE(4): PACD ARRAY OF (0..3)
+        DO CASE IOBYTE(4)
+        0:  TTYOUT;
+        1:  LPTOUT;
+        2:  CRTOUT;
+        3:  USERLIST;
+        END
+ 
+  The alteration guide and documentation on PIP and STAT describe
+what these physical device might be.  The command:
+ 
+       STAT VAL:
+ 
+produces essentially a menu of the nominal phyiscal devices
+assignable in the CP/M system.
+ 
+     Here is some software:
+        IOBYTE  EQU     3     ;LOCATION OF IOBYTE
+        CMASK   EQU     03H     ;CONSOLE MASK
+        RMASK   EQU     0CH     ;READER MASK
+        PMASK   EQU     30H     ;PUNCH MASK
+        LMASK   EQU     0C0H    ;LIST MASK
+        RD2     EQU     08H     ;READER DEVICE 2 MASK
+        PD2     EQU     40H     ;PUNCH DEVICE 2 MASK
+CONTIN:
+        LDA     IOBYTE          ;GET IOBYTE
+        ANI     CMASK           ;LOOK AT CONSOLE FIELD
+        JZ      TTYN          ;CONSOLE 0:
+        JPE     UCIN1           ;CONSOLE 3:
+        RAR                     ;CONSOLE1:
+        JC      KBDIN           ;CONSOLE 1:
+        JMP     BACHIN          ;CONSOLE 2
+CONOUT:
+        LDA     IOBYTE          ;GET IO BYTE
+        ANI     CMASK           ;LOOK AT CONSOLE FIELD
+        JZ      TTYOUT          ;CONSOLE 0:
+        JPE     UCOUT1          ;CONSOLE 3:
+        RAR                     ;LOOK FOR CONSOLE 1
+        JC      CRTOUT          ;CONSOLE 1:
+        JMP     BACHOUT         ;CONSOLE 2
+CONSTAT:
+        LDA     IOBYTE
+        ANI     CMAS
+        JZ      TTYSTAT         ;CONSOLE STATUS 0
+        JPE     UCSTAT1         ;CONSOLE STATUS 3
+        RAR
+        JC      KBDSTAT         ;CONSOLE STATUS 3
+        RET                     ;DON'T KNOW WHAT STATUS 2 IS
+READER:
+        LDA     IOBYTE
+        ANI     RMASK           ;LOOK AT READER BITS ONLY
+        JZ      TTYIN           ;READER 0
+        JPE     UR2             ;READER 3:
+        ANI     RD2             ;SEE IHER READER 1 OR 2
+        JZ      PTR             ;READER1 IF ZERO
+        JMP     UR1             ;READER 2 IF NOT
+PUNCH:
+        LDA     IOBYTE
+        ANI     PMASK
+        JZ      TTYOUT          ;PUNCH 0
+        JPE     UP2             ;PUNCH 3
+        ANI     PD2             ;SEE IF EITHER READER 1 OR 2
+        JZ      PTP             ;PUNCH 1 IF ZERO
+        JMP     UP1             ;PUNCH 2 IF NOT
+LIST:
+        LDA     IOBYTE        ANI     LMASK
+        JZ      TTYOUT          ;LIST 0:
+        JPE     UL1             ;LIST 3:        JM      LPTOUT          ;LIST 2:
+        JMP     CRT             ;LST 1;
+  
+                         MISCELLANEOUS STUFF
+ 
+  To conclude, there are some interesting tid-bits which the reader
+may (or may not for that matter) find useful.
+ 
+  The SUBMIT processor in the CCP(Console Command Processor) uses a
+very interesting programming technique which I found worthwhile
+understanding.  Recall that the transient program "SUBMIT" uses as
+its input a text file of CP/M commands and produces a file called
+$$$.SUB which the CCP will use as a command file.  For example
+consider the following submit file:
+ 
+     A:PIP B:PROG.ASM=B:PO.SRC,B:P1.SRC(CR)(LF)
+     A:ASM PROG.BBB(CR)(LF)
+     A:LOAD B:PROG(CR)(LF)
+     A:PIP LST:=B:PROG,PRN(T8P50)(CR)(LF)
+ 
+  The Submit program turns this file into a series of 128 byte
+records arranged such that the first line of the orginal file is the
+last record of the new file, the second line the second to the last
+record and so on.  Each record has the following form:
+ 
+     byte 1:                    length
+     bytes 2-length+1:          command string
+     bytes length+2-128:        undefined
+ 
+  The above file would look like this when converted to $$$.SUB (the
+numbers in decimal and brackets are included here just for clarity):
+     
+     record 1:  (28)A:PIP LST:=B:PROG,PRN(T8P50)
+     record 2:  (13)A:LOAD B:PROG
+     record 3:  (14)A:ASM PROG.BBB
+     record 4:  (33)A:PIP B:PROG.ASM=B:PO.SRC,B:P1.SRC
+ 
+  Why, you ask, is $$$.SUB backwards? Well that's part of the
+trick.  Remember that the RC field in the FCB is an end of extent
+pointer.  If the $$$.SUB file is on the disk the CCP will open it
+and set the NR field of the FCB to RC-1 and read the file.  What
+this does is read in the last record of the file (as determined by
+the RC field).  After the read the CCP will decrement the RC field
+and close the file, which will cause the FCB and specifically the RC
+field command as if it had been typed in from the console.  The next
+time around, the CCP will do the same thing except that the RC field
+is now pointing at the record whose number is one less than that of
+the previous operation.  In other words, the RC field is used as an
+implicit record pointer. Very neat and it works too!
+ 
+  Sometimes it is desirable to bypass the BDOS and communicated
+directly with certain BIOS functions.  For example MICROSOFT's BASIC
+interpreter does not use the BDOS character I/O functions as it does
+its own line editing and the USCD Pascal system completely overlays
+the BDOS.  There is a technique for accessing the BIOS that is
+general enough so as not to be consedered a kludge.  An application
+can always find the page boundary on which the BIOS begins by
+examining the high order address byte of the warm boot entry point. 
+Using that as the high order byte of the address the low order byte
+is set to an offset into that page as determined by:
+ 
+     OFFSET=FUNCTION * 3
+ as each entry is three bytes.  For example here is a short routine
+which causes data to be written to the list device:
+ 
+LOFF    EQU     0FH     ; BIOS+LOFF=LIST ENTRY
+LIST:
+        PUSH    H       ; SAVE HL
+        LHLD    1       ; GET ADDRESS OF WARM BOOT
+        MVI     L,LOFF  ; SET LOW ORDER BYTE TO LIST OFFSET
+        XTHL            ; RESTORE HL, LIST ADDRESS ON STACK
+        RET             ; EXECUTE LIST ROUTINE IN BIOS
+ 
+This technique works as long as the BIOS begins on a page
+boundary.  The more general technique would be:
+ 
+LOFF    EQU     0FH-3   ; OFFSET FROM WARM BOOT ENTRY
+LIST:   PUSH    H       ; SAVE HL
+        LHLD    1       ; GET ADDRESS OF WARM BOOT
+        PUSH    D       ; SAVE DE
+        LXI     D,LOFF
+        DAD     D       ; GET TO LIST ENRY POINT
+        POP     D       ; RESTORE DE
+        XTHL            ; RESTORE HL
+        RET             : EXECUTE LIST ROUTINE
+ 
+  There is one more thing and then I'll quit.  If you remember from
+above, I mentioned that while poking around inside a screen oriented
+text editor, I found that it modified the error address fields at
+the beginning of the BDOS.  It also does another curious thing.  In
+the editor there is a command to save the rest of the file, exit the
+editor and automatically process it with an entirely different
+program, such as an assembler or text formatter. There is an
+interesting technique here which could be generally useful.  What
+happens is this: First, modify the address of the console input
+routine in the BIOS jump table to cause a routine inside the
+application program to supply data to the CCP.  This is done as
+follows:
+ 
+        LHLD    1       ; GET THE BIOS PAGE ADDRESS IN H
+        MVI     L,CI+1  ; HL IS THE ADDRESS OF THE ADDRESS
+                        ; OF CONSOLE INPUT ROUTINE
+        MOV     E,M     ; GET THE DEVICE ADDRESS IN DE
+        INX     H
+        MOV     D,M
+        XCHG
+        SHLD    SAVE    ; SAVE IT FOR LATER
+        LXI     D,ALT   ; DE IS ADDRESS OF ALTERNATE ROUTINE
+        MOV     M,D     ; POKE JUMP ADDRESS
+                        ; IN BIOS JUMP TABLE
+        DCX     H
+        MOV     M,E
+        JMP     0       ; AND RE-BOOT
+SAVE:   DS      2       ; LOCATION USED TO SAVE
+                        ; CONSOLE INPUT DEVICE ADDRESS
+ 
+  After doing this, everytime the CCP request a character from what
+it thinks is the console input device, it will be handed a character
+from inside the original application program.  Just before handing
+the CCP a carriage return the application will restore the original
+address of the console input routine:
+ 
+        LHLD    SAVE    ; GET ORIGINAL DEVICE ADDRESS
+        XCHG            ; PUT IN DE
+        LHLD    1       ; GET ADDRESS OF ADDRESS FIELD OF
+                        ; CONSOLE INPUT ENTRY
+        MVI     L,CI+1
+        MOV     M,D     ; RESTORE ORIGINAL ADDRESS
+        INX     H
+        MOV     M,E
+                        ; ... AND CONTIN
+ 
+The routine that does the character handling is  essentially
+this:
+ 
+        LHLD    POINTER ; GET ADDRESS OF NEXT CHARACT        MOV     A,M     ; GET NEXT CHARACTER
+        INX     H       ; ADVANCE POINTER
+        SHLD    POINTER ; SAVE POINTER
+        CPI     CR      ; END OF DATA?
+        RNZ             ; IF NOT THEN JUST RETURN IT
+                        ; ELSE RESTORE CONSOLE
+                        ; INPUT ADDRESSES
+ 
+  This works for two reasons: obviously the BIOS jump table can be
+considered data as well as code (hail to John Von Neumann) and since
+the original program will remain intact until the next program is
+actually loaded on top of it, the routine simulating the console
+will function normally.  This technique suggests a viable method for
+chaining a series of programs together without having to
+specifically build a submit file for each chain.
+ 
+
+
+BLUE@MIT-AI 09/10/80 03:53:00
+To: info-cpm at MIT-MC
+Frank -- following is a two part article that may be of some interest 
+to some members of this list. It may be a little general for a few, but
+is fairly informative.	Do with it as you see fit.
+				--Bill <Blue@AI>
+
+ 
+CPM/TIPS Part 1
+ 
+                CP/M, A VIEW FROM INSIDE BY CARL ADLER
+ 
+         Reprinted from NORTHWEST COMPUTER SOCIETY/July 1979
+ 
+  Although CP/M is not the ultimate in operating systems it is an
+extremely useful software devlopment tool which is implementable
+on a wide variety of 8080 and Z80 based computers. As a result it
+has become, by default i not by design, the standard of users of
+these microprocessors.
+ 
+  CP/M's implementability lays mainly in the portability afforded to
+it through the use of the BIOS (Basic I/O System). This concept is a
+simple but very effective solution to the problem of hardware vari-
+ability inherent in microprocessor based computer systems.  The S-
+100 buss not withstanding there seem to be as many hardware config-
+urations as there are designers(as an example, my own computer has
+a 56 pin backplane and uses memory-mapped I/O). It is a surprising
+and welcome gesture for a software manufacturer to supply the exact
+procedures necessary to bring up its software.  By the way of
+contrast, I know a very compulsive programmer who spent the better
+part of a month bringing up ISIS on a non-MDS hardware, whereas it
+took less than a week for this same programmer to bring up CP/M on
+the same hardware.
+ 
+  The other major fctor in CP/M's success must be the configur-
+ability.  How many microcomputer users start th 65K (wch ISIS
+requires to do anything useful)? With the ability to turn a 16K toy
+into a "real" computer, CP/M has ensured a very large following of
+devotees.
+ 
+  As mentioned in thers manual, CP/M is divided into four
+logically distinct but interacting parts:
+ 
+  BDOS (Basic Disk Operating System)
+  BIOS (Basic Input/Output System)
+  CCP (Console Command Processor)
+  TPA (Transient Program Area)
+ 
+  As there isn't a whole lot to say about the TPA other than that is
+where the transient programs are executed, and the users manual is
+very explicit on the use of the CCP, I will deal mainly with the
+BDOS and BIOS, Which I consider to be the heart of the system.
+ 
+                THE BASIC DISK OPERATING SYSTEM (BDOS)
+ 
+  The BDOS is the file manager of CP/M Though an application program
+can:
+ 
+     .Open a file
+     .Close a file
+     .Search for th first and subsequent entries in the
+      directory for a file
+     .Erase a file from the directory
+     .Read and Write logical rerds
+     .Create entries in the diry
+     .Rename entries in the directory
+ 
+as well as various support functions.  These functions mainly add
+a level of abstraction to the disk hardware as implemented in the
+BIOS allowing the application program(mer) to deal with the stored
+data without having to know where it is physically located.  The
+BDOS also acts as a conduit betweehe application program and the
+character I/O entry points in the BIOS as well as providing some
+macro-functions for string I/O to and from the console. Thus through
+the use of the BDOS, CP/M is able to transform a computer and its
+peripherals into a generalized sstem with no particular hardware
+characteristics machine language itself.  (and through the use of
+one of the many "hi-level" languages which have been implemented to
+run under CP/M, it is possible to solve problems with out even
+knowing or caring what kind of CPU is running the show).  To my way
+of thinking , this is a rather significant development in micro-
+computing.
+ 
+  The BDOS functions are listed and explained quite throughly in the
+programmer's guide so I'll not bore the reader (and make myself type
+anyone than I have to) by reiterating them here.  However I would
+like to address myself to a cuple of points which are associated
+with the BDOS.  First, while monkeying around one day, I discovered
+that there are some strange locations at the beginning of the BDOS
+which can be (and most definitely are) used by transient programs
+even though they are supposedly secure inside the operating system. 
+Here is an outline of these locations:
+ 
+         ORG     BDOS
+SERNUM:  DS      6
+ENTRY:   JMP     COMMAND
+         DW      BADIO
+         DW      SELERROR
+         DW      ROERRORMAP:     LXI     H,MAPTABLE      ;POINT HL AT LOG TO PHYS MAPPING
+         MVI     B,0            ;SET BC TO LOICAL SECTOR (IN C)
+         DAD     B            ;INDEX INTO TABLE
+         MOV     C,M             ;CONVERT LOGICAL TO PHYSICAL SECTOR
+         JMP     SETSECTOR       ;DO BIOS SET SECTOR FUNCTION
+         NOP
+MAPTABLE:
+     DB     1,7,13,19
+     DB     25,5,11,7            ;THIS TABLE MAPS LOGICAL ONTO
+     DB     23,3,9,15            ;   PHYSICAL DISK SECTORS
+     DB     21,2,8,14
+     DB     20,26,6,12
+     DB     18,24,4,10
+     DB     16,22,,0
+     DB     0,0,0,0              ;THE NULLS ARE ADDRESS ALINGMENT
+CONFIG:
+     DB     SECPT                ;SECTORS PER TRACK(26 ON IBM DISKS)
+     DB     LASTDIR              ;NUMBERS OF LAST DIRECTORY ENTRY (63)
+     DB     RPB                  ;2**RPB=RECORDS PER BLOCK (3)
+     DB     LASTSEC              ;LAST SECTOR IN BLOCK (7)
+     DB     LASTBLOCK            ;LAST BLOCK ON THE DISK (242)
+     DB     DIRALLOC             ;DIRECTORY ALLOCATION MASK (C0 HEX)
+     DB     DIRTACK              ;TRACK THAT DIRECTORY BEGINS ON (2)
+ 
+ 
+  The first 6 bytes of the BDOS contain the serial numbers which
+supposedly prevent copyright infringments. The next 3 contain the
+actual entry point to the BDOS command decoder.  The next 9 bytes
+are the addresses of routines inside the BDOS which are executed
+when one of the three fatal errors occur.  Following the error
+addresses is the routine which the BDOS uses to stagger its data on
+a track followed by the mapping table.  After the mapping table are
+some constants which define the particular implementation of CP/M on
+specific size disks.
+ 
+  The error address can be modified by an application program to
+recover somewhat more gracefully from a fatal error (I ran across
+this in a screen-oriented text editor which made possible to save
+the memory image of the program after an I/O error).  The config-
+uration table data can be used (and is used by STAT in version 1.4)
+to find out what's going on with disk space.
+ 
+  As far as I can tell it is not serendipitious that this infor-
+mation exists and is located where it is.  It seems that the people
+at Digital Research left room for certain easy modifications and
+enhancements to CP/M.
+ 
+  The second point I would like o address is the technique CP/M
+uses to do housekeeping on its files.  All of the file management
+functions in the BDOS use the address of an FCB (file control block)
+as their parameter.  Like the concept of the I/O byte the FCB is a
+rather elegant solution to the housekeeping problem in a file
+management system.  It accomplishes two things for the operations
+system.  First it "decentralizes" the process of maintaining "open
+files", and second, it gives application programs access to the same
+information about a file that the BDOS uses.  These two factors
+together allow an application to get as close as it requires to the
+file management process.  There are some problems with the FCB, as
+implemented.  First there is the question of whether or not an
+application OUGHT to have access to housekeeping information as it
+is possible to louse things up pretty badly if things are not done
+correctly.  This I think is a matter of taste.  Since CP/M, as
+implemented, is a single-user system there isn't the problem of
+messing other people's files.
+ 
+  The other problem is a bit more serious (rumor has it that Digital
+Research is dealing with .  Since the largest number that an
+allocated block can have (see below) is 255(D) and with a block size
+of an even 2k, the maximum number of bytes of bytes of storage CP/M
+can address on one disk is approximately 510 kilobytes.  This
+presents serious impediments (due to program standardization) to
+implementing the operating system on the larger disk systems
+becoming available.
+ 
+  Be that as it may, within the scope of single (or perhaps double)
+density floppy disks, the FCB is in my opinion, a stroke of genius.
+Because an application, through the use of the FCB, has such flex-
+ibility it behooves the assembly language programmer to understand
+as best he or she can how to use it.  The programmer's guide
+describes the format and I'll elaborate a bit on it.
+ 
+  The FCB consists of seven fields of information each having a
+mnemonic associated with it.  They are:
+ 
+         FIELD           FCB POSIONS
+         ET              0
+         FN              1-8
+         FT              9-11
+         EX              12
+         NOT USED        13-14
+         ZC              15
+         DM              16-31
+         NR              32
+ 
+ 
+  The FN and FT fields are only logically distinct.  The BDOS uses
+all eleven bytes as a fundamental unit of information when opening,
+closing, creating, erasing, searching and renaming files (The EX
+field is included during OPEN, CLOSE, CREATE and SEARCH opera-
+tions).  It is the CCP and transient programs which make a
+distinction between file ame and file type.
+ 
+  Since a file can be of any length up to the capacity of the disk
+and since a single FCB describes only 16k bytes of a file, there
+must be a way to link multiple sections of a file each described own
+by its.  This is done via the EX field.  The first extent of a file
+has an EX value of 0, the second a value of 1 and so on.
+ 
+  The ET field is an interesting mixture of usefulness and ambi-
+guity.  When the FCB is stored in the directory the ET filed may
+contain a 0, indicating that the entry is used, or, an E5(H) indi-
+cating that the entry has been deleted (or never used). However when
+the FCB is used as a parmeter for one of the file management
+functions, the ET field serves an entirely different purpose.  If
+ET=0 then then the BDOS will assume that the command pertains to the
+currently selected disk.  If the ET field is not zero then the BDOS
+assumes that it contains the disk number+1 to which the function
+pertains.  In this case the BDOS will temporarily select disk number
+ET-1 and then clear ET to zero before proceeding with the requested
+function.  When the file operation is complete, the BDOS will re-
+store ET to its original value. Thus, an application program need
+never concern itself with remembering or selecting specific disks as
+these values are retained throughout processing from the time that
+the CCP sets them up in the default FCBs.
+ 
+  The RC field is essentially an "end of extent" pointer. It is
+"pushed" along by the NR field when writing and is used to limit the
+NR field during reading to prevent the reading of unwritten data.
+ 
+  The DM field is an array of 16 bytes, each representing a logical
+block of data within the extent.  The value of each of these bytes
+represents the physical area of disk space allocated to the logical
+block unless the value is 0, in which case the block has not been
+allocated any disk space.
+   Together, the RC and DM fields form a "current" description of the
+locations on the dik used by the data contained with the extent.
+ 
+  The NR field is used to specify which record, relative to the
+beginning of the extent, is to be read or written. The BDOS will
+automatically increment th number during read and write
+operations, making sequential file acess virtually automatic.
+ 
+
+
+
+Date: 3 September 1980 23:51-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  List Repaired
+To: INFO-CPM at MIT-MC
+
+Apparently the list got reverted to some previous version and has now
+been brought back up-to-date.  Some of you may have missed some
+correspondence since I do not know how long the list was broken.  Here
+is a summary of the current contents of MC:FJW;CPM ARCHIV (FTPable
+from MC - no account required):
+
+ No. Lines        From->To        Subject or Text
+  1:    9  MAZE->INFO-CPM         Does anyone have the documentation on cp/m
+  2-   22  FJW->INFO-CPM          A MENU Program for CP/M
+  3-    9  FJW->INFO-CPM          Another typo
+  4-   32  FJW->MCTESQ            How do you ...
+  5-   16  MCTESQ->INFO-CPM       How do you ...
+  6-   12  MCTESQ->INFO-CPM       Well I just started using CP/M today...
+  7-   18  Lauren@UCLA-SECURITY-  Kick-off
+  8-   10  FJW->INFO-CPM          Typo
+  9-   30  FJW->INFO-CPM          STAT in 2.2
+ 10-  118  FJW->INFO-CPM          Kick-off
+ 11-   10  LEAVITT@ISI->INFO-CPM  CP/M WITH APPLE
+ 12-   16  FJW->INFO-CPM          CP/M Mailing List
+
+--Frank
+
+Date: 2 Sep 1980 1720-EDT
+From: MAZE at MIT-DMS (James Mazer)
+To: INFO-CPM at MIT-MC
+Message-id: <[MIT-DMS].159949>
+
+Does anyone have the documentation on cp/m stored on-line
+anywhere?  Replies to Maze at MC pls.
+
+	/Jamie
+
+
+
+Date: 2 September 1980 02:34-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  A MENU Program for CP/M
+To: INFO-CPM at MIT-MC
+
+I transcribed and debugged the MENU program described in the Creative
+Computing article previously cited and the source is now in
+MC:FJW;MENU MAC in Z80 format (easily reverted to 8080 code) and
+suitable for input to MACRO-80.
+
+(I dumped it at a painful 300 baud for reliability, and read it back
+in and assembled, linked, and ran it with no errors.)
+
+Suggested enhancements:
+
+1. Should list all COM files from all available disks.
+2. Should be able to run from any drive.
+
+You are welcome to it.  (FTP from MC does not require an account.)
+
+--Frank
+
+Date: 1 September 1980 05:04-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Another typo
+To: INFO-CPM at MIT-MC
+
+Last message should read:
+
+Loading the program from disk will NOT solve the problem...
+
+Date: 1 September 1980 05:01-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  How do you ...
+To: MCTESQ at MIT-MC
+cc: INFO-CPM at MIT-MC
+
+Loading from disk would solve the problem that CP/M wants the program
+to start at 0100H.  You will need to reassemble with ORG 0100H and
+write a program which relocates itself to high memory and reads the
+cassette programs into 0100H and then JMP 0100H.
+
+I also save the CCP SP and end up with a RET as follows:
+
+START	LD	(EXITX),SP
+	LD	SP,MYSTACK
+,
+,
+EXIT	LD	SP,0
+EXITX	EQU	$-2
+	RET
+
+However, I don't save on the click because I may have done some disk
+I/O from the time I left, and thus I do a RESET and SELDSK of the
+saved default drive.  So, in my case, I could probably cut all that
+out and just do a JP 0 to get the same effect, right?
+
+If your disk I/O works then the STAT should also work.  What is your
+configuration?  Did you have to do anything special to bring up your
+CP/M in the first place?
+
+--Frank
+
+Date:  1 SEP 1980 0439-EDT
+From: MCTESQ at MIT-MC (Michael Toy)
+Subject: How do you ...
+To: INFO-CPM at MIT-MC
+
+	I have a lot of programs on cassete that sit at location 0.  Is
+there any way other than writing a program that loads them from disk to
+run them under cp/m?
+	FJW, yes I exit programs in a way other than jmp 0, i pop h
+at the beginning of my program and shld it someplace, then to quit
+i lhld it back and do a pchl.  Or I'll just save the
+CCP stack pointer, set up my own stack, then restore the CCP stack
+before I quit so I can go back with a ret.  This keeps the disk
+from clicking on at then end of every program i write.
+						michael
+
+Date:  1 SEP 1980 0429-EDT
+From: MCTESQ at MIT-MC (Michael Toy)
+Subject: Well I just started using CP/M today...
+To: INFO-CPM at MIT-MC
+
+	And its not that bad.  I'd rather have unix or even
+tops (bottoms?) 10, but its better than i thought.  
+	Is there some reason for the stat command to not work?
+It just starts printing garbage over and over and
+i don't understand why.
+						michael
+
+Date: 31 Aug 1980 1439-PDT (Sunday)
+From: Lauren at UCLA-SECURITY (Lauren Weinstein)
+Subject:  Kick-off
+In-reply-to: Your message of 31 August 1980 07:00-EDT
+To: FJW at MIT-MC
+CC: INFO-MICRO at AI
+
+Don't go anywhere near OS1!!!  In a previous message, I recounted what
+I discovered about the organization selling that dog when I flew up
+north to meet with them once.  The "CP/M source" they offer is no CP/M
+source at all, it is simply the source of the CP/M emulator that lets
+OS1 run some CP/M 1.4 type programs.  It has nothing to do with real
+CP/M as far as I can tell.  Do not be misled!
+
+--Lauren--
+-------
+
+
+Date: 31 August 1980 17:16-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Typo
+To: INFO-CPM at MIT-MC
+
+In my first message describing the TOD format, that date will be in
+address format alright, but that is LSB (not MSB) first, of course.
+
+--Frank
+
+Date: 31 August 1980 15:29-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  STAT in 2.2
+To: INFO-CPM at MIT-MC
+
+Before I get beat about the head and shoulders about STAT's setting of
+the individual file attributes in 2.2, let me correct myself now:
+STAT indeed does set those parameters on the disk copy of the
+directory entry itself.  (This is opposed to 1.4 STAT which only sets
+the whole disk as R/O or R/W and only until the next boot.)  You must
+(in either level) do a disk system reset (and reselect the saved
+default if 2.2) if you change disks while your program is running, or
+do a DIR in CCP, or the changed disk will be assumed to be R/O!
+
+This was particularly annoying with ED when I was creating the dummy
+entries for the master cataloger programs, although I appreciate the
+protective approach.
+
+--Frank
+
+P.S.  There is some confusion, still, about CP/M records (128 bytes
+each), used by the read and write functions, and the SAVE built-in
+command, which uses 256-byte pages, and the actual disk I/O.  For
+example, my N* double-density system uses 512-byte blocks.  Does this
+mean that for each disk access, my BDOS and disk controller interface
+selects which CP/M record I want out of the four records in the
+512-byte block, reading or writing 512-byte blocks for each disk
+access regardless of what may already be in the buffer from the last
+request?  Can anybody explain what is really going on here?
+
+Date: 31 August 1980 07:00-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Kick-off
+To: INFO-CPM at MIT-MC
+
+Kicking this off:
+
+CP/M 2.2 has a known bug in that the CCP does not properly retain the
+USER number (across resets, I believe).  (Does any use, or plan to use
+USER numbers other than 0 or set the option bits - for the in-memory
+copy of the directory only for R/O, $DIR, $SYS, etc.?  Those option
+bits should be a part of the actual directory entry on disk anyway!)
+
+There is an inconsistency between disk drive numbering used by SELDSK
+and the others.  SELDSK is zero-based numbering (A=0, B=1, etc.),
+while the other functions use 0 in the FCB to mean the default drive,
+then A=1, B=2, etc.  My SELDSK, when used under a 1.4 system, simply
+takes that byte from the FCB and decrements it for use in the BDOS
+call.  (Using SELDSK is optional for 2.2 since the functions pick up
+the disk drive from the FCB (Byte 0) - unless you want to actually
+change the default drive in your program - and then change it back,
+just as for 1.4.  Does anyone NOT take the JMP 0 exit from their
+programs?)
+
+Digital Research's next project is CP/M for 8086 machines.  Apparently
+they think that will be the next darling of the industry.
+
+Once that CP/M for the 8086 is off the ground, Version 3.0 is next in
+sight.  It will have a number of MP/M features retrofitted, and a five
+byte TOD entry put in an as yet undetermined place in the directory
+entry.  The format is a two-byte date (in address format, MSB first)
+with Day 1 = January 1, 1978, and each of the hours, minutes and
+seconds as two BCD digits.
+
+Earlier this week, I received a fresh-off-the-press copy of "The CP/M
+Handbook (with MP/M)" by Rodney Zaks.  As usual in this industry, it
+was advertised before it was available.  It is very well done to the
+point that you can throw away most of the manual that comes with the
+CP/M package.  (The CP/M 2.2 is the same manual as for 1.4 except for
+the last two "sections", and those sections have more(!) examples of
+actual code, especially for how to use the random record access
+features.)  I was disappointed that Zak's book did not give a hacker's
+insight to more of the CCP other than how to do that auto-start I
+asked about, and it detailed alot about using ED - but no code worth
+mentioning.
+
+The handbook also details more about MP/M than I wanted to know -
+mainly because I now know what I am missing - with a number of
+features which I don't see why they can't be used in regular CP/M,
+such as GENHEX (make a HEX file out of a COM or PRL file suitable for
+relocation with GENCOM).  SPOOLER builtin.  A time-of-day scheduler.
+And others...maybe that is what they have in mind for 3.0??
+
+(A personal comment here: I can't see really using MP/M in any current
+micro, given the address space limits - even with bank-switching,
+unless you are willing to tolerate the time it takes to switch.  It
+would be more cost-effective to share the relatively expensive
+peripherals such as a printer and hard disk, than to time-share a
+micro.  Even better would be to add more dedicated micros such as you
+already have for the disk I/O controller, and "front-end" the
+terminal, printer, and modem I/O functions - even above
+interrupt-driven I/O.)
+
+We also got in a copy of TPM from Computer Design Labs (for Z80's only
+- sorry).  I have not had a chance to completely check it out yet.  I
+can say this:  it was no sweat to bring it up just like that.
+SYSGENning a new system is an integrated on-step process.  It has an
+entry to set and read time, a fixed location with fixed time, and can
+be patched to actually read your clock board, if you have one.  It
+will run most, if not all CP/M 1.4 programs, but not vice-versa.  It
+has most of the same extensions that 2.2 has, but not in the same
+entry points - in fact, it has more.  Noteable are:
+
+ 6 - Get TPM Serial Number
+28 - Read Console with no echo
+29 - Get Date
+30 - Get Time
+31 - Trap Control (for ^C)
+32 - Set Date/Time
+33 - Chain Program
+34 - Get TPM Version Number
+35 - Do Direct Disk I/O
+36 - Create FCB
+37 - Return Time in MS. (hardware required)
+38-40 Reserved
+
+I am especially attracted to Chain Program.
+
+A while back I saw ads for OS1 in which they were offering to throw in
+the source code for CP/M, probably 1.3.  Does anybody know where I can
+obtain a preferably commented listing of CCP - any version?  Some
+people simply overlay CCP and write their own versions of whatever
+they need that may already be available in CCP.  I would rather leave
+CCP around and find a way to hand it stuff and return to my program
+when done - especially if I load my stuff just under CCP... and chain,
+if required...Anybody got any ideas on this?
+
+Finally, I would urge you to read Alan Miller's CP/M product reviews
+and other related tidbits in Interface Age - the October issue
+includes his CBIOS (again) now with code for interrupt-driven,
+buffered console input and an article describing how it works.  He is
+also reachable by phone, when he doesn't have his modem plugged into
+the campus computer, and talks to the Lifeboat and other people around
+the country on a regular basis.  (The campus computer is a DEC, which
+doesn't have paper tape I/O - one of his machines is the DEC paper
+tape reader/punch...)  (I dropped my charter subscription to IA before
+I latched onto CP/M, and now his articles would be the only reason for
+resuming it.)
+
+That's all I have for now.  If there are no objections, I would like
+to make this correspondence available to my Digital Research contact
+who is also much interested in suggestions for documentation
+improvements (but that was before I received Zak's book...).  Also,
+would someone care to relate to us those portions of interest from
+Lifeboat's LifeLine?
+
+--Frank
+
+Date: 30 Aug 1980 1442-PDT
+Sender: LEAVITT at USC-ISI
+Subject: CP/M WITH APPLE
+From:  Mike Leavitt <LEAVITT at USC-ISI>
+To: INFO-CPM at MC
+Message-ID: <[USC-ISI]30-Aug-80 14:42:57.LEAVITT>
+
+HAS ANYONE HAD EXPERIENCE WITH THE APPLE AND THE MICROSOFT CP/M
+CARD?  DOES IT WORK AS ADVERTISED?  ANY LIMITATIONS?
+
+Date: 29 August 1980 13:55-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  CP/M Mailing List
+To: INFO-CPM at MIT-MC
+
+This relatively small mailing list has been established on MC.  As
+with most initial startups, if you receive this message, you are on
+the list.  Please direct administrative questions, such as additions,
+corrections, or deletions to INFO-CPM-REQUEST@MIT-MC.  An archive file
+has also been setup to hold whatever correspondence there will be.  It
+is MC:FJW;CPM ARCHIV (another original name).
+
+OK, now, let's have at it!
+
+--Frank
+

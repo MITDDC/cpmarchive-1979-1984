@@ -1,0 +1,2164 @@
+;	TITLE	'ByeII as of 12/13/82'
+;	PAGE	44
+;
+;		REMOTE CONSOLE PROGRAM FOR CP/M AND MODEM
+;
+;		ByeII Version 1.2 (revised 12/13/82)
+;
+;This program allows modem callers to use your CP/M system just as if they
+;were seated at the system console.  Special assembly-time options allow
+;limiting the caller's access by password and/or access to only a
+;message-service program.
+;
+;Based on an original program written by Dave Jaffe	January 1979
+;ByeII written to handle all modems by Paul Traina	November 1982
+;
+;ByeII is a version of Bye80 that has all modem I/O in one small section
+;that is easily adaptable to run on any modem.  Bye II supports the
+;following modems:
+;
+; PMMI		- adapted from Ward Christensen		BY2-PMMI.ASM
+; MM100		- adapted from Dave Jaffe		BY2-DCH .ASM
+; Interfacer 3	- adapted from Paul Traina		BY2-INT3.ASM
+;		  (also works with Interfacer 4)
+; MM][ (Apple)	- adapted from Paul Traina		BY2-MMII.ASM
+; Apple-Cat	- adapted from Dave Roznar		BY2-ACAT.ASM
+; WD8250	- adapted from Thom Quick		BY2-8250.ASM
+; IN8251	- adapted from Thom Quick		BY2-8251.ASM
+;
+;In order to run ByeII, simply YANK (using Mince, WordMaster, or your
+;favorite editor) the BY2-xxxx.ASM file into the proper area. This area
+;is clearly marked and is near the end of ByeII (search for "+" marks).
+;If you have a modem currently not supported, all you need to do is study
+;any of the existing BY2-xxxx.ASM files for instructions.  If you like,
+;I will make a proper insertion file for you if you contact me.  The routines
+;have been heavily documented, but if you have any problems, give me a call at
+;the OxGate.	-- Paul S. Traina 11/27/82
+;PS: to save space, my mark in comments is "<pst>".
+;
+;Thanks to Bill Precht for the "label + offset" idea allowing
+;this program to relocate itself without using DDT to initially
+;set it up.
+;
+;Modifications/fixes: (in reverse order to minimize reading time)
+;
+;12/13/82 Fixed a bug that would not generate the WHEEL code needed for
+;	  NewZCPR. 						<pst>
+;
+;11/27/82 First release of ByeII.  Changed MSPEED to 3Ch to correspond with
+;	  new versions of XModem. This is a major re-write of BYE81. ByeII
+;	  makes implementation of BYE on different systems MUCH easier.  Just
+;	  make up a BY2-xxxx.ASM file, and yank it into the proper place in the
+;	  source file.  I've timed a novice installing ByeII.  It took him
+;	  under 15 minutes to install for his MM100.  Good luck!   <pst>
+;
+;07/01/82 Move most of the revision notes to BYE80.NOT, this is disgusting,
+;	  we are going to have to decide how to handle the rampant featureitis.
+;	  Added check to allow mapping ^C to another character (not just a
+;	  NUL) when 0000h <> C3h.  See CTRLC equate. (OxGate likes it if
+;	  you convert ^C's into ^O's so we can look more like CBBS); but
+;	  normal people probably want to keep the CTRLC equate = to 00h.
+;	  Added Sandy Smith's code and comments (see note below).
+;	  NB: If you have a 8251 or 8250, use that code, not SMODEM code.
+;								<pst>
+;
+;06/09/82 Fixed baud rate divisors for 8250's based on a clock rate of
+;	  1.8432 Mhz.  Added code to generate MSPEED value for XMODEM51+
+;	  Placed default location of MSPEED at 3Dh to avoid fubaring WHEEL.
+;						-- Sandy Smith
+;
+;03/25/82 Improved carrier check handling for DCHayes.
+;	  Fixed a bug in conditional assembly for ringback (problem in
+;	  Bye77 and also Bye78).
+;	  Changed FASTCLK conditional to a SPEED equate (for 6 & 8 Mhz CPUs)
+;	  Finally fixed the bug in LF parsing for OxGate.
+;	  Code added for DCHayes MM][.				<pst>
+;
+;02/03/82 Fixed the buggy conditional jumps in/after RINGWT.
+;	  Now there is conditional assembly depending on if you are
+;	  a WD8250/IN8251 or a "standard" system.
+;	  Fixed a few bugs in conditional assembly.		<pst>
+;
+;01/20/82 Add equates and routines for HEATH or IMS systems and any
+;	  other systems using External modems and the WD8250 UART.
+;	  Included assembly option for compatability with RBBS,
+;	  MINICBBS, and OXGATE implimentations. -- Thom Quick
+;
+;01/09/82 Added WRTLOC flag for use with an RBBS program that sets
+;	  this flag during disk writes; avoids files out of synch
+;	  problem if caller hangs up during writes. Added MINICK
+;	  routines which do the same with MINICBBS. Added patch
+;	  to allow bye to run below the CCP with programs such as
+;	  TYPESQ. Separated Superb conditional assembly into Externl
+;	  and LOSER, this separates external modem operation from a
+;	  losing feature of a particular BIOS. -- Paul Kelly
+;		
+;	For further notes on revision history, see BYE2-nn.NOT
+;
+;-------------------------------------------------------------
+;
+;This program runs up in high RAM.  It gets there
+;by being moved there when 'BYE' is typed.
+;
+;The program in high RAM does the following:
+;
+;	1.	Hangs up the phone
+;	2.	Awaits ring detect, allows exit
+;		to CP/M if local KBD types CTL-C
+;	3.	Outputs carrier (see callback routines)
+;	4.	Awaits incoming carrier going to step 1
+;		if none found in 15 seconds
+;	5.	Asks number of nulls (0-9)
+;	6.	Types the file "WELCOME" from
+;		disk, allowing CTL-C to skip it
+;	7.	Asks for a password, allowing
+;		5 tries to get it right.
+;	8.	When password entered, if used,
+;		drops into CP/M.
+;	9.	Caller can leave by hanging up,
+;		(any time carrier is lost, it
+;		waits 15 seconds, then goes
+;		back to step 1), or the caller
+;		may type the program name (BYE)
+;
+;------------------------------------------------
+;
+;System equates
+;
+FALSE	EQU	0			;for conditional assembly
+TRUE	EQU	NOT FALSE
+;
+CR	EQU	13	;Ascii carriage return
+LF	EQU	10	;Ascii line feed
+MINUTES	EQU	20*60	;constant for 1 minute time delay
+;
+;Change the following equate to an area in your high memory where this
+;program may patch itself in.  ByeII takes up about 2k bytes (or more,
+;depending upon the options selected).  A marker has been placed at the end
+;to deliberately print an error message during assembly in order to determine
+;the actual ending address of the program.  The error message will not affect
+;the assembly.  Make sure you have memory available up to the address shown.
+;
+DEST0	EQU	0F800H	;running location of code
+;
+;You will likely also want to change the password, located below at label
+;'PASSWD', and the messages printed at label 'WELCOME' and just above label
+;'HANGUP'. The names of the WELCOME and COM files are at lables 'WELFIN' and
+;'COMFCB' respectively. 
+;
+;****************************************************
+;*	    Option configuration section	    *
+;****************************************************
+;
+;-----------------General Options------------------
+;
+OXGATE	EQU	FALSE	;true, running OxGate RCP/M-BBS system
+MINICK	EQU	FALSE	;true, running MiniCBBS
+RBBSCK	EQU	FALSE	;true, running RBBS that sets/resets 'WRTLOC' flag
+PRINTER EQU	TRUE 	;true, retain list device
+DUAL$IO EQU	TRUE 	;true, console/modem linked together
+CALLBAK EQU	FALSE	;true, allow callback feature
+PWRQD	EQU	FALSE	;true, passoword needed to login
+BOOTMSG	EQU	FALSE	;true, print "Please wait..." message
+FKEYS	EQU	TRUE	;true, local console has special function keys
+USRLOG	EQU	FALSE	;true, count number of users
+DECIMAL EQU	FALSE	;true, decimal value for userlog
+HARDLOG EQU	FALSE	;true, echo remote input to printer
+TIMEOUT EQU	TRUE	;true, auto logout for sleepy callers
+TOVALUE EQU	5	;      minutes to auto logout
+COMFILE EQU	FALSE	;true, chain a COM file
+TRAPLC	EQU	FALSE	;true, allow option to convert lowercase to uppercase
+ALLDEV	EQU	FALSE	;true, retain PUN:, RDR:, and LST: devices
+IOBYTE	EQU	0003	;location of CP/M IOByte
+IOVAL	EQU	0	;initial value to store in IOByte (only if MINICK true)
+; 
+;----------System and hardware dependent options--------------
+;
+NZCPR	EQU	TRUE	;True if running NewZCPR under secure mode
+WHEEL	EQU	003Eh	;Location of NZCPR's wheel flag
+MSPEED	EQU	003Ch	;baud rate pointer
+CWAIT	EQU	10	;wait up to 10 seconds for carrier at first
+CLOSS	EQU	5	;if carrier dies, wait 5 seconds before hanging up
+BYELOW	EQU	FALSE	;true, ByeII running below CCP
+LOSER	EQU	FALSE	;true, warm boot overwrites part of the BIOS
+NORING	EQU	FALSE	;true, UART ring indicator not available
+CPM2	EQU	TRUE	;true, using CP/M 2.2
+MAXUSR	EQU	15	;      highest user area (set to 0 for CP/M 1.4)
+WELUSR	EQU	14	;      user # of welcome file
+COMUSR	EQU 	14	;      user # of COM file
+SPEED	EQU 	6	;processor speed in Mhz
+MAXDRV	EQU	2	;highest drive supported (2=B:)
+CTRLC	EQU	15	;map ^C to this if 0000h<>C3h (NB: ^O=15 decimal)
+INULLS	EQU	0	;initial number of nulls
+TWITKEY EQU	'N'-40H ;keycode to hangup modem manually
+MSGKEY	EQU	'Q'-40H ;keycode to print "Message from Sysop: "
+SYSDKEY EQU	'O'-40H ;keycode to print "System going down in 5 minutes..."
+IMSAI	EQU	FALSE	;true, adds various options w/sense switches
+SENSE	EQU	0FFH	;      sense switch port number
+BLKOUT	EQU	FALSE	;      turn off remote send
+SELPASS EQU	FALSE 	;      require a password
+CCSDISK	EQU	FALSE 	;true, CCS disk controller
+RTC	EQU	FALSE 	;true, running CompuPro SS1 clock card
+;
+BP110	EQU	0	;110  baud -- baud rate pointers for
+BP300	EQU	1	;300  baud -- storeing in MSPEED
+BP450	EQU	2	;450  baud
+BP600	EQU	3	;600  baud
+BP710	EQU	4	;710  baud
+BP1200	EQU	5	;1200 baud
+;
+	IF	CCSDISK
+;
+DISK	EQU	034H	;disk control port
+DISKON	EQU	071H	;motors on, select disk A:
+DISKOFF	EQU	051H	;motors off, select disk A:
+	ENDIF		;CCSDISK
+
+	IF	IMSAI
+;
+;Assignment of front-panel options to switches:
+;
+LOGSW	EQU	01H	;turn on for hardcopy
+PWDSW	EQU	02H	;turn on for 'password' mode
+BLACKSW EQU	04H	;turn on to black out remote end
+ENABLF	EQU	08H	;turn on to enable special function keys
+	ENDIF	;IMSAI
+
+	IF	BYELOW
+DEST	EQU	DEST0+3	;KEEP ON TARGET
+;
+;****WARNING *** WMLOC AND OLDBD ARE SYSTEM DEPENDENT****
+;WMLOC can be found in the BIOS by tracing through the
+;warm boot routine with DDT until you find:
+;	LXI	H,OLDBD
+;	SHLD	0006
+;WMLOC is the address containing the LSB of OLDBD
+;
+WMLOC	EQU	0E04DH
+OLDBD	EQU	0D006H
+;
+	ENDIF		;BYELOW 
+
+	IF	NOT BYELOW
+DEST	EQU	DEST0
+	ENDIF		;NOT BYELOW
+;
+;There are some cases where warm boot overwrites the
+;initial bios jump table. This problem was solved for
+;the Superbrain 3.0 bios by finding a warmboot call
+;to high in the bios. This call is then patched by
+;BYE.  The form of the call is:
+;	WBCALL  CALL    WMSTRT
+;
+	IF	LOSER
+;
+WBCALL	EQU	0DE48H	;check this in your BIOS 	
+;
+;The following location is called
+;
+WMSTRT	EQU	0EE48H	;check this in your BIOS
+;
+	ENDIF		;LOSER
+;            
+;****************************************************
+;*	 End of option configuration section	    *
+;****************************************************
+;
+	ORG	100H
+;
+	IF 	BYELOW	
+;This code allow running below ccp and using programs such as
+;Mbasic or Typesq ect....
+;
+	LXI	H,OLDBD	 ;old location stored in 6 and 7 for jump from BDOS
+	SHLD	DEST-2	 ;store it just above ByeII
+	LXI	H,DEST-3 ;point to three bytes above normal ByeII
+	MVI	M,0C3H	 ;put a jump there
+	SHLD	0006H	 ;store DEST-3 for BDOS jump
+	SHLD	WMLOC	 ;store DEST-3 in your BIOS
+	ENDIF	;BYELOW
+;
+;Move modem interface program up to high RAM and jump to it
+;
+MOVEUP	LXI	B,PEND-START+1	    ;number of bytes to move
+	LXI	H,DEST+PEND-START+1 ;end of moved code
+	LXI	D,SOURCE+PEND-START ;end of source code
+;
+MVLP	LDAX	D	;get byte
+	DCX	H	;bump pointers
+	MOV	M,A	;new home
+	DCX	D
+	DCX	B	;bump byte count
+	MOV	A,B	;check if zero
+	ORA	C
+	JNZ	MVLP	;if not, do some more
+;
+	PUSH	H	;save for later jump
+	MVI	A,0C3H	;clear any traps so Sysop can use "BYE /A"
+	STA	0
+	XRA	A	;next warmboot to user area 0, drive A:
+	STA	4
+	MVI	C,14	;make drive A: default
+	MOV	E,A	;login drive CP/M function
+       	CALL    BDOS	                                 
+;
+	IF	CPM2	;set user area 0
+	MVI	C,32	;set CP/M user funtion
+	MVI	E,WELUSR
+	CALL	BDOS
+	ENDIF		;CPM2
+;
+	RET		;to address pushed above
+;
+;
+SOURCE	EQU	$	;boundary memory marker
+;
+OFFSET	EQU	DEST-SOURCE ;relocation offsett
+;
+;-----------------------------------------------;
+;	The following code gets moved		;
+;	to high RAM located at "DEST",		;
+;	    where it is executed.		;
+;-----------------------------------------------;
+;XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+;XX   C A U T I O N :  If modifying anything	XX
+;XX	in this program from here on:		XX
+;XX	A-L-L  labels must be of the form:	XX
+;XX	LABEL	EQU	$+OFFSET		XX
+;XX	in order that the relocation to high  	XX
+;XX	RAM work successfully.  Forgetting to	XX
+;XX	specify '$+OFFSET' will cause the pro-	XX
+;XX	gram to JMP into whatever is currently	XX
+;XX	in low memory, with unpredictable	XX
+;XX	results.  Be careful....		XX
+;XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+;
+START	EQU	$+OFFSET
+	JMP	START0	;hop over fixed vectors
+;
+;Cold boot vector ends up here. Our cold boot routine consists of a jump to
+;the warm boot routine. We are defined to consist of only this jump, with a
+;jump to PRNLOG immediately after this jump, and other modifiable variables
+;after that. By doing this, a trivial program can be written that calculates
+;where PRNLOG is thru the warm boot vector at 0001H, then calls PRNLOG,
+;allowing remote users to get the BYE log printed. Such a program,
+;easily entered with DDT, is as follows:
+;
+;	LHLD	0001H	;point to cold boot vector +3
+;	DCX	H	;point to vector high byte
+;	MOV	D,M	;get that in D
+;	DCX	H	;point to vector low byte
+;	MOV	E,M	;get that in E
+;	LXI	H,3	;calculate PRNLOG address by adding to cold boot addr.
+;	DAD	D
+;	PCHL		;print log info, then return to CCP
+;
+;A similar calculation can be used to determine the locations of the MXUSR,
+;MXDRV, and TOVAL variables to change them on the fly for special users.
+;Since this will often be done by a BASIC signon program (like OxGate) the
+;following sequence of code is recommended:
+;
+; 10 A=PEEK(2)*256+PEEK(1)-2	'point to cold boot address
+; 20 A=PEEK(A+1)*256+PEEK(A)+6	'get address of MXUSR
+; 30 POKE A,8			'set MXUSR to 8, allows 0-8
+; 40 POKE A+1,4			'set MXDRV to 4, allows A-D
+; 50 POKE A+2,5			'set TOVAL to 5, allows 5 min of inactivity
+;
+;The values POKE'ed will be reset to the assembly values of MAXUSR, MAXDRV
+;and TOVALUE respectively the next time ByeII answers the phone.
+;
+;The following will test whether ByeII is active and then set
+;the flag at WRTLOC.
+;
+; 10 A=PEEK(2)*256+PEEK(1)-2
+; 20 A=PEEK(A+1)*256+PEEK(A)+9	'get address of WRTLOC
+; 30 IF CHR$(PEEK(A+1))+SHR$(PEEK(A+2))+CHR$(PEEK(A+3))<>"BYE" THEN POKE A,&HFF
+;				'set flag for write in progress
+;
+;The routine on line 30 should be used in RBBS so that when RBBS is 
+;running locally nothing will be poked into the bios.
+;   
+MCBOOT	EQU	$+OFFSET
+	JMP	MBOOT	;off to warm boot
+	JMP	PRNLOG	;go print out items of interest
+;
+;Variables follow in a predefined order that can
+;be manipulated by a passworded or other program
+;to give special users different capabilities.
+;
+;***************************************************************************
+;Here is a quickie handy reference table to use so we don't get            *
+;mixed up:  PLEASE UPDATE IT IN ANY FUTURE CHANGES                         *
+;***************************************************************************
+;MXUSR | MXDRV | TOVAL | NULLS | ULCSW | LFEEDS | WRTLOC | HARDON | LOSTFLG*
+;--------------------------------------------------------------------------*
+;1 byt | 1 byt | 1 byt | 1 byt | 1 byt | 1 byte | 1 byte | 1 byte | 1 byte *
+;***************************************************************************
+;
+;	Runtime maximum user area  (unused under CP/M 1.4)
+MXUSR	EQU	$+OFFSET
+	DB	MAXUSR
+;
+;	Runtime maximum drive available
+MXDRV	EQU	$+OFFSET
+	DB	MAXDRV
+;
+;	Number of minutes to wait before timeout
+TOVAL	EQU	$+OFFSET
+	DB	TOVALUE
+;
+;	Number of nulls to put after a carriage return
+NULLS	EQU	$+OFFSET
+	DB	INULLS
+;
+;	Upper-case only switch,  32 for uppercase, 0 for upper/lowercase
+ULCSW	EQU	$+OFFSET
+	DB	0
+;
+;	Line-feed masking bit (non-zero= mask line feeds)
+LFEEDS	EQU	$+OFFSET
+	DB	FALSE
+;	
+;	Location RBBS pokes so modem doesnt hangup during disk writes
+WRTLOC	EQU	$+OFFSET
+	DB	FALSE
+;
+;	Switch to let Sysop turn on/off the hard log (so his work remotely
+;	will not show up on the bloody hardlog and waste all that paper)
+;	If HARDLOG is not true, this is ignored, but takes up space so that
+;	smart programs won't screw stuff up when they change these locations
+HARDON	EQU	$+OFFSET
+	DB	TRUE
+;
+;	Lostflag has been moved up here, so that we can make BYE hang-up
+;	the phone without the "Good-bye" message (like if we kill a twit)
+LOSTFLG	EQU	$+OFFSET
+	DB	FALSE
+;
+;
+;Program version number message.
+;
+VMSG	EQU	$+OFFSET
+	DB	'ByeII version 1.0 as of 11/27/82',CR,LF
+	DB	'$'
+;
+;
+;----------------------------------------------
+;This is the official start of the BYE program.
+;----------------------------------------------
+;
+; f carrier lost, hang up, await ring. Otherwise, say goodbye, and hang up
+;
+START0	EQU	$+OFFSET
+;
+	XRA	A	;A=0
+	STA	LOSTFLG ;show no carrier lost
+;
+	IF	MINICK
+;
+;Set MINICK to true if you use MINICBBS and want to take advantage of its
+;feature which can prevent the modem from hanging up if the caller should
+;happen to disconnect during a file update. MINICBBS sets the high-order 
+;bit of IOBYTE to (address 0003) to indicate a file update is in progress.
+;
+	MVI	A,IOVAL	;get proper initial value
+	STA	IOBYTE	;set it in IOByte
+	ENDIF		;MINICK
+;
+;Don't allow a remote user to do 'BYE /A'
+;
+	CALL	MDCARCK		;call modem carrier check routine
+	JNZ	GOODBY		;we have carrier, so say bye bye...
+;
+;Identify version of program
+;
+	MVI	C,PRINTF	;print function
+	LXI	D,VMSG		;signon message
+	CALL	BDOS
+;
+;Check for /A option on command - request to
+;go immediately into answer mode
+	LXI	H,FCB+1 ;get first character
+	MOV	A,M
+	CPI	'/'	;option?
+	JNZ	HANGUP
+;Got an option - validate it
+	INX	H	;get which option it is...
+	MOV	A,M
+	STA	OPTION	;save it, we might need it later
+	CPI	'A'	;answer immediately?
+	JZ	ANSWER	;skip to answer routine
+;
+	IF	COMFILE
+	CPI	'C'	;answer and do comfile?
+	JZ	ANSWER	;skip to answer routine
+	ENDIF		;COMFILE
+;
+	IF	USRLOG	;check for reset of counters
+	CPI	'R'
+	CZ	RESET
+	ENDIF		;USRLOG
+;
+	JMP	HANGUP	;we know it's local, so skip call to carrier check
+;
+;No option, or invalid one
+;
+NOSLASH EQU	$+OFFSET
+	CALL	CARCK	;signed off with this program?
+	JC	HANGUP	;nobody there
+;
+GOODBY	EQU	$+OFFSET
+	CALL	ILPRT	;print this message:
+	DB	CR,LF,'Good-bye, call again...'
+;
+	IF 	RTC
+	DB	CR,LF,CR,LF,'Off at ',0
+	CALL	TIME
+	CALL	ILPRT
+	ENDIF		;RTC
+;
+	DB	CR,LF,CR,LF,0
+	CALL	UNPATCH ;undo BIOS patches
+;
+;Nobody there, or we are done, so hang up
+;
+HANGUP	EQU	$+OFFSET
+	LXI	SP,STACK ;set up local stack
+	XRA	A	 ;force next warmboot to user 0
+	STA	4	 ;and drive A:
+	MVI	C,14
+	MOV	E,A
+	CALL	BDOS
+	MVI	A,' '	 ;don't allow options
+	STA	OPTION
+;
+	IF	CPM2 AND COMFILE
+	MVI	C,32	 ;set CP/M user area function
+	MVI	E,COMUSR ;location of our COMFILE
+	CALL	BDOS
+	ENDIF		 ;CPM2 AND COMFILE
+;
+	IF	COMFILE
+	CALL	LODCOM	;load the COM file
+	ENDIF		;COMFILE
+;
+;
+HANGUP2 EQU	$+OFFSET
+;
+;Make phone hangup
+;
+	CALL	MDINIT	;call modem initialization routine (hang's up modem)
+;
+	IF	CCSDISK
+	CALL	DSKOFF	;turn off drives
+	ENDIF
+;
+	MVI	A,0C3H	;clear any traps left from COM file
+	STA	0
+;
+;Await ringing
+;
+RINGWT	EQU	$+OFFSET
+;
+;Check local keyboard for CTL-C exit request.
+;NOTE: Must do input via BDOS because CBIOS patches are not done until call
+;      comes in.
+;
+	CALL	UCSTS
+	ANI	7Fh	;strip parity bit
+	CPI	'C'-40H ;^C?
+	CZ	USRCHK	;check for exit
+;
+	IF	NORING	;if modem can't check for ring
+	CALL	MDCARCK	;check for carrier
+	JNZ	ANSWER	;we have carrier, let's say hello.
+	JMP	RINGWT	;nope, loop
+	ENDIF	;NORING
+;
+	IF	NOT NORING
+RINGW2	EQU	$+OFFSET
+	CALL	MDRING	;call ring-check routine
+	JZ	RINGWT	;not ringing...
+;
+;The phone may be ringing.  Wait .1 sec and look
+;again to make sure it isn't just relay bounce
+;
+	CALL	DELAY	;.1 sec delay for debounce
+	CALL	MDRING	;modem ringing?
+	JZ	RINGWT	;no, must have been a relay bounce
+;
+;The phone is definitely ringing, now wait until ring is finished
+;
+ENDRING EQU	$+OFFSET
+	CALL	DELAY	;.1 sec delay for debounce
+	CALL	MDRING
+	JNZ	ENDRING ;wait until ring is finnished
+	ENDIF	;NOT NORING
+;
+	IF	(NOT NORING) AND CALLBAK ;NEXT ROUTINES IMPLEMENT CALLBAK
+;
+;This routine minimizes the computer's interference with normal household phone
+;use by having computer folk dial, let the phone ring once, hang up and then
+;dial again.  When the phone rings only once it alerts the computer which then
+;waits for and answers any ring which occurs within the next 40 seconds.
+;
+	MVI	L,45	;delay 4.5 seconds for next ring
+;
+WAITNX	EQU	$+OFFSET
+	CALL	DELAY	;wait .1 seconds
+	DCR	L	;more to go?
+	JNZ	WAITNX	;yes, loop
+	CALL	MDRING	;ringing?
+	JZ	EXPECT	;no?...it's for me!
+;
+;If second ring, then check for third ring, in case
+;caller's phone exchange not synch'ed with computer's
+;
+ENDRNG2 EQU	$+OFFSET
+	CALL	MDRING
+	JNZ	ENDRNG2 ;wait until ring is finnished
+	MVI	L,45	;delay 4.5 seconds for next ring
+WAITNX2 EQU	$+OFFSET
+	CALL	DELAY	;wait .1 seconds
+	DCR	L	;more to go?
+	JNZ	WAITNX2	;yes, loop
+	CALL	MDRING
+	JZ	EXPECT	;no?...it's for me!
+;
+;Call not for computer - wait until ringing done, then reset.
+;
+WAITNR	EQU	$+OFFSET
+	MVI	L,100	;wait for 10 seconds of silence
+;
+WAITNRL EQU	$+OFFSET
+	CALL	DELAY	;delay .1 seconds
+	CALL	MDRING
+	JNZ	WAITNR	;yes, wait 10 more seconds
+	DCR	L	;no ring, maybe we're done
+	JNZ	WAITNRL ;no, loop some more
+	ENDIF	;(NOT NORING) AND CALLBACK
+;
+	IF	(NOT NORING) AND CALLBAK AND USRLOG
+	LXI	H,NONUSR ;record as a voice call
+	CALL	BOPLOG	 ;call routine to add one
+	ENDIF	;(NOT NORING) AND CALLBAK AND USRLOG
+;
+	IF	(NOT NORING) AND CALLBAK ;continue with callback routines
+	JMP	HANGUP2	;go wait for next call
+;
+EXPECT	EQU	$+OFFSET
+	LXI	H,400	;40 seconds to wait for second call
+;
+RELOOK	EQU	$+OFFSET
+	CALL	MDRING
+	JNZ	ANSWER	;yes, go answer it
+	CALL	DELAY	;wait .1 second
+	DCX	H	;HL=HL-1
+	MOV	A,H
+	ORA	L	;is count zero?
+	JNZ	RELOOK	;no, look some more
+	JMP	HANGUP2	;count done, wait for new call
+;
+	ENDIF	;(NOT NORING) AND CALLBACK 	end of callback routines
+;
+;Setup modem
+;
+ANSWER	EQU	$+OFFSET
+;
+	IF	NZCPR		 ;only when using NewZCPR under secure mode
+	XRA	A		 ;when running NZCPR for your CCP.
+	STA	WHEEL		 ;answer the phone in non-wheel mode
+	ENDIF	;NZCPR
+;
+	IF	USRLOG AND PWRQD ;count # of logon attempts
+	LXI	H,OLDUSR	 ;get # of attempts
+	CALL	BOPLOG		 ;call routine to add one
+	ENDIF	;USRLOG AND PWRQD
+;
+ANSWERA	EQU	$+OFFSET
+	CALL	MDANSW		;answer phone at 300 baud
+	MVI	A,BP300		;poke in MSPEED value
+	STA	MSPEED
+	CALL	MDINP		;clear garbage characters
+	CALL	MDINP
+	CALL	FRSTCR		;check for carrier the first time
+	JC	HANGUP2		;wasn't a voice call
+;
+;Now test input for baud rate
+;
+;	*** Note:  On systems that support 110, 300, and 1200,
+;	    getting into 110 baud takes a lot of <cr>'s... this is a
+;	    previously undocumeted fault of Bye.  If you have any ideas
+;	    on fixing it, give me a call.  The problem only occurs with
+;	    such a large diversity in baud rates (my guess is that the
+;	    modem sees a character coming in at 110 baud, and it thinks
+;	    it's really 4 or 5 characters at 1200 baud (sick, huh?)
+;	    This doesn't seem to be a problem in the 110-600 baud range,
+;	    so, if you DON'T have a 1200 baud modem, this is no problem.
+;								<pst>
+;
+	CALL	PATCH		;patch jump table
+	CALL	TSTBAUD		;see if baud=300
+	JZ	WELCOME		;yes, exit
+;
+	CALL	SET1200		;now check 1200 baud
+	JNZ	ANS1
+	MVI	A,BP1200	;set the MSPEED pointer
+	STA	MSPEED
+	CALL	TSTBAUD		;check baurated
+	JZ	WELCOME
+;
+ANS1	EQU	$+OFFSET
+	CALL	SET450		;try 450 baud next
+	JNZ	ANS2
+	MVI	A,BP450		;set MSPEED pointer
+	STA	MSPEED
+	CALL	TSTBAUD		;check baudrate
+	JZ	WELCOME	
+;
+ANS2	EQU	$+OFFSET
+	CALL	SET600		;try 600 baud now
+	JNZ	ANS3
+	MVI	A,BP600		;set MSPEED
+	STA	MSPEED
+	CALL	TSTBAUD		;check baudrate
+	JZ	WELCOME
+;
+ANS3	EQU	$+OFFSET
+	CALL	SET710		;try 710 baud (PMMI's only)
+	JNZ	ANS4
+	MVI	A,BP710		;set MSPEED	
+	STA	MSPEED
+	CALL	TSTBAUD		;check baudrate
+	JZ	WELCOME
+;
+ANS4	EQU	$+OFFSET
+	CALL	SET110		;finally try 110 baud
+	JNZ	BADDO		;try again...*sigh*
+	MVI	A,BP110
+	STA	MSPEED		;set MSPEED
+	CALL	TSTBAUD		;check baudrate
+	JZ	WELCOME
+;
+BADDO	EQU 	$+OFFSET
+	CALL	UNPATCH  	;restore original jump table
+	JMP	ANSWERA	 	;test more - invalid baud rate
+;
+;Get the console status when unpatched
+;
+UCSTS	EQU	$+OFFSET
+;
+	IF	CPM2
+	MVI	C,DRECTIO ;direct I/O call
+	MVI	E,0FFh	  ;ask for input
+	CALL	BDOS	  ;A=0 if no character waiting
+	RET
+	ENDIF		  ;CPM2
+;
+	IF	NOT CPM2
+	MVI	C,CSTS	  ;in CP/M 1.4, we have to get the status first
+	CALL	BDOS
+	ORA	A
+	RZ
+	MVI	C,CI	  ;and then the character
+	CALL	BDOS
+	RET
+	ENDIF		  ;NOT CPM2
+;
+;Following are the USRLOG routines
+;
+	IF	USRLOG	 ;include reset functions
+RESET	EQU	$+OFFSET ;reset all logon counters
+	LXI	H,0
+	ENDIF		 ;USRLOG
+;
+	IF	USRLOG AND PWRQD
+	SHLD	OLDUSR	;reset attempt counter
+	ENDIF		;USRLOG AND PWRQD
+;
+	IF	USRLOG
+	SHLD	NEWUSR	;reset logon counter
+	ENDIF		;USRLOG
+;
+	IF	USRLOG AND CALLBAK
+	SHLD	NONUSR	;reset voice counter
+	ENDIF		;USRLOG AND CALLBAK
+;
+	IF	USRLOG AND IMSAI
+	MVI	A,0FFH
+	OUT	SENSE	;reset imsai panel display
+	ENDIF		;USRLOG AND IMSAI
+;
+	IF	USRLOG
+	RET
+	ENDIF		;USRLOG
+;
+;PRNLOG is called to print out the ByeII version # and USRLOG info. It can be
+;called from outside the program, using the vector after MCBOOT.
+;
+PRNLOG	EQU	$+OFFSET
+;
+	MVI	C,PRINTF ;print out program version number
+	LXI	D,VMSG
+	CALL	BDOS
+;
+	IF	USRLOG AND PWRQD ;print # of logon attempts
+	MVI	C,PRINTF
+	LXI	D,ATMSG
+	CALL	BDOS
+	LXI	H,OLDUSR+1 ;point to high byte
+	CALL	HXOUT
+	ENDIF		;USRLOG AND PWRQD
+;
+	IF	USRLOG	;print # of logons
+	MVI	C,PRINTF
+	LXI	D,SUMSG
+	CALL	BDOS
+	LXI	H,NEWUSR+1
+	CALL	HXOUT
+	ENDIF		;USRLOG
+;
+	IF	USRLOG AND CALLBAK	;# of voice calls
+	MVI	C,PRINTF
+	LXI	D,VCMSG
+	CALL	BDOS
+	LXI	H,NONUSR+1
+	CALL	HXOUT
+	ENDIF		;USRLOG AND CALLBAK
+;
+	RET		;if no log, null PRNLOG routine
+;
+USRCHK	EQU	$+OFFSET
+	CALL	PRNLOG	;give info
+	MVI	C,PRINTF
+	LXI	D,RS1MSG
+	CALL	BDOS	;prompt to resume waiting for ring
+;
+PRNREL	EQU	$+OFFSET
+	CALL	UCSTS	;get reply
+	ORA	A
+	JZ	PRNREL	;wait until answered
+	CPI	'R'	;is answer "R", for resume?
+	JZ	PRNRES	;go do it if so
+	CPI	'R'+20H	;take lower case too
+	JNZ	EXCPM	;if not "r", warm boot CP/M
+;
+PRNRES	EQU	$+OFFSET
+	MVI	C,PRINTF
+	LXI	D,RS2MSG
+	JMP	BDOS	;resume via BDOS after message
+;
+RS1MSG	EQU	$+OFFSET
+	DB	CR,LF,CR,LF,'Type "R" to resume,'
+	DB	' anything else to warm boot: $'
+RS2MSG	EQU	$+OFFSET
+	DB	'Resuming...',CR,LF,'$'
+;
+;  Here to exit to CP/M
+;
+EXCPM	EQU	$+OFFSET
+;
+	IF	CCSDISK
+	CALL	DSKON	;turn on the drives
+	ENDIF	;CCSDISK
+;
+	IF BYELOW
+	LXI	H,OLDBD	;reset the old BDOS jump in the BIOS warmboot routine
+	SHLD	WMLOC
+	ENDIF	;BYELOW
+;	
+	JMP	0000H	;warm boot CP/M
+;
+	IF	USRLOG
+;
+;BOPLOG increments the 16 bit counter pointer at by HL.  If decimal option
+; in use, number is kept as 4 BCD digits.
+;
+BOPLOG	EQU	$+OFFSET
+	MOV	A,M	;get low byte
+	INR	A	;increment
+	ENDIF	;USRLOG
+;
+	IF	USRLOG AND DECIMAL
+	DAA		;decimal adjust
+	ENDIF	;USRLOG AND DECIMAL
+;
+	IF	USRLOG
+	MOV	M,A	;replace low order byte
+	RNC		;if no carry, BOP done
+	INX	H	; else carry to high order byte
+	MOV	A,M	;get high order byte
+	INR	A	; and BOP it
+	ENDIF
+;
+	IF	USRLOG AND DECIMAL
+	DAA		;decimal adjust
+	ENDIF	;USRLOG AND DECIMAL
+;
+	IF	USRLOG
+	MOV	M,A	;replace high order byte
+	RET
+	ENDIF		;USRLOG
+;
+	IF	USRLOG AND PWRQD
+ATMSG	EQU	$+OFFSET
+	DB	CR,LF,'Number of logon attempts: $'
+	ENDIF	;USRLOG AND PWRQD
+;
+	IF	USRLOG
+SUMSG	EQU	$+OFFSET
+	DB	CR,LF,'Number of logons: $'
+	ENDIF	;USRLOG
+;
+	IF	USRLOG AND CALLBAK
+VCMSG	EQU	$+OFFSET
+	DB	CR,LF,'Number of voice calls: $'
+	ENDIF	;USRLOG AND CALLBAK
+;
+	IF	USRLOG
+HXOUT	EQU	$+OFFSET
+	PUSH	H	;save pointer
+	CALL	HXHAF	;do high order half of #
+	POP	H	;restore pointer
+	DCX	H	;point to low, then drop in to do low half
+;
+HXHAF	EQU	$+OFFSET
+	MOV	A,M	;get half # in A
+	MOV	B,A	;save number
+	RAR		;rotate right 4 bits
+	RAR		;to make an ascii digit
+	RAR
+	RAR
+	CALL	ONEOUT	;output MSN to console
+	MOV	A,B	;get number back
+;
+ONEOUT	EQU	$+OFFSET
+	ANI	0Fh	;get LSN for output
+	ADI	90h	;convert to decimal ascii
+	DAA
+	ACI	40h
+	DAA
+	PUSH	B
+	MVI	C,02h
+	MOV	E,A	;output the number
+	CALL	BDOS
+	POP	B
+	RET
+	ENDIF	;USRLOG
+;
+;Welcome to the system
+;
+WELCOME EQU	$+OFFSET
+;
+	IF	CCSDISK
+	CALL	DSKON	;turn on the drives
+	ENDIF	;CCSDISK
+;
+	IF	CPM2
+	MVI	A,MAXUSR	;reset maximum user area
+	STA	MXUSR
+	ENDIF	;CPM2
+;
+	MVI	A,MAXDRV	;reset maximum drive
+	STA	MXDRV
+;
+	IF	TIMEOUT
+	MVI	A,TOVALUE	;reset timeout count
+	STA	TOVAL
+	ENDIF	;TIMEOUT
+;
+	MVI	A,5		;Assume this many nulls in case of error
+	STA	NULLS
+;
+	IF 	NOT OXGATE	;OxGate pokes nulls as required
+;
+GETNULL EQU	$+OFFSET
+;
+	CALL	ILPRT	;print this message
+	DB	CR,LF
+	DB	'HOW MANY NULLS (0-9) DO YOU NEED? ',0
+	CALL	MINPUT	;get value
+	MOV	C,A	;to C for output
+	CALL	MOUTPUT ;echo character
+	MOV	A,C	;restore value
+	CPI	'0'
+	JC	GETNULL ;bad, retry
+	CPI	'9'+1
+	JNC	GETNULL ;bad, retry
+	SUI	'0'	;make binary
+	STA	NULLS	;save count
+;
+	ENDIF	;NOT OXGATE
+;
+	IF	TRAPLC AND NOT OXGATE	;OxGate doen't ask questions, it knows
+GETULC	EQU	$+OFFSET		; 			   what to do.
+	CALL	ILPRT	;print this message
+	DB	CR,LF
+	DB	'CAN YOUR TERMINAL DISPLAY LOWER CASE? ',0
+	MVI	A,32	;force case conversion for now
+	STA	ULCSW
+	CALL	MINPUT	;get YES or NO
+	MOV	C,A
+	CALL	MOUTPUT ;echo
+	MOV	A,C
+	CPI	'N'
+	JZ	DONEOPT ;we're already set up fro no lower case
+	CPI	'Y'
+	JNZ	GETULC	;wasn't Y or N...go ask again
+	XRA	A
+	STA	ULCSW	;set flag for no conversion
+;
+DONEOPT EQU	$+OFFSET
+	ENDIF	;TRAPLC AND NOT OXGATE
+;
+	CALL	ILPRT
+	DB	CR,LF,LF,0
+;Print the welcome file
+	LXI	H,WELFILN ;source
+	LXI	D,FCB	  ;destination
+	MVI	B,13	  ;length
+	CALL	MOVE	  ;move the name
+	LXI	D,80h	  ;set DMA address to 80h
+	MVI	C,STDMA
+	CALL	BDOS
+;
+	IF	CPM2
+	MVI	C,32	  ;Set user number for welcome file
+	MVI	E,WELUSR
+	CALL	BDOS
+	ENDIF	;CPM2
+;
+;Open the welcome file
+;
+	LXI	D,FCB
+	MVI	C,OPEN
+	CALL	BDOS
+;Did it exist?
+	INR	A	;A=> 0 means "NO"
+	JZ	PASSINT ;no welcome file
+;Got a file, type it
+	XRA	A	;A=0
+	STA	FCBRNO	;zero record number
+	LXI	H,100H	;get initial buffer pointer
+;
+;Type the welcome file
+;
+WELTYLP EQU	$+OFFSET
+	CALL	RDBYTE	;get a byte
+	CPI	1Ah	;EOF?
+	JZ	PASSINT ;yes, done
+	MOV	C,A	;setup for type
+	CALL	MOUTPUT ;type the character
+	CALL	MSTAT	;check for character typed
+	ORA	A
+	JZ	WELTYLP ;no, loop
+	CALL	MINPUT	;yesm get character
+	CPI	'C'-40H ;^C?
+	JNZ	WELTYLP ;no, loop until EOF
+;
+;Get the password
+;
+PASSINT EQU	$+OFFSET
+;
+	IF	PWRQD AND IMSAI AND SELPASS 
+	IN	SENSE	;turn the switch up to require the password
+	ANI	PWDSW
+	JZ	NOPASS
+	ENDIF	;PWRQD AND IMSAI AND SELPASS
+;
+	IF	PWRQD
+	MVI	D,5	;5 tries at password
+;
+PASSINP EQU	$+OFFSET
+	CALL	ILPRT
+	DB	CR,LF,'Enter password: ',0
+	LXI	H,PASSWD ;point to password
+	MVI	E,0	 ;no missed letters
+;
+PWMLP	EQU	$+OFFSET
+	CALL	MINPUT	;get a character
+	CPI	60h	;lower case?
+	JC	NOTLC	;no,
+	ANI	5Fh	;make upper case alpha
+;
+NOTLC	EQU	$+OFFSET
+	ENDIF	;PWRQD
+
+	IF	DUAL$IO AND PWRQD
+	PUSH	PSW	;save character input
+	CPI	20H	;is character a control code?
+	JNC	PWDIS	;pass if displayable
+	MVI	C,'^'	;if control, map to up arrow, then display
+	CALL	CONOUT
+	POP	PSW
+	PUSH	PSW
+	ADI	40h
+PWDIS	EQU	$+OFFSET
+	MOV	C,A
+	CALL	CONOUT	;output character locally
+	POP	PSW	;restore A
+	ENDIF	;DUAL$IO AND PWRQD
+
+	IF	PWRQD
+	CPI	'U'-40H ;^U?
+	JZ	PASSINP ;Yes, abort, and retry
+	CMP	M	;match password?
+	JZ	PWMAT
+	MVI	E,1	;no, show miss
+	CPI	CR	;cr?
+	JNZ	PWMLP	;no, wait for CR
+;
+;Password didn't match
+;
+PWNMAT	EQU	$+OFFSET
+	CALL	ILPRT
+	DB	'Incorrect',CR,LF,0
+	DCR	D	;more tries?
+	JNZ	PASSINP ;yes
+	JMP	BADPASS ;no, go hang up
+;
+;Character matched in password
+;
+PWMAT	EQU	$+OFFSET
+	INX	H	;to next character
+	CPI	CR	;end?
+	JNZ	PWMLP	;no, loop
+;End of password.  Any missed chars?
+	MOV	A,E	;get flag
+	ORA	A
+	JNZ	PWNMAT	;not right
+;Password correct
+	ENDIF		;PWRQD
+;
+NOPASS	EQU	$+OFFSET
+;
+	IF 	RTC
+	CALL	ILPRT
+	DB	CR,LF,CR,LF,'On at ',0
+	CALL	TIME
+	CALL	ILPRT
+	DB	CR,LF,0
+	ENDIF		;RTC
+;
+	IF	USRLOG	 ;count number of successful logins
+	LXI	H,NEWUSR ;get last value
+	CALL	BOPLOG	 ;call routine to add one
+	ENDIF	;USRLOG
+;
+	IF	IMSAI AND USRLOG
+	LDA	NEWUSR	;re-get low order value
+	CMA		;invert for lights
+	OUT	SENSE	;display on imsai front panel
+	ENDIF	;IMSAI AND USRLOG
+;
+	IF	BOOTMSG
+	CALL	ILPRT	;print wait message
+	DB	CR,LF
+	DB	'Please Wait... ' ;boot message goes here
+	DB	CR,LF,0
+	ENDIF	;BOOTMSG
+;
+	IF	COMFILE AND CPM2
+	MVI	C,32
+	MVI	E,COMUSR	;switch to COM file user area
+	CALL	BDOS
+	ENDIF	;COMFILE AND CPM2
+;
+	IF	COMFILE
+	MVI	A,20h	;fool the system so that the COM file will see
+	STA	FCB+1	;a space at FCB+1 for default purposes
+
+	LDA	OPTION
+	CPI	'A'	;sysop can bypass COM file by typing "BYE /A"
+	JZ	0
+	CPI	'C'	;sysop can also go to COM file loaded with "BYE /C"
+	JNZ	RUNCOM
+	CALL	ILPRT	;print this message:
+	DB	'Loading system...',CR,LF,0
+	CALL	LODCOM
+RUNCOM	EQU	$+OFFSET ;everyone else gets COM file
+	CALL	100H
+	ENDIF	;COMFILE
+;
+	JMP	0	;warm boot now for "normal" CP/M use
+;
+;TSTBAUD attempts to read a CR, LF, or ^C, and returns with
+;zero flag if the character read is one of these three.
+;
+TSTBAUD EQU	$+OFFSET
+	CALL	MINPUT	;get character from modem
+	CPI	CR	;if a CR
+	RZ		;
+	CPI	LF	;if a LF
+	RZ
+	CPI	'C'-40H	;if a ^C
+	RET		;return with proper flags set
+;
+;	Test to see if carrier is there,  if after CWAIT seconds, it's not,
+;	then return saying so.  This routine is only called just after we
+;	answered the phone
+;
+FRSTCR:	EQU	$+OFFSET
+	CALL	MDCARCK		;carrier there?
+	JNZ	CARCK2		;yes, jump to regular routine
+	PUSH	B		;save BC
+	MVI	B,CWAIT*10	;set for "cwait" seconds
+	JMP	CARLP		;from here on, it's same as other routine
+;
+;Loss of connection test
+;
+CARCK	EQU	$+OFFSET
+	CALL	MDCARCK		;carrier there?
+	JNZ	CARCK2		;yep, go onto other checks...
+	PUSH	B		;preserve so we can use it
+	MVI	B,CLOSS*10	;set for "closs" seconds
+CARLP	EQU	$+OFFSET
+	CALL	DELAY		;wait .1 seconds
+	CALL	MDCARCK		;check for carrier
+	MOV	A,B		;get count back in A
+	POP	B		;fix stack in case all is ok
+	JNZ	CARCK2		;got carrier, continue on
+	DCR	A		;count time down
+	STC			;in case this is the end of time       (what a
+	RZ			;return if timed out		       concept)
+	PUSH	B		;preserve BC
+	MOV	B,A		;get counter value in B
+	JMP	CARLP		;keep checking
+;
+;Now test drive #'s and (if CP/M 2.x) user #'s to
+;insure that maximums are not exceeded.
+;
+CARCK2	EQU	$+OFFSET
+	LDA	4	;CHECK DISK/USER #
+	ANI	0FH	;ISOLATE DRIVE
+	PUSH	H	;SAVE HL
+	LXI	H,MXDRV	;PT TO ALLOWED # DRIVES
+	CMP	M	;VALID DRIVE?
+	JC	CARCK3	;YES, SKIP THIS JUNK
+	LDA	4	;GET WHOLE LOGIN BYTE
+	ANI	0F0H	;RETAIN USER # & FORCE DRIVE TO A
+	STA	4	;UPDATE LOGIN BYTE
+	CALL	ILPRT	;TELL USER WHAT HE DID
+	DB	'[Invalid drive, returning to A:]',0
+	JMP	0	;WARM BOOT
+;
+CARCK3	EQU	$+OFFSET
+;
+	IF	CPM2
+	LDA	4	;GET LOGIN BYTE
+	ANI	0F0H	;ISOLATE USER #
+	RRC		;MOVE TO LOW BITS
+	RRC
+	RRC
+	RRC
+	LXI	H,MXUSR	;PT TO MAX USER #
+	CMP	M	;VALID USER #?
+	JC	CARCK4	;YES, DON'T CHANGE
+	JZ	CARCK4
+	LDA	4	;GET LOGIN BYTE AGAIN
+	ANI	0FH	;KEEP DRIVE, ZERO USER
+	STA	4	;UPDATE LOGIN BYTE
+	CALL	ILPRT	;TELL HIM WHAT HAPPENED
+	DB	'> [Invalid user number, returning to 0]',0
+	JMP	0	;WARM BOOT
+	ENDIF		;CPM2
+;
+CARCK4	EQU	$+OFFSET
+	POP	H	;RESTORE HL
+	ORA	A
+	RET
+;
+;.1 sec delay routine
+;
+DELAY	EQU	$+OFFSET
+	PUSH	B
+;
+	LXI	B,4167*SPEED	;TIMING CONSTANT x CLOCK MHZ
+;
+DELAY1	EQU	$+OFFSET
+	DCX	B
+	MOV	A,B
+	ORA	C
+	JNZ	DELAY1
+	POP	B
+	RET
+;
+;50 ms delay routine
+;
+KDELAY	EQU	$+OFFSET
+	PUSH	B
+;
+	LXI	B,2083*SPEED
+	JMP	DELAY1
+;
+;Patch in the new JMP table (saving the old)
+;
+PATCH	EQU	$+OFFSET
+	CALL	TBLADDR		;CALC HL= CP/M JMP TABLE
+	LXI	D,VCOLDBT	;POINT TO SAVE LOCATION
+	MVI	B,24		;SAVE ALL VECTORS
+	CALL	MOVE		;MOVE IT
+;Now move new JMP table to CP/M
+	CALL	TBLADDR		;CALC HL=CP/M'S JMP TABLE
+	XCHG			;MOVE TO DE
+	LXI	H,NEWJTBL	;POINT TO NEW
+	CALL	MOVE		;MOVE IT
+	RET
+;
+UNPATCH EQU	$+OFFSET
+	CALL	TBLADDR		;HL=CP/M'S JMP TABLE
+	XCHG			;MOVE TO DE
+	LXI	H,VCOLDBT	;GET SAVED TABLE
+	CALL	MOVE		;MOVE ORIG BACK
+;
+	IF	LOSER
+	LXI	H,WMSTRT	;LOAD OLD CALL LOCATION
+	SHLD	WBCALL+1	;RESTORE OLD CALL
+	ENDIF			;LOSER
+;
+	RET			
+;
+;Calculate HL=CP/M's jump table, B=length
+;
+TBLADDR EQU	$+OFFSET
+	LHLD	1	;GET BIOS POINTER
+	DCX	H	;..SKIP
+	DCX	H	;..TO
+	DCX	H	;..COLD BOOT
+;
+	IF	(NOT PRINTER) and (NOT ALLDEV)
+	MVI	B,18	;BYTES TO MOVE
+	ENDIF		;NOT PRINTER AND NOT ALLDEV
+;
+	IF	PRINTER ;RETAIN LIST DEVICE?
+	MVI	B,15	;DON'T MOVE LISTER JUMP
+	ENDIF		;PRINTER
+;
+	IF	ALLDEV	;THIS PATCHES ALL DEVICES TO PHONE
+	MVI	B,24	;MOVE ALL JUMPS
+	ENDIF		;ALLDEV
+
+	RET
+;
+;Move (HL) to (DE), length in (B)
+;
+MOVE	EQU	$+OFFSET
+	MOV	A,M	;GET A BYTE
+	STAX	D	;PUT AT NEW HOME
+	INX	D	;BUMP POINTERS
+	INX	H
+	DCR	B	;DEC BYTE COUNT
+	JNZ	MOVE	;IF MORE, DO IT
+	RET		;IF NOT,RETURN
+;
+	IF	LOSER
+NWBCALL	EQU	$+OFFSET
+	CALL	WMSTRT	;WARM BOOT DISK READ
+	CALL	PATCH	;FIX BIOS AGAIN AFTER WMSTRT
+	RET
+	ENDIF		;LOSER
+;
+;Common routine to check for carrier lost, called from console out
+;
+CHECK	EQU	$+OFFSET
+;
+	IF	MINICK
+	LDA	IOBYTE	;GET IOBYTE
+	ANI	80H	;TEST FOR DISK UPDATE
+	RET		;BUSY WAIT UNTIL DONE
+	ENDIF		;MINICK
+;
+	IF	RBBSCK
+	LDA	WRTLOC	;GET WRITE IN PROGRESS FLAG
+	ORA	A
+	RNZ		;BUSY WAIT UNTIL DONE
+	ENDIF		;RBBSCK
+;
+	CALL	CARCK	;SEE IF CARRIER STILL ON
+	RNC		;ALL OK
+;
+;Carrier is lost.  Type message so local console shows the reason
+;
+BADPASS EQU	$+OFFSET ;COME HERE ON BAD PASSWORD
+	MVI	A,1	;SHOW CARRIER LOST SO
+	STA	LOSTFLG ;..WE WON'T CK AGAIN
+	LXI	SP,STACK ;ENSURE VALID STACK
+	CALL	ILPRT
+	DB	CR,LF
+	DB	'[Carrier Lost]'
+	DB	CR,LF,0
+DROPCAR	EQU	$+OFFSET
+	CALL	UNPATCH ;RESTORE ORIG BIOS JMP TBL
+	XRA	A	;CLEAR OUT CARRIER..
+	STA	LOSTFLG ;..LOST FLAG
+	JMP	HANGUP
+;
+;Readbyte routine - used to read the welcome file
+;
+RDBYTE	EQU	$+OFFSET
+	MOV	A,H	;TIME TO READ?
+	ORA	A	;..IF AT 100H
+	JZ	NORD	;NO READ REQ'D
+;Have to read a sector
+	LXI	D,FCB
+	MVI	C,READ
+	CALL	BDOS
+	ORA	A	;OK?
+	MVI	A,1AH	;FAKE UP EOF
+	RNZ		;RET EOF IF BAD
+	LXI	H,80H
+;
+NORD	EQU	$+OFFSET
+	MOV	A,M	;GET CHAR
+	INX	H	;TO NEXT
+	RET
+;
+;Keyboard/modem status test routine
+;
+MSTAT	EQU	$+OFFSET
+;
+	CALL	CHECK	;CHECK FOR CARRIER LOST
+;
+	IF	DUAL$IO ;WANT LOCAL CONSOLE?
+	CALL	CONSTAT ;GET LOCAL STATUS
+	ORA	A
+	RNZ		;RET IF LOCAL CHAR
+	ENDIF		;DUAL$IO
+;
+	CALL	MDINST	;GET MODEM INPUT STATUS
+	RET
+;
+;Modem input function, checks local console first
+;
+MINPUT	EQU	$+OFFSET
+;
+	IF	TIMEOUT
+	LDA	TOVAL	;GET # MINUTES BEFORE TIMEOUT
+;
+MINPUT0	EQU	$+OFFSET
+	STA	TOCNTM	;SET MINUTES COUNTER
+	PUSH	H
+	LXI	H,MINUTES ;INIT ONE MINUTE TIMEOUT COUNTER
+	SHLD	TOCNT
+	POP	H
+	ENDIF		;TIMEOUT
+;
+MINPUT1 EQU	$+OFFSET
+	LDA	LOSTFLG ;KNOWN LOSS..
+	ORA	A	;..OF CARRIER?
+	CZ	CHECK	;CARRIER STILL ON?
+	CALL	MSTAT	;ANYTHING?
+	ORA	A
+;
+	IF	NOT TIMEOUT
+	JZ	MINPUT	;LOOP TILL CHAR RCD
+	ENDIF		;NOT TIMEOUT
+;
+	IF	TIMEOUT
+	JNZ	MINPUT2
+	CALL	KDELAY	;KILL 50 MS
+	PUSH	H
+	LHLD	TOCNT	;KNOCK DOWN TIMEOUT COUNTER
+	DCX	H
+	SHLD	TOCNT
+	MOV	A,H
+	ORA	L
+	POP	H
+	JNZ	MINPUT1 ;STILL TIME LEFT..KEEP TRYING
+	LDA	TOCNTM	;COUNT OFF LAST MINUTE
+	DCR	A
+	JNZ	MINPUT0	;GO BACK IF TIME LEFT
+	CALL	ILPRT
+	DB	'[Input timed out]',7,7,0
+	JMP	NOSLASH
+	ENDIF		;TIMEOUT
+;
+MINPUT2 EQU	$+OFFSET
+;
+	IF	DUAL$IO ;BOTH LOCAL AND REMOTE
+	CALL	CONSTAT ;CHECK LOCAL CONSOLE
+	ORA	A	;CHAR?
+	JNZ	CONIN	;..YES, READ IT, RET.
+	ENDIF
+;
+;Local console wasn't ready, so read modem
+;
+	CALL	MDINP
+	ANI	7FH	;DELETE PARITY
+	JZ	MINPUT	;IGNORE NULLS
+;
+	IF	HARDLOG
+	PUSH	B
+	MOV	B,A	;PUT A COPY IN B
+	LDA	HARDON	;IF HARDON = 0 THEN TURN HARDLOG OFF (SO SYSOP
+	ORA	A	;		DOESN'T USE UP A LOT OF PAPER WHILE
+	MOV	A,B	;		PLAYING ZORK (FOO))
+	POP	B
+	JZ	NOLOG
+	ENDIF
+;
+	IF	HARDLOG
+	CPI	20H
+	JNC	MINPUT3
+	CPI	CR
+	JNZ	NOLOG
+;
+MINPUT3	EQU	$+OFFSET
+	CALL	LISTOUT ;ECHO ON PRINTER
+	CPI	CR
+	JNZ	NOLOG	;CR NEEDS LINEFEED
+	MVI	A,LF
+	CALL	LISTOUT ;SO SEND IT
+	MVI	A,CR	;GET BACK CR
+	ENDIF		;END OF HARDLOG
+;
+NOLOG	EQU	$+OFFSET
+;
+	CPI	3	;IS IT CONTROL-C?
+	RNZ		;NO, PASS IT THRU
+	LDA	0	;SEE IF WARM BOOT DISABLED
+	CPI	0C3H	;JMP MEANS WARM BOOT OK
+	MVI	A,3	;SO RETURN CONTROL-C
+	RZ
+	XRA	A	;ELSE CONVERT TO NULL
+	RET
+;
+;Modem output function
+;
+MOUTPUT EQU	$+OFFSET
+;
+;If we already know carrier is lost, don't check
+;for it again or loop trying to output.
+;
+	LDA	LOSTFLG ;KNOWN LOSS OF CARRIER?
+	ORA	A
+	JNZ	SILENT	;AVOID LOOP IN CASE CARRIER LOST
+	CALL	CHECK	;CARRIER STILL ON?
+;
+MOUTA	EQU	$+OFFSET
+	CALL	MDOUTST	;CHECK MODEM OUTPUT STATUS
+	JZ	MOUTA
+	MOV	A,C	;GET CHAR
+	ANI	7FH	;STRIP PARITY BIT
+;
+	IF	TRAPLC OR OXGATE
+	CPI	60H	;CHECK FOR LOWER CASE
+	JC	MOUTP2	;SKIP IF NOT LC
+	CPI	7FH	;CHECK FOR RUBOUT
+	JZ	MOUTP2
+	PUSH	H
+	LXI	H,ULCSW ;SUBTRACT EITHER 20H OR 0
+	SUB	M
+	POP	H
+	MOV	C,A	;FORCE ON LOCAL AS WELL AS REMOTE
+;
+MOUTP2	EQU	$+OFFSET
+	ENDIF		;TRAPLC
+;
+	IF	OXGATE
+	CPI	LF	;WE HAVE A TOGGLE FOR LINE FEEDS
+	JNZ	MOUTP3	;NOPE, NOT A LF
+	LDA	LFEEDS	;YES, SEE IF WE CAN SEND IT...
+	ORA	A	;SET FLAGS
+	MVI	A,0	;PREPARE A WITH A NULL
+	JNZ	MOUTP3	;NOPE, DON'T (INSTEAD SEND A NULL)
+	MVI	A,LF	;YES, SEND THE LINE FEED
+MOUTP3	EQU	$+OFFSET
+	ENDIF		;OXGATE
+;
+	CALL	MDOUTP	;OUTPUT TO MODEM
+;
+SILENT	EQU	$+OFFSET
+;
+	IF	DUAL$IO ;TO LOCAL ALSO?
+	PUSH	PSW	;SAVE CHAR
+	CALL	CONOUT	;SEND TO REGULAR BIOS
+	POP	PSW	;GET CHAR AGAIN
+	ENDIF		;DUAL$IO
+;
+;Check for nulls
+	CPI	LF	;TIME FOR NULLS?
+	RNZ		;NO, RETURN
+;Send nulls if required
+	LDA	NULLS	;GET COUNT
+	ORA	A	;ANY?
+	RZ		;..NO
+	PUSH	B
+	MOV	B,A	;SAVE COUNT
+	MVI	C,0	;0 IS A NULL
+;
+NULLP	EQU	$+OFFSET
+	CALL	MOUTPUT ;TYPE A NULL
+	DCR	B	;MORE?
+	JNZ	NULLP	;..YES, LOOP
+	POP	B
+	MVI	C,LF	;RESTORE LF
+	RET
+;
+;Boot trap - becomes disconnect if JMP at 0 has been altered
+;
+MBOOT	EQU	$+OFFSET
+	LDA	0	;LOOK AT OPCODE
+	CPI	0C3H	;IS IT STILL JMP?
+	JZ	VWARMBT ;YES, ALLOW IT
+	JMP	NOSLASH ;NO, DISCONNECT
+;
+;Inline print routine
+;
+ILPRT	EQU	$+OFFSET
+	XTHL		;SAVE HL, GET MSG
+	PUSH	B	;SAVE BC REGS
+;
+ILPLP	EQU	$+OFFSET
+	MOV	C,M	;GET CHAR
+	CALL	MOUTPUT ;OUTPUT IT
+	INX	H	;POINT TO NEXT
+	MOV	A,M	;TEST
+	ORA	A	;..FOR END
+	JNZ	ILPLP
+	POP	B	;RESTORE BC REGS
+	XTHL		;RESTORE HL, RET ADDR
+	RET		;RET PAST MSG
+;
+	IF	PWRQD	;KEEP PASSWORD HERE
+;
+;Access password (ends in carriage return)
+;
+PASSWD	EQU	$+OFFSET
+	DB	'APPLE'	;THE PASSWORD ITSELF
+	DB	CR	;END OF PASSWORD
+;
+;Allow room for bigger password to be patched in
+;
+	DB	0,0,0,0,0,0,0,0,0,0,0,0,0
+	ENDIF		;PWRQD
+;
+;Routine to load the COM file
+;
+	IF	COMFILE
+LODCOM	EQU	$+OFFSET
+	XRA	A	;INITIALIZE FCB
+	STA	COMFCB
+	LXI	H,COMFCB+12
+	MVI	B,21
+;
+ZLOOP	EQU	$+OFFSET
+	MVI	M,0
+	INX	H
+	DCR	B
+	JNZ	ZLOOP
+;
+	MVI	C,OPEN	;NOW OPEN THE FILE
+	LXI	D,COMFCB
+	CALL	BDOS
+	INR	A	;SHOULD BE NON-ZERO
+	JZ	ABORT	;NO FILE, ABORT
+;
+;Now load the file
+	LHLD	6	;GET TOP OF MEMORY
+	LXI	D,-80H	;RECORD LOADS CAN'T START..
+	DAD	D	;..ABOVE (BDOS) - 80H
+	PUSH	H	;SAVE ON STACK
+;
+	LXI	D,80H	;TPA-80H
+	LXI	B,0	;KEEP A RECORD COUNTER
+	PUSH	B	;SAVE COUNTER
+	PUSH	D	;AND LOAD ADDRESS
+;
+GLOOP	EQU	$+OFFSET
+	POP	D	;GET TPA ADRS
+	LXI	H,80H	;POINT TO NXT ADRS TO READ TO
+	DAD	D	;HL HAS THE ADDRESS
+	POP	B	;INCREMENT THE COUNTER
+;Check for load past top-of-memory
+	POP	D	;GET (TOP-OF-MEMORY)
+	PUSH	D	;RE-SAVE FOR NEXT TIME
+	MOV	A,E	;SUBTRACT: (TOP) - (ADRS)
+	SUB	L
+	MOV	A,D	;ONLY THE CARRY NEEDED
+	SBB	H
+	JNC	SIZEOK	;CY= BETTER MOVCPM
+	CALL	ERRXIT	;SO TELL THE STORY
+	DB	'[Program area too small]','$'
+;
+SIZEOK	EQU	$+OFFSET
+	INX	B
+	PUSH	B
+	PUSH	H	;SAVE TPA ADRS
+	XCHG		;ALIGN REGISTERS
+	MVI	C,STDMA ;TELL BDOS WHERE TO PUT RECORD
+	CALL	BDOS
+	LXI	D,COMFCB ;NOW READ THE RECORD
+	MVI	C,READ
+	CALL	BDOS
+	ORA	A
+	JZ	GLOOP	;A=0 IF MORE TO READ
+	POP	B	;UNJUNK STACK
+	POP	B	;THIS IS OUR COUNTER
+	POP	H	;MORE JUNK ON STACK
+	MOV	A,B	;CHECK FOR ZERO
+	ORA	C
+	JZ	ABORT	;WE SHOULD HAVE READ SOMETHING
+	LXI	D,80H	;WE DID, RESET DMA TO 80H
+	MVI	C,STDMA
+	CALL	BDOS
+	CALL	LOADOK	;PRINT THIS MSG TO CONSOLE:
+	DB	'COM file loaded',CR,LF,'$'
+;
+LOADOK	EQU	$+OFFSET
+	POP	D
+	LDA	OPTION	;SEE IF THIS WAS "BYE /C"
+	CPI	'C'	;IF IT WAS THEN..
+	RZ		;..DON'T PRINT MESSAGE
+	MVI	C,PRINTF
+	CALL	BDOS
+	RET
+;
+ABORT	EQU	$+OFFSET
+	CALL	ERRXIT
+	DB	CR,LF
+	DB	'[Cannot find COM file]','$'
+;
+ERRXIT	EQU	$+OFFSET
+	POP	D
+	MVI	C,PRINTF
+	CALL	BDOS	;PRINT THE ABORT MSG
+	JMP	EXCPM	;WARM BOOT
+	ENDIF		;COMFILE
+;
+;This area is used for vectoring calls to the
+;user's CBIOS, but saving the registers first
+;in case they are destroyed.
+;
+CONSTAT EQU	$+OFFSET
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	CALL	VCONSTAT
+	POP	H
+	POP	D
+	POP	B
+	RET
+;
+CONIN	EQU	$+OFFSET
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	CALL	VCONIN
+;
+	IF	FKEYS
+	CALL	CKFUNC
+	ENDIF		;FKEYS
+;
+	POP	H
+	POP	D
+	POP	B
+	RET
+;
+CKFUNC	EQU	$+OFFSET
+;
+	IF	FKEYS AND IMSAI
+	PUSH	B
+	MOV	B,A	;SAVE CHAR
+	IN	SENSE	;READ THE SWITCHES
+	ANI	ENABLF	;CHECK FKEY ENAB SW
+	MOV	A,B	;GET CHAR
+	POP	B
+	RZ		;NO FUNCT IF SW OFF
+	ENDIF		;FKEYS AND IMSAI
+;
+	IF	FKEYS
+	CPI	SYSDKEY
+	JZ	SYSDOWN ;TELL CALLER TO LEAVE
+	CPI	TWITKEY
+	JZ	DROPCAR	;MAKE CALLER LEAVE
+	CPI	MSGKEY
+	RNZ
+	CALL	ILPRT	;SEND CALLER A MESSAGE
+	DB	'Message from Sysop:',0
+	MVI	A,' '	;SOMETHING TO RETURN WITH
+	RET
+;
+SYSDOWN EQU	$+OFFSET
+	CALL	ILPRT
+	DB	'System going down in'
+	DB	' 5 minutes...',0
+	MVI	A,' '
+	RET
+	ENDIF		;FKEYS
+;
+CONOUT	EQU	$+OFFSET
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	CALL	VCONOUT
+	POP	H
+	POP	D
+	POP	B
+	RET
+;
+LISTOUT	EQU	$+OFFSET
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	PUSH	PSW
+	MOV	C,A
+	CALL	VLISTOUT
+	POP	PSW
+	POP	H
+	POP	D
+	POP	B
+	RET
+;
+;This is the JMP table which is copied on top
+;of the one pointed to by location 1 in CP/M
+;
+NEWJTBL EQU	$+OFFSET
+	JMP	MCBOOT	;COLD BOOT
+	JMP	MBOOT	;WARM BOOT
+	JMP	MSTAT	;MODEM STATUS TEST
+	JMP	MINPUT	;MODEM INPUT ROUTINE
+	JMP	MOUTPUT ;MODEM OUTPUT ROUTINE
+	IF	NOT ALLDEV
+	RET		;DUMMY LIST DEVICE
+	NOP
+	NOP
+	ENDIF		;NOT ALLDEV
+;
+	IF	ALLDEV
+	JMP	MOUTPUT	;MODEM LIST DEVICE
+	JMP	MOUTPUT	;MODEM PUNCH DEVICE
+	JMP	MINPUT	;MODEM READER DEVICE
+	ENDIF		;ALLDEV
+;
+	IF CCSDISK
+;
+DSKON	EQU	$+OFFSET
+	PUSH	PSW		;SAVE THE A AND FLAGS
+	MVI	A,DISKON	;VALUE TO TURN ON MOTORS
+	OUT	DISK		;TO THE DISK CONTROLLER
+	PUSH	H		;THIS IS TIMER
+	LXI	H,0000H		;THIS LONG
+DSKLP	EQU	$+OFFSET
+	XTHL
+	XTHL
+	DCX	H		;COUNT LOOP
+	MOV	A,H		;CHECK FOR DONE
+	ORA	L
+	JNZ	DSKLP
+	POP	H		;RESTORE HL
+	POP	PSW		;AND A & FLAGS
+	RET
+;
+DSKOFF	EQU	$+OFFSET
+	PUSH	PSW		;SAVE A & FLAG
+	MVI	A,DISKOFF	;VALUE TO TURN MOTORS OFF
+	OUT	DISK
+	POP	PSW
+	RET
+;
+	ENDIF		;CCSDISK
+;
+;*****************************************************************
+
+	+++ PLEASE INSTALL YOUR MODEM DEPENDANT ROUTINES HERE +++
+
+;*****************************************************************
+;
+	IF 	RTC
+CLKBASE	EQU	50H		;BASE OF SYSTEM SUPPORT 1 CARD
+CLKCTL	EQU 	CLKBASE+10	;CLOCK CONTROL PORT
+CLKDATA	EQU	CLKBASE+11	;CLOCK DATA PORT
+CREAD	EQU	10H+40H		;READ COMMAND + HOLD COUNT COMMAND
+;
+TIME	EQU	$+OFFSET
+	PUSH	H
+	PUSH	D
+	PUSH	B
+	PUSH	PSW
+	MVI	D,CREAD+5	;POINT TO 10S OF HOURS
+	MVI	B,3		;3 LOOPS
+	JMP	TX		;START W/ NO SEPARATOR
+;
+T1	EQU	$+OFFSET
+	MVI	C,':'		;SEPARATOR
+	CALL	MOUTPUT		;TO THE PRINTER
+TX	EQU	$+OFFSET
+	MOV	A,D		;GET THE DIGIT ADDRESS
+	CALL	CLOCK		;GET THE VALUE
+	MOV	C,A		;SAVE IT
+	MVI	A,CREAD+5	;TEST FOR FIRST LOOP
+	CMP	D		;1ST LOOP?
+	MOV	A,C		;RECOVER THE VALUE
+	JNZ	T2		;JUMP IF NOT 1ST LOOP
+	ANI	3		;DROP PM INDICATOR
+T2	EQU	$+OFFSET
+	ADI	'0'		;ADD ASCII BIAS
+	MOV	C,A
+	CALL	MOUTPUT		;AND PRINT IT
+	DCR	D		;POINT TO NEXT DIGIT
+	MOV	A,D		;GET THE DIGIT ADDRESS TO A
+	CALL	PCLOCK		;GET & PRINT ASCII
+	DCR	D		;BUMP DIGIT COUNTER
+	DCR	B
+	JNZ	T1		;LOOP TILL ALL PRINTED
+;
+;
+	CALL	ILPRT		;PRINT THE TIME ZONE
+	DB	' PST  ',0 	CENTRAL STANDARD TIME
+;
+; WE WILL NOW PRINT THE DAY OF THE WEEK, FOLLOWED
+; BY THE MONTH, DATE AND YEAR
+;
+;
+	MVI	A,CREAD+6	;THIS IS DAY OF WEEK 
+	CALL	CLOCK		;GET THE DAY NUMBER
+;
+DAYDONE	EQU	$+OFFSET
+	ADD	A		;DOUBLE DAY COUNT
+	LXI	H,DAYS		;POINT TO TABLE
+	MOV	E,A		;ADD OFFSET TO DE
+	MVI	D,0
+	DAD	D		;NEW POINTER IN HL
+	MOV	A,M		;GET LO BYTE OF WORD
+	INX	H		;POINT TO HI BYTE
+	MOV	H,M		;TO H
+	MOV	L,A		;PLUS LO BYTE POINTS TO STRING
+	CALL	LINOUT		;PRINT THE DAY
+;
+	MVI	A,CREAD+10	;10S OF MONTHS
+	CALL	CLOCK
+	ORA	A		;WE GOT 10'S OF MONTHS?
+	JZ	NOTENS		;JUMP IF NOT
+	MVI	A,10		;ADD 10S IF WE GOT EM
+NOTENS	EQU	$+OFFSET
+	MOV	B,A		;SAVE 10S IN B
+	MVI	A,CREAD+9	;GET THE ONES
+	CALL	CLOCK
+	ADD	B		;ADD TO THE 10S PLACE TO GET MONTH
+	DCR	A		;CORRECT FOR JAN=1
+	ADD	A		;DOUBLE MONTH NUMBER
+	LXI	H,MONTHS	;POINT TO DISPATCH TABLE
+	MOV	E,A		;OFF SET TO DE
+	MVI	D,0
+	DAD	D		;POINTER TO STRING AT (HL)
+	MOV	A,M		;GET LO BYTE TO A
+	INX	H		;POINT TO NEXT
+	MOV	H,M		;HI BYTE TO H
+	MOV	L,A		;LO BYTE TO L POINTS TO STRING
+	CALL	LINOUT		;PRINT THE MONTH
+;
+	MVI	A,CREAD+8	;10S OF DAYS
+	CALL	CLOCK
+	ANI	3		;DROP LEAP YEAR INDICATOR
+	JZ	NTENS		;JUMP IF NO TENS PLACE
+	CALL	PASC		;PRINT IT
+NTENS	EQU	$+OFFSET
+	MVI	A,CREAD+7	;ONES OF DAYS
+	CALL	PCLOCK		;PRINT THEM
+	LXI	H,YEAR		;PLUS YEAR MESSAGE
+	CALL	LINOUT		;TO LISTER
+	MVI	A,CREAD+12	;TENS OF YEAR
+	CALL	PCLOCK		;PRINT THEM
+	MVI	A,CREAD+11	;ONES OF YEAR
+	CALL	PCLOCK
+	CALL	ILPRT		;FINISH THE LINE
+	DB	CR,LF,CR,LF,0
+	POP	PSW
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+PCLOCK	EQU	$+OFFSET
+	CALL	CLOCK		;GET THE DIGIT
+PASC	EQU	$+OFFSET
+	ADI	'0'		;ADD ASCII BIAS
+	MOV	C,A
+	JMP	MOUTPUT		;AND PRINT
+;
+CLOCK	EQU	$+OFFSET
+	OUT	CLKCTL		;TELL IT ADDRESS
+	IN	CLKDATA		;GET THE DATA NYBBLE
+	PUSH	PSW		;SAVE THE DATA
+	XRA	A		;GET 0
+	OUT	CLKCTL		;RESET HOLD BIT
+	POP	PSW		;RESTORE DATA
+	RET
+;
+LINOUT	EQU	$+OFFSET
+	MOV	A,M		;GET THE CHARACTER
+	CPI	'$'		;DONE?
+	RZ			;RETURN IF DONE
+	MOV	C,A		;ELSE PRINT IT
+	CALL	MOUTPUT
+	INX	H		;POINT TO NEXT CHARACTER
+	JMP	LINOUT		;THEN LOOP TILL DONE
+;
+;
+SUN	EQU	$+OFFSET
+	DB	'Sunday, $'
+MON	EQU	$+OFFSET
+	DB	'Monday, $'
+TUE	EQU	$+OFFSET
+	DB	'Tuesday, $'
+WED	EQU	$+OFFSET
+	DB	'Wednesday, $'
+THU	EQU	$+OFFSET
+	DB	'Thursday, $'
+FRI	EQU	$+OFFSET
+	DB	'Friday, $'
+SAT	EQU	$+OFFSET
+	DB	'Saturday, $'
+;
+JAN	EQU	$+OFFSET
+	DB	'January $'
+FEB	EQU	$+OFFSET
+	DB	'February $'
+MAR	EQU	$+OFFSET
+	DB	'March $'
+APR	EQU	$+OFFSET
+	DB	'April $'
+MAY	EQU	$+OFFSET
+	DB	'May $'
+JUN	EQU	$+OFFSET
+	DB	'June $'
+JUL	EQU	$+OFFSET
+	DB	'July $'
+AUG	EQU	$+OFFSET
+	DB	'August $'
+SEP	EQU	$+OFFSET
+	DB	'September $'
+OCT	EQU	$+OFFSET
+	DB	'October $'
+NOV	EQU	$+OFFSET
+	DB	'November $'
+DEC	EQU	$+OFFSET
+	DB	'December $'
+;
+YEAR	EQU	$+OFFSET
+	DB	', 19$'
+;
+;#################################################
+DAYS	EQU	$+OFFSET
+	DW	SUN
+	DW	MON
+	DW	TUE
+	DW	WED
+	DW	THU
+	DW	FRI
+	DW	SAT
+	DW	SUN
+;
+MONTHS	EQU	$+OFFSET
+	DW	JAN
+	DW	FEB
+	DW	MAR
+	DW	APR
+	DW	MAY
+	DW	JUN
+	DW	JUL
+	DW	AUG
+	DW	SEP
+	DW	OCT
+	DW	NOV
+	DW	DEC
+;
+;
+	ENDIF	;RTC
+;
+WELFILN EQU	$+OFFSET
+	DB	0,'WELCOME    ',0
+;Welcome file name ^^^^^^^^^^^ (must be 11 characters)
+;
+COMFCB	EQU	$+OFFSET
+;
+	IF	NOT OXGATE
+	DB	0,'RBBS    COM'
+;COM file name	   ^^^^^^^^^^^ (must be 11 characters)
+	ENDIF		;NOT OXGATE
+;
+	IF 	OXGATE
+	DB	0,'OXENTR  COM'
+;COM file name     ^^^^^^^^^^^ (must be 11 characters)
+	ENDIF		;OXGATE
+;
+PEND	EQU	$+OFFSET ;END OF RELOCATED CODE
+;
+;These areas are not initialized
+;
+	DS	21	;REST OF COM FCB
+;
+OPTION	EQU	$+OFFSET
+	DS	1
+;
+TOCNTM	EQU	$+OFFSET
+	DS	1
+;
+TOCNT	EQU	$+OFFSET
+	DS	2
+;
+;Save the CP/M jump table here
+;
+VCOLDBT EQU	$+OFFSET
+	DS	3
+;
+VWARMBT EQU	$+OFFSET
+	DS	3
+;
+VCONSTAT EQU	$+OFFSET
+	 DS	3
+;
+VCONIN	 EQU	$+OFFSET
+	 DS	3
+;
+VCONOUT  EQU	$+OFFSET
+	 DS	3
+;
+VLISTOUT EQU	$+OFFSET
+	 DS	3
+;
+VPUNCH	EQU	$+OFFSET
+	DS	3
+;
+VREADER	EQU	$+OFFSET
+	DS	3
+;
+;
+;
+;Since these areas are not initialized,
+;the following counters will not be changed
+;by subsequent loads of this program
+;
+	IF	USRLOG
+OLDUSR	EQU	$+OFFSET
+	DS	2
+;
+NEWUSR	EQU	$+OFFSET
+	DS	2
+;
+NONUSR	EQU	$+OFFSET
+	DS	2
+	ENDIF		;USRLOG
+;
+	DS	60
+STACK	EQU	$+OFFSET ;LOCAL STACK
+;
+ENDMARK	EQU	$+OFFSET ;! IGNORE ERROR. THIS MARKS END OF PGM
+;
+;BDOS equates
+;
+CI	EQU	1
+WRCON	EQU	2
+DRECTIO EQU	6
+PRINTF	EQU	9
+CSTS	EQU	11
+OPEN	EQU	15
+READ	EQU	20
+STDMA	EQU	26
+BDOS	EQU	5
+FCB	EQU	5CH 
+FCBRNO	EQU	FCB+32
+;
+	END
+

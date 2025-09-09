@@ -1,0 +1,547 @@
+
+>>>>>>>>>>>>>>>>>>>>> CP/M-Net News <<<<<<<<<<<<<<<<<<<<<<<<
+
+============================================================
+Number 3	       March, 1981	   Volume 1, Issue 3
+============================================================
+
+			In This Issue
+			=============
+
+	 The Famous UP-Arrow Story - Michael J. Karas
+
+	  CP/M Bit Map File Allocation...EXPLAINED!
+
+   A Simple 6 Byte Hexadecimal to ASCII Conversion Routine
+
+   A CP/M 1.4 Parameter Display Program in Microsoft Basic
+
+  CP/M-Net 'Tip-of-the-Month', 64 character wide DDT or SID
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+	       The Famous UP-Arrow Story
+	       =========================
+			 by
+		  Michael J. Karas
+
+ Some time ago,  while working at a job that I would just as
+soon  forget,  the famous up-arrow incident took place.   My
+desk  happened	to  be right next to that  of  Kelly  Smith,
+editor of the CP/M Net (tm) News.  Kelly had been spending a
+large  amount of his time working on a diagnostics  software
+package for the company's business computer.  (The now known
+PCC  2000.) Building a diagnostics package can	be  creative
+and  on one particular day Kelly wanted to show me how	some
+of  the softare worked.  In other words he wanted me to  see
+some  of  the creativity that he had put into this  software
+package.
+
+ I went over to his computer setup to look at the CRT screen
+while  he showed me the Memory Display/Alter routine he  had
+made.  After  observing for a short time I asked how do  you
+back  up  to the previous memory address if  you  enter  the
+wrong data. His response was that you terminated the current
+entry  sequence and reentered the errored memory address.  I
+decided that it would be nice if there was a key that  would
+allow you to simply backup to the previous address.
+
+ After	lunch,	(Kelly	usually seemed to pound away at  the
+keyboard all during lunch in those days;) Kelly asked me  if
+a newly modified version of his Display Alter Routine solved
+my  problem.  I  tried it out and found that while  entering
+data  with the memory display/alter command that use of  the
+up-arrow  (^) key would cause the displayed address to	back
+up to the previous address. A very useful feature I decided.
+Kelly's only comment was that some people get their gibblets
+jiggled in the most strange ways.  Anyway,  to this day  the
+monitors  in  all of my personal computers contain a  memory
+display/alter routine with the up-arrow.
+
+ These days I don't usually use the monitors anymore due  to
+the  fact that I have disks and thus access to DDT,  Digital
+Research's Diagnostic Debugging Tool. The "S" command of DDT
+does not have the capability to offer the up-arrow attribute
+to ease the pain of putting in the wrong value for a  memory
+byte.  So  I  took it upon myself to change DDT so  that  it
+would do "Up-Arrow".
+
+ If  you should desire to "jiggle your giblets" while  using
+the  DDT Version 1.4 debugger package then you will have  to
+do  a  little  work for the "jigglin'".  The  rest  of	this
+article  describes  how  to  make  DDT	react  to  up-arrow.
+Operating  instructions  are at the end of the	installation
+procedure.  Note that this patch is specifically tailored to
+DDT  Version 1.4 and may not work with other  versions.  The
+short program below should be edited into a file using	your
+favorite editor with the name "DDTPATCH.ASM". It should then
+be  assembled  into a ".HEX" file using  an  assembler.  Use
+particular care to get all of the strange equated numbers at
+the beginning exactly right.
+
+;****************************************************************
+;	PATCH TO GIVE SET MEMORY COMMAND BACKUP CAPABILITY
+;	IN DDT VERSION 1.4.
+;****************************************************************
+;
+;
+WBOOT	EQU	00000H		;WARM BOOT ENTRY ADDRESS
+BDOS	EQU	00005H		;BDOS ENTRY ADDRESS
+TPA	EQU	00100H		;START OF TRANSIENT PROGRAM
+;
+;
+CMNDLP	EQU	06FEH		;LOCATION OF COMMAND LOOP START
+				;(IN ABSOLUTE DDT IMAGE)
+;
+DISPLP	EQU	0A7EH		;LOCATION OF DISPLAY LOOP START
+				;(IN ABSOLUTE DDT IMAGE)
+;
+PATCH	EQU	0A91H		;LOCATION OF PATCH IN MEMORY ALTER
+				;(IN ABSOLUTE DDT IMAGE)
+;
+ASCHEX	EQU	0C53H		;LOCATION OF CONVERSION ROUTINE
+				;(IN ABSOLUTE DDT IMAGE)
+;
+ENDDDT	EQU	0FD0H		;LOCATION OF END OF DDT 1.4
+				;(IN ABSOLUTE DDT IMAGE)
+;
+	ORG	TPA+1		;FIX OLD DDT 1.4 MODULE SIZE
+;
+	DW	0FB6H+028H	;NEW MODULE SIZE WITH PATCH
+;
+	ORG	PATCH+200H	;OFFSET ASSEMBLY AREA
+;
+
+	POP	H
+	CALL	CHARIN-200H	;GO TO NEW ROUTINE TO GET CHAR
+;
+	CPI	0DH		;IS INPUT CHAR A CARRIAGE RETURN?
+	JZ	INCMADR-200H	;GO TO INCREMENT TO NEXT ADDRESS
+;
+	CPI	'.'		;IS INPUT THE EXIT PERIOD?
+	JZ	CMNDLP		;GO BACK TO DDT'S COMMAND LOOP
+;
+	CPI	'^'		;IS INPUT AN UPARROW TO BACKUP
+	JZ	DECMADR-200H	;GO TO DECREMENT TO PREV ADDRESS
+	CALL	ASCHEX		;GO TO ASCII TO HEX CONVERSION
+	RLC			;ADJUST HEX FOR HIGH NIBBLE
+	RLC
+	RLC
+	RLC
+	MOV	D,A		;SAVE HIGH NIBBLE
+	CALL	CHARIN-200H	;GET ASCII FOR LOW CHAR
+	CALL	ASCHEX		;GO TO ASCII TO HEX CONVERSION
+	ORA	D		;COMBINE LOW AND HIGH NIBBLES
+	NOP			;FIX PATCH SIZE TO FIT IN DDT 1.4
+	MOV	M,A		;PUT NEW VALUE INTO MEMORY
+INCMADR:
+	INX	H		;INCREMENT FOR NEXT MEMORY ADDRESS
+	JMP	DISPLP		;GO DISPLAY NEXT MEM ADDRESS
+;
+;
+;CODE TO BE PATCHED IN AT END OF DDT PROGRAM. THESE ROUTINES
+;ADD THE CAPABILITY TO GET SINGLE CONSOLE CHARACTERS AND TO
+;DECREMENT THE CURRENTLY DISPLAYED MEMORY ADDRESS IN THE DDT
+;SET MEMORY COMMAND.
+;
+	ORG	ENDDDT+200H
+;
+CHARIN:
+	PUSH	D		;SAVE POSSIBLE HIGH NIBBLE
+	PUSH	H		;SAVE CURRENT MEMORY ADDRESS
+	MVI	C,01H		;SET BDOS FUNCTION FOR CONIN
+	CALL	BDOS		;USE BDOS FOR CONSOLE INPUT
+	POP	H
+	POP	D
+	RET
+DECMADR:
+	DCX	H		;DECREMENT MEMORY ADDRESS
+	JMP	DISPLP		;GO DISPLAY THE PREVIOUS MEM ADDRESS
+;
+	END
+;
+;
+
+ Once you have made the hex file, then put a copy of it on a
+CP/M  system  disk along with your copy of DDT version	1.4.
+Boot  up  this disk in drive A:  and  carefully  follow  the
+installation  instructions below.  If you are not  currently
+familiar  with the operation of DDT now would be a good time
+to get the manual out and read it.  We will be using DDT  to
+make a patched version of itself. The sequence below must be
+followed  exactly.  The  notation  <cr> indicates  that  you
+should enter carriage return.  The part of the text that the
+system types versus the part that you type should be obvious
+if you are familiar with DDT.
+
+A>
+A>DDT<cr>		      <== Invoke DDT
+DDT VERS 1.4
+-IDDT.COM<cr>
+-R<cr>			      <== Read in a copy of DDT.COM
+NEXT  PC
+1400 0100
+-S1308<cr>		      <== Change bit map for patch
+1308 92 88<cr>
+1309 08 42<cr>
+130A 44 12<cr>
+130B 48 02<cr>
+130C 40 .<cr>
+-F13AC,13B0,00<cr>	      <== Fill in new zeros to map
+-S13B1<cr>		      <== Add a new bit to map
+13B1 00 04<cr>
+13B2 00 .<cr>
+-M11B6,1400,1A00<cr>	      <== Move bit map out of way
+-IDDTPATCH.HEX<cr>
+-R<cr>			      <== OVerlay DDT.COM with patch
+NEXT  PC
+1400 0000
+-M1A00,2000,11DE<cr>	      <== Move bit map into place
+-^C			      <== Bale out of DDT to System
+A>SAVE 19 DDTP.COM<cr>	      <== Save patched DDT
+
+ You  are now ready to try out the patched version  of	DDT.
+For the most part DDT will operate just like before. The new
+version  will modify the way that the "S" substitute  memory
+command functions.  The command is invoked just as before (-
+Saaaa<cr>  aaaa=desired address).  When DDT responds with  a
+display of the memory address and its contents it will enter
+a mode waiting for operator input. Four different things can
+be entered at this point:
+
+a)  A <cr> may be entered to cause the contents of the	next	
+    memory address to be displayed.
+
+b)  A "." may be entered to cause DDT to return back to  the
+    command mode.  Note that the patched DDT does not need a
+    <cr>  after the "." to return to the command  or  prompt
+    mode.
+
+c) A "^" may be entered to cause DDT to display the contents
+   of the previous memory address. This is the back-up mode.
+   Note  that the backup is immediate and does not require a
+   <cr> after it.
+
+d)  A two digit hexadecimal value may be entered  to  modify
+   the	contents of the currently displayed memory location.
+   The	digits must be 0-9;A-F or DDT will display a "?" and
+   return  to the prompt mode. The second entered digit will
+   be taken immediately and will change the memory contents.
+   The next higher address will then be displayed.
+
+ I hope you enjoy the up arrow feature as much as I  do.  Or
+as Kelly Smith would say, "Get your gibblets jiggled."
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	  CP/M Bit Map File Allocation...EXPLAINED!
+	  =========================================
+			    by
+			Kelly Smith
+
+
+		     What It's for...
+
+ For  each  diskette  "logged-on"  to the  CP/M  Basic	Disk
+Operating   System  (BDOS),   physical	diskette  space   is
+dynamically  allocated	to that diskette  (for	later  write
+operations)   and  maintained  in  memory  by	Bit   Mapped
+Allocation.  When changing diskettes (and to avoid the "R/O"
+error  message)  you  must  enter  Control-C  to  erase  the
+previous  diskettes Bit Map,  and cause the BDOS to read the
+file directory to establish the new Bit Map.  On  subsequent
+write  operations to the diskette,  the Bit Map is modified,
+and  the  diskette  File Control Block (FCB)  for  the	(now
+closed file) is updated in the File Directory.
+
+		      What It Is...
+
+ The  Bit Map is actually a tight encoding of available  (or
+not)  sectors on the diskette.	The Bit Map is an  array  of
+single	bits which correspond to each block of eight sectors
+allocated  for usage on the diskette.  A  blank  (formatted)
+diskettes Bit Map Allocation array then looks like this:
+
+      ("Standard" Single Density IBM Format Diskette)
+
+	       GROUP ALLOCATION MAP DRIVE - B
+	      11000000000000000000000000000000
+	      00000000000000000000000000000000
+	      00000000000000000000000000000000
+	      00000000000000000000000000000000
+	      00000000000000000000000000000000
+	      00000000000000000000000000000000
+	      00000000000000000000000000000000
+	      000000000000000000
+	   240 GROUPS REMAINING ON DISK OUT OF 243
+
+ Notice  that two bits are 1's...this predefines  allocation
+space  for  the CP/M Directory for the	diskette  (i.e.,  16
+sectors or 2 groups),  and insures that the directory is not
+overwritten  when creating new files.  All remaining 0's are
+free  groups,  ready to become allocated in  the  directory.
+When the BDOS receives a request to create a file,  it first
+searches the Bit Map until it finds a bit containing a zero,
+and  the number (this will be explained shortly) of this bit
+is  the number of the first free group to be  allocated  for
+the  file.  The BDOS sets the bit map to a one and places  a
+one  byte  hexadecimal	group  number into the	FCB  of  the
+directory,  created  for the new file.	As subsequent  write
+operations  occur for the file,  the BDOS examines the	last
+group number in the FCB (and also the Next Record count) and
+from  the numbers automatically computes the  next  physical
+track  and  sector  number where the diskette  write  is  to
+occur.	Keeping  in mind that eight sectors equal one group,
+when  all eight sectors of a group have  been  written,  the
+BDOS  searches the Bit Map again for the next bit containing
+a zero. When a free allocation is found, its group number is
+added  to the FCB (not necessarily a sequential number)  and
+the  corresponding bit is set to a one.  Also note that  the
+minimum file size that a file will be,	is one	kilobyte...a
+file which has seven or fewer sectors will be shown (by STAT
+Filename.Typ<cr>) as utilizing one group (1k);	a file which
+has  eight  sectors will be shown as utilizing	two  groups,
+even though the second group is empty.
+
+ Here  is  an  example of what one sector of  the  directory
+looks like, showing four FCB's for three files:
+
+  Filename.Typ	EX RC <--------------Group-------------->
+  -------------------------------------------------------
+  MACRO   .LIB	00 80 45464748 494A4B4C 4D4E4F50 51525354
+  MACRO   .LIB	01 08 55000000 00000000 00000000 00000000
+  PLINK   .COM	00 0B 56570000 00000000 00000000 00000000
+  DISKTEST.COM	00 09 58590000 00000000 00000000 00000000
+
+ Specifically,	 note	that  the  file  MACRO.LIB  has  two
+entries...and also the Record Count (RC) for the first entry
+is set to 80 hexadecimal.  As new records are written to the
+diskette,  the RC is updated by the BDOS.  When a transition
+occurs	from  7F to 80,  the BDOS adds a new  FCB  into  the
+directory,  and  also  creates a new extension (EX)  to  the
+file.  Bit  Map  allocation  then  proceeds  from  the	next
+available group.
+
+			 And Why...
+
+ As I mentioned, the group allocations may not be sequential
+(even  though my example shows sequential groups).  As files
+are deleted from the diskette, they leave "holes" in the Bit
+Map to make space available for any new files to be created.
+The major advantage here, is that the disk is never required
+to  be	"packed down" (i.e.,  for iCOM FDOS  users  or	UCSD
+Pascal	users,	you  know  what I mean!).  For users  of  an
+operating   system  that  utilizes  Sequential	 or   Linked
+Allocation methods, my heart goes out to you...nothing quite
+so  "gut wrenching" as a disk error in the middle of a	pack
+operation!  The  other advantage to Bit Map  Allocation,  is
+true random access to sectors (no "kludge" ISAM,  as in MITS
+DOS  or  BASIC and no "rewind file pointers" as in  PASCAL),
+and  dynamic  allocation of file  size.  Another  source  of
+frustration regarding Linked Allocations is when an isolated
+sector	(which	"forward references" the next sector in  the
+file)  is "bombed"...there is no way to recover  the  ENTIRE
+file intact...just up to the point of the offending sector!
+
+ Now for some detail (as promised):  To determine the  group
+allocation  from the Bit Map,  we must first "split" the  in
+half...then  it all begins to make (I hope) good  sense.  To
+find  the (hexadecimal) group number of an individual bit in
+the  Bit Map,  take the first digit from the even  (or	odd)
+half row and the digit from the column in the same half.  As
+shown  in  the	example  below then,  the  next  free  group
+allocation is 02 and the last free group is F1:
+
+	      GROUP ALLOCATION MAP DRIVE - B
+Even Half Row		  Columns	      Odd Half Row
+
+	     0123456789ABCDEF 0123456789ABCDEF
+	     ---------------------------------
+	  0 :1100000000000000:0000000000000000: 1
+	  2 :0000000000000000:0000000000000000: 3
+	  4 :0000000000000000:0000000000000000: 5
+	  6 :0000000000000000:0000000000000000: 7
+	  8 :0000000000000000:0000000000000000: 9
+	  A :0000000000000000:0000000000000000: B
+	  C :0000000000000000:0000000000000000: D
+	  E :0000000000000000:00	      : F
+	 240 GROUPS REMAINING ON DISK OUT OF 243
+
+ The PHYSICAL relationship of sectors to groups is such that
+Group  02  starts at Track 2/Sector 20,  Group 03 starts  at
+Track 02/Sector 13 (YES!  Sector 13, because of the diskette
+"skew factor"...hmmm,  a good topic for yet another  mundane
+article on my part...OK, OK,...BORING!), and so on.
+
+ In conclusion,  Digital Research's CP/M BDOS makes the most
+efficient  use	of available space on  the  diskette.  Other
+operating systems (let's cuss MITS DOS again!) often require
+that  the  file size be specified by the  user...overcaution
+(and  much  guessing)  results in large  amounts  of  unused
+diskette  space that is NOT AVAILABLE to other	files.	This
+space  can  only be recovered by copying the data to  a  new
+diskette with the proper file size specified, and WHATS EVEN
+WORSE is that this same procedure must be followed to EXPAND
+a  file  that  has already  utilized  the  space  originally
+allocated to it! So anyway...NICE JOB Dr. Kildall!
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+   A Simple 6 Byte Hexadecimal to ASCII Conversion Routine
+   =======================================================
+			    by
+	 Kelly Smith (originator of routine unknown)
+
+ Only  six  bytes  of  8080  (or Z80)  code  can  perform  a
+hexadecimal (0 to F) to ASCII conversion.  Assuming that the
+hexadecimal digit is in the A register, then:
+
+hex$to$ascii:	    ; convert low nibble hex digit in the
+		    ; the A reg., to ASCII character in the
+		    ; A reg.
+	  adi  90h  ; first add
+	  daa	    ; adjust result, if carry
+	  aci  40h  ; second add, adjust to ASCII
+	  daa	    ; adjust result, if carry
+	  .
+	  .
+	  .
+
+ How  does  it work?  There are two main considerations  for
+hexadecimal to ASCII conversion: Is the A register less than
+ten, or is the A register greater than or equal to ten?
+
+ The first DAA instruction (which operates on the lower four
+bits   (low  nibble)),	 adjusts  the  result  of  the	 ADI
+instruction  to  less than ten.  Then  the  ACI  instruction
+operates  on the upper four bits (high nibble) by adding the
+carry  out of the lower nibble.  The second DAA  instruction
+then adjusts the results of the high nibble to less than 10.
+
+ If the A register is initially less than ten, the first add
+results in 9Xh...in this case, the DAA does not affect the A
+register. The second add (with carry) results in 9Xh+40h=DXh
+(D Hex = 13 Dec).  After the second DAA,  the result is  3Xh
+where 'X' is the decimal digits 0 through 9;  thus the ASCII
+representation	 for   decimal	 digit	9  results   in   39
+hexadecimal.
+
+ If  the A register is initially ten or greater,  the  first
+add results in 9Xh (same as before),  but the result of  the
+foqst DAA is 0Yh (i.e.,  Yh=Xh-10d) and includes the setting
+of  the  carry	flag.  The next add (with  carry)  gives  us
+oYh+40h+1=4Zh, where Z=Y+1. The last DAA has no affect...The
+hexadecimal  digits 41 to 46 represent the ASCII alphabetics
+A to F...for example,  let X=10d=Ah,  then Y=X-10d=10d-10d=0
+and  Z=Y+1=0+1=1...the result is 41 hexadecimal,  the  ASCII
+symbol	 for   'A'...the  routine  is	simpler   than	 the
+explanation!
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+  A CP/M 1.4 Parameter Display Program in Microsoft Basic
+  =======================================================
+			   by
+	 Kelly Smith (from a program by Rod Hart)
+
+ Its  not  often that you find a really unique utility	that
+"crosses  boundries"  between  an  operating  system  and  a
+computer  language...this one,	is particularly "cute"	(and
+useful),  that	I  downloaded with XMODEM  from  Rod  Hart's
+system...nice  job Rod!  My only changes were to make it all
+fit on a 24 by 80 screen display, without using clear screen
+codes that are terminal sensitive.  Note also, this WILL NOT
+WORK on CP/M 2.2 parameters! So put your "thinking caps" on,
+write a version for CP/M 2.2, XMODEM it to Rod or myself and
+become FAMOUS (if not rich)!
+
+10 REM CP/M Version 1.4 System Parameter Display Program
+20 REM by Roderick W. Hart (WA3MEZ)
+30 REM December 23, 1979
+40 REM modified February 8, 1981 by Kelly Smith, CP/M-Net
+50 PRINT TAB( 10) "Parameters unique to your CP/M Version 1.4 are:"
+60 BD=PEEK(7)*256
+70 SP=PEEK(BD+&H3A)
+80 RB=PEEK(BD+&H3C)
+90 LS=PEEK(BD+&H3D)
+100 LB=PEEK(BD+&H3E)
+110 DL=PEEK(BD+&H3F)
+120 DT=PEEK(BD+&H40)
+130 RE=PEEK(BD+&H3B)
+140 TR=PEEK(BD+&H40)
+150 MT=(BD+&H1A)
+160 PRINT:PRINT TAB( 10) "Your BDOS starts at ";HEX$(BD);" hex"
+180 PRINT TAB( 10) "Your sector map table is located at ";HEX$(MT);" hex"
+190 PRINT TAB( 10) "Your directory allocation mask is ";HEX$(DL);" hex"
+200 PRINT TAB( 10) "You have";TR;"tracks reserved for the system"
+210 PRINT TAB( 10) "You have";SP;"sectors per track"
+220 PRINT TAB( 10) "You have";RE;"records per extent"
+230 PRINT TAB( 10) "You have";RB;"records per block"
+240 PRINT TAB( 10) "Last sector in block is";LS
+250 PRINT TAB( 10) "Last block on the disk is";LB
+290 PRINT:PRINT TAB( 24);"Sector Map Table"
+300 PRINT TAB( 24);"------ --- -----"
+310 PRINT
+320 FOR X=0 TO (SP-1)
+330 MP=PEEK(MT+X)
+340 Z=Z+5
+350 IF Z<60 THEN 360 ELSE 390
+360 PRINT TAB( Z);MP;
+370 IF X=(SP-1) THEN 410
+380 NEXT X
+390 Z=5:PRINT CHR$(15)
+400 GOTO 360
+410 END
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+		 CP/M-Net "Tip-of-the-Month"
+		 ===========================
+			     by
+		 Kelly Smith and Eddie Currie
+
+ Are  you one of the "poor unfortunates" that has to contend
+with  a 64 character wide screen display,  and	bashes	your
+head  against the CRT in front of you (while mumbeling	"why
+did  I	EVER  BUY this #`!%&$ THING...it SCREWS UP  the  DDT
+'DUMP' display so badly,  I can't even use it!").  Well,  no
+more  tears  on  the  keyboard my  friend...just  put  these
+patches into DDT or SID,  and as if by magic (at no time  do
+my  fingers  leave my hands),  VOILA...a 64  character	wide
+'DUMP' that you can actually READ!!!...follow along:
+
+ For users of DDT.COM version 1.4 or 2.2, make the following
+substitution...
+
+A>ddt ddt.com<cr>   <--- patch DDT.COM using DDT
+DDT VER 2.2	    <--- DDT announcing itself
+NEXT  PC
+1400 0100	    <--- DDT telling us it's used 19 pages
+-sa17<cr>	    <--- Substitute at address 0A17 hex...
+0A17 05 08<cr>	    <--- ...08 instead of 05!
+0A18 08 .<cr>	    <--- end the substitution
+-g0<cr> 	    <--- exit DDT and return to CP/M
+A>save 19 ddt64.com<cr> <--- save the 64 wide DDT.COM
+
+ And for users of SID.COM...
+A>sid sid.com<cr>   <--- patch SID.COM using SID
+SID VER 1.4	    <--- SID announcing itself
+NEXT  PC  END
+2D00 0100 B3FF	    <--- SID telling us it's used 44 pages
+#saa5<cr>	    <--- Substitute at address 0AA5 hex...
+0AA5 93 96<cr>	    <--- ...96 instead of 93!
+0AA6 08 .<cr>	    <--- end the substitution
+#g0<cr> 	    <--- exit SID and return to CP/M
+A>save 44 sid64.com<cr> <--- save the 64 wide SID.COM		
+
+ What these patches do, is to throw out the space characters
+between  each  display of the hexadecimal representation  of
+each  memory content of the DDT or SID	'DUMP'	display...it
+crunches the display format, and make it READABLE!
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

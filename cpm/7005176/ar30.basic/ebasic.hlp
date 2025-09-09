@@ -1,0 +1,361 @@
+Invoking BASIC-E
+BASIC-E Statements
+BASIC-E Functions
+Differences between BASIC-E and CBASIC
+BASIC-E Error Messages
+CBASIC:  Compiler Error Messages
+CBASIC:  Run-Time Error Messages -- Warnings
+CBASIC:  Run-Time Error Messages -- Error Codes
+:Invoking BASIC-E
+
+     BASIC-E is invoked by typing the following --
+
+          EBASIC filename $o
+
+where  'filename' is the name of the source file 'filename.BAS' to  be 
+compiled and 'o' is one or more of the following options --
+
+          A    List Productions (for compiler debugging); normally OFF
+          B    List only source statements with errors; normally OFF
+          C    Check syntax only; don't create .INT file; normally OFF
+          D    Convert lowercase to uppercase; normally ON
+          E    Generate line number code; normally OFF
+
+     After compilation, the program may then be executed by --
+
+          ERUN filename
+
+where 'filename' is the name of the intermediate code file 'filename.INT'.
+:BASIC-E Statements
+
+     The following statements are valid in BASIC-E --
+
+          FOR       NEXT      FILE      GOTO      LET  
+          CLOSE     GOSUB     INPUT     ON        PRINT
+          READ      RESTORE   RETURN    OUT       RANDOMIZE
+          STOP      DATA      DEF       DIM       END
+          IF        REM       ELSE      THEN
+
+:BASIC-E Functions
+
+     The following built-in functions are valid in BASIC-E --
+
+          ABS       ASC       ATN       CHR$      COS
+          COSH      FRE       INP       INT       LEFT$
+          LEN       LOG       MID$      POS       RIGHT$
+          RND       SGN       SIN       SINH      STR$
+          SQR       TAB       TAN       VAL       EXP
+
+:Differences between BASIC-E and CBASIC
+
+     The  following  features are not available in BASIC-E,  but  they  are 
+available in CBASIC --
+
+          1.  PEEK or POKE
+          2.  PRINT USING
+          3.  CALL to machine code programs
+          4.  LPRINT
+
+:BASIC-E Error Messages
+
+     Since  BASIC-E is a "subset" of CBASIC,  refer to the CBASIC help file 
+for information on the BASIC-E error messages.
+
+     Most,  but  not all,  BASIC-E error messages are covered in this  help 
+file.
+:CBASIC:  Compiler Error Messages
+
+                               Text Messages
+
+NO SOURCE FILE:  <FILENAME>.BAS
+     The  compiler could not locate a source file used in either  a  CBASIC 
+command or an INCLUDE directive.
+
+PROGRAM CONTAINS n UNMATCHED FOR STATEMENT(S)
+     There are n FOR statements for which a NEXT could not be found.
+
+PROGRAM CONTAINS n UNMATCHED WHILE STATEMENT(S)
+     There are n WHILE statements for which a WEND could not be found.
+
+WARNING:  INVALID CHARACTER IGNORED
+     The previous line contains an invalid ASCII character;  this character 
+is ignored by the compiler, and a question mark is printed in its place.
+
+
+
+                           2-Letter Error Codes
+
+CE -- Close Error
+     The intermediate (.INT) file could not be closed.
+
+DE -- Disk Error
+     A disk error occurred while trying to read the .BAS file.
+
+DF -- Disk Full
+     There  was no space on the disk or the disk directory was  full.   The 
+.INT file was not created.
+
+DL -- Duplicate Line number
+     The same line number was used on two different lines.   Other compiler 
+errors  may  cause a DL error message to be printed even if duplicate  line 
+numbers do not exist.
+
+DP -- Defined Previously
+     A variable in a DIM statement was previously defined.
+
+
+EF -- Exponential Format
+     A number in exponential format was input with no digits following  the 
+E.
+
+FD -- Function Definition
+     A function name that has been previously defined is being redefined in 
+a DEF statement.
+
+FI -- FOR Index
+     An  expression which is not an unsubscripted numeric variable is being 
+used as a FOR loop index.
+
+FN -- Function parameter Number 
+     A function reference contains an incorrect number of parameters.
+
+FP -- Function Parameter type
+     A function reference parameter type does not match the parameter  type 
+used in the function's DEF statement.
+
+
+FU -- Function Undefined
+     A function has been referenced before it has been defined.
+
+IE -- IF Expression
+     An  expression  used  immediately following an IF  evaluates  to  type 
+string.  Only type numeric is permitted.
+
+IF -- In File
+     A  variable  used  in a FILE statement is of type numeric  where  type 
+string is required.
+
+IP -- Input Prompt
+     An input prompt string is not surrounded by quotes.
+
+IS -- Invalid Subscript
+     A subscripted variable was referenced before it was dimensioned.
+
+IU -- Invalid Use
+     A variable defined as an array is used with no subscripts.
+
+
+MF -- Mixed Format
+     An expression evaluates to type string when type numeric is required.
+
+MM -- Mixed Mode
+     Variables  of  type string and type numeric are combined in  the  same 
+expression.
+
+NI -- NEXT Index
+     A variable referenced by a NEXT statement does not match the  variable 
+referenced by the associated FOR statement.
+
+NU -- NEXT Unexpected
+     A NEXT statement occurs without an associated FOR statement.
+
+OO -- ON Overflow
+     More than 25 ON statements were used in the program.
+
+
+SE -- Syntax Error
+     The source line contains a syntax error.
+
+SN -- Subscript Number
+     A subscripted variable contains an incorrect number of subscripts.
+
+SO -- Syntax Overflow
+     The  expression is too complex and should be simplified and placed  on 
+more than one line.
+
+TO -- Table Overflow
+     The  program  is  too  large for the  system.   The  program  must  be 
+simplified or the system size increased.
+
+UL -- Undefined Line number
+     A line number that does not exist has been referenced.
+
+US -- Undefined String
+     A string has been terminated by a carriage return rather than quotes.
+
+
+VO -- Variable Overflow
+     Variable names are too long for one statement.
+     This should not occur.
+
+WE -- WHILE Error
+     The expression immediately following a WHILE statement is not numeric.
+
+WU -- WHILE Undefined
+     A WEND statement occurs without an associated WHILE statement.
+:CBASIC:  Run-Time Error Messages -- Warnings
+
+     Two textual run-time error messages are presented by CRUN:
+
+NO INTERMEDIATE FILE
+     A  file name was not specified with the CRUN command,  or no  file  of 
+type .INT and the specified file name was found on disk.
+
+IMPROPER INPUT - REENTER
+     This  message  occurs when the fields entered from the console do  not 
+match  the  field specified in the INPUT statement.   This can  occur  when 
+field types do not match or the number of fields entered is different  from 
+the  number  of  fields  specified.   All fields  specified  by  the  INPUT 
+statement must be reentered.
+
+                     2-Letter Warning Codes
+
+DZ -- Divide by Zero
+     A number was divided by zero.   The result is set to the largest valid 
+CBASIC number.
+
+FL -- Field Length
+     A  field  length greater than 255 bytes was encountered during a  READ 
+LINE.  Only the first 255 characters of the record are retained.
+
+LN -- Logarithm error
+     The  argument  given in the LOG function was zero  or  negative.   The 
+value of the argument is returned.
+
+NE -- NEgative number
+     A  negative  number  was  specified following the  raise  to  a  power 
+operator (^).  The absolute value is used in the calculation.
+
+
+OF -- OverFlow
+     A calculation produced a number too large.   The result is set ot  the 
+largest valid CBASIC number.
+
+SQ -- SQuare root error
+     A  negative  number was specified in the SQR function.   The  absolute 
+value is used.
+:CBASIC:  Run-Time Error Messages -- Error Codes
+
+AC -- AsCii error
+     The string used as the argument in an ASC function evaluated to a null 
+string.
+
+CE -- Close Error
+     An error occurred upon closing a file.
+
+CU -- Close Undefined file 
+     A close statement specified a file number that was not active.
+
+DF -- Defined File
+     An  OPEN or CREATE was specified with a file number that  was  already 
+active.
+
+DU -- Delete Undefined file
+     A DELETE statement specified a file number that was not active.
+
+
+DW -- Disk Write error
+     An  error occurred while writing to a file.   This occurs when  either 
+the directory or the disk is full.
+
+EF -- End of File
+     A  read  past the end of file occurred on a file for which no  IF  END 
+statement has been executed.
+
+ER -- Error in Record
+     An  attempt  was  made to write a record of length  greater  than  the 
+maximum  record  size specified in the associated  OPEN,  CREATE,  or  FILE 
+statement.
+
+FR -- File Rename
+     An attempt was made to rename a file to an existing file name.
+
+FU -- File Undefined
+     An attempt was made to read or write to a file that was not active.
+
+
+IR -- Invalid Record number
+     A record number less than one was specified.
+
+LW -- Line Width
+     A  line  width  less than 1 or greater than 133 was  specified  in  an 
+LPRINTER WIDTH statement.
+
+
+ME -- MAKE Error
+     An  error occurred while creating or extending a file because the disk 
+directory was full.
+
+MP -- MATCH Parameter
+     The third parameter in a MATCH function was zero or negative.
+
+NF -- Number of FILE
+     The file number specified was less than 1 or greater than 20.
+
+
+NM -- No Memory
+     There was insufficient memory to load the program.
+
+NN -- No Number field
+     An attempt was made to print a number with a PRINT USING statement but 
+there was not a numeric data field in the USING string.
+
+NS -- No String field
+     An attempt was made to print a string with a PRINT USING statement but 
+there was not a string field in the USING string.
+
+OD -- Overflow Data
+     A  READ  statement was executed with no DATA available.
+
+OE -- OPEN Error
+     An attempt was made to OPEN a file that didn't exist and for which  no 
+IF END statement had been previously executed.
+
+
+OI -- ON Index
+     The  expression  specified  in  an ON ...  GOSUB or  an  ON  ...  GOTO 
+statement  evaluated to a number less than 1 or greater than the number  of 
+line numbers contained in the statement.
+
+OM -- Overflow Memory
+     The program ran out of memory during execution.
+
+QE -- Quote Error
+     An attempt was made to PRINT to a file a string containing a quotation 
+mark.
+
+RE -- READ Error
+     An attempt was made to read past the end of a record in a fixed file.
+
+RG -- RETURN with no GOSUB
+     A RETURN occurred for which there was no GOSUB.
+
+
+RU -- Random Undefined
+     A random read or print was attempted to other than a fixed file.
+
+SB -- SuBscript
+     An  array subscript was used which exceeded the boundaries  for  which 
+the array was defined.
+
+SL -- String Length
+     A concatenation operation resulted in a string of more than 255 bytes.
+
+SS -- SubString error
+     The second parameter of a MID$ function was zero or negative.
+
+TF -- Too many Files
+     An attempt was made to have more than 20 active files simultaneously.
+
+
+TL -- TAB Length
+     A  TAB statement contained a parameter less than 1 or greater than the 
+current line width.
+
+UN -- UNdefined edit string
+     A PRINT USING statement was executed with a null edit string.
+
+WR -- WRite error
+     An  attempt was made to write to a file after it had  been  read,  but 
+before it had been read to the end of the file.
+

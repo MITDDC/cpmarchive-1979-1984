@@ -1,0 +1,1750 @@
+!<arch>
+1               362737827   99    31    100644  20297     `
+
+
+M A C
+
+
+Multiple Assembly-language Compiler
+
+
+
+Ross Nealon University  of  Wollongong.   MAC  is  a  generalised
+cross-assembler,  table driven, with a finite-state parsing algo-
+rithm built in. MAC accepts a description of the target machine's
+architecture,  a  list  of the symbolic opcodes and their values,
+and a list of bitwise instruction formats.  MAC generates  output
+in  three  forms - listings, code dumps, and loader format object
+files.  MAC comes equipped with a  table-formatting  program,  to
+format r-files from symbolic descriptions.
+
+   This document comprises the first part of the  description  of
+the  MAC  cross-assembler.   The  second part describes the table
+formatter for producing a target machine description for MAC, and
+the third part describes the system from an implementors point of
+view.  GENERAL DESCRIPTION MAC is a two-pass finite state  assem-
+bler that accepts symbolic assembly-language statements, and per-
+forms a one-to-one translation, compiling each  instruction  into
+its  equivalent binary machine code.  MAC will read source state-
+ments until end-of-file, or until an 'end' directive  is  encoun-
+tered.  Any error in the first pass will cause termination of the
+assembly at the end of the first pass.  Pass one  is  devoted  to
+scanning  the  source line, performing syntax checking, re-coding
+the source and building a file of intermediate coded source  (in-
+tercode)  one  record  per  source  line, and building the symbol
+table, a list of labels and their values.  Pass two re-reads  the
+intercode  records  and  uses  the entries in the symbol table to
+generate the binary machine code, and produce useable  output  in
+the form of listings, code dumps, and loader format object files.
+These formats are described in a later section  of  this  manual.
+The  programmer  wishing to use MAC must supply MAC with the name
+of a pre-formatted file, containing the description of  the  tar-
+get,  the  parser table and so on.  These pre-formatted files (r-
+files) reside in the library '/usr/lib/mac'.  It is  only  neces-
+sary  to  provide the name of a file in the library, as MAC first
+searches the current directory, then the  library  for  the  file
+named.   MAC generates listings by re-reading the source code, so
+that an assembly of source from the standard  input  cannot  gen-
+erate a listing.
+
+
+SYNOPSIS
+
+mac [-opts [...]] r-file [source] [object]
+
+
+        Options appear one per argument.
+
+        -l:  Generate source/code listing
+        -a:  Generate loader object file
+        -r:  Produce relocatable code
+        -s:  Print symbol table
+        -d:  List the blocks of assembled code on standard output
+        -h:  Data output in Hexadecimal (default)
+        -o:  In octal
+        -b:  In binary
+        -u:  Do not unlink temp file
+        -e:  Supress ALL error messages
+        -n:  Suppress listing, dump & error messages
+        -w:  Print opcode field of instr. one word per listing line.
+        -f:  Print opcode field of instr. broken into its format fields.
+        -i:  Print opcode field of instr. one  instr.  per  listing  line
+        (default).
+        -c:  Print info about the source output format.
+
+        Name  of a file  containing a set  of  pre-formatted  tables  for
+        MAC.
+
+        The name of a file containing the source to be assembled.  If not
+        present, MAC will read from the standard input.
+
+        If present, MAC assumes '-a' option, and generates a loader  for-
+        mat  object file with that name.  If '-a' is on and this argument
+        is not present, MAC uses the name "m.out".
+
+
+        mac -l -s m6800 vdu.s vdu.o
+        mac z80 t.s >dump
+        mac -a -n 8080 copy.s
+
+
+SOURCE LINE
+
+[label]  [opcode [args]]  [;comment]
+
+
+        A previously non-defined label can tag the start of  each  source
+        line.  The label is then defined to have the value of the current
+        location counter.  The label must start in column one,  otherwise
+        it  is treated as an opcode.  If the first character of the label
+        name is '`', then it is  a  local  label,  and  is  only  defined
+        between consecutive 'lsb' (Local Symbol Block) pseudo's.
+
+        A special operation code symbolic or a pseudo opcode to  indicate
+        what  code  to  generate.  If this field is not present, the args
+        field is not allowed.
+
+        This field is made up of expressions, literals,  special  charac-
+        ters  and  delimiters,  with  no intervening spaces or tabs. This
+        field adds to the information describing the code to be  generat-
+        ed.  This field is often called the argument "picture".
+
+        All characters after a ';' (not  in  a  character  constant)  are
+        treated  as a comment and are ignored.  A comment terminates scan
+        of the source line.
+
+
+        All intervening white-space separating fields on the source  line
+        may be any number of blanks and/or tabs.
+
+
+LITERALS A literal is a label, which has been defined (in the  r-
+file)  as  reserved. This label cannot be used in expressions, as
+it has no value.  It cannot be set to a value.  Literals are use-
+ful  only  to recognise argument pictures on instructions.  Refer
+to the description of the r-file that you will  be  using  for  a
+list of defined literals.
+
+
+LABELS A label is from one to eight lowercase alpha-alpha/numeric
+characters.  The first character must be from the set {a-z _ . `}
+and may optionally be followed by  one  to  seven  alpha/numerics
+{a-z _ . 0-9}.
+
+
+ll1     .sin     .mul
+r1      `sin      mul.1
+ret     loop1    ent27
+
+
+OPERATORS Mac recognises the following operators:-
+
+        +     addition  (binary or unary)
+	-     subtraction   (binary  or unary)
+	*     multiplication
+	/     division  
+	%     modulus
+	|     bit-wise logical or
+	&     bit-wise logical and
+	~     exclusive or (binary)
+	~     bitwise  not  or  one's  complement  (unary)
+	>     right-shift 
+	<     left-shift 
+	=     literal reference 
+	-     address of location containing the value of the expression
+
+
+The unary operators plus (+), minus (-), and complement  (~)  may
+be added to prefix any term in an expression.  Note that only one
+unary operator per term is allowed.
+
+
+EXPRESSIONS An expression is an unparenthesized list  of  labels,
+constants,  location counter symbols (!) called terms; and opera-
+tors.  An expression must consist of at least one term, optional-
+ly  followed by one or more operator-term pairs.  Any term may be
+optionally prefixed by a unary operator.  An expression may  con-
+tain  as its first symbol a literal reference operator.  CAUTION:
+although the literal reference operator is syntactically correct,
+it is not yet implemented. A warning is generated if it is used.
+
+
+EXAMPLES:
+
+
+ll+1 entr-adc+isp/4 entr-adc+isp>2 -mask|e_bit =entr+2
+
+
+NOTE:	2+3*4   is evaluated as (2+3)*4, not 2+(3*4).
+
+CONSTANTS Numeric constants can be described as C-type constants.
+A constant beginning with {1-9} is interpreted as decimal, begin-
+ning with 0 is interpreted as octal, beginning with 0x as hexade-
+cimal, and 0b as binary.
+
+    examples:-
+
+        123     55      91234        (decimal)
+        0       0666    077777       (octal)
+        0xf618  0xff    0x34ac       (hex)
+        0b101   0b111011011011       (binary)
+
+Negative constants are obtained by combining a positive  constant
+with the unary negation operator (-).
+
+Character constants are enclosed in single quotes, and are treat-
+ed as small integer constants, with their values being made up of
+a concatenation of their respective ASCII values.  The C-language
+escape  conventions  apply, \n => newline, \r => carriage return,
+\f => form-feed, \b => backspace, \t => tab, and \0 => ASCII NUL.
+
+Strings are enclosed in double quotes, and have no  real  numeric
+value.  They cannot be used in expressions. The characters of the
+string are assembled one per consecutive byte in memory.  Strings
+are  only  useful as title information (See later - pseudo opcode
+'title') and for the special definition of constants (See later -
+pseudo  opcode  'dc').   Strings are limited to 250 characters in
+length.
+
+
+PSEUDO OPCODES
+
+
+A special type of opcode symbolic is the pseudo opcode. These are
+always  defined  to  the assembler, and provide the user with the
+means to control the location counters, their values,  code  gen-
+eration, constant and storage definition and listings.
+
+
+        If a listing is being generated, skip to the top of  a  new  page
+        and output title and header information.
+
+        [label]     eject
+
+        Set title information, and perform 'eject's function.  Title also
+        generates a new local symbol block i.e.  also does an 'lsb'.
+
+        [label]     title   "[string]"
+
+        Include the argument file in the assembly at this point (like 'C'
+        #include).   Only  the path name given is searched, not any other
+        directories.  The listing state of the included file is saved, so
+        that without affecting the listing of the calling file.
+
+        [label]     include "filename"
+
+        Turn listings on(off).  These  requests  do  not  nest  i.e.  one
+        'list'  turns listing on no matter how many 'nlists' preceded it.
+        and '-l' must be on for anything to appear.  End of  source  code
+        indicator.  This  will terminate pass one, check the symbol table
+        for errors (undefined  labels  etc.)  and  reset  various  states
+        within the assembler in preparation for pass two.  If an experes-
+        sion is given, this is passed to the loader as a  start  address.
+        Any source code present after an 'end' directive will be ignored.
+
+        [label]   end   [expression]
+
+        Seg selects a particular location  counter  to  use.   MAC  comes
+        equipped  with eight distinct location counters, any of which may
+        be selected.  Each location counter will generate a distinct seg-
+        ment  of  code.  Location counter 0 is the default.  Segments may
+        be interleaved within the source code,  MAC  will  assemble  each
+        segment  distinctly.  Each segment exists exclusively of any oth-
+        ers.
+
+        [label]   seg     expression
+
+        Equ equates the label tag to the defined  expression.   This  ex-
+        pression must be defined before this instruction is processed.
+
+        label     equ     expression
+
+
+        Lsb declares the end of one local symbol block and starts  a  new
+        one. All local symbol definitions (labels starting with '`') pri-
+        or to the lsb are forgotten.
+
+        Org (abbreviation for origin) is used to set the current location
+        counter's value.
+
+        [label]   org     expression
+
+        Align sets the current location counter to the next even multiple
+        of  the  argument  expression. No alignment is performed if it is
+        not necessary.
+
+        [label]   align   expression
+
+        This is only useful when an object file is  being  generated,  as
+        any global label is dumped with the code in a symbol table at the
+        end of the object file.
+
+        [label1]  global  label2
+
+        Defines a number of null bytes of storage specified by the  argu-
+        ment expression.
+
+        [label]   ds      expression
+
+        Define constant allows the definition of  a  constant  in  memory
+        with a value equal to the argument expression.  The format of the
+        constant in memory is dependant upon the format described in  the
+        r-file.  Refer to the write-up on the r-file that you will be us-
+        ing.  If the argument is a string, then  each  character  of  the
+        string  is  assembled (its ASCII value) into consecutive bytes of
+        memory.
+
+        [label]   dc      expression
+        [label]   dc      "string"
+
+
+        Struc allows the user to create "structures" that are really  la-
+        bels  equated  to  offsets  from the start of the structure.  The
+        general form of struct is a label, and the storage in  bytes  for
+        the  label.   The  label  will be set to the value of the current
+        offset, and the offset counter then incremented  by  the  storage
+        length.   This is equivalent to the C struct declaration.  If the
+        label is omitted, then the structure offset counter is increment-
+        ed.
+
+        [label]   struc   expression
+
+        Ends equates the label tag (if given) to the value of the  struc-
+        ture  offset  counter  and  then resets the counter to zero.  The
+        next struc pseudo op will therefore start a new structure defini-
+        tion.   If  the  label  tag  is present, it will be given a value
+        corresponding to the size of the structure in bytes.
+
+        [label]   ends
+
+
+Up to four other special define constant pseudo  opcodes  can  be
+declared  in  the r-file.  These may exist to define funny length
+constants (e.g.- double word) or funny  format  constants  (e.g.-
+two  bytes, with the bytes swapped).  The user should consult the
+description of his r-file, to find the exact nature and  name  of
+each  of the dc's.  Generally - they are of the form dc?, where ?
+is any legal alpha/numeric.
+
+ERRORS
+
+
+MAC generates three types of error messages: non-fatal  warnings,
+severe  errors that will cause incorrect code generation, and fa-
+tal internal errors.  No action is taken on warnings, severe  er-
+rors  cause termination of the current pass (one or two), and fa-
+tal errors cause immediate termination of the assembly, sometimes
+forcing a core dump (see abort() (3)).  The error messages appear
+before the line in error.
+
+
+WARNINGS
+An expression has been assembled which is numerically  too  large
+to  fit into the assigned space in the instruction.  Check the r-
+file write-up as to the exact format of the instruction in error.
+Since MAC re-reads the source code to  generate  a  listing,  re-
+reading  from  the  standard input is impossibe, hence no listing
+can be generated.  The -l option is turned off.
+End-of-file has been encountered, no end directive seen.
+
+
+SEVERE
+Part of an expression is not a label, a constant or the  location
+counter symbol '!'.  (Possible control character.)
+Two sub-expressions, both relocatable,  may  only  be  subtracted
+from each other. No other operation between them is permitted. No
+unary ops. (except the null op. '+') may be applied
+The argument to an include pseudo-op cannot be opened as  a  file
+(does not exist or wrong permissions) to a relocatable.
+The special dc pseudo op (with no identifying character) has been
+used when not declared in the r-file.  Check the r-file write-up.
+Some delimiter has been encountered unexpectedly  in  an  expres-
+sion.
+An attempt to divide by zero has been trapped.  Check validity of
+the expression(s) on the instruction argument(s).
+Two (or more) undefined global labels have appeared in an expres-
+sion. The load format only permits one undefined global to appear
+in an expression.
+An expression is required as part of the instruction's arguments.
+
+An attempt has been made to assemble an instruction that  has  no
+legal opcode value.  This means that the argument picture used on
+this instruction is illegal, this instruction  cannot  have  this
+format of arguments.
+It should not be possible for this pass 2 diagnostic  to  appear,
+class checking having taken place in pass 1, but who knows ?
+Included files may be nested to a depth of 5  (actually  NINCLUDE
+in mac.h).
+A label is required for the global pseudo op.  The label must ap-
+pear  in the argument picture, and must not be part of an expres-
+sion.
+A label tag starting in column one is required here.
+An attempt has been made to use a label in an expression, but  as
+yet is has not been defined and has no value.
+An expression is expected in the argument  field,  but  none  was
+found.
+An attempt has been made to  find  the  value  of  an  expression
+modulus zero.
+The label tag on this line has been previously defined.
+The result of the expression argument to the ds  pseudo  instruc-
+tion is negative.  MAC cannot define a negative number of storage
+bytes.
+The location counters cannot be set to a negative value.
+The argument expression to the seg pseudo op is not in the allow-
+able range.  (0 to 7 currently).
+The opcode symbolic on this line is not a legal symbolic for this
+r-file. Check the r-file write-up.
+The argument to this pseudo must be a string.
+The argument picture for this instruction  is  syntactically  in-
+correct.  (E.g.- two adjacent operators, no delimiters separating
+expressions, bad label class, etc.)
+The argument to the title pseudo opcode must be  a  string.  Null
+strings ("") turn the title off.
+
+
+Self explanatory.
+The instruction being assembled requires more  or  fewer  expres-
+sions  in  the argument picture than have been given. Consult the
+r-file write-up.
+
+
+FATAL
+More than the maximum buffer size of characters has been typed on
+one line.
+M.out file exists and is protected, or cannot be created in  this
+directory.  No object is generated.
+As for m.out.
+The temporary file for intermediate source code cannot be created
+in this directory, or one exists and is protected.
+MAC cannot locate the named r-file.  Check that it exists in your
+directory, or in /usr/lib/mac.
+Something has happened to the source file since it was last read.
+A listing cannot be generated.
+Something happened to the temp file between when it  was  created
+and when it was opened. This probably can't happen.
+Input source file cannot be opened.
+Input source can't be rewound.
+An internal inconsistency in the temp file.  Seek help
+This means that the r-file in use has been corrupted. Report this
+error as soon as practical.
+Self explanatory. Pass two is inhibited.
+MAC's internal table lookup routines have been called  in  error.
+Report this as soon as practical.
+
+
+
+The named label has been referenced in the  source  program,  but
+never defined.
+The program being assembled is so large that it cannot be  assem-
+bled in the host machines memory.  (Split the program into small-
+er pieces, and assemble each independantly.)
+The file given as ar r-file argument doesn't look like a real  r-
+file.  (Wrong magic number).
+Internal diagnostics generated  if  the  org  pseudo  goes  wrong
+internally. Should never happen.
+MAC's internal pass one parser table or MAC itself is bad. Report
+this as soon as is practical.
+Too many labels are being defined.  MAC cannot get enough of  the
+host machine's memory to define them all.
+Incorrect parameters on the call.  Usually r-file missing.
+
+
+LISTING FORMAT
+
+loc.-counter   code   line-#   source
+
+The location counter field displays the  value  of  the  location
+counter before the next instruction is assembled.  The code field
+is the actual assembled code from the following  source  instruc-
+tion.   The  line  number is the source line number and is useful
+for locating lines in error.  The  source  field  is  the  actual
+source code as seen by MAC.
+
+
+
+DUMP FORMAT
+
+Code is dumped to the standard output with  the  segment  number,
+start address and segment length.  The code is then dumped in the
+default format (hex, octal or binary).
+
+
+
+OBJECT FILE FORMAT
+
+The formats of the various headers and structures associated with
+the object file (m.out) are described in the header file m.out.h.
+
+
+The overall structure of the file is
+
+	 -----------------------
+	|			|
+	| file header		|
+	|			|
+	 -----------------------
+	|			|
+	| global symbols	|
+	|			|
+	 -----------------------
+	|			|
+	| code block		|
+	|			|
+	 -----------------------
+	|			|
+	| optional relocation	|
+	| block			|
+	|			|
+	 -----------------------
+	|			|
+	| further code and	|
+	| relocation blocks	|
+	|			|
+	 _______________________
+
+
+The header section is one 'struct aout'.  The global symbols sec-
+tion  is  only  produced  if there are global symbols in the file
+(see pseudo-op 'global').  The globals  section  is  one  'struct
+out'  with  ou_nseg equal to 'SYMBOLS' followed by a linear array
+of struct g_sym.  Relocation blocks are only produced if  the  -r
+flag is present. The code blocks are one 'struct out' followed by
+a linear array of type  'int',  the  relocation  blocks  are  one
+'struct out' with ou_nseg equal to 'RELOCATION' followed by array
+of type 'struct relocate'. There are no checksums.
+
+2               362434516   99    31    100644  21759     `
+>From bart Wed Nov 26 10:47 EST 1980 remote from alice
+
+
+
+
+
+MACTAB II
+
+Multiple Assembly-language Compiler
+Table Formatter.
+
+
+Ross Nealon
+
+University of Wollongong.  Recent mods. by Peter Lamb
+
+University of Melbourne
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GENERAL DESCRIPTION.  MACTAB is one of the companion programs  to
+the  MAC  cross-assembler.  Its purpose is to aid the user in the
+formatting and production of  a  description  file  for  the  MAC
+cross-assembler.   This file is expected to be an absolute binary
+data  file,  containing  a  concise  description  of  the  target
+machines  architecture,  the  desired  format  of  the  assembly-
+language source line, and other  necessary  details.   All  error
+messages  are  reported  to  the standard output, and are flagged
+with the line number of the description line in error.  Any error
+will abort production of the description file.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TERMINOLOGY.  An r-file is a file containing a formatted descrip-
+tion  of  a machine for the MAC cross-assembler.  A d-file is the
+(almost) human-readable input to mactab.  An opcode  symbolic  is
+the  symbolic label chosen to represent a particular instruction.
+Thus - 'sub' may be chosen to mean the  subtraction  instruction.
+The  opcode  class is a number, which describes to which category
+of instructions this particular symbolic  belongs.   Classes  may
+represent   addressing  modes,  or  instruction  types,  such  as
+branches, loads and stores.  A label class is  a  symbolic  which
+groups together labels which have special properties, for example
+register names or branch conditions.  A format  descriptor  is  a
+concise  description of a binary instruction, giving the location
+of the argument fields within the instruction, and the  width  of
+the fields.  There must exist one format descriptor for each pos-
+sible binary instruction format.  The  argument  picture  is  the
+part  of  the  source line after the symbolic opcode. The picture
+contains expressions, which are evaluated to  form  arguments  to
+the  instruction  being  assembled.   The  picture can be used to
+recognise different classes of opcodes.  Thus - '#123' might mean
+immediate  mode,  while  '123' might mean the contents of address
+123.  Labels are defined as standard MAC labels, consisting of at
+least one alpha character, from the set {a-z . _} and can option-
+ally be followed by one to seven alphanumerics, from the set {a-z
+. _ 0-9}.  MACTAB allows the user to pre-define labels, that is -
+to assign a value to a label.  This label  thereafter  cannot  be
+redefined, and has its assigned value in any expression.  Mac lo-
+cal symbols (those starting with '`') cannot  be  predefined.   A
+label may be assigned to be a member of one or more label classes
+(A class name is of the same form as a  label).   Classed  labels
+are  generally used for naming registers etc. where a general ex-
+pression may not be desirable.  Literals are special labels, that
+are  defined  as  reserved, and have no value. Literals cannot be
+used in expressions, but are useful for recognising different ar-
+gument pictures.  Thus, if 'x' is defined as literal, the picture
+'expr,x' would  indicate  that  an  expression  then  comma  then
+literal  'x'  are required in that order for a succesful parse of
+that source line.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SYNOPSIS.  mactab  [-lnfx] [-hheader] d-file  [r-file]
+
+
+Input description source code.  Output filename.
+
+
+Only the  source  file  name  is  required.   MACTAB  reads  from
+'source'  until  end-of-file or the 'end' section is encountered.
+MACTAB then collects individually compiled sections,  and  writes
+them  to  the file 'r-file' if one was specified.  Any error will
+abort production of the r-file, but will continue scan of source.
+-l:     produce  a  listing which shows groups         of opcodes
+arranged by the groups         of argument pictures  allowed  for
+them.
+
+-f:     (implies -l) additionally supply a  list          of  all
+the binary output forms of the         instructions.          The
+output is interpreted as:
+
+        0  or  1  bits  produced  by  'o',  'n'  or  'v'  formats
+        a - m   bits generated by args a - m, as is         A - M
+bits generated by args a - m, PC relative          ____    Under-
+lined  --  bit-field  swapped first half         underlined, last
+half plain.
+
+-x:     (implies -l) also provide the  information          given
+by  -l  in a cross-reference form.          All the argument pic-
+tures are printed and         numbered, and  then  a  per  opcode
+table         of allowed arguments is printed. '**'         means
+that combination is illegal.
+
+-n:     produce the output in a form for n/troff         to  pro-
+duce a pretty listing complete         with emboldening etc.
+
+
+
+
+SOURCE FORMAT.  The r-file  source  description  is  made  up  of
+several  distinct  parts, two of which are optional.  These parts
+are called SECTIONS.  The order of the sections is not  critical,
+but  some  sections require that other sections be previously de-
+fined.  It is suggested that the user follow  the  given  section
+ordering  and  internal  arrangement.   A section has the general
+form:-
+            section-name
+            .
+            .
+            <description>
+            .
+            .
+            %
+
+
+The '%' at the end indicates end-of-section.   The  section-names
+and  end-of-section  character  must  begin  in column one of the
+source line.  Any line may contain a comment, introduced  by  ';'
+and  continuing to the end of the line. Empty lines are permitted
+only if the first char is a ';'.
+
+
+
+
+
+
+
+
+HEADER SECTION.  The header section generally describes the  tar-
+get machine's architecture to MAC.  A header section MUST be sup-
+plied.  This section produces the header record at the  beginning
+of  each  r-file.  MACTAB allows the definition of special pseudo
+opcodes for the definition of constants during the assembly  pro-
+cess.  These opcodes, called Define Constant (dc) opcodes, can be
+given one extra identifying character, appended to the 'dc'.  dc4
+dcf     dc.
+dcb     dch     dc_ The identifying character must be a legal al-
+phanumeric, so that the whole dc opcode forms a legal MAC label.
+
+
+Each dc can be constructed  to  define  constants  of  particular
+length and/or format.  Thus - 'dcb' may be declared to define one
+byte of storage with a constant in it, 'dch' to  define  a  half-
+word  constant, 'dcw' to define a full-word constant.  The source
+line required is:- dc      <character>    <format>  The  required
+<format>  field  is  described  in  detail  later in this manual.
+Please refer to the FORMATS section for this description.
+
+
+MACTAB and MAC allow the user to define a default dc,  which  has
+no  identifying  character.  The  source line required is:- defmt
+<format> Where <format> is as described later.
+
+
+For the use of loaders handling MAC output, perhaps from a  range
+of  different  machines, the magic number put into the m.out file
+may be specified here.  The magic number  defaults  to  MWORD  in
+m.out.h.  magic   <value>
+
+
+Program counter incrementation is important for addressing  rela-
+tive  to the program counter.  The pc can be pre-incremented (be-
+fore an instruction is executed) or  post-incremented  (after  an
+instruction   is  executed).   Declaration  is  as  follows:-  pc
+post           OR
+pc      pre
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The assembler requires the width of the basic address unit (byte)
+in bits. Declaration is:- byte    <width> Where <width> is a con-
+stant (numeric) with a value equal to the byte width.
+
+Similarly - the assembler needs to know the number of  bytes  per
+word.   It's  definition  is:- word    <length> Where <length> is
+the number of bytes per word.
+
+
+The address width of the machine (in bits) may also be  selected.
+This controls the format of the address field of the listing. The
+default is 16.  addr    <value>
+
+
+For machines where the start of an instruction must  be  on  some
+multiple  of  a basic unit, but not all instructions are equal in
+length to that multiple (you don't believe that such machines ex-
+ist  ?? Ho, Ho).  Mac provides padding to make up the difference.
+Instr tells mac how long (in b.u's) an instruction is. Default is
+1  b.u.  Bind binds instructions to 'instr' boundaries.  The pad-
+ding is always with b.u.'s of value 0.  bind addr    <value>
+
+
+The user is requested to supply some opcode value that is treated
+as illegal by the target machine.  If none is supplied - zero (0)
+is assumed.  This is now superseded, and produces only a warning.
+The declaration is:- ii      <value>
+
+
+MAC allows the user to supply a string of up to thirty characters
+that  is printed at the head of each page generated by MAC (list-
+ings and so on).  This is optional.  mac     "Title string"
+
+
+MAC allows the user to give a page length in lines  for  listings
+and  so  on. This is specified as a number of lines.  The default
+is 60.  page    <lines>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A typical declaration is illustrated below.  The format  descrip-
+tors on the define constant lines are described later.
+
+header pc      post byte    8 word    2 dc       b        a:8  dc
+f        a:16  defmt            a:8  mac     "Dummy machine" page
+60 ii      0xff %
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+LITERALS SECTION.  The literals section allows definition of  the
+special  class  of labels called literals.  Literals are standard
+MAC labels that have been defined as reserved, and have no  value
+assigned  to  them.   Literals cannot be used in expressions, but
+are useful in an instructions argument field for recognising dif-
+ferent pictures.  A literal cannot be redefined as a label with a
+value.  A typical definition may be:-
+
+literals x y a %
+
+The literals section (if needed) MUST appear before the args sec-
+tion.   This  section  is  optional and may be totally omitted if
+desired.
+
+
+
+LABELS SECTION.  This is the only other optional  section.   This
+section  allows  the user to pre-define up to NSYM (see mactab.h)
+labels and assign them values.  Mac local symbols (those starting
+with '`') may not be predefined.  These labels will always be de-
+fined to all users of the r-file, and so provide a mechanism  for
+remembering frequently used addresses or values, such as register
+names or subroutines in the monitor Read-Only-Memory.  The labels
+are  defined  to  have non-relocatable values.  This section must
+appear before the 'args' and the 'classes' section if classed la-
+bels  are to be used (see section on label classes).  The defini-
+tion is:- label    <value> Where <value> is a legal MAC constant.
+A typical section definition is:-
+
+labels adc     4 nul     0 tty     0xc0fe mask    0777 %
+
+
+
+CLASSES SECTION.  This section is the last optional section.  Its
+purpose is to bind some of the symbols defined in the labels sec-
+tion into classes. A label may be bound to any number of  classes
+from zero up to the number of classes defined. The number of per-
+mitted classes is equal to the number of  bits  in  a  'C'  'int'
+variable  i.e.  16  on  PDP-11's, 32 on VAX, Interdata 8/32, 3220
+etc. If a label is not mentioned in this section, then it is con-
+sidered an argument string where a label of a class of which they
+are  a  member  is  specified.    A   class   definition   is   :
+<classname>     <label1>        <label2>        <label3>       or
+<classname>     <label4>,<label5>,<label6>
+A classes section may be:
+
+classes
+intreg  r0,r1,r2,r3
+fpreg   fr0,fr2
+index   ir0,ir1
+%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FORMATS SECTION.  This section describes the format of the binary
+instruction  (or data for a define constant) to MAC.  Generally -
+each class of instructions (zero page, pc relative, register  in-
+dexed etc) will have a seperate format descriptor.  Each descrip-
+tor can define one instruction or data format.   Each  descriptor
+is made up of field descriptors, called subset descriptors.  Each
+subset is defined as follows:- <subset-name>:<subset-width>
+
+Each subset name is one identifying character.   The  letter  'o'
+means  opcode  value,  '!' means the current value of the program
+counter, a '#' means a constant will follow, and the letters  'a'
+to  'm'  mean  the values of argument expressions one to thirteen
+respectivly.  The special subset name 'v'  indicates  a  selected
+value  is  to be used.  The mechanism for selecting this value is
+described later in the argument section.   The  subset  name  'n'
+means  the  next (least significant) number of bits of the opcode
+value.  Pre-fixing the subset names 'a' to 'm'  with  the  letter
+'p'  indicates  that  this  argument  should be assembled program
+counter relative.  That is - the value assembled is the value  of
+the  expression  minus the current value of the location counter.
+Pre-fixing the subset names 'a' to 'm'  with  the  special  field
+'r<n>' where <n> is a decimal constant, implies that the argument
+expression should be assembled  with  the  most  significant  <n>
+(number)  of bits in the expressions value swapped with the least
+significant <n> bits.  This format prefix assumes that  the  max-
+imum  length of the expression's value will be two times the con-
+stant <n>.  The name  'o'  implies  assemble  the  value  of  the
+current opcode being assembled here.  Then 'o:8' implies that the
+opcode value should be assembled in the next 8  bits  of  memory.
+Thus  'a:16'  means  assemble  argument 'a' (argument one) in the
+next 16 bits, '#123:16' means assemble the decimal  constant  123
+in  the  next 16 bits, 'pa:8' means argument one made pc relative
+in the next 8 bits, 'r8a:16' means assemble argument  one  in  16
+bits,  with  the  first  8 bits and the next 8 bits swapped.  The
+form 'n:6' requests the least significant (next) six bits of  the
+opcode  value  to  be assembled in six bits.  The opcode value is
+then shifted right by six bits.  The  form  'v:3'  indicates  the
+next  (least sig.) three bits of the selected value should be as-
+sembled in a field three bits wide.  This action  is  similar  to
+that  of  the  'n'  subset  name, except that MAC uses a selected
+value, and not the opcode value.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The full descriptor is made  up  of  several  subset  descriptors
+grouped  together, optionally separated by white space.  |-------
+-----------------------| | opcode | arg 1 |    arg 2    |  |-----
+-------------------------|
+    8        8         16            (bits)
+
+The above instruction may be described as:-
+
+o:8 a:8 b:16
+
+Each descriptor must be prefixed with  a  number  indicating  the
+number  of  arguments  to this instruction, blanks/tabs, then the
+format descriptor.  2       o:8 a:8 b:16
+
+A typical definition may be:-
+
+formats 0       o:8 2       o:8 b:4 a:12 1       #0xf:4 o:4 a:8 1
+o:6  a:12  1        a:4 o:4 #0x12:8 1       o:8 r4a:8 1       o:8
+pa:8 2       n:7 v:3 o:3 a:3 b:16 1       o:8 a:8 !:8 %
+
+
+MACTAB scans each format descriptor for validity, and reports any
+inconsistencies.   The  total  width  of the format descriptor in
+bits must be an even multiple of the width of the  basic  address
+unit  (byte). For this reason, the header section must be defined
+before the  formats  section.   Each  descriptor  is  assigned  a
+number,  starting  at  zero  (0) and being incremented by one for
+each new descriptor.  These logical numbers are the  only  method
+of referring to a format descriptor.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OPCODES SECTION.  This section is used to  describe  all  of  the
+possible  opcode  symbolics  (except the pseudo opcodes which are
+always defined) and the values of each symbolic.  Each  different
+argument picture may be used to select a new opcode class (a par-
+ticular value out of a class of values).  Thus - the construct
+
+                sub   expression may select a value from  a  list
+for the 'sub' instruction, while the construct
+
+                sub   #expression may be set  to  select  another
+value from the same list for the 'sub' instruction.  The table is
+set out as lines of triples enclosed in parentheses.  Each triple
+corresponds to a legal opcode value. The first member of the tri-
+ple is the opcode class. If this value matches the  opcode  class
+value generated by the argument scan, the triple is used for gen-
+erating the opcode.  If there is no triple matching the class re-
+turned  by  the  argument scan, then this combination of argument
+and opcode is illegal.  The second member of the  triple  is  the
+number  of  a format descriptor to use in assembling the instruc-
+tion, if no other descriptor is selected (see argument  section).
+The  third member of the triple is the value used by the instruc-
+tion formatter for the opcode.
+
+opcodes  add     (0  0  0x10)  (2  1  0x30)  jmp     (3  2  0x7f)
+sub     (0 0 0x50) (2 1 0x70) %
+
+In the above example there are two classes for each  of  the  in-
+structions 'add' and 'sub', the first one selected when the class
+returned by the argument is 0, and the second selected  when  the
+class  returned  is  2.  Any argument which selects a class other
+than 0 or 2 is illegal with 'add'  or  'sub'.  For  the  case  of
+'add',  if  the class is 0, then the format selected is format 0,
+provided the argument did not preselect the format, and  the  op-
+code  value made available to the formatter is '0x10'.  The 'jmp'
+instruction will only be legal with argument  pictures  returning
+class  3.  There is no limit on the number of opcodes or classes.
+However, if the listing options  are  to  operate  correctly  the
+largest class should be one less than the wordsize of the machine
+(max class no. should be 15 on a  PDP-11,  or  32  on  a  VAX  or
+PERKIN-ELMER  8/32  or  3220). This limit may be raised in future
+releases.  The reader intending to create  d-files  should  first
+look  at  some  of  the d-files supplied with MAC.  ARGS SECTION.
+This section is responsible for  the  generation  of  the  parser
+table  used by MAC.  This section takes the user's description of
+the argument pictures and using a top-down recursive descent  al-
+gorithm builds a finite-state parser table.  Each picture is made
+up of literals, the reserved keyword 'expr'  meaning  an  expres-
+sion, delimiters (commas and so on) and some required characters,
+such as a '#' meaning immediate mode, '$' meaning  zero-page  ad-
+dressing,  '@'  meaning  indexed and so on.  These characters are
+'required' in the sense that they must be present in the argument
+picture for MAC to recognise that format of picture.  Of course -
+it is totally up to the user as to  which  characters  will  mean
+what.   MACTAB  recognises  the keyword 'expr', and where-ever it
+occurs, MACTAB substitutes a call to an expression  parser,  that
+is  pre-defined.   MACTAB also recognises label class names which
+have been previously defined in the CLASSES section. Where-ever a
+class name appears in the argument picture, a label bound to that
+class may appear in the source of an assembly program.  The  user
+can  associate a series of actions to perform upon recognition of
+an argument picture.  The  actions  currently  implemented  are:-
+Select  a  new  format descriptor Select a class of opcode values
+for this symbolic Select a value (numeric constant) to be used in
+formatting the instruction.
+
+Typical argument pictures could be:- x expr , x expr , (  y  )  #
+expr a , expr ( $ expr ) , y fpreg , expr intreg , fpreg
+
+; Where intreg and fpreg are classed ; labels (see  CLASSES  sec-
+tion) Selection of actions is by addition of four constants after
+the picture but on the same source  line.   The  first  describes
+which  action to take (if any).  Each bit in the constant means a
+particular argument.  If a bit is set, MAC will  try  to  perform
+the  requested  action.   The remaining three constants are argu-
+ments to the actions, specifying such things as which new  format
+descriptor,  which opcode class , and the actual numeric value (8
+bits max) to use when selecting a value.  If the  bits  are  num-
+bered  0  as  the least-significant bit (right-most), then if bit
+zero is set, MAC will select a new format descriptor, and  assume
+the  fourth  argument constant will be the new format descriptor.
+If bit one is set, MAC will select a class of opcode values, that
+class  being  the  value  of  the  third constant. If no class is
+selected, the default is class 0.  If bit two is set, MAC assumes
+the  second constant is an 8-bit value to use somehow.  Selection
+actions are optional.  The actions are selected by preceeding the
+four  constants  with a brace '{'.  All four constants are needed
+after the brace.  Constants should be seperated by blanks  and/or
+tabs.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Several pictures should always be defined by the user.  The  pic-
+ture " " (a string) should be defined, for the dc and title pseu-
+do opcodes.  A blank line is equivalent to the  case  of  an  in-
+struction  having  no argument picture.  See appendix 1 for exam-
+ples of real definitions.
+
+
+
+
+
+END SECTION.  The end section is needed to  actually  create  the
+named  r-file.  Upon recognition of this section, MACTAB collects
+the compiled sections, and writes them  in  their  correct  order
+onto  the r-file.  Any errors except the end section missing will
+cause the r-file not to be produced.  If an  end-of-file  is  en-
+countered  before the end section, MACTAB reports this as a warn-
+ing only, and assumes an end section.  In this case only,  an  r-
+file  will  be produced.  No terminating '%' is required for this
+section.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3               362431460   99    31    100644  2608      `
+>From bart Wed Nov 26 10:48 EST 1980 remote from alice
+	R-FILE  WRITEUP.		1/3/79
+
+	Motorola 6800			(m6800)
+
+
+  Addressing modes.
+  ---------- -----
+
+	expression(x)			address memory relative to
+					the index register 'x'.
+
+	#expression			generate an immediate mode
+					instruction.
+
+	expression			address memory directly
+
+	a,expression(x)			address memory offset by x,
+					and operate on the a-register.
+
+	b,expression(x)			address memory offset by x,
+					and operate on the b-register.
+
+	a,#expression			immediate mode and a-register.
+
+	b,#expression			immediate mode and b-register.
+
+	a,expression			a-register and memory.
+
+	b,expression			b-register and memory.
+
+	a				a-register only
+
+	b				b-register only
+
+
+
+  Constant definition.
+  -------- ----------
+
+
+	dca	expression		defines a 16 bit constant,
+					value=expression.
+
+	dcb	expression		defines an 8 bit constant,
+					value=expression.
+
+	dc	expression		defines an 8 bit constant.
+	dc	"string"		defines a set of characters
+					one per consecutive byte
+					of memory.
+
+  Opcode Symbolics and Functions.
+  ------ --------- --- ---------
+
+
+	nop		no operation
+	tap		transfer a to cond code
+	tpa		transfer cc to a
+	inx		increment x register
+	dex		decrement x
+	clv		clear v-bit
+	sev		set v-bit
+	clc		clear carry bit
+	sec		set carry
+	cli		clear interrupt
+	sei		set interrupt
+	sba		subtract a and b
+	cba		compare a and b
+	tab		transfer a to b
+	tba		transfer b to a
+	daa		decimal adjust
+	aba		add b to a
+	bra		branch
+	bhi		branch on high
+	bls		branch if lower or same
+	bcc		br. if carry clear
+	bcs		br. if carry set
+	bne		br not equal
+	beq		br if equal
+	bvc		br if overflow clear
+	bvs		br if    "     set
+	bpl		br if plus
+	bmi		br if minus
+	bge		br greater or equal to zero
+	blt		br if less than zero
+	ble		br less or equal to zero
+	tsx		transfer sp to index x
+	ins		increment sp
+	pul		pop off stack
+	des		decrement sp
+	txs		transfer x to sp
+	psh		push onto stack
+	rts		return from subroutine
+	rti		return from interrupt
+	wai		wait for interrupt
+	swi		software interrupt
+	neg		negate
+	com		complement
+	lsr		logical shift right
+	ror		rotate right
+	asr		arithmatic shift right
+	asl		arithmatic shift left
+	rol		rotate left
+	dec		decrement
+	inc		increment
+	tst		set condition code
+	jmp		unconditional branch
+	clr		set to zero
+	sub		subtract
+	cmp		compare
+	sbc		subtract with carry
+	and		logical and
+	bit		bit test
+	lda		load
+	sta		store
+	eor		exclusive or
+	adc		add with carry
+	ora		or
+	add		addition
+	cpx		compare index reg.
+	bsr		branch to subroutine
+	jsr		jump to subroutine
+	lds		load stack pointer
+	ldx		load x reg.
+	sts		store sp
+	stx		store x reg.
+
+4               362431462   99    31    100644  2868      `
+>From bart Wed Nov 26 10:48 EST 1980 remote from alice
+header
+pc	pre
+byte	8
+word	1
+addr	16
+dc	a	a:16
+dc	b	a:8
+defmt		a:8
+mac	"MOTOROLA 6800"
+%
+literals
+a
+b
+x
+%
+args
+expr(x)		{ 0b0010 0 2 1
+#expr		{ 0b0010 0 4 2
+expr		{ 0b0010 0 3 0
+a,expr(x)	{ 0b0010 0 6 0
+b,expr(x)	{ 0b0010 0 9 0
+a,#expr		{ 0b0010 0 5 0
+b,#expr		{ 0b0010 0 8 0
+a,expr		{ 0b0010 0 7 2
+b,expr		{ 0b0010 0 10 2
+a		{ 0b0010 0 0 0
+b		{ 0b0010 0 1 0
+""
+
+%
+formats
+0	o:8
+1	o:8a:8
+1	o:8a:16
+1	o:8pa:8
+%
+opcodes
+nop	(0 0 0x01)  
+tap	(0 0 0x06)  
+tpa	(0 0 0x07)  
+inx	(0 0 0x08)  
+dex	(0 0 0x09)  
+clv	(0 0 0x0a)  
+sev	(0 0 0x0b)  
+clc	(0 0 0x0c)  
+sec	(0 0 0x0d)  
+cli	(0 0 0x0e)  
+sei	(0 0 0x0f)  
+sba	(0 0 0x10)  
+cba	(0 0 0x11)  
+tab	(0 0 0x16)  
+tba	(0 0 0x17)  
+daa	(0 0 0x19)  
+aba	(0 0 0x1b)  
+bra	(3 3 0x20)  
+bhi	(3 3 0x22)  
+bls	(3 3 0x23)  
+bcc	(3 3 0x24)  
+bcs	(3 3 0x25)  
+bne	(3 3 0x26)  
+beq	(3 3 0x27)  
+bvc	(3 3 0x28)  
+bvs	(3 3 0x29)  
+bpl	(3 3 0x2a)  
+bmi	(3 3 0x2b)  
+bge	(3 3 0x2c)  
+blt	(3 3 0x2d)  
+bgt	(3 3 0x2e)  
+ble	(3 3 0x2f)  
+tsx	(0 0 0x30)  
+ins	(0 0 0x31)  
+pul	(0 0 0x32)  (1 0 0x33)  
+des	(0 0 0x34)  
+txs	(0 0 0x35)  
+psh	(0 0 0x36)  (1 0 0x37)  
+rts	(0 0 0x39)  
+rti	(0 0 0x3b)  
+wai	(0 0 0x3e)  
+swi	(0 0 0x3f)  
+neg	(0 0 0x40)  (1 0 0x50)  (2 1 0x60)  (3 2 0x70)  
+com	(0 0 0x43)  (1 0 0x53)  (2 1 0x63)  (3 2 0x73)  
+lsr	(0 0 0x44)  (1 0 0x54)  (2 1 0x64)  (3 2 0x74)  
+ror	(0 0 0x46)  (1 0 0x56)  (2 1 0x66)  (3 2 0x76)  
+asr	(0 0 0x47)  (1 0 0x57)  (2 1 0x67)  (3 2 0x77)  
+asl	(0 0 0x48)  (1 0 0x58)  (2 1 0x68)  (3 2 0x78)  
+rol	(0 0 0x49)  (1 0 0x59)  (2 1 0x69)  (3 2 0x79)  
+dec	(0 0 0x4a)  (1 0 0x5a)  (2 1 0x6a)  (3 2 0x7a)  
+inc	(0 0 0x4c)  (1 0 0x5c)  (2 1 0x6c)  (3 2 0x7c)  
+tst	(0 0 0x4d)  (1 0 0x5d)  (2 1 0x6d)  (3 2 0x7d)  
+jmp	(2 1 0x6e)  (3 2 0x7e)  
+clr	(0 0 0x4f)  (1 0 0x5f)  (2 1 0x6f)  (3 2 0x7f)  
+sub	(5 1 0x80)  (6 1 0xa0)  (7 2 0xb0)  (8 1 0xc0)  (9 1 0xe0)  (10 2 0xf0)
+cmp	(5 1 0x81)  (6 1 0xa1)  (7 2 0xb1)  (8 1 0xc1)  (9 1 0xe1)  (10 2 0xf1)
+sbc	(5 1 0x82)  (6 1 0xa2)  (7 2 0xb2)  (8 1 0xc2)  (9 1 0xe2)  (10 2 0xf2)
+and	(5 1 0x84)  (6 1 0xa4)  (7 2 0xb4)  (8 1 0xc4)  (9 1 0xe4)  (10 2 0xf4)
+bit	(5 1 0x85)  (6 1 0xa5)  (7 2 0xb5)  (8 1 0xc5)  (9 1 0xe5)  (10 2 0xf5)
+lda	(5 1 0x86)  (6 1 0xa6)  (7 2 0xb6)  (8 1 0xc6)  (9 1 0xe6)  (10 2 0xf6)
+sta	(6 1 0xa7)  (7 2 0xb7)  (9 1 0xe7)  (10 2 0xf7)
+eor	(5 1 0x88)  (6 1 0xa8)  (7 2 0xb8)  (8 1 0xc8)  (9 1 0xe8)  (10 2 0xf8)
+adc	(5 1 0x89)  (6 1 0xa9)  (7 2 0xb9)  (8 1 0xc9)  (9 1 0xe9)  (10 2 0xf9)
+ora	(5 1 0x8a)  (6 1 0xaa)  (7 2 0xba)  (8 1 0xca)  (9 1 0xea)  (10 2 0xfa)
+add	(5 1 0x8b)  (6 1 0xab)  (7 2 0xbb)  (8 1 0xcb)  (9 1 0xeb)  (10 2 0xfb)
+cpx	(2 1 0xac)  (3 2 0xbc)  (4 2 0x8c)  
+bsr	(3 3 0x8d)  
+jsr	(2 1 0xad)  (3 2 0xbd)  
+lds	(2 1 0xae)  (3 2 0xbe)  (4 2 0x8e)  
+ldx	(2 1 0xee)  (3 2 0xfe)  (4 2 0xce)  
+sts	(2 1 0xaf)  (3 2 0xbf)  
+stx	(2 1 0xef)  (3 2 0xff)  
+%
+end
+

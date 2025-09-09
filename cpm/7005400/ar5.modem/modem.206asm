@@ -1,0 +1,2018 @@
+;MODEM.ASM V2.06, by Ward Christensen
+;	(revised 5/7/81)
+;
+;CP/M - CP/M file transfer program, and terminal program.
+;
+;NOTE: This file will assemble, without need for editing,
+;to work with a PMMI MM-103 modem, 2 mHz system clock, and
+;no front panel display.  See equates for other modems and
+;additional options.
+;
+* * * * * * * * * * * * * * * * * * * * * * * * *
+*						*
+*    This program documented in "MODEM.DOC"	*
+*						*
+* * * * * * * * * * * * * * * * * * * * * * * * *
+* This program was "MODEM.ASM" but is 		*
+* temporarily named "MODEM2.ASM" so people	*
+* will realize it is an enhancement of the	*
+* original program "MODEM.ASM" on CP/M User's	*
+* group disk 25.				*
+* * * * * * * * * * * * * * * * * * * * * * * * *
+;
+;Modifications/fixes (in reverse order to minimize
+;reading time):
+;
+;	05/07/81
+;Added traps for ambiguous file name or none at all.
+;Rearranged equates for greater clarity.  Cleaned up
+;file.  (KBP)
+;
+;	05/02/81
+;Added the ability to display modem status on a
+;front panel, if one has one (such as an Ithaca
+;Intersystems DPS-1).
+;	1. FRNTPNL EQU TRUE turns it on
+;	2. PANEL EQU 0FFH (sets up port address
+;		of front panel)  (John Mahr)
+;
+;	05/01/81
+;Restored HELP display.  Lower case chars and tabs
+;had been taken out.  Added typical external port
+;equates and init values.  Rearranged order of
+;modification/fixes info.  (KBP)
+;
+;	04/18/81
+;Added detection of framing errors, overrun errors,
+;parity errors (if parity is used) for the receive
+;file routine.  This feature is ONLY active for
+;the PMMI modem, since I do not know what the modem
+;status bits are for IDS and D.C. Hayes modems.
+;If there is one of the mentioned errors, the line
+;will be purged for that block and a NAK will be
+;sent to the sender for that block.  A message to
+;operator will also be displayed.  (By John Mahr)
+;
+;	05/27/80
+;Eliminated control-X cancel of send feature, at
+;suggestion of Ward Christensen. A line glitch could
+;cause premature abort when this feature was active.
+;Added equates for FALSE and TRUE to make assembly
+;options clearer. Removed H8 port equates (they can
+;be put in external modem equates). (KBP)
+;
+;	12/06/79
+;Corrected error in HELP file. Said T.110, now says
+;TO.110. By Ward Christensen. Corrected receive file
+;routine so terminal or echo mode works after file
+;transfer in quiet mode. Moved checks for "H" and
+;"X" options so modem is not reinitialized. (KBP)
+;
+;	08/06/79
+;Added equates for external modem (not S-100 plug-in)
+;(KBP)
+;
+;	08/05/79
+;Added D.C. Hayes modem support by Jim Bell  (KBP)
+;
+;	07/24/79
+;Move initialize local stack to beginning of program
+;so default stack is not used. Add conditional assembly
+;option to terminal routine for timeshare systems.
+;Correct error in local abort routine (was looking for
+;control-E - now correctly looks for control-X). Add
+;register saves to CONOUT, KEYIN and keyboard status
+;routines, as some CBIOS routines clobber them. (KBP)
+;
+;	07/01/79
+;Modified program to allow for non-standard versions of
+;CP/M. All references to entries into CP/M should be made
+;relative to the variable symbol called "BASE". For example,
+;the equate to BDOS should be BASE+5 instead of 5. Base
+;will be set to 0 when the variable STDCPM is set to TRUE.
+;(Bob Mathias).
+;
+;	05/24/79
+;Fixed missing return instruction at end of
+;initialization routine.  (KBP)
+;
+;	05/22/79
+;Added feature to make receive file routine say
+;file successfully opened, when in quiet mode.
+;Moved initial 'gobble garbage inputs' to before
+;command CPI's so all modes are cleared. Changed
+;initial send wait to 80 secs to allow more time
+;for receiving end to come up. Added 'H' after msg
+;that shows number of sectors in extent about to
+;be sent.  (KBP)
+;
+;	05/09/79
+;Allow 'T' and 'E' sub-options to go to terminal
+;or echo mode after transferring a file.  (WLC)
+;
+;	04/26/79
+;Rewritten by Ward Christensen to combine
+;improvements to the original made by Ward
+;and by Keith Petersen, W8SDZ, and suggestions
+;by Jim Bell which Keith implemented.  See
+;MODEM.DOC for additional historical
+;information and documentation.
+;
+;	09/23/77
+;Originally written by Ward Christensen
+;
+;	--------------
+;
+;NOTE: If you add improvements or otherwise update
+;this program, please modem a copy of the new file
+;to "TECHNICAL CBBS" in Dearborn, Michigan - phone
+;313-846-6127 (110, 300, 450 or 600 baud).  Use the
+;filename MODEM.NEW.	(KBP)
+;
+;	--------------
+;Define FALSE and TRUE
+;
+FALSE	EQU	0
+TRUE	EQU	NOT FALSE
+;
+STDCPM	EQU	TRUE 	;TRUE, IS STANDARD CP/M
+ALTCPM	EQU	FALSE	;TRUE, IS ALTERNATE CP/M FOR H8 OR TRS80
+;
+	IF	STDCPM
+BASE	EQU	0	;CP/M BASE ADDRESS
+	ENDIF
+;
+	IF	ALTCPM
+BASE	EQU	4200H	;CP/M BASE ADDRESS FOR ALTERNATE CP/M
+	ENDIF
+;
+PMMI	EQU	TRUE 	;TRUE, IS PMMI MODEM
+DCH	EQU	FALSE	;TRUE, IS D.C. HAYES MODEM
+;
+FASTCLK	EQU	FALSE	;TRUE FOR 4 MHZ CLOCK, FALSE FOR 2 MHZ
+FRNTPNL	EQU	FALSE	;FOR FRONT PANEL DISPLAY MAKE TRUE
+;
+	IF	FRNTPNL
+PANEL	EQU	0FFH	;PORT ADDRESS FOR FRONT PANEL
+	ENDIF
+;
+	IF	PMMI
+MODCTLP	EQU	0C0H	;PMMI VALUES
+MODSNDB EQU	1	;BIT TO TEST FOR SEND
+MODSNDR	EQU	1	;VALUE WHEN READY
+MODRCVB EQU	2	;BIT TO TEST FOR RECEIVE
+MODRCVR	EQU	2	;VALUE WHEN READY
+MODDATP EQU	0C1H	;DATA PORT
+BAUDRP	EQU	0C2H	;BAUD RATE OUTPUT
+MODCTL2	EQU	0C3H	;SECOND CTL PORT
+ORIGMOD	EQU	1DH	;8 DATA, NO PARITY, ORIG
+ANSWMOD	EQU	1EH	;8 DATA, NO PARITY, ANSW
+FRMER	EQU	20H	;FRAMING ERROR MASK
+ORUNER	EQU	10H	;OVERRUN ERROR MASK
+PARER	EQU	08H	;PARITY ERROR MASK
+	ENDIF		;PMMI
+;
+	IF	DCH
+MODCTLP	EQU	82H	;D. C. HAYES VALUES
+MODSNDB EQU	2	;BIT TO TEST FOR SEND
+MODSNDR	EQU	2	;VALUE WHEN READY
+MODRCVB EQU	1	;BIT TO TEST FOR RECEIVE
+MODRCVR	EQU	1	;VALUE WHEN READY
+MODDATP EQU	80H	;DATA PORT
+MODCTL2	EQU	81H	;SECOND CTL PORT
+;NOTE: baud rate defaults to 300 - 1 stop bit.
+;Do not change next equates:
+ORIGMOD EQU	86H	;OFF HOOK, 110 BAUD, CAR. ON, ORIG.
+ANSWMOD	EQU	82H	;OFF HOOK, 110 BAUD, CAR. ON, ANSW.
+	ENDIF		;DCH
+;
+;*********************************************************
+;If you are using an external modem (not S-100 plug-in)
+;change these equates for your modem port requirements.
+;Values shown are typical for Horizon II or IMSAI SIO
+;when second serial port is used for the modem.
+;
+INITREQ	EQU	FALSE	;TRUE, IF MODEM PORT INIT. REQ'D
+;
+;If initialization is required these bytes are sent to the
+;serial control port.  Values shown are for 8 data bits,
+;one stop bit, no parity.
+;
+INITC1	EQU	0AAH	;1ST INIT CHAR TO CTL PORT FOR USART
+INITC2	EQU	40H	;2ND  "
+INITC3	EQU	4EH	;3RD  "
+INITC4	EQU	37H	;4TH  "
+;
+	IF	NOT PMMI AND NOT DCH
+MODCTLP	EQU	05H	;PUT YOUR MODEM CONTROL PORT HERE
+MODSNDB	EQU	01H	;YOUR BIT TO TEST FOR SEND
+MODSNDR	EQU	01H	;YOUR VALUE WHEN READY
+MODRCVB	EQU	02H	;YOUR BIT TO TEST FOR RECEIVE
+MODRCVR	EQU	02H	;YOUR VALUE WHEN READY
+MODDATP	EQU	04H	;YOUR MODEM DATA PORT
+	ENDIF		;END OF EXTERNAL MODEM EQUATES
+;*********************************************************
+;
+;Some time-share computers require terminals to
+;have bit 7 high (marking), so in the terminal
+;mode we force it to high if the following option
+;is selected:
+;
+TIMESHR	EQU	FALSE	;TRUE TO MAKE BIT 7 HIGH
+; 
+;Define some other things (normally not changed)
+;
+ERRLIM	EQU	10	;MAX ALLOWABLE ERRORS (10 STANDARD)
+EXITCHR	EQU	'E'-40H ;CTL-E EXIT FROM T OR C
+DISCCHR	EQU	'D'-40H	;CTL-D DISCONNECTS MODEM T/E
+;
+;Define ASCII characters used
+;
+SOH	EQU	1	;START OF HEADER
+EOT	EQU	4	;END OF TRANSMISSION
+ACK	EQU	6	;ACKNOWLEDGE
+NAK	EQU	15H	;NEG ACKNOWLEDGE
+CAN	EQU	18H	;CANCEL
+LF	EQU	10	;LINEFEED
+CR	EQU	13	;CARRIAGE RETURN
+; 
+	ORG	BASE+100H
+;
+;Init private stack
+	LXI	H,0	;HL=0
+	DAD	SP	;HL=STACK FROM CP/M
+	SHLD	STACK	;..SAVE IT
+	LXI	SP,STACK ;SP=MY STACK
+	CALL	START	;GO PRINT ID
+	DB	'MODEM ver 2.06'
+	DB	CR,LF,'$'
+; 
+START	POP	D	;GET ID MESSAGE
+	MVI	C,PRINT
+	CALL	BDOS	;PRINT ID MESSAGE
+;
+;Initialize the JMPS to CP/M BIOS
+;
+	CALL	INITADR
+;
+	LDA	FCB+1	;GET PRIMARY OPTION
+	CPI	'H'	;MODEM H(ELP)?
+	JZ	HELP	;..YES, GIVE HELP
+	CPI	'X'	;MODEM X(AMPLES)?
+	JZ	EXAM	;GIVE EXAMPLES
+;
+;Save primary option, validate secondary opt.
+;
+	CALL	PROCOPT
+;
+;Init the modem or serial port
+;
+	CALL	INITMOD
+;
+;Move the filename from FCB 2 to FCB 1
+;
+	CALL	MOVEFCB
+;
+;Gobble up garbage chars from the line
+;prior to receive or send
+;
+	IN	MODDATP
+	IN	MODDATP
+;
+;JMP to appropriate function
+;
+	LDA	OPTION	;GET PRIMARY OPTION
+;
+	CPI	'C'	;(COMPAT W/EARLIER
+	JZ	TRMECHO	;OPTION "COMPUTER")
+;
+	CPI	'E'	;TERMINAL IN ECHO
+	JZ	TRMECHO	;..MODE?
+;
+	CPI	'T'	;TERMINAL..
+	JZ	TERM	;..MODE?
+;
+	CPI	'D'
+	JZ	DISCONN
+;
+       	CPI	'S'	;SEND..
+	JZ	SENDFIL	;..A FILE?
+;
+	CPI	'R'	;RECEIVE..
+	JZ	RCVFIL	;..A FILE?
+;
+;Invalid option
+;
+	JMP	BADOPT
+;
+* * * * * * * * * * * * * * * * * * * * *
+*					*
+*	TERM: Terminal mode		*
+*					*
+* * * * * * * * * * * * * * * * * * * * *
+;
+;This program simply sends keyed characters
+;down the line, and displays characters
+;received from the line.  This makes it
+;suitable for communication with time sharing
+;computers, CBBS's, or another program
+;running "MODEM E" (echo mode)
+;
+;Type the "EXITCHR" (originally CTL-E) to exit,
+;or the "DISCCHR" (originally CTL-D) to disconnect.
+;
+;A future enhancement will be to write the
+;received data in memory, and allow it to
+;be written to disk
+;
+TERM	CALL	STAT	;LOCAL CHAR KEYED?
+	JZ	TERML	;..NO, CHECK LINE
+	CALL	KEYIN	;GET CHAR
+	CPI	EXITCHR	;TIME TO END?
+	JZ	CKDIS	;YES, CK DISCONN
+	CPI	DISCCHR	;DISCONNECT REQUEST?
+	JZ	DISCONN	;YES, DO IT
+;
+	IF	TIMESHR
+	ORI	80H	;FORCE BIT 7 TO HIGH
+	ENDIF		;TIMESHR
+;
+	OUT	MODDATP	;SEND THE CHAR
+;
+;See if char from line
+;
+	IF	NOT DCH
+TERML	IN	MODCTLP	;READ STATUS
+	ENDIF
+;
+	IF	DCH
+TERML	IN	MODCTL2	;READ STATUS
+	ENDIF
+;
+	IF	FRNTPNL AND PMMI
+	OUT	PANEL	;DISPLAY STATUS
+	ENDIF
+;
+	ANI	MODRCVB	;ISOLATE BIT
+	CPI	MODRCVR	;READY?
+	JNZ	TERM	;..NO, LOOP
+	IN	MODDATP	;READ DATA
+	ANI	7FH	;STRIP PARITY BIT
+	CALL	TYPE	;TYPE IT
+	JMP	TERM	;LOOP
+;
+* * * * * * * * * * * * * * * * * * * * *
+*					*
+*	TRMECHO: Terminal with echo	*
+*					*
+* * * * * * * * * * * * * * * * * * * * *
+;
+;Terminal program with echo - see notes
+;under "TERM" above
+;
+;C A U T I O N   Don't run with both computers
+;in "ECHO" mode - line errors (or any char)
+;will be echoed back and forth ad infinitum.
+;
+	IF	NOT DCH
+TRMECHO	IN	MODCTLP	;GET STATUS
+	ENDIF
+;
+	IF	DCH
+TRMECHO	IN	MODCTL2	;GET STATUS
+	ENDIF
+;
+	IF	FRNTPNL AND PMMI
+	OUT	PANEL	;DISPLAY STATUS
+	ENDIF
+;
+	ANI	MODRCVB	;ISOLATE READY BIT
+	CPI	MODRCVR	;ARE WE READY?
+	JZ	LINECHR	;YES, READ THE CHR
+	CALL	STAT	;CHECK LOCAL KB
+	JZ	TRMECHO	;..NO CHAR
+	CALL	KEYIN	;GET LOCAL CHAR
+	CPI	EXITCHR	;END?
+	JZ	CKDIS	;YES, CK DISCONN, EXIT
+	CPI	DISCCHR	;DISCONN?
+	JZ	DISCONN	;..YES, DO IT.
+	OUT	MODDATP	;SEND CHAR
+	CALL	TYPE	;ECHO IT LOCALLY
+	JMP	TRMECHO	;..AND LOOP
+;
+;Got char from line
+;
+LINECHR	IN	MODDATP	;GET CHAR
+	OUT	MODDATP	;ECHO IT
+	ANI	7FH	;STRIP PARITY BIT
+	CALL	TYPE	;TYPE IT
+	JMP	TRMECHO	;LOOP
+;
+* * * * * * * * * * * * * * * * * * * * *
+*					*
+*	SENDFIL: Sends a CP/M file	*
+*					*
+* * * * * * * * * * * * * * * * * * * * *
+;
+;The CP/M file specified in the modem command
+;is transferred over the phone to another
+;computer running MODEM with the "R" (receive)
+;option.  The data is sent one sector at a
+;time with headers and checksums, and re-
+;transmission on errors.  
+;
+SENDFIL CALL	TRAP	;CHECK FOR NO NAME OR AMBIG. NAME
+	CALL	OPENFIL	;OPEN THE FILE
+	MVI	E,80	;WAIT 80 SEC..
+	CALL	WAITNAK	;..FOR INITIAL NAK
+;
+SENDLP	CALL	RDSECT	;READ A SECTOR
+	JC	SENDEOF	;SEND EOF IF DONE
+	CALL	INCRSNO	;BUMP SECTOR #
+	XRA	A	;ZERO ERROR..
+	STA	ERRCT	;..COUNT
+;
+SENDRPT	CALL	SENDHDR	;SEND A HEADER
+	CALL	SENDSEC	;SEND DATA SECTOR
+	CALL	SENDCKS	;SEND CKSUM
+	CALL	GETACK	;GET THE ACK
+	JC	SENDRPT	;REPEAT IF NO ACK
+	JMP	SENDLP	;LOOP UNTIL EOF
+;
+;File sent, send EOT's
+;
+SENDEOF	MVI	A,EOT	;SEND..
+	CALL	SEND	;..AN EOT
+	CALL	GETACK	;GET THE ACK
+	JC	SENDEOF	;LOOP IF NO ACK
+	JMP	DONE	;ALL DONE
+;
+* * * * * * * * * * * * * * * * * * * * *
+*					*
+*	RCVFIL: Receive a file		*
+*					*
+* * * * * * * * * * * * * * * * * * * * *
+;
+;Received a file in block format as sent
+;by another person doing "MODEM S fn.ft".
+;
+RCVFIL	CALL	TRAP	;CHECK FOR NO NAME OR AMBIG. NAME
+	CALL	ERASFIL	;ERASE THE FILE
+	CALL	MAKEFIL	;..THEN MAKE NEW
+	CALL	ILPRT	;PRINT:
+	DB	'FILE OPEN, READY TO RECEIVE',CR,LF,0
+;
+RCVLP	CALL	RCVSECT	;GET A SECTOR
+	JC	RCVEOT	;GOT EOT
+	CALL	WRSECT	;WRITE THE SECTOR
+	CALL	INCRSNO	;BUMP SECTOR #
+	CALL	SENDACK	;ACK THE SECTOR
+	JMP	RCVLP	;LOOP UNTIL EOF
+;
+;Got EOT on sector - flush buffers, end
+;
+RCVEOT	CALL	WRBLOCK	;WRITE THE LAST BLOCK
+	CALL	SENDACK	;ACK THE SECTOR
+	CALL	CLOSFIL	;CLOSE THE FILE
+	JMP	DONE	;ALL DONE
+;
+* * * * * * * * * * * * * * * * * * * * *
+*					*
+*		SUBROUTINES		*
+*					*
+* * * * * * * * * * * * * * * * * * * * *
+;
+;---->	TRAP: Check for no file name or ambiguous name
+;
+TRAP	LXI	H,FCB+1 ;POINT TO FILE NAME
+	MOV	A,M	;GET FIRST CHAR OF FILE NAME
+	CPI	' '	;ANY THERE?
+	JNZ	ATRAP	;YES, CHECK FOR AMBIGOUS FILE NAME
+	CALL	ERXIT	;PRINT MSG, EXIT
+	DB	'++NO FILE NAME SPECIFIED++',CR,LF,'$'
+;
+ATRAP	MVI	B,11	;11 CHARS TO CHECK
+;
+TRLOOP	MOV	A,M	;GET CHAR FROM FCB
+	CPI	'?'	;AMBIGUOUS?
+	JZ	TRERR	;YES, EXIT WITH ERROR MSG
+	INX	H	;POINT TO NEXT CHAR
+	DCR	B	;ONE LESS TO GO
+	JNZ	TRLOOP	;NOT DONE, CHECK SOME MORE
+	RET		;NO AMBIGUOUS NAME, RETURN
+;
+TRERR	CALL	ERXIT	;PRINT MSG, EXIT
+	DB	'++CAN''T USE WILD CARD OPTIONS++',CR,LF,'$'
+;
+;---->	RCVSECT: Receive a sector
+;
+;Returns with carry set if EOT received.
+;
+RCVSECT	XRA	A	;GET 0
+	STA	ERRCT	;INIT ERROR COUNT
+;
+RCVRPT:
+	IF	PMMI
+	XRA	A	;GET 0
+	STA	ERRCDE	;CLEAR RECEIVE ERROR CODE
+	ENDIF
+;
+	LDA	QFLG	;QUIET?
+	ORA	A
+	JZ	RCVSQ	;YES, NO STAT MSG.
+	CALL	ILPRT	;PRINT:
+	DB	'AWAITING #',0
+	LDA	SECTNO	;GET SECTOR #
+	INR	A	;(REAL INR LATER)
+	CALL	HEXO	;PRINT IN HEX
+	CALL	CRLF	;..THEN CRLF
+;
+RCVSQ	MVI	B,10	;10 SEC TIMEOUT
+	CALL	RECV	;GET SOH/EOT
+	JC	RCVSTOT	;TIMEOUT
+;
+	IF	PMMI
+	CALL	RCVERR	;TRANS ERROR?
+	JC	RCVDERR	;CARRY ON IF ERROR
+	ENDIF
+;
+	CPI	SOH	;GET SOH?
+	JZ	RCVSOH	;..YES
+;
+;Earlier versions of MODEM prog sent some nulls -
+;ignore them
+;
+	ORA	A	;00 FROM SPEED CHECK?
+	JZ	RCVSQ	;YES, IGNORE IT
+	CPI	EOT	;END OF TRANSFER?
+	STC		;RETURN WITH CARRY..
+	RZ		;..SET IF EOT
+;
+;Didn't get SOH or EOT - 
+;
+	MOV	B,A	;SAVE CHAR
+	LDA	VSEEFLG	;VIEWING..
+	ORA	A	;..MODE?
+	JZ	RCVSEH	;YES, PRT.MSG
+	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	RCVSERR	;YES, SKIP MSG
+;
+RCVSEH	MOV	A,B	;GET CHAR
+	CALL	HEXO	;SHOW IN HEX
+	CALL	ILPRT	;PRINT:
+	DB	'H RCD, NOT SOH',CR,LF,0
+;
+;Didn't get valid header - purge the line,
+;then send NAK.
+;
+RCVSERR	MVI	B,1	;WAIT FOR 1 SEC..
+	CALL	RECV	;..WITH NO CHARS
+	JNC	RCVSERR	;LOOP UNTIL SENDER DONE
+	LDA	ERRCT	;ABORT IF..
+	INR	A	;..WE HAVE REACHED..
+	STA	ERRCT	;..THE ERROR..
+	CPI	ERRLIM	;..LIMIT?
+	JC	RCVCKQ2	;..NO, TRY AGAIN (FIRST, SEND NAK)
+;
+;10 errors in a row - 
+;
+	LDA	VSEEFLG	;VIEWING..
+	ORA	A	;..FILE?
+	JZ	RCVCKQ	;YES, ASK RETRY/QUIT
+	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	RCVSABT	;ABORT
+;
+RCVCKQ	CALL	CKQUIT	;RETRY/QUIT?
+	JNZ	RCVSABT	;QUIT, THEN ABORT
+;
+;Line must be purged because sender probably started
+;resending while operator answered RETRY/QUIT prompt.
+;
+RCVCKQ2	MVI	A,NAK	;SEND NAK TO CANCEL SECTOR
+	CALL	SEND
+	JMP	RCVRPT	;GO RE-RECEIVE SECTOR
+;
+RCVSABT	CALL	CLOSFIL	;KEEP WHATEVER WE GOT
+	CALL	ERXIT
+	DB	'++UNABLE TO RECEIVE BLOCK'
+	DB	CR,LF,'++ABORTING++$'
+;
+;Timed out on receive
+;
+RCVSTOT	LDA	VSEEFLG	;VIEWING..
+	ORA	A	;..MODE?
+	JZ	RCVSPT	;YES, PRT MSG
+	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	RCVSERR	;YES, NO MSG
+;
+RCVSPT	CALL	ILPRT
+	DB	'++TIMEOUT++ ',0
+;
+RCVPRN	LDA	ERRCT	;PRINT ERROR..
+	CALL	HEXO	;..COUNT
+	CALL	CRLF
+	JMP	RCVSERR	;BUMP ERR CT, ETC.
+;
+	IF	PMMI
+;---->	RCVERR: Checks for framing error, overrun error,
+;		and parity error.
+;	1.  Error code (ERRCDE) was set in RECV routine.
+;	2.  ERRCDE=0 for no errors, ERRCDE<>0 for errors.
+;	3.  If there is an error, the carry bit is set on.
+;
+RCVERR	PUSH	PSW	;SAVE CHAR TRANSMITTED
+	LDA	ERRCDE	;GET RECEIVE ERROR CODE
+	ANA	A	;IS IT ZERO?
+	JZ	RCVERR2	;YES, NO RECEIVE ERROR
+	POP	PSW	;RESTORE CHAR TRANSMITTED
+	STC		;SET CARRY ON TO INDICATE AN ERROR
+	RET
+;
+RCVERR2	POP	PSW	;RESTORE CHAR TRANSMITTED
+	ORA	A	;CLEAR CARRY BIT
+	RET
+;
+;---->	RCVDERR: Checks for a receive error and displays
+;	apropriate error message.  Then goes to RCVSERR
+;	to purge the line and send a NAK.
+;
+RCVDERR	LDA	VSEEFLG	;VIEWING
+	ORA	A	;..MODE?
+	JZ	RCVDERRP ;YES,. PRT MSG
+	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	RCVSERR	;YES, NO MSG
+;
+RCVDERRP:
+	LDA	ERRCDE	;GET RECEIVE ERR CODE
+	ANI	FRMER	;WAS THERE A FRAMING ERROR?
+	CPI	FRMER
+	JNZ	RCVDERR2 ;NO, GO CHECK FOR OVERRUN
+	CALL	ILPRT
+	DB	'++FRAMING ERR++ ',0
+	CALL	RCVDERR5 ;PRINT # OF ERR
+;
+RCVDERR2:
+	LDA	ERRCDE	;GET RECEIVE ERR CODE
+	ANI	ORUNER	;WAS THERE AN OVERRUN?
+	CPI	ORUNER
+	JNZ	RCVDERR3 ;NO, CHECK FOR PARITY ERR
+	CALL	ILPRT
+	DB	'++OVERRUN ERR++ ',0
+	CALL	RCVDERR5
+;
+RCVDERR3:
+	LDA	ERRCDE	;GET RECEIVE ERR CODE
+	ANI	PARER	;WAS THERE A PARITY ERR?
+	CPI	PARER
+	JNZ	RCVDERR4 ;NO, GO PURGE LINE
+	CALL	ILPRT
+	DB	'++PARITY ERR++ ',0
+	CALL	RCVDERR5
+;
+RCVDERR4:
+	JMP	RCVSERR	;GO PURGE LINE, SEND NAK
+;
+;Display the number of the error, do a carriage
+;return and line feed.
+;
+RCVDERR5:
+	LDA	ERRCT	;GET ERROR NUMBER
+	CALL	HEXO	;DISPLAY IT
+	CALL	CRLF	;DO CR, LF
+	RET
+	ENDIF		;PMMI
+;
+;
+;Got SOH - get block #, block # complemented
+;
+RCVSOH	MVI	B,1	;TIMEOUT = 1 SEC
+	CALL	RECV	;GET SECTOR
+	JC	RCVSTOT	;GOT TIMEOUT
+;
+	IF	PMMI
+	CALL	RCVERR	;TRANSMISSION ERROR?
+	JC	RCVDERR	;YES, GO DISP MSG, PURGE LINE
+	ENDIF
+;
+	MOV	D,A	;D=BLK #
+	MVI	B,1	;TIMEOUT = 1 SEC
+	CALL	RECV	;GET CMA'D SECT #
+	JC	RCVSTOT	;TIMEOUT
+;
+	IF	PMMI
+	CALL	RCVERR	;TRANSMISSION ERROR?
+	JC	RCVDERR	;YES IF CARRY ON
+	ENDIF
+;
+	CMA		;CALC COMPLEMENT
+	CMP	D	;GOOD SECTOR #?
+	JZ	RCVDATA	;YES, GET DATA
+;
+;Got bad sector #
+;
+	LDA	VSEEFLG	;VIEWING..
+	ORA	A	;..MODE?
+	JZ	RCVBSE	;..YES, PRT MSG
+	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	RCVSERR	;..YES, NO MSG
+;
+RCVBSE	CALL	ILPRT	;PRINT:
+	DB	'++BAD SECTOR # IN HDR',CR,LF,0
+	JMP	RCVSERR	;BUMP ERROR CT.
+;
+RCVDATA	MOV	A,D	;GET SECTOR #
+	STA	RCVSNO	;SAVE IT
+	MVI	A,1	;SHOW..
+	STA	DATAFLG	;GETTING DATA
+	MVI	C,0	;INIT CKSUM
+	LXI	H,BASE+80H ;POINT TO BUFFER
+;
+RCVCHR	MVI	B,1	;1 SEC TIMEOUT
+	CALL	RECV	;GET CHAR
+	JC	RCVSTOT	;TIMEOUT
+;
+	IF	PMMI
+	CALL	RCVERR	;TRANSMISSION ERROR?
+	JC	RCVDERR	;YES IF CARRY ON
+	ENDIF
+;
+	MOV	M,A	;STORE CHAR
+	INR	L	;DONE?
+	JNZ	RCVCHR	;NO, LOOP
+;
+;Verify checksum
+;
+	MOV	D,C	;SAVE CHECKSUM
+	XRA	A	;SHOW..
+	STA	DATAFLG	;..END OF DATA
+	MVI	B,1	;TIMEOUT LEN.
+	CALL	RECV	;GET CHECKSUM
+	JC	RCVSTOT	;TIMEOUT
+;
+	IF	PMMI
+	CALL	RCVERR	;TRANSMISSION ERROR?
+	JC	RCVDERR	;YES IF CARRY ON
+	ENDIF
+;
+	CMP	D	;CHECKSUM OK?
+	JNZ	RCVCERR	;NO, ERROR
+;
+;Got a sector, it's a dup if = prev,
+;	or ok if = 1 + prev sector
+;
+	LDA	RCVSNO	;GET RECEIVED
+	MOV	B,A	;SAVE IT
+	LDA	SECTNO	;GET PREV
+	CMP	B	;PREV REPEATED?
+	JZ	RECVACK	;ACK TO CATCH UP
+	INR	A	;CALC NEXT SECTOR #
+	CMP	B	;MATCH?
+	JNZ	ABORT	;NO MATCH - STOP SENDER, EXIT
+	RET		;CARRY OFF - NO ERRORS
+;
+;Got cksum
+;
+RCVCERR	LDA	VSEEFLG	;VIEWING..
+	ORA	A	;..MODE?
+	JZ	RCVCPR	;..YES, PRT MSG
+	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	RCVSERR	;YES, NO MSG
+;
+RCVCPR	CALL	ILPRT
+	DB	'++CKSUM++ ',0
+	JMP	RCVPRN	;PRINT ERROR #
+;
+;Previous sector repeated, due to the last ACK
+;being garbaged.  ACK it so sender will catch up 
+;
+RECVACK	CALL	SENDACK	;SEND THE ACK,
+	JMP	RCVSECT	;GET NEXT BLOCK
+;
+;Send an ACK for the sector
+;
+SENDACK	MVI	A,ACK	;GET ACK
+	CALL	SEND	;..AND SEND IT
+	RET
+;
+;---->	SENDHDR: Send the sector header
+;
+;Send: (SOH) (block #) (complemented block #)
+;
+SENDHDR	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	SENDHNM	;YES, SKIP STATUS MSG.
+	CALL	ILPRT	;PRINT:
+	DB	'SEND # ',0
+	LDA	SECTNO	;PRINT..
+	CALL	HEXO	;..SECT #
+	CALL	CRLF	;..THEN CR/LF
+;
+SENDHNM	MVI	A,SOH	;SEND..
+	CALL	SEND	;..SOH,
+	LDA	SECTNO	;THEN SEND..
+	CALL	SEND	;..SECTOR #
+	LDA	SECTNO	;THEN SECTOR #
+	CMA		;..COMPLEMENTED..
+	CALL	SEND	;..SECTOR #
+	RET		;FROM SENDHDR
+;
+;---->	SENDSEC: Send the data sector
+;
+;While sending the sector, the "DATAFLG" is set
+;such that if "V" (view the file) was requested,
+;the "SHOW" routine will print the data, but not
+;the HDR or CKSUM, or any non-fatal msgs.
+;
+SENDSEC	MVI	A,1	;SHOW NOW AT DATA..
+	STA	DATAFLG	;..FOR VIEW COMMAND
+	MVI	C,0	;INIT CKSUM
+	LXI	H,BASE+80H ;POINT TO BUFFER
+;
+SENDC	MOV	A,M	;GET A CHAR
+	CALL	SEND	;SEND IT
+	INR	L	;POINT TO NEXT CHAR
+	JNZ	SENDC	;LOOP IF <100H
+	XRA	A	;SHOW NOT INTO DATA..
+	STA	DATAFLG	;..FOR VIEW COMMAND
+	RET		;FROM SENDSEC
+;
+;---->	SENDCKS: Send the checksum
+;
+SENDCKS	MOV	A,C	;SEND THE..
+	CALL	SEND	;..CHECKSUM
+	RET		;FROM SENDCKS
+;
+;---->	GETACK: Get the ACK on the sector
+;
+;Returns with carry clear if ACK received.
+;If an ACK is not received, the error count
+;is incremented, and if less than "ERRLIM",
+;carry is set and control returns.  If the
+;error count is at "ERRLIM", the program
+;aborts if in "QUIET" mode, or asks the
+;user for quit/retry if not.
+;
+GETACK	MVI	B,10	;WAIT 10 SECONDS MAX
+	CALL	RECVDG	;RECV W/GARBAGE COLLECT
+	JC	GETATOT	;TIMED OUT
+	CPI	ACK	;OK? (CARRY OFF IF =)
+	RZ		;YES, RET FROM GETACK
+	MOV	B,A	;SAVE CHAR
+	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	ACKERR	;..YES, NO MSG
+	MOV	A,B	;GET CHAR
+	CALL	HEXO	;PRINT IN HEX
+	CALL	ILPRT	;PRINT:
+	DB	'H RCD, NOT ACK',CR,LF,0
+;
+;Timeout or error on ACK - bump error count
+;
+ACKERR	LDA	ERRCT	;GET COUNT
+	INR	A	;BUMP IT
+	STA	ERRCT	;SAVE BACK
+	CPI	ERRLIM	;AT LIMIT?
+	RC		;NOT AT LIMIT
+;
+;Reached error limit
+;
+	LDA	VSEEFLG	;VIEWING..
+	ORA	A	;..FILE?
+	JZ	GACKV	;YES, ASK QUIT/RETRY
+	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	CSABORT ;..YES, NO MSG
+;
+GACKV	CALL	CKQUIT	;SEE IF WANT TO QUIT
+	STC		;TO SHOW NO ACK
+	RZ		;KEEP ON TRYIN'
+;
+CSABORT	CALL	ERXIT
+	DB	'CAN''T SEND SECTOR '
+	DB	'- ABORTING',CR,LF,'$'
+;
+;Timeout getting ACK
+;
+GETATOT	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	ACKERR	;YES, NO MSG
+	CALL	ILPRT	;PRINT:
+	DB	'TIMEOUT ON ACK',CR,LF,0
+	JMP	ACKERR
+; 
+ABORT	LXI	SP,STACK
+;
+ABORTL	MVI	B,1	;1 SEC. W/O CHARS.
+	CALL	RECV
+	JNC	ABORTL	;LOOP UNTIL SENDER DONE
+	MVI	A,NAK	;NEGATIVE ACK
+	CALL	SEND	;TELL SENDING END
+	CALL	ILPRT	;EXIT WITH ABORT MSG
+	DB	'MODEM PROGRAM CANCELLED',CR,LF,0
+	JMP	CKDIS	;CHECK FOR DISCONN.
+;
+;---->	INCRSNO: Increment sector #
+;
+INCRSNO	LDA	SECTNO	;INCR..
+	INR	A	;..SECT..
+	STA	SECTNO	;..NUMBER
+	RET
+;
+;---->	ERASFIL: Erase the incoming file.
+;
+;If it exists, ask if it may be erased.
+;
+ERASFIL	LXI	D,FCB	;POINT TO CTL BLOCK
+	MVI	C,SRCHF ;SEE IF IT..
+	CALL	BDOS	;..EXISTS
+	INR	A	;FOUND?
+	RZ		;..NO, RETURN
+	CALL	ILPRT	;PRINT:
+	DB	'++FILE EXISTS, TYPE Y TO ERASE: ',0
+	CALL	KEYIN	;GET CHAR
+	PUSH	PSW
+	CALL	TYPE	;ECHO
+	CALL	CRLF	;BACK TO START OF LINE
+	POP	PSW
+	ANI	5FH	;MAKE UPPER CASE
+	CPI	'Y'	;WANT ERASED?
+	JNZ	CKDIS	;QUIT IF NOT ERASE
+;
+;Erase old file
+;
+	LXI	D,FCB	;POINT TO FCB
+	MVI	C,ERASE	;GET BDOS FNC
+	CALL	BDOS	;DO THE ERASE
+	RET		;FROM "ERASFIL"
+;
+;---->	MAKEFIL: Makes the file to be received
+;
+MAKEFIL	LXI	D,FCB	;POINT TO FCB
+	MVI	C,MAKE	;GET BDOS FNC
+	CALL	BDOS	;TO THE MAKE
+	INR	A	;FF=BAD?
+	RNZ		;OPEN OK
+;Directory full - can't make file
+	CALL	ERXIT
+	DB	'++ERROR - CAN''T MAKE FILE',CR,LF
+	DB	'++DIRECTORY MUST BE FULL',CR,LF,'$'
+;
+;---->	OPENFIL: Opens the file to be sent
+;
+OPENFIL	LXI	D,FCB	;POINT TO FILE
+	MVI	C,OPEN	;GET FUNCTION
+	CALL	BDOS	;OPEN IT
+	INR	A	;OPEN OK?
+	JNZ	OPENOK	;..YES
+	CALL	ERXIT	;..NO, ABORT
+	DB	'CAN''T OPEN FILE$'
+;
+OPENOK	CALL	ILPRT	;PRINT:
+	DB	'FILE OPEN, EXTENT LENGTH: ',0
+	LDA	FCB+15	;GET # SECTORS
+	CALL	HEXO	;PRINT IN HEX
+	CALL	ILPRT	;PRINT:
+	DB	'H',CR,LF,0
+	RET
+;
+;---->	CLOSFIL: Closes the received file
+;
+CLOSFIL	LXI	D,FCB	;POINT TO FILE
+	MVI	C,CLOSE	;GET FUNCTION
+	CALL	BDOS	;CLOSE IT
+	INR	A	;CLOSE OK?
+	RNZ		;..YES, RETURN
+	CALL	ERXIT	;..NO, ABORT
+	DB	'CAN''T CLOSE FILE$'
+;
+;---->	RDSECT: Reads a sector
+;
+;For speed, this routine buffers up 16
+;sectors at a time.
+;
+RDSECT	LDA	SECINBF	;GET # SECT IN BUFF.
+	DCR	A	;DECREMENT..
+	STA	SECINBF	;..IT
+	JM	RDBLOCK	;EXHAUSTED?  NEED MORE.
+	LHLD	SECPTR	;GET POINTER
+	LXI	D,BASE+80H	;TO DATA
+	CALL	MOVE128	;MOVE TO BUFFER
+	SHLD	SECPTR	;SAVE BUFFER POINTER
+	RET		;FROM "READSEC"
+;
+;Buffer is empty - read in another block of 16
+;
+RDBLOCK	LDA	EOFLG	;GET EOF FLAG
+	CPI	1	;IS IT SET/
+	STC		;TO SHOW EOF
+	RZ		;GOT EOF
+	MVI	C,0	;SECTORS IN BLOCK
+	LXI	D,DBUF	;TO DISK BUFFER
+;
+RDSECLP	PUSH	B
+	PUSH	D
+	MVI	C,STDMA	;SET DMA..
+	CALL	BDOS	;..ADDR
+	LXI	D,FCB
+	MVI	C,READ
+	CALL	BDOS
+	POP	D
+	POP	B
+	ORA	A	;READ OK?
+	JZ	RDSECOK	;YES
+	DCR	A	;EOF?
+	JZ	REOF	;GOT EOF
+;
+;Read error
+;
+	CALL	ERXIT
+	DB	'++FILE READ ERROR$'
+;
+RDSECOK	LXI	H,80H	;ADD LENGTH OF ONE SECTOR...
+	DAD	D	;...TO NEXT BUFF
+	XCHG		;BUFF TO DE
+	INR	C	;MORE SECTORS?
+	MOV	A,C	;GET COUNT
+	CPI	16	;DONE?
+	JZ	RDBFULL	;..YES, BUFF IS FULL
+	JMP	RDSECLP	;READ MORE
+;
+REOF	MVI	A,1
+	STA	EOFLG	;SET EOF FLAG
+	MOV	A,C
+;
+;Buffer is full, or got EOF
+;
+RDBFULL	STA	SECINBF	;STORE SECTOR COUNT
+	LXI	H,DBUF	;INIT BUFFER..
+	SHLD	SECPTR	;..POINTER
+	LXI	D,BASE+80H	;RESET..
+	MVI	C,STDMA	;..DMA..
+	CALL	BDOS	;..ADDR
+	JMP	RDSECT	;PASS SECT TO CALLER
+;
+;---->	WRSECT: Write a sector
+;
+;Writes the sector into a buffer.  When 16
+;have been written, writes the block to disk.
+;
+;Entry point "WRBLOCK" flushes the buffer at EOF.
+;
+WRSECT	LHLD	SECPTR	;GET BUFF ADDR
+	XCHG		;TO DE FOR MOVE
+	LXI	H,BASE+80H	;FROM HERE
+	CALL	MOVE128	;MOVE TO BUFFER
+	XCHG		;SAVE NEXT..
+	SHLD	SECPTR	;..BLOCK POINTER
+	LDA	SECINBF	;BUMP THE..
+	INR	A	;..SECTOR #..
+	STA	SECINBF	;..IN THE BUFF
+	CPI	16	;HAVE WE 16?
+	RNZ		;NO, RETURN
+;
+;---->	WRBLOCK: Writes a block to disk
+;
+WRBLOCK	LDA	SECINBF	;# SECT IN BUFFER
+	ORA	A	;0 MEANS END OF FILE
+	RZ		;NONE TO WRITE
+	MOV	C,A	;SAVE COUNT
+	LXI	D,DBUF	;POINT TO DISK BUFF
+;
+DKWRLP	PUSH	H
+	PUSH	D
+	PUSH	B
+	MVI	C,STDMA	;SET DMA
+	CALL	BDOS	;TO BUFFER
+	LXI	D,FCB	;THEN WRITE
+	MVI	C,WRITE	;..THE..
+	CALL	BDOS	;..BLOCK
+	POP	B
+	POP	D
+	POP	H
+	ORA	A
+	JNZ	WRERR	;OOPS, ERROR
+	LXI	H,80H	;LENGTH OF 1 SECT
+	DAD	D	;HL= NEXT BUFF
+	XCHG		;TO DE FOR SETDMA
+	DCR	C	;MORE SECTORS?
+	JNZ	DKWRLP	;..YES, LOOP
+	XRA	A	;GET A ZERO
+	STA	SECINBF	;RESET # OF SECTORS
+	LXI	H,DBUF	;RESET BUFFER..
+	SHLD	SECPTR	;..POINTER
+;
+RSDMA	LXI	D,BASE+80H ;RESET..
+	MVI	C,STDMA	;..DMA..
+	CALL	BDOS	;..ADDR
+	RET
+;
+WRERR	CALL	RSDMA	;RESET DMA TO NORM.
+	CALL	ILPRT	;PRINT:
+	DB	'++ERROR WRITING FILE',CR,LF,0
+	JMP	ABORT	;EXIT
+;
+;---->	RECV: Receive a character
+;
+;Timeout time is in B, in seconds.  Entry via
+;"RECVDG" deletes garbage characters on the
+;line.  For example, having just sent a sector,
+;calling RECVDG will delete any line-noise-induced
+;characters "LONG" before the ACK/NAK would
+;be received.
+;
+RECVDG	EQU	$	;RECEIVE W/GARBAGE DELETE
+	IN	MODDATP	;GET A CHAR
+	IN	MODDATP	;..TOTALLY PURGE UART
+;
+RECV	PUSH	D	;SAVE
+;
+	IF	FASTCLK	;4MHZ?
+	MOV	A,B	;GET TIME REQUEST
+	ADD	A	;DOUBLE IT
+	MOV	B,A	;NEW TIME IN B
+	ENDIF
+;
+MSEC	LXI	D,50000	;1 SEC DCR COUNT
+;
+	IF	NOT DCH
+MWTI	IN	MODCTLP	;CHECK STATUS
+	ENDIF
+;
+	IF	DCH
+MWTI	IN	MODCTL2	;CHECK STATUS
+	ENDIF
+;
+	IF	FRNTPNL AND PMMI
+	OUT	PANEL	;DISPLAY STATUS
+	ENDIF
+;
+	ANI	MODRCVB	;ISOLATE BIT
+	CPI	MODRCVR	;READY?
+	JZ	MCHAR	;GOT CHAR
+	DCR	E	;COUNT..
+	JNZ	MWTI	;..DOWN..
+	DCR	D	;..FOR..
+	JNZ	MWTI	;..TIMEOUT
+	DCR	B	;MORE SECONDS?
+	JNZ	MSEC	;YES, WAIT
+;
+;Modem timed out receiving
+;
+	POP	D	;RESTORE D,E
+	STC		;CARRY SHOWS TIMEOUT
+	RET
+;
+;Got char from modem
+;
+MCHAR:
+	IF	PMMI
+;Check to see if there was a framing, overrun,
+;and/or parity error.
+	IN	MODCTLP	;GET STATUS
+	MOV	D,A	;SAVE STATUS
+	ANI	FRMER	;FRAMING ERR?
+	CPI	FRMER
+	JNZ	MCHAR2	;NO, CHECK FOR OVERRUN
+	LDA	ERRCDE	;GET RECV ERR CODE
+	ORI	FRMER	;TURN ON RECV ERR CODE
+	STA	ERRCDE
+;
+MCHAR2:	MOV	A,D	;RESTORE STATUS
+	ANI	ORUNER	;OVERRUN ERR?
+	CPI	ORUNER
+	JNZ	MCHAR3	;NO, CHECK FOR PARITY
+	LDA	ERRCDE	;GET RECV ERR CODE
+	ORI	ORUNER	;TURN ON RECV ERR CODE
+	STA	ERRCDE
+;
+MCHAR3:	MOV	A,D	;RESTORE STATUS
+	ANI	PARER	;PARITY ERR?
+	CPI	PARER
+	JNZ	MCHAR4	;NO, GET DATA CHAR
+	LDA	ERRCDE	;GET RECV ERR CODE
+	ORI	PARER	;TURN ON RECV ERR CODE
+	STA	ERRCDE
+MCHAR4:
+	ENDIF		;PMMI
+;
+;Get the data char
+;
+	IN	MODDATP	;GET MODEM DATA CHAR
+	POP	D	;RESTORE DE
+;
+;Calc checksum
+;
+	PUSH	PSW	;SAVE THE CHAR
+	ADD	C	;ADD TO CHECKSUM
+	MOV	C,A	;SAVE CHECKSUM
+;
+;Check if monitoring rec'd data
+;
+	LDA	RSEEFLG	;SEE RECEIVED..
+	ORA	A	;..DATA?
+	JZ	MONIN	;..YES
+;
+;Check if "VIEWING" and this is a data char
+;
+	LDA	VSEEFLG	;VIEWING..
+	ORA	A	;..DATA?
+	JNZ	NOMONIN	;..NO
+;
+;"VIEW" requested.  Show the char if it is data
+;
+	LDA	DATAFLG	;GET DATA FLAG
+	ORA	A	;TEST IT
+	JZ	NOMONIN	;..OFF, NOT DATA
+;
+MONIN	POP	PSW	;..IS DATA,
+	PUSH	PSW	;GET IT,
+	CALL	SHOW	;..AND SHOW IT
+;
+NOMONIN	POP	PSW	;RESTORE CHAR
+	ORA	A	;CARRY OFF: NO ERROR
+	RET		;FROM "RECV"
+;
+;---->	SEND: Send a character to the modem
+;
+SEND	PUSH	PSW	;SAVE THE CHAR
+;
+;Check if monitoring sent data
+;
+	LDA	SSEEFLG	;CHECK IF MONITORING..
+	ORA	A	;..SENT DATA
+	JZ	MONOUT	;..YES
+;
+;Check if "VIEWING" the file
+;
+	LDA	VSEEFLG	;GET VIEW FLAG
+	ORA	A	;TEST IT
+	JNZ	NOMONOT	;NO
+	LDA	DATAFLG	;IS THIS
+	ORA	A	;..DATA?
+	JZ	NOMONOT	;..NO.
+;
+MONOUT	POP	PSW	;GET THE CHAR
+	PUSH	PSW	;SAVE IT
+	CALL	SHOW	;SHOW IT
+;
+NOMONOT	POP	PSW	;RESTORE CHAR
+	PUSH	PSW	;SAVE IT
+	ADD	C	;CALC CKSUM
+	MOV	C,A	;SAVE CKSUM
+;
+	IF	NOT DCH
+SENDW	IN	MODCTLP	;GET STATUS
+	ENDIF
+;
+	IF	DCH
+SENDW	IN	MODCTL2	;GET STATUS
+	ENDIF
+;
+	IF	FRNTPNL AND PMMI
+	OUT	PANEL	;DISPLAY STATUS
+	ENDIF
+;
+	ANI	MODSNDB	;ISOLATE READY BIT
+	CPI	MODSNDR	;READY?
+	JNZ	SENDW	;..NO, WAIT
+	POP	PSW	;GET CHAR
+	OUT	MODDATP	;OUTPUT IT
+	RET		;FROM "SEND"
+;
+;---->	WAITNAK: Waits for initial NAK
+;
+;To ensure no data is sent until the receiving
+;program is ready, this routine waits for
+;the first timeout-NAK from the receiver.
+;(E) contains the # of seconds to wait.
+;
+WAITNAK	LDA	VSEEFLG	;VIEWING?
+	ORA	A
+	JZ	WAITNPR	;PRINT MSG
+	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	WAITNLP	;YES, SKIP MSG
+;
+WAITNPR	CALL	ILPRT	;PRINT:
+	DB	'AWAITING INITIAL NAK',CR,LF,0
+;
+WAITNLP	MVI	B,1	;TIMEOUT DELAY
+	CALL	RECV	;DID WE GET..
+	CPI	NAK	;..A NAK?
+	RZ		;YES, SEND BLOCK
+	DCR	E	;80 TRIES?
+	JZ	ABORT	;YES, ABORT
+	JMP	WAITNLP	;NO, LOOP
+;
+;---->	INITADR: Init's CP/M BDOS addresses
+;
+;This routine fills in the addresses of various
+;JMP and CALL instructions, so that CP/M BDOS
+;is bypassed while accessing the console.  This
+;is done to allow characters such as control-C
+;and control-S to be keyed while in terminal
+;mode, without CP/M interpreting them.
+;
+INITADR	LHLD	BASE+1	;GET WARM BOOT ADDR
+	LXI	D,3	;LENGTH OF A 'JMP'
+	DAD	D	;TO CONSOLE STAT
+	SHLD	VSTAT+1	;MODIFY CALL
+	DAD	D	;TO CONSOLE IN
+	SHLD	VKEYIN+1 ;MODIFY CALL
+	DAD	D	;TO CONSOLE OUT
+	SHLD	VTYPE+1	;MODIFY CALL
+	RET
+;
+;---->	PROCOPT: Process command options
+; 
+;1) Saved the primary option in 'OPTION';
+;2) Scans the sub-option characters, and for
+;each found, zeros the appropriate entry in
+;the option table.  For example, if 'D' is 
+;coded (DISCONNECT) then the 'D' stored at
+;'DISCFLG' is set to 0 so it can be tested
+;later.
+;
+PROCOPT	LXI	D,FCB+1	;TO PRIMARY OPT.
+	LDAX	D	;GET PRIMARY
+	STA	OPTION	;SAVE IT
+;
+OPTLP	INX	D	;TO SECONDARY OPTION
+	LDAX	D	;GET CHAR
+;
+;If you mod this program for >7 options,
+;you must change the following, since
+;there won't be a ' ' after the option
+;if a baud rate was specified.
+;
+	CPI	' '	;NO MORE OPT'NS?
+	JZ	ENDOPT	;..YES
+;Set the approp. option: store 0 in it
+	LXI	H,OPTBL	;HL = ADDR OF 'OAQDSRV'
+	MVI	B,OPTBE-OPTBL ;OPT TABLE LEN
+;
+OPTCK	CMP	M	;FOUND THE OPTION?
+	JNZ	OPTNO	;NO, DON'T SET IT
+	MVI	M,0	;SET THE OPTION
+	JMP	OPTLP	;GET NEXT OPTION
+;
+OPTNO	INX	H	;TO NEXT
+	DCR	B	;MORE?
+	JNZ	OPTCK
+;Option not in table
+	JMP	BADOPT	;SHOW BAD SUB OPTION
+;
+;If "VIEW" was asked for, set QUIET flag
+;
+ENDOPT	LDA	VSEEFLG	;VIEW..
+	ORA	A	;..ASKED FOR?
+	RNZ		;..NO, RET FROM 'PROCOPT'
+	STA	QFLG	;YES, NO HDR/CKSUM PRT
+	RET		;FROM 'PROCOPT'
+;
+;Done - close up shop
+;
+DONE	LDA	VSEEFLG	;VIEWING?
+	ORA	A
+	JZ	DONETC	;SHOW MSG
+	LDA	QFLG	;QUIET
+	ORA	A	;..MODE?
+	JZ	DONECTE	;YES, CK TERM/ECHO
+;
+DONETC	CALL	ILPRT
+	DB	CR,LF,'TRANSFER COMPLETE' 
+	DB	CR,LF,0
+;
+;Check if terminal or echo sub command
+;was specified
+;
+DONECTE	LDA	TERMFLG	;TERM?
+	ORA	A
+	JZ	TERM	;..YES
+	LDA	ECHOFLG	;ECHO?
+	ORA	A
+	JZ	TRMECHO	;..YES
+;
+;Fall into 'CKDIS'
+;
+;---->	CKDIS: Check if DISCONNECT requested
+;
+;This routine is jumped to at the end of
+;processing, and disconnects the phone if
+;'D' was specified as a sub-option.
+;
+CKDIS	LDA	DISCFLG	;CHECK 'D' FLAG
+	ORA	A	;REQUESTED?
+;
+	IF	PMMI OR DCH
+	JNZ	NDIS	;..NO, JUST EXIT
+	ENDIF
+;
+	IF	NOT PMMI AND NOT DCH
+	JNZ	EXIT
+	ENDIF
+;
+;Await C/R to disc. so we don't lose the phone
+;
+	CALL	ILPRT
+	DB	CR,LF,'PRESS RETURN TO DISCONNECT:',0
+	CALL	KEYIN
+	PUSH	PSW
+	CALL	CRLF
+	POP	PSW
+	CPI	CR
+	JNZ	CKDIS	;ASK AGAIN
+;
+;---->	DISCONN: Disconnect the phone
+;
+DISCONN	EQU	$
+;
+	IF	PMMI
+	XRA	A	;GET DISCONN VALUE
+	OUT	MODCTLP	;RESET ORIG/ANSW
+	OUT	MODCTL2	;TURN OFF DTR, DO BREAK
+	ENDIF
+;
+	IF	DCH
+	XRA	A	;GET DISCONNECT VALUE
+	OUT	MODCTLP	;DISCONNECT
+	ENDIF
+;
+	CALL	ILPRT	;PRINT:
+	DB	'++DISCONNECTED++',0
+	JMP	EXIT
+;
+;No disconnect, type msg as reminder that phone's
+;off hook
+;
+	IF	PMMI OR DCH
+NDIS	LDA	QFLG	;QUIET..
+	ORA	A	;..MODE?
+	JZ	EXIT	;..YES, NO MSG
+	CALL	ILPRT
+	DB	CR,LF,'++DON''T FORGET - THE MODEM IS '
+	DB	'NOT DISCONNECTED++',CR,LF
+	DB	'USE "MODEM D" TO DISCONNECT',CR,LF,0
+	JMP	EXIT
+	ENDIF		;PMMI OR DCH
+;
+;---->	INITMOD: Initializes the modem
+;
+;This routine is used to initialize serial
+;boards, or setup S-100 modem boards.
+;Just returns if no initialization required.
+;
+INITMOD:
+;
+	IF	INITREQ  ;REQUIRE INIT?
+	MVI	A,INITC1 ;GET 1ST INIT CHAR
+	OUT	MODCTLP	 ;OUTPUT IT
+	NOP ! NOP! NOP	 ;DELAY FOR USART
+	NOP ! NOP
+	MVI	A,INITC2 ;GET 2ND INIT CHAR
+	OUT	MODCTLP	 ;OUTPUT IT
+	NOP ! NOP! NOP	 ;DELAY FOR USART
+	NOP ! NOP
+	MVI	A,INITC3 ;GET 3RD INIT CHAR
+	OUT	MODCTLP	 ;OUTPUT IT
+	NOP ! NOP! NOP	 ;DELAY FOR USART
+	NOP ! NOP
+	MVI	A,INITC4 ;GET 4TH INIT CHAR
+	OUT	MODCTLP	 ;OUTPUT IT
+	NOP ! NOP! NOP	 ;DELAY FOR USART
+	NOP ! NOP
+	ENDIF
+;
+	IF	PMMI
+	CALL	GETBAUD	;GET THE BAUD RATE
+	OUT	BAUDRP	;OUT BAUD RATE PORT
+	ENDIF		;PMMI
+;
+	IF	DCH
+	CALL	GETBAUD	;GET BAUD RATE
+	ENDIF		;DCH
+;
+	IF	PMMI
+;Set the Motorola modem chip bit for >300 if req'd
+	CPI	52	;>300?
+	MVI	A,5FH	;VALUE FOR >300
+	JC	GT300
+	MVI	A,7FH	;VALUE FOR <= 300
+;
+GT300	OUT	MODCTL2	;SET IT
+;
+;Set ORIG/ANSW if requested
+;
+	LDA	ORIGFLG	;ORIGINATE..
+	ORA	A	;..MODE?
+	MVI	A,ORIGMOD 
+	JZ	OFFHOOK	;..YES, DO IT
+	LDA	ANSWFLG	;ANSWER..
+	ORA	A	;..MODE?
+	MVI	A,ANSWMOD
+	RNZ		;NEITHER ORIG NOR ANSW.
+	ENDIF		;PMMI
+;
+	IF	DCH
+	LDA	ANSWFLG	;ANSWER..
+	ORA	A
+	MVI	B,ANSWMOD ;SET ANSWER MODE
+	JZ	INITM1
+	LDA	ORIGFLG	;GET ORIGINATE FLAG
+	ORA	A
+	MVI	B,ORIGMOD ;SET ORIGINATE MODE
+	JZ	INITM1
+	LDA	HOLDD	;NEITHER - GET LAST VALUE
+	MOV	B,A	;STORE IN B
+;
+INITM1:	MOV	A,B	;GET MODE
+	STA	HOLDD	;SAVE VALUE
+	MOV	A,C	;GET BAUD RATE INDICATOR
+	ORA	A	;ZEBO IF 110 BAUD
+	MOV	A,B	;GET MODE
+	JZ	OFFHOOK	;DO OFFHOOK
+	ORI	1	;SET 300 BAUD
+	ENDIF		;DCH
+;
+	IF	PMMI OR DCH
+;
+;Go offhook in requested (ORIG/ANSW) mode
+;
+OFFHOOK	LXI	H,4000	;DELAY AMT
+;
+OFFDLY	DCR	L
+	JNZ	OFFDLY
+	DCR	H
+	JNZ	OFFDLY
+	OUT	MODCTLP	;GO OFF HOOK
+	RET
+	ENDIF		;PMMI OR DCH
+;
+	IF	PMMI
+;---->	GETBAUD: Gets baud rate from command
+;
+;This routine checks if a baud rate has
+;been asked for, (such as MODEM T.450),
+;and if so, calculates the PMMI baud rate
+;value to be output.  Defaults to 300.
+;
+GETBAUD	LDA	FCB+9	;GET 'FILETYPE'
+	CPI	' '	;DEFAULT?
+	MVI	A,52	;300 BAUD VALUE
+	RZ		;NO BAUD RATE, USE 300
+;
+;Got baud rate - convert to proper timer value
+;
+;First, convert the number to binary
+;
+	CALL	CVBIN
+;
+;Calculate the value to output:
+;
+;	Rate = 250000/16/baud rate
+;
+;	Divide by repetitive subtraction
+;	------
+;Complement the baud rate
+;
+	MOV	A,H	;GET HI
+	CMA		;COMPLEMENT
+	MOV	D,A	;SAVE
+	MOV	A,L	;GET LO
+	CMA		;COMPLEMENT
+	MOV	E,A	;SAVE
+	INX	D	;DE=2'S COMPLEMENT
+;Divide
+	LXI	H,15625	;250000/16 
+	LXI	B,-1	;INIT QUOTIENT
+;
+DIVLP	INX	B	;BUMP QUOTIENT
+	DAD	D	;'SUBTRACT'
+	JC	DIVLP	;LOOP 'TILL DONE
+;Validate the result
+	MOV	A,B	;CAN'T HAVE >255
+	ORA	A
+	MOV	A,C	;GET ACTUAL
+	RZ		;RET IF <256
+	JMP	BADRATE	;INVALID
+	ENDIF		;PMMI
+;
+	IF	DCH
+GETBAUD	LDA	FCB+9	;GET FILETYPE
+	CPI	' '	;DEFAULT?
+	JNZ	GETBAU1	;NO - DO BAUD RATE STUFF
+	MVI	C,1	;SET 300 BAUD
+	MVI	B,17H	;SET 1 STOP BIT
+	JMP	GETBAU2
+;
+;Convert baud rate to binary
+;
+GETBAU1	CALL	CVBIN	;CONVERT TO BINARY
+	PUSH	H	;SAVE BAUD RATE
+	MVI	C,0	;ANTICIPATE 110 BAUD
+	MVI	B,1FH	;SET 2 STOP BITS
+	LXI	D,-110	;GET CONSTANT
+	DAD	D	;SUBTRACT
+	MOV	A,H
+	ORA	L
+	POP	H
+	JZ	GETBAU2	;110 BAUD
+	MVI	B,17H	;SET 1 STOP BIT
+	INR	C
+	LXI	D,-300	;GET CONSTANT
+	DAD	D
+	MOV	A,H
+	ORA	L
+	JNZ	BADRATE	;INVALID
+;
+GETBAU2	MOV	A,B	;GET SET UP
+	OUT	MODCTL2	;INITIALIZE MODEM FOR STOP BITS..
+	RET		;..DATA BITS, ETC.
+	ENDIF		;DCH
+;
+	IF	PMMI OR DCH
+;Routine to convert baud rate to binary
+;
+CVBIN:	LXI	D,FCB+9	;TO ASCII VALUE
+	LXI	H,0	;INIT BINARY RESULT
+;
+DECLP	LDAX	D	;GET ASCII DIGIT
+	INX	D	;TO NEXT DIGIT
+	CPI	' '	;BLANK ONE?
+	JZ	DECLP	;..YES, SKIP IT
+	CPI	'0'	;VALIDATE IT
+	JC	BADRATE	;ERROR
+	CPI	'9'+1	;VALIDATE
+	JNC	BADRATE	;ERROR
+	SUI	'0'	;MAKE DIGIT BINARY
+;
+;Multiply prev value by 10
+;
+	MOV	B,H	;SET UP FOR
+	MOV	C,L	;MULTIPLY BY 10
+	DAD	H	;MULTIPLY BY 2
+	DAD	H	;X 2 = 4
+	DAD	B	;+ 1 = 5
+	DAD	H	;X 2 = 10
+	ADD	L	;ADD IN DIGIT
+	MOV	L,A	;SAVE BACK
+	JNZ	DIGNC	;NO CARRY?
+	INR	H	;ADD IN CARRY
+;
+;Check if done
+DIGNC	MOV	A,E	;SEE IF PAST
+	CPI	FCB+12	;..LAST DIGIT
+	JNZ	DECLP	;NO, LOOP
+	RET
+;
+;Invalid baud rate
+;
+BADRATE	CALL	ERXIT
+	DB	'++INVALID BAUD RATE++$'
+	ENDIF		;PMMI OR DCH
+;
+;The following provides a return from INITMOD
+	IF	(NOT PMMI) AND (NOT DCH)
+	RET		;**THIS MUST BE HERE**
+	ENDIF		;(NOT PMMI) AND (NOT DCH)
+;
+;---->	MOVEFCB: Moves FCB(2) to FCB
+;
+;I attempted to make the MODEM command 'natural',
+;i.e. MODEM SEND filename (MODEM S fn.ft) rather
+;than MODEM filename SEND (MODEM fn.ft S) so this
+;routine moves the filename from the second FCB
+;to the first
+;
+MOVEFCB	LXI	H,FCB+16 ;FROM
+	LXI	D,FCB	;TO
+	MVI	B,16	;LEN
+	CALL	MOVE	;DO THE MOVE
+	XRA	A	;GET 0
+	STA	FCBSNO	;ZERO SECTOR #
+	STA	FCBEXT	;..AND EXTENT
+	RET
+;
+;---->	SHOW: Shows char sent/received
+;
+;CR, LF, and TAB are shown.  All other
+;non-printable characters are shown in
+;hex as (XX)
+;
+SHOW	CPI	LF	;LF?
+	JZ	CTYPE	;..YES, TYPE IT
+	CPI	CR	;CR?
+	JZ	CTYPE	;..YES, TYPE IT
+	CPI	09	;TAB
+	JZ	CTYPE	;..YES, TYPE IT
+	CPI	' '	;CTL-CHR?
+	JC	SHOWHEX	;YES, SHOW IN HEX
+	CPI	7FH	;DEL?
+	JC	CTYPE	;NO, TYPE THE CHAR
+;
+SHOWHEX	PUSH	PSW	;SAVE THE CHAR
+	MVI	A,'('	;TYPE..
+	CALL	CTYPE	;..'('
+	POP	PSW	;THEN..
+	CALL	HEXO	;..THE CHAR
+	MVI	A,')'	;THEN..
+	JMP	CTYPE	;..')' AND RETURN.
+;
+;---->	CTYPE: Types via CP/M so tabs are expanded
+;
+CTYPE	PUSH	B	;SAVE..
+	PUSH	D	;..ALL..
+	PUSH	H	;..REGS
+	MOV	E,A	;CHAR TO E
+	MVI	C,WRCON	;GET BDOS FNC
+	CALL	BDOS	;PRIN THE CHR
+	POP	H	;RESTORE..
+	POP	D	;..ALL..
+	POP	B	;..REGS
+	RET		;FROM "CTYPE"
+;
+CRLF	MVI	A,CR
+	CALL	TYPE
+	MVI	A,LF
+;
+;---->	TYPE: Type via direct CBIOS access.
+;We assume CBIOS may destroy some registers,
+;so save them all.
+;
+;This routine bypasses CP/M'S CTL-S, CTL-C
+;tests.
+;
+TYPE	PUSH	PSW	;SAVE CHAR
+	PUSH	B	;AND OTHER REGISTERS
+	PUSH	D
+	PUSH	H
+	MOV	C,A	;FOR BIOS
+VTYPE	CALL	$-$	;MODIFIED AT INIT
+	POP	H	;RESTORE REGISTERS
+	POP	D
+	POP	B
+	POP	PSW	;..AND CHAR
+	RET		;FROM "TYPE"
+;
+;---->  STAT: Keyboard status
+;
+;Save all registers, except A, in case
+;CBIOS clobbers them.
+;
+STAT	PUSH	B
+	PUSH	D
+	PUSH	H
+VSTAT	CALL	$-$	;ADDR SET AT INIT
+	POP	H
+	POP	D
+	POP	B
+	ORA	A	;0 => NOT READY
+	RET
+;
+;---->  KEYIN: Keyboard input
+;
+;Save all registers, except A, in case
+;CBIOS clobbers them.
+;
+KEYIN	PUSH	B
+	PUSH	D
+	PUSH	H
+VKEYIN	CALL	$-$	;ADDR SET AT INIT
+	POP	H
+	POP	D
+	POP	B
+	ANI	7FH	;STRIP PARITY IF THERE
+	RET		;FROM KEYIN
+;
+;---->  HEXO: Hex output
+;
+HEXO	PUSH	PSW	;SAVE FOR RIGHT DIGIT
+	RAR		;RIGHT..
+	RAR		;..JUSTIFY..
+	RAR		;..LEFT..
+	RAR		;..DIGIT..
+	CALL	NIBBL	;PRINT LEFT DIGIT
+	POP	PSW	;RESTORE RIGHT
+;
+NIBBL	ANI	0FH	;ISOLATE DIGIT
+	CPI	10	;IS IS <10?
+	JC	ISNUM	;YES, NOT ALPHA
+	ADI	7	;ADD ALPHA BIAS
+;
+ISNUM	ADI	'0'	;MAKE PRINTABLE
+	JMP	TYPE	;..THEN TYPE IT
+;
+;---->	CKQUIT: QUIT/RETRY after multiple errors
+;
+;Returns w/zero set if "RETRY" asked for
+;
+CKQUIT	XRA	A	;ZERO..
+	STA	ERRCT	;..ERROR COUNT
+	CALL	ILPRT	;PRINT:
+	DB	'MULTIPLE ERRORS ENCOUNTERED.  '
+	DB	'TYPE Q TO QUIT, R TO RETRY: ',0
+	CALL	KEYIN	;QUIT/RETRY
+	PUSH	PSW
+	CALL	TYPE
+	CALL	CRLF
+	POP	PSW
+	ANI	5FH	;MAKE UPPER CASE
+	CPI	'R'	;RETRY?
+	RZ		;'KEEP ON TRUCKIN'
+	CPI	'Q'	;QUIT?
+	JNZ	CKQUIT	;NO, ASK AGAIN
+	ORA	A	;SET NON-ZERO
+	RET
+;
+;---->	ILPRT: Inline print of msg
+;
+;The call to ILPRT is followed by a message,
+;binary 0 as the end.  Binary 1 may be used to
+;pause (message 'PRESS RETURN TO CONTINUE')
+;
+ILPRT	XTHL		;SAVE HL, GET HL=MSG
+;
+ILPLP	MOV	A,M	;GET CHAR
+	ORA	A	;END OF MSG?
+	JZ	ILPRET	;..YES, RETURN
+	CPI	1	;PAUSE?
+	JZ	ILPAUSE	;..YES
+	CALL	CTYPE	;TYPE THE MSG
+;
+ILPNEXT	INX	H	;TO NEXT CHAR
+	JMP	ILPLP	;LOOP
+;
+;Pause while typing help so info doesn't
+;scroll off of video screens
+;
+ILPAUSE	CALL	ILPRT	;PRINT:
+	DB	CR,LF,'PRESS RETURN TO CONTINUE'
+	DB	CR,LF,0
+	CALL	KEYIN	;GET ANY CHAR
+	CPI	'C'-40H	;REBOOT?
+	JZ	EXIT	;YES.
+	JMP	ILPNEXT	;LOOP
+;
+ILPRET	XTHL		;RESTORE HL
+	RET		;PAST MSG
+;
+;---->	PRTMSG: Prints msg pointed to by (DE)
+;
+;A '$' is the ending delimiter for the print.
+;No registers saved.
+;
+PRTMSG	MVI	C,PRINT	;GET BDOS FNC
+	JMP	BDOS	;PRINT MESSAGE, RETURN
+;
+;---->	ERXIT: Exit printing msg following call
+;
+ERXIT	POP	D	;GET MESSAGE
+	CALL	PRTMSG	;PRINT IT
+	CALL	CKDIS	;DISCONNECT?
+;
+EXIT	LHLD	STACK	;GET ORIGINAL STACK
+	SPHL		;RESTORE IT
+	RET		;--EXIT-- TO CP/M
+;
+;Move 128 characters
+;
+MOVE128	MVI	B,128	;SET MOVE COUNT
+;
+;Move from (HL) to (DE) length in (B)
+;
+MOVE	MOV	A,M	;GET A CHAR
+	STAX	D	;STORE IT
+	INX	H	;TO NEXT "FROM"
+	INX	D	;TO NEXT "TO"
+	DCR	B	;MORE?
+	JNZ	MOVE	;..YES, LOOP
+	RET		;..NO, RETURN
+;
+OPTION	DB	0	;PRIMARY OPTION
+;
+;DATAFLG is used by the "V" subcommand -
+;it is 0 when a header or cksum is being
+;sent/rcd, and 1 if "VIEWABLE" data (the
+;sector itself)
+;
+DATAFLG	DB	0	;AT HEADER, FIRST
+;
+;Sub-option table.  If an option is in effect,
+;the character is set to binary 0
+;
+OPTBL	EQU	$
+ANSWFLG	DB	'A'	;ANSWER MODE
+DISCFLG	DB	'D'	;DISCONNECT WHEN DONE
+ECHOFLG	DB	'E'	;TO ECHO AFTER XFER
+ORIGFLG	DB	'O'	;ORIGINATE MODE
+QFLG	DB	'Q'	;QUIET TRANSFER (NO MSGS)
+RSEEFLG	DB	'R'	;SEE WHAT'S RECEIVED
+SSEEFLG	DB	'S'	;SEE WHAT'S SENT
+TERMFLG	DB	'T'	;TO TERM AFTER XFER
+VSEEFLG	DB	'V'	;VIEW MESSAGES (NO HDR, ETC)
+OPTBE	EQU	$	;END OF OPTIONS
+;
+RCVSNO	DB	0	;SECT # RECEIVED
+SECTNO	DB	0	;CURRENT SECTOR NUMBER 
+ERRCT	DB	0	;ERROR COUNT
+;
+	IF	PMMI
+ERRCDE	DB	0	;RECEIVE ERROR CODE
+	ENDIF
+;
+	IF	DCH
+HOLDD	DB	86H	;HOLD AREA - LAST DC HAYES CONT CHAR.
+	ENDIF
+;
+;Following 3 used by disk buffering routines
+EOFLG	DB	0	;EOF FLAG (1=TRUE)
+SECPTR	DW	DBUF
+SECINBF	DB	0	;# OF SECTORS IN BUFFER
+	DS	60	;STACK AREA
+STACK	DS	2	;STACK POINTER
+;
+;16 sector disk buffer (overlays help msgs)
+;
+DBUF	EQU	$	;16 SECTOR DISK BUFFER
+;
+;Invalid command
+;
+BADOPT	CALL	TYPE
+	CALL	ILPRT	;EXIT W/ERROR
+	DB	': INVALID OPTION ON MODEM '
+	DB	'COMMAND - ',CR,LF
+ DB 'PRESS RETURN FOR HELP, CTL-C IF NOT',CR,LF,1,0
+;
+HELP	CALL	ILPRT
+ DB 'Format for command is:',cr,lf,cr,lf
+ DB 'MODEM # FILENAME',CR,LF,CR,LF
+ DB 'Where # is a 1 character primary option,',cr,lf
+ DB ' which may be followed by sub-options,',cr,lf
+ DB ' and by ".xxx" to set baud rate to xxx'
+ DB cr,lf,cr,lf,1
+ DB 'Primary Options:',cr,lf
+ DB '	S to send a file',cr,lf
+ DB '	R to receive a file',cr,lf
+ DB '	T to act as a terminal',cr,lf
+ DB '	E to act as a computer (echo data)',cr,lf
+ DB '	D to disconnect the phone'
+ DB '	(S100 modems only)',cr,lf
+ DB '	H to print this help file'
+ DB cr,lf,cr,lf,1
+ DB 'Secondary options:',cr,lf
+ DB '	A answer mode',cr,lf
+ DB '	O originate mode',cr,lf
+ DB '	D disconnect after execution',cr,lf
+ DB '	T go to terminal mode after file xfer',cr,lf
+ DB '	E go to echo mode after file xfer',cr,lf
+ DB '	Q quiet mode - no status msgs',cr,lf
+ DB '	R show chars received',cr,lf
+ DB '	S show chars sent',cr,lf
+ DB '	V view file sent/received (no status)',cr,lf
+ DB CR,LF,'FOR EXAMPLES, TYPE: MODEM X',cr,lf,0
+	JMP	EXIT
+;
+EXAM	CALL	ILPRT
+ DB 'Send file, originate mode, 300 baud:',CR,LF
+ DB '	MODEM SO fn.ft',cr,lf
+ DB 'Send another file:',CR,LF
+ DB '	MODEM S fn.ft',cr,lf
+ DB 'Then send a third file at 450 baud and disconnect:'
+ DB CR,LF,'	MODEM SD.450 fn.ft',cr,lf
+ DB 'Act as a terminal, originate mode, at 110 baud:',cr,lf
+ DB '	MODEM TO.110',CR,LF
+ DB '	(Use ctl-D to disconnect)',cr,lf
+ DB 'Receive file, answer mode, view it, 600 baud:',cr,lf
+ DB '	MODEM RAV.600 fn.ft',cr,lf,0
+JMP EXIT
+;
+;BDOS equates (version 2)
+;
+RDCON	EQU	1
+WRCON	EQU	2
+PRINT	EQU	9
+CONST	EQU	11	;CONSOLE STAT
+OPEN	EQU	15	;0FFH=NOT FOUND
+CLOSE	EQU	16	;	"	"
+SRCHF	EQU	17	;	"	"
+SRCHN	EQU	18	;	"	"
+ERASE	EQU	19	;NO RET CODE
+READ	EQU	20	;0=OK, 1=EOF
+WRITE	EQU	21	;0=OK, 1=ERR, 2=?, 0FFH=NO DIR SPC
+MAKE	EQU	22	;0FFH=BAD
+REN	EQU	23	;0FFH=BAD
+STDMA	EQU	26	;SET DMA
+BDOS	EQU	BASE+5
+REIPL	EQU	BASE
+FCB	EQU	BASE+5CH ;SYSTEM FCB
+FCBEXT	EQU	FCB+12	 ;FILE EXTENT
+FCBSNO	EQU	FCB+32	 ;SECTOR #
+FCB2	EQU	BASE+6CH ;SECOND FCB
+;
+	END

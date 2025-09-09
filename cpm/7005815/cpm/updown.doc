@@ -1,0 +1,36 @@
+11:26am  Monday, 8 February 1982			GZ@MC
+6:23am  Thursday, 2 July 1981				FJW@MC
+12:32am  Wednesday, 7 January 1981			GZ@MC
+5:33am  Wednesday, 3 December 1980  			GZ@MC
+
+====================
+All this has been superceded by GREN's :UPL and :DOWNL.  They are
+self-explanatory (just give the filenames on the command line).  If the
+programs don't seem to be there,  try :CPM;UPL/:CPM;DOWNL.	--GZ
+====================
+
+--------------------
+This has been superceded by :GZ;UP and :GZ;DOWN.  See :GZ;UP DOC or
+:GZ;DOWN DOC for usage details.  --FJW
+--------------------
+
+Documentation for CPM;DOWN LOAD and CPM;UP LOAD
+
+:LISP MC:CPM;DOWN LOAD $ File
+where the $ is an escape, will print "Type CR when ready" and
+wait for a carriage return to be typed.  All other characters
+are ignored.  The CR (or any other character typed) is not
+echoed.  After the CR is received, File will be printed out on
+the terminal in raw image mode, with all control-character
+interrupts (^Z,^_,^G etc.)  disabled and echo turned off.  When
+it is finished, it will just sit there in this state until you
+type 10 ^C's.  This is so you can save the file away locally.
+
+:LISP MC:CPM;UP LOAD $ File 
+where the $ is an escape, will print "ready" and then proceed to
+read characters from the terminal in raw image mode, with
+all control-character interrupts (^Z,^_,^G etc.) disabled, and
+put the characters in File.  When it receives 10 consecutive
+^C's it will print "done" and finish.  These last 10 ^C's will
+get placed in the File, but you won't see them if you look at
+the file in emacs.

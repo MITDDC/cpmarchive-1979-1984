@@ -1,0 +1,882 @@
+
+  [4] *rtF #230941: 05/04 09:22	KING@AFSC-HQ => ROBG@MIT-DMS
+				Re: Re Questions and Answers [33502]
+
+[Message #4 (230941)]
+
+Date:  4 May 1982 0922-EDT
+From: Stephen M.King <KING at AFSC-HQ>
+Postal-address: HQ AFSC/ACDPS, Andrews AFB, DC  20334
+Phone: (301)981-4002;   AUTOVON: 858-4002
+Subject: Re: Re Questions and Answers
+To: ROBG at MIT-DMS
+In-Reply-To: Your message of 4-May-82 0111-EDT
+
+Hi Rob,
+
+Here's my copy of LockSmith stuff...
+
+
+SOURCE file TY (10)TCA640>LOCKSMITH4.0 'HOW TO BACK UP' USING LOCKSMITH
+  ALSO old file LS.TECH.NOTES has been appended to the end of this file.
+LAST UPDATE 4-20-82
+(also see LS PARAMETERS available on Source by typing TY
+  (10)TCA640>LS.PARAMETERS)
+
+SYMBOL   MEANING
+------   -------
+T      = tracks to copy
+NORMAL = not synchronized
+:      = data listed to the right is PARMs to be changed before copying
+         track(s) indicated
+BY     = shows track increment (1 if not otherwise indicated) (C/R defaults to
+         1)
+**     = user supplied. not verified as to accuracy
+
+NOTE-When following instructions below, do each step in the order listed.
+Change parms before copying tracks indicated to the left of the colon.
+Previously entered parms remain as changed unless changes are indicated in
+subsequent lines. Where tracks are indicated with single number (Ex: 9.5 in
+FS-1 or T0 in many others) they are entered as both beginning and ending
+tracks.
+
+IF A PARTICULAR PROGRAM IS NOT LISTED, TRY T0-T22 NORMAL. PROGRAMS THAT ONLY
+REQUIRE T0-T22 NORMAL ARE NOT LISTED DUE TO SPACE CONSTRAINTS.
+
+AIRSIM - 1
+     T0-T2 sync: A8=B5 78=00 79=12 47=FF
+     T9-T22 sync
+     T3-T8 sync: 79=0E (ERROR ON TRACK 8 OKAY)
+     NOTE- WRITE PROTECT COPY BEFORE RUNNING!!
+AKALABETH **
+     T0-T18 sync: 44=DD
+ALIEN TYPHOON **
+     T0-TE sync
+ALIEN TYPHOON **
+     T0 norm
+     T1-T5 by 1: 46=AD
+     T6-TE by 1: 44=DE
+APPLEOIDS **
+     T0-T22 normal
+     T3.5 normal
+     T21.5 normal
+APPLE PANIC
+     T0-TD normal
+APPLE PANIC **
+     T0 norm
+     T1-TC: 44=DD
+APPLE PRINT USING **
+     T0-T23 sync
+APPLE WORLD
+     T0-T23
+APPLEWRITER (APPLE ///)
+     T0-T22 sync
+AUTOBAHN
+     T0 normal
+     T4-T6 sync: 74=00
+     T9.5-TC.5 sync
+BAG OF TRICKS **
+     T0 morm
+     T1-T14: 40=10 44=D6 53=00
+BATTLE OF SHILOH **
+     Same as TORPEDO FIRE
+BEER RUN  **
+     T0 : 18=20 19=00 46=96 4D=00 4E=00 52=00 53=00 54=12 57=00 40=20
+     T1.5-TD.5 sync
+BEER RUN  **
+     T0 norm
+     T1.5-TD.5 sync: 72=00 73=00 77=00 78=00 79=12 7C=00 40=20 19=00
+                     44=DD 45=AD 46=DA
+BPI BUSINESS ACCTING SYSTEM (4 DISKS) (revised 10-26)
+     T0-T22: 19=00 21=02 58=19 59=06 5A=1A 5B=FF BD=44 BE=E6 BF=45 C0=FF C1=40
+             C2=01 C4=44 C5=D5 C6=45 C7=AA C8=40 C9=04 CA=00
+CARTELS AND CUTTHROATS **
+     Same as TORPEDO FIRE
+CASTLE OF DARKNESS **
+     T0 sync: 46=96
+     T1-T23 sync: 44=AB 45=AB 79=12
+CASTLE WOLFENSTEIN
+     T0-T22 sync
+COMPUTER AIR COMBAT
+     T0-T22: 25=19 65=00 6B=00
+CONTEXT CONNECTION same as Desk Top Plan II
+COPTS & ROBBERS
+     T0: (parms same as Gorgon)
+     T1.5-TF.5 by 1 sync: (parms same as Gorgon)
+CRANSTON MANOR  **
+     T0-T22 normal
+     T18: 53=00 44=D5 45=FE 4C=1B 57=00
+CROSSFIRE **
+     T0-T22 normal
+     T1: 4C=1B APPLY PATCH NC30 (version 4.0 only)
+         4C=1B 57=00 E9=02 (version 4.1 only)
+CROSSWORD MAGIC **
+     T0-T22 sync: 46=96 75=00 76=00 77=00 78=00 79=12 4B=AA
+CRUNCH, CRUMBLE & CHOMP  **
+     T0-T22 sync
+CYBERSTRIKE
+     T0 norm
+     T4-TB sync: 46=F5 79=12
+     T11-T1C sync: 46=B5
+DARK FOREST  **
+     T0-T22 sync
+DARK FOREST  **
+     T0: 18=20 19=00 46=96 4D=00 4E=00 52=00 53=00 54=12 57=00 40=20
+     T2-T22 by 1 sync: 72=00 73=00 77=00 78=00 79=12 7C=00
+                       40=20 19=00 44=D5 45=AA 46=AF
+DATADEX
+     T0-T2 sync: 79=12 46=96
+     T3.5 sync
+     T5-T22 sync
+DATA FACTORY 5.0
+     T0-T23 sync: 46=96 79=12 71=19 75=00 76=00 77=00 78=00
+     NOTE - Write protect copy!  Also, to boot disk follow these
+     steps: 1) Boot disk
+            2) When computer starts to beep open drive dorr and press RESET
+            3) When computer print BREAK IN 5 close drive door and press RESET
+            4) Use program
+DATA PLAN **
+     T0-T22 sync
+DATA REPORTER
+     T0-T22 norm: 4D=00 46=96 54=12
+DB MASTER and UTILITIES DISK
+     T0-T5 sync
+     T6.5-T22.5 BY 1 norm
+     (Write Protect copy before running)
+DESK TOP PLAN II
+     T0-22: 19=00 21=02 58=19 59=06 5A=1A 5B=FF BD=44 BE=EB BF=45 C0=FD C1=40
+            C2=01 C4=44 C5=D5 C6=45 C7=AA C8=40 C9=06 CA=00
+DISK ORGANIZER II  **
+     T0 norm
+     T2-T4 sync
+     TA-TB sync
+     T1: 4C=1B apply patch NC30 (vers. 4.0 only)
+         4C=1B 57=00 E9=04 (version 4.1 only)
+DISK RECOVERY **
+     T0 norm
+     T2-T4 sync
+     TA-TB sync
+EPOCH (revised as of 10-26)
+     T0: 18=20 19=00 46=96 4D=00 4E=00 52=00 53=00 54=12 57=00 40=20
+     T1.5-TF.5 by 1 sync:
+         72=00 73=00 77=00 78=00 79=12 7C=00 40=20 19=00 44=D5 45=AA 46=DA
+ESCAPE FROM ARCTURUS
+     T0-T22: 4D=00
+EXECUTIVE SECRETARY
+     T0-T22: 46=96 54=12
+EXPEDITER
+     T0-22 normal (all versions)
+     T3 & T1F: 4C=1B APPLY PATCH NC 30 (version 4.0 only)
+               4C=1B 57=00 E9=02 (version 4.1 only)
+FALCONS **
+     T0 sync
+     T1.5-T19.5 by 1 sync
+FALCONS **  (new as of 12-21-81)
+     T0 normal
+     T1.5-T4.5 by 1.5: 18=20 34=AA 44=DF 45=AD 46=FE
+           (If the above parms don't work try:
+           18=40 19=00 34=AA 40=40 44=DF 45=AD
+           46=00 4E=00 4D=00 52=00 53=00)
+     T5.5
+     T7-TA by 1
+     TB.5-TE.5 by 1.5
+     T10-T12 by 1
+     T13.5-T14.5 by 1
+     T16-T19 by 1.5
+     T1A-T1B.5 by 1.5
+FINANCIAL CONTROLLER (all 5 disks) **
+     T0-T22 sync
+FIREBIRD
+     T0: 18=20 19=00 46=96 4D=00 4E=00 52=00 53=00 54=12 57=00 40=20
+     T1.5-TB.5 by 1 sync:
+         72=00 73=00 77=00 78=00 79=12 7C=00 40=20 19=00 44=DD 45=AD 46=DA
+FS-1 (new as of 11-1-81)
+     T0 normal
+     T1.5-T21 by 1.5: 44=DB 45=AB 46=BF 40=20 4E=00 54=12
+     T7-T8
+     T9.5
+GAMMA GOBLINS **
+     Same as SNEAKERS
+GENETIC DRIFT
+     T0: 18=50 19=00 40=20 46=96 4D=00 4E=00 52=00 53=00 54=12 57=00
+     T1-T3: 44=BB 45=D5 46=BB
+     T4.5-T6 by 1.5
+     T7.5-TB.5 by 1
+     TD: 44=D4 45=D5 46=BB
+     TE.5-T12.5: 44=AD 45=B5 46=DE
+GOBLER
+     T0-T22: 4E=00
+     T3: 4C=1B D2=00 45=BD 4E=01 34=FF 54=12 52=00
+         (NOTE- In this set of parms changing 4C to 1B will NOT invoke
+          NIBBLE COUNT preservation since parm D2 is set to 00.)
+GORGON (new as of 11-1-81)
+     T0: 18=20 19=00 46=96 4D=00 4E=00 52=00 53=00 54=12 57=00 40=20
+     T1.5-TE.5 by 1 sync:
+         72=00 73=00 77=00 78=00 79=12 7C=00 40=20 19=00 44=DD 45=AD 46=DA
+HAYDEN APPLESOFT COMPILER
+     T0-T22 sync: 46=996 71=19 79=12
+     NOTE - Errors on T10-T1E OK.  Also, very sensitive to drive speed!!
+HAYDRON **
+     Same as GORGON
+HIRES CRIBBAGE and HIRES FOOTBALL **
+     T0-T5 sync     T6-T22 normal
+HIRES GOLF **
+     T0-T22 norm: 4E=00 46=B5 54=12
+INVOICE FACTORY (2 Disks)
+     T0-T22: 46=96 54=12
+JAWBREAKER **
+     T0-T22 norm
+     T3: 34=FF 44=DF 45=EF 46=F7 50=00 51=00 52=00 53=00 54=12
+LETTER PERFECT
+     T0-T22: 44=00 45=D5 46=AA
+MAGIC WINDOW
+     T0-T22: 4F=0B
+MASTER TYPE
+     T0-T2 normal
+     T3-T1A norm: 44=D4
+     T1C-T22 normal
+MICRO BASEBALL **
+     T0-T4 normal     T5-T22 sync
+MICRO COURIER
+     T0-T22 normal
+     T1F: 81=97 82=EB 40=08 16=08 41=FF 19=00 58=0B 59=FF
+MICRO TELEGRAM
+     Same as MICRO COURIER
+MICROWAVE
+     T0-T22 norm
+     T11: 4C=1B 57=00 E9=02
+MISSLE DEFENSE
+     T0-T22 sync
+MULTI DISK CATALOG III **
+     T0-T22 sync
+NIGHT MISSION **
+     T0 norm
+     T1-T15: 44=BB 45=AB 46=DF 40=20 4E=00 54=12
+     NOTE - Write protect copy before running!
+OLYMPIC DECATHALON
+     T0-T22 sync: 46=B5 A8=00 71=18 79=12
+OO-TOPOS
+     T0-T22: 21=02
+ORBITRON (same as Gorgon)
+OPERATION APOCALYPSE
+     T0-T22: 25=19 65=00 6B=00
+OUTPOST (same as Sneakers)
+PALACE IN THUNDERLAND
+     T0-T22: 25=19
+PEGASUS II
+     T0-T22 normal (all versions)
+     T3: 4C=1B apply PATCH NC30 (version 4.0 only)
+         4C=1B 57=00 E9=02 (version 4.1 only)
+PFS **
+     Same as PFS REPORTS (track 0 error may occur)
+     Write Protect disk before running!
+PFS REPORTS
+     T1-T13 normal
+     T0: 40=08 41=FF 16=08 19=00 58=0B 59=FF 54=12 12=02 44=93 45=F3 46=FC
+         47=FF 81=93 82=F3 83=FC 84=FF
+PHANTOMS FIVE
+     T0 normal     T2-T1C: 44=DD
+POOL 1.5
+     T0-T15 sync: 46=B5 79=12
+     T1E-T21 sync
+PRESIDENT ELECT (revised as of 10-23)
+     T0-T22: 25=19 6B =00
+PUCKMAN
+     T0: 54=12     T1-TD: 54=09
+PULSAR II
+     T0 sync
+     T1C.5-T1D.5 sync
+     T2-TC sync: 44=DD
+     T13-T19 sync
+     T1A.5-T1B.5 sync
+QUICK LOADER  **
+     T0 norm
+     T2-T11 sync
+RASTER BLASTER (for old RASTER BLASTER only)
+     T0 normal
+     T5-T11 by 4 sync: 44=AD 45=DE 53=00
+     T6-T12  by 4 sync
+     T7.5-TF.5 BY 4 sync
+     T1.5-T3.5 BY 2 sync
+RASTER BLASTER (New versions)
+     T0: 46=96 54=12
+     T5-T11 by 4 sync: 44=AD 45=DE 46=00 72=00 73=00 75=00 78=00 79=12
+     T6-T12 by 4 sync
+     T7.5-TF.5 by 4 sync
+     T1.5-T3.5 by 2 sync
+RINGS OF SATURN **
+     T0-T2 sync
+     T3-T22 normal
+     T5 sync
+     T9 sync
+SABATOGE **
+     T0-T22 norm
+     T3: 4C=1B  Apply patch NC30 (version 4.0 only)
+         4C=1B 57=00 E9=02 (version 4.1 only)
+SARGON II **
+     T0-T1A norm: 19=00 54=12
+SHATTERED ALLIANCE
+     T0-T22: 25=19
+SHATTERED ALLIANCE (NEW)
+     T0: 4C=18 47=FF 53=0B 54=12
+     T1-T22: 44=D4 46=B7
+SINGA SHAPE MANAGER **
+     T0-T22 sync
+SNAKEBITE ** same as GORGON
+SNEAKERS
+     T0: 18=20 19=00 46=96 4D=00 4E=00 52=00 53=00 54=12 57=00 40=20
+     T1.5-TD.5 by 1 sync:
+         72=00 73=00 77=00 78=00 79=12 7C=00 40=20 19=00 44=DD 45=AD 46=DA
+SNOGGLE **
+     T0-T9 norm
+        or
+     T0-TF norm
+     T10.5-T11.5 sync
+SOFTPORN ADVENTURE
+     T0-T22 normal (all versions)
+     T3: 4C=1B Apply PATCH NC30 (version 4.0 only)
+         4C=1B 57=00 E9=02 (version 4.1 only)
+SOUTHERN COMMAND **
+     T0-T22: 25=19 6B=00 34=D5 35=AB
+SPACE EGGS
+     T0 norm     T2-6 norm     T11-13 norm
+     T14-1A: 44=DD
+SPACE QUARKS
+     T0: 18=50 19=00 40=20 46=96 4D=00 4E=00 52=00 53=00 54=12 57=00
+     T1-T2: 44=AB 45=D4 46=AB
+     T3.5-T5.5 by 1
+     T7
+     T9: 44=FE 45=DD 46=AF
+     TA.5-B.5 by 1: 44=AA 45=DE 46=BB
+     TD-15 by 1
+SPACE WARRIOR
+     T0: 18=50 19=00 40=20 46=96 40=20 4E=00 52=00 53=00 54=12 57=00
+     T2.5-T3.5: 44=DF 45=AD 46=DE
+     T5-T8 by 3
+     T6.5
+     TA-T10 by 3
+STAR CRUISER **
+     T0-T3 by 3 sync     T5-Tb by 1 sync     T11-T12 by 1 sync
+     T4 sync: 44=AA 45=DD 46=BB
+STAR MINES **
+     T0 norm
+     T1-T2 norm: 46=AD
+     T4-TA norm
+STAR RATERS **
+     T0-T5 norm (TRACK 5 ERROR MAY OCCUR)
+STAR THIEF
+     T0-T13 NORMAL (TRACK E-13 ERRORS MAY OCCUR) (all versions)
+     T22: 4C=1B Apply PATCH NC30 (version 4.0 only)
+          4C=1B 57=00 E9=02 (version 4.1 only)
+SUPER APPLE BASIC **
+     T0-T22 norm
+     T3 norm-extended retry
+SUPERSCRIBE II
+     T0-T22 norm
+     T3 norm: 45=00 50=00
+SUPERSCRIBE II **
+     Same as PEGASUS II
+TAX PREPARER
+     T0-T22: 46=96 54=12 4C=19
+THEIF
+     T0-22: 83=FF 4F=0B 53=00
+     T4-T5 sync: 38=02 1E=02 19=00 12=01 7C=00
+THRESHOLD
+     T0-T22 normal
+     T1-T23 by 22: 4C=1B (patch NC30 for version 4.0)
+                   4C=1B 57=00 E9=02 (version 4.1 only)
+TIGERS IN THE SNOW **
+     Same as PRESIDENT ELECT
+TIME ZONE (Disk #1)
+     T0-T4 sync
+     T5-T22 norm
+TIME ZONE (All other Disks)
+     T0-T22 normal
+TINY TROL
+     T0-T22 normal     T3.5-T5 BY 1.5
+TORPEDO FIRE
+     T0 normal     T1-T22: 4F=0B
+TWERPS **
+     Same as Gorgon
+     Plus T1A: 4C=1B 57=00 E9=02
+ULTIMA
+     T0-T22: 1E=0B
+ULYSIS **
+     T0-T22 norm
+     T3: 4C=1B apply PATCH NC30 (version4.0 only)
+         4C=1B 57=00 E9=02 (version 4.1 only)
+VISICALC (DOS 3.3 version)
+     T0-T22 normal (T1 ERR Is OK)
+VISICALC (APPLE ///)
+     T0-T22 sync
+VISIDEX (change as of 11-18-81)
+     T0-T22: 40=04 16=08 41=FF 19=00 58=0B 59=FF 81=AA 82=EB 83=FD 21=02
+             46=96 54=12
+VISIFILE
+     Same as DESK TOP PLAN II except PARM C0=FD s/b C0=EC
+VISISCHEDULE **
+     T0-T22: 40=04 16=08 41=FF 19=00 58=0B 59=FF 81=AA 82=EB 83=EC
+VISITERM
+     T0-T22 normal
+     T6: 40=08 16=08 41=FF 19=00 58=0B 59=FF 81=AA 82=EB 83=FC
+VISITREND/VISIPLOT
+     T0-T22 normal
+     T7: 40=08 16=08 41=FF 19=00 81=DE 82=AA 58=0B 59=FF
+WARP FACTOR **
+     Same as TORPEDO FIRE
+WIZARDRY
+     T0-T9 normal
+     TF-T22 normal
+     TA-TE sync: 36=1
+     (note- uses nibble count which requires drive speed adjustment
+     with either the <> signs or by removing drive cover and adjusting actual
+     speed. Also, you MUST put a write protecttab on the copy disk BEFORE
+     running.)
+WIZARDRY **
+     T0: 36=01 21=02 46=96
+     T1-T22 sync: 36=00
+     (note-see notes on above procedure for WIZARDRY)
+ZORK (old versions)
+     T0-T22: 1E=0B
+     T3:    4C=1B (patch NC30 for version 4.0)
+            4C=1B 57=00 E9=02 (version 4.1 only)
+ZORK I and ZORK II (new versions)
+     T0-T22: 46=96 40=14
+
+IF A PARTICULAR PROGRAM IS NOT LISTED, TRY T0-T22 NORMAL. PROGRAMS THAT ONLY
+USE T0-T22 NORMAL ARE NOT LISTED DUE TO SPACE CONSTRAINTS.
+
+SPECIAL NOTE: (version 4.0 only)
+Some APPLE disk drives have exhibited problems with the head seek algorithm.
+To determine if your APPLE is affected by this problem, perform the following
+test:
+     1) Attempt to copy your LOCKSMITH disk, Track 9 only (no sync).
+     2) The copy may fail, but should indicate a track start (in the second
+        line of the 3 line inverse block) of - D5 AD FF.
+     3) If this is not the case, your drives exhibit the problem, and you
+        should apply patch LSGP after booting LOCKSMITH.
+
+If your drives exhibit this problem, send your 4.0 version in for a free
+revision to version 4.1 that solves this problem.
+
+---------------------------------------------------------------------------
+PATCHES listed below should be entered before starting copy routines unless
+otherwise indicated. These patches work only for version 4.0. They are built
+into version 4.1. Entering them into 4.1 will result in an 'incorrect patch'
+error.
+
+PATCH NAME - ENTER AS LISTED BELOW
+PATCH MULT - MULTNQNQG/RP This patch, when applied first, allows multiple
+             patches to be applied.
+PATCH LSGP - LSGPNJMFM/G//LA/LG/M/ZNGEKCPSWQ Use as directed
+PATCH NC30 - NC30WKDXQQSJ/EQQSJ/EY/ Use as directed (when PARM 4C is changed
+             to 1B)
+PATCH SI9K - SI9KWRTY//AWRTU/NAWRTQ// Allows using SILENTYPE or TRENDCOM
+             printers
+NOTE:When using patches, enter them as shown with no spaces.
+---------------------------------------------------------------------------
+
+LOCKSMITH TECHNICAL NOTES
+--------- --------- -----
+
+(based on most frequently asked questions)
+
+We are maintaining an extensive and detailed list of disks which LOCKSMITH
+will copy, as well as any parameter changes or patches which the user must
+make to copy certain disks.
+
+We are working hard to provide users with necessary parm changes as we
+determine them. We openly solicit user input regarding LOCKSMITH parameters
+which work for certain disks.
+
+If, after you make the recommended parameter changes and you are still unable
+to copy the disk in question, follow these instructions:
+
+  1. Make sure your disk drive speed is correct.
+  2. Retry the copy reversing the order of the disk drives used.
+  3. If possible, attempt the copy on a different apple or set of drives
+     to make sure that the problem is not your disk drives.
+  4. If all fails, write us about the problem including all
+     pertinent information about what attempts you made to copy the disk.
+     If we are able to solve your problem, we will contact you.
+
+Some protected disks use a technique known as nibble counting. This technique
+is based on the fact that all APPLE disk drives run at slightly different
+speeds, and even the speed of a specific disk drive varies slightly over
+time. Disks which are protected by this method count the nibbles on a given
+track and record this unique number somewhere else on the disk. When the disk
+is booted by the user, the nibble count on the track in question is checked
+against the correct value. Simply copying the track will almost always write
+a different number of nibbles due to disk drive speed variation.
+
+LOCKSMITH 4.0 has a provision for nibble counting, and will preserve nibble
+counts on any track requested. To request nibble count preservation, set parm
+36 to 01. (This is automatically done for the user when parm 4C is set to 1B.)
+After the track is written to the copy disk, the nibbles are counted and
+compared to the original count to be preserved. The difference is shown as a
+four-digit hex number preceeded by '<' or '>' to indicate to the user which
+way to manually adjust the count. The count may be adjusted in one of two
+ways. Either the disk speed adjustment pot can be turned in the direction
+indicated by the '<' or '>' arrows (see user manual regarding disk speed
+adjustment), or a limited amount of adjustment can be done from software
+without actually adjusting the disk speed.
+
+To adjust the nibble count from software, press either '<' or '>' as indicated,
+and wait until the speaker begins beeping. The speaker will beep rapidly once
+for each nibble that the track is being shortened or lengthened. Then press
+the return key (or any key other than '<' and '>') and allow the nibble count
+routine to test the track again. When the nibble count is within the tolerance
+value specified by PARM 37 (normally 00), the track will be considered copied
+correctly. This technique may seem cumbersome, but it is the only way in which
+a track may be copied while preserving the nibble count.
+
+Note that nibble count adjustment from software (using '<' and '>') will not
+work if a typeahead buffer is installed on the APPLE. To perform nibble count
+preservation, either remove the typeahead buffer, or adjust the disk speed pot
+directly.
+
+When the nibble-editor is entered from the main menu, the track is read into
+the buffer with no LOCKSMITH analysis whatsoever. No nibbles will be indicated
+as self-sync (inverse), as this is determined when analysis occurs during a
+disk copy operation. Also, ctrl-B and ctrl-E will place the cursor at the
+beginning and end of the buffer, because track-start and track-end are also
+determined by analysis during disk copy.
+
+To enter the nibble-editor after analysis by LOCKSMITH, perform a copy
+operation, specifying manual error retry. Open the door of the copy disk drive
+to cause a verify error (error code 8) and enter the nibble editor by
+selecting: 5. Nibble-Edit Current Track Data. In this way you may nibble-edit
+a track after LOCKSMITH has performed analysis on it.
+
+                   THE COMPLEAT GUIDE TO LOCKSMITH PARAMETERS
+                   ------------------------------------------
+
+This document describes all user-changeable LOCKSMITH parameters in depth.
+A partial list of these parameters was previously distributed to all Version
+4.0/4.1 owners.  Also provided here is detailed LOCKSMITH program logic
+information.  Note---This document is of a highly technical nature, and is
+intended primarily for the ADVANCED user of LOCKSMITH.
+
+
+BACKGROUND
+----------
+
+When LOCKSMITH was first introduced in January 1981, it would copy almost all
+disks with no special instructions from the user.  Only a few disks required
+parameter changes.
+
+Alas, those good old days are gone forever.  Instead of providing the user
+with better backup policy, software vendors decided to escalate the battle by
+developing more complicated (and in some cases, bizarre) protection
+techniques.  Because of the m any different techniques now in use, it is
+likely that many disks will require some input from the user in the form of
+parameter changes.  Omega Microware currently maintains an extensive list of
+software, along with the LOCKSMITH parameters used to copy each.  Some of the
+entries on this list are user-supplied, and Omega Microware welcomes
+information from users regarding how to back-up software not already on this
+list.
+
+
+OVERVIEW
+--------
+
+LOCKSMITH copies disks by reading a track, performing analysis on the data,
+and writing the track back to the copy disk.  Reading and writing are fairly
+straightforward functions.  The analysis of the track data is by far the most
+difficult task, and must provide for flexibility.  Many analysis routines
+(algorithms) are provided within LOCKSMITH.  Each algorithm performs a
+specific function relating to the analysis of track data.  By changing
+parameters, the user may select, disable, or change the execution order of
+algorithms.  Parameters may also be used to define values to be used by
+individual algorithms.
+
+
+ALGORITHMS
+----------
+
+The algorithms are numbered from 0 to $23 (all values are in hex), although
+more algorithms may be added in future versions of LOCKSMITH.  During track
+analysis, algorithms are selected sequentially from a table of algorithm
+numbers, locapted from PARM4C-80.  As algorithms are selected from this table
+during analysis, they are displayed on the screen as 2-digit hex numbers in
+inverse video.  Algorithm 00 indicates a null algorithm, which can be used to
+replace algorithm numbers in the table which the user wants to disable.  An FF
+entry in this table indicates the end of the algorithms to perform.
+
+Currently, the algorithm table contains four separate algorithm sequences,
+each one terminated by an FF entry.  The starting point of the algorithm
+sequence to be used is defined by PARM25.  This parameter contains the index
+into the algorithm table to be used as the first algorithm of a sequence.  For
+example, if PARM25=00, the algorithm sequence would start at PARM4C.  If
+PARM25=10, the algorithm sequence would start at PARM5C.
+
+The section of algorithm table starting at PARM71 is selected as an algorithm
+sequence start (instead of PARM4C) when synchronized tracks are chosen.
+
+Algorithms, in addition to performing their specialized function, can return a
+flag to indicate success or failure.  It is possible to indicate that an
+algorithm is to be performed only if the previous algorithm failed.  This may
+be done by setting the high-order bit of the algorithm number within the
+algorithm table.  For example, an entry of A1 indicates that algorithm 21 is
+to be performed only if the previous algorithm failed.
+
+
+DESCRIPTION OF ALGORITHMS
+-------------------------
+
+The following is a list of algorithm numbers and the parameters which affect
+them.
+
+ALG 00 (this algorithm doesn't do much of anything)
+
+ALG 01 (consecutive nibbles to self-sync) changes normal nibbles to self-sync
+nibbles based on:  finding (PARM10) consecutive nibbles in the range (PARM34)
+to (PARM35), inclusive.  For example, if PARM10=0C, PARM34=FE, and PARM35=FF,
+then algorithm 01 wou ld search for sequences of length 0C nibbles with values
+FE through FF, and set them to self-sync.
+
+ALG 02 (invalids to self-sync) sets invalid nibbles (those with 3 or more
+consecutive zero bits) to self-sync.
+
+ALG 03 (standardize self-sync) sets all self-sync to (PARM33), which must have
+high-order bit clear.
+
+ALG 04 (loner self-sync to normal) set consecutive self-sync strings of less
+than or equal to (PARM3C) to normal.
+
+ALG 05 (glitch remover) set consecutive normal nibbles of length less than or
+equal to (PARM12) to self-sync.
+
+ALG 06 (set self-sync by marker pattern match) searches for pattern specified
+by (PARM44-4B), and sets the previous (PARM40) nibbles to self-sync.  Values
+of 00 within the pattern are "don't care" and always match.
+
+ALG 07 (extend bit shifted self-sync) extends self-sync strings backwards,
+using the table at (PARM86-A5).  This table contains nibble value sequences
+frequently found to be self-sync.
+
+ALG 08 (reserved for future use)
+
+ALG 09 (trackstart after longest gap) set trackstart to first normal after
+longest string of self-sync (gap).
+
+ALG 0A (minimum length self-sync) extend self-sync strings backwards to
+minimum length of (PARM2C).
+
+ALG 0B (set self-sync by self-sync pattern match) set self-sync based on
+multiple-byte pattern match.  Pattern is defined at (PARM81-85) and is
+terminated with a 00 value.
+
+ALG 0C (shorten all gaps) shorten all gaps (consecutive strings of self-sync)
+by (PARM41) nibbles if the string length was greater than or equal to
+(PARM16).
+
+ALG 0D (2 of 3 gap merge) merges first and second gaps (by setting to
+self-sync, nibbles between them) if 3 gaps are found within (PARM26) nibbles.
+(The gaps merged are usually the gap after a data field.)
+
+ALG 0E (trackstart after first self-sync) sets trackstart to first normal
+after the first string of self-sync.
+
+ALG 0F (shorten longest gaps) shorten the longest gap if longer than (PARM2C)
+by (PARMxx) nibbles.  Repeat this procedure (PARMyy) times.
+
+   xx=27 (or 29 if synchronized)
+   yy=28 (or 2A if synchronized)
+
+ALG 10 (reserved for future use)
+
+ALG 11 (set failure flag) same as algorithm 00, but sets the failure flag
+
+ALG 12 (trackstart by marker pattern match) set trackstart to the first
+sequence to match pattern at (PARM44-4B) (see ALG 06)
+
+ALG 13 (center of gaps to normal) leaving 8 self-sync at the start and at the
+end of a gap, set self-sync in the center of the gap to normal.
+
+ALG 14 (bit-translate to self-sync) using the bit table at (PARMD9-E8),
+translate nibbles corresponding to a one-bit to self-sync.  Bits in the table
+represent values for nibbles in the following order:  80,81,82, ...
+FC,FD,FE,FF
+
+ALG 15 (reserved for future use)
+
+ALG 16 (reserved for future use)
+
+ALG 17 (track-end and compare) This algorithm searches for a repeat of the
+track-start beginning at (PARM1D) pages beyond the current track-start.  A
+repeat of the track-start is determined by matching (PARM1E) number of
+nibbles.  If the track size is greater than (PARM1B) pages, an e rror 2 status
+code will be issued.  Once a track-end is chosen, the first two track images
+are compared, nibble for nibble.  If an unequal nibble compare occurs, a
+look-ahead of up to (PARM13) nibbles is performed, looking for self-sync.  If
+self-sync is f ound, the compare failure is ignored.  If no self-sync is found
+during this look-ahead, a counter is incremented for the compare-failure, and
+this count is checked against (PARM14), which must not be exceeded, or an
+error 4 status code is issued immediat ely.  The 3rd track image is then used
+as a tie-breaker to determine which of the 1st or 2nd track images is correct.
+The exact position in the 3rd track image is found by first finding the
+approximate location in the 3rd image (by using track length), backing up
+(PARM11) nibbles, and pattern-matching (PARM32) number of nibbles, while
+searching through the next (PARM31) number of nibbles.  The 1st image is
+corrected by the tie-breaker nibble.  This algorithm returns a success/fail
+flag.
+
+ALG 18-1F (parm modifier) These algorithms are used to dynamically modify
+parms.  The table at (PARMB6-D8) consists of several sequences of parm
+modifier entries.  Each parm modifier entry consists of a pair of bytes.  The
+1st byte defines the parm number, and the 2nd byte define s the new parm
+value.  The end of a sequence is indicated by a 00 entry for parm number, and
+a new sequence begins with the next byte.  Algorithm 18 invokes the 1st
+sequence of parameter modifier entries, algorithm 19 invokes the 2nd sequence,
+etc.  Using these algorithms, parameters may be automatically changed and
+restored during analysis.  The defaults for these algorithms are currently set
+as follows:
+
+   ALG18 sets 13-sector parms
+   ALG19 sets 16-sector parms
+   ALG1A sets misc. parms
+   ALG1B sets nibble-counting parms
+
+ALG 20 (goto nibble buffer address) This algorithm is used in conjunction with
+the nibble editor.  This algorithm prompts the user for an address to go to,
+and the nibble editor cursor is immediately placed at that location.  (see
+INVOKING ALGORITHMS FROM THE NIBBLE EDITOR)
+
+ALG 21 (set error code 1) issues an error 1 status code.  It is usually placed
+in the algorithm table with the high-order bit set, to cause it to execute
+only when the previous algorithm fails.
+
+ALG 22 (backup trackstart to front of gap) moves the trackstart pointer
+backwards to the beginning of the preceeding gap
+
+ALG 23 (set trackstart to longest normal) sets trackstart to the 1st nibble of
+the longest sequence of normal nibbles.
+
+
+PRINTER CONTROL PARMS
+---------------------
+
+(PARM2D) specifies the printer slot, and (PARM2E) is set to 00 if LOCKSMITH is
+not to generate <CR> at the end of a line, or left at 01 if <CR>'s are to be
+generated.
+
+
+MAXIMUM ERROR COUNT PARMS
+-------------------------
+
+(PARM01),(PARM02), and (PARM04) are used to specify the number of errors
+allowed for error codes 1,2, and 4 in automatic error retry mode.  If
+increments of 1/2 tracks are used, (PARM09),(PARM0A), and (PARM0C) are used
+instead.
+
+
+NIBBLE-COUNTING PARMS
+---------------------
+
+There are 3 parameters which are used when nibble-count preservation is
+desired.  Setting (PARM36) to 01 turns on nibble-counting.  The nibble-count
+tolerance value, (PARM37), specifies how close to the original disk, the copy
+must be.  When nibble-counting, the track-end pointer is moved up by (PARME9)
+pages before writing.
+
+
+PARMS USED FOR SYNCHRONIZING
+----------------------------
+
+(PARM22) specifies the track*2 to sync to.  This is normally 00, but may be
+set to any track.  (PARM1F) is the length of the nibble sequence to sync with,
+and (PARMA6-B5) contain the pattern to match when attempting to sync on the
+sync-track.  Values of 00 within the pattern are "don't care" and always
+match.  (PARM23) and (PARM24) are values which can be used to adjust the
+accuracy of the sync-track routine.  They are normally equal, and can be
+adjusted by increasing the value of one with respect to the other.
+
+
+PARMS USED TO CONTROL WRITING
+-----------------------------
+
+(PARM20) contains the lead-in self-sync nibble value.  (PARM2Flt is
+$1A00) number of these lead-in self sync nibbles are written before track data
+is written, with the exception of synchronized track writing, which is
+preceeded by (PARM23) lead-in self-sync nibbles.  The number of framing bits
+(1 or 2) is contained in (PARM21).  This places the proper number of trailing
+zero-bits after self sync.  (PARM2B) contains the number of the algorithm to
+be used to shorten the track after an over-write is detected by verify
+readback failure.
+
+
+OTHER PARMS
+-----------
+
+(PARM38) is the number of nibbles to test during verify readback.  (PARM39),
+if set non-zero, shows the hi-res screen during analysis, to provide a
+graphical representation of analysis.  (PARM3A) is used during disk certify.
+It specifies the maximum size of the track-end glitch.  (PARM3B), when set to
+01, causes the nibble-editor to be entered for every track, before analysis.
+
+
+DEBUG PARAMETER
+---------------
+
+(PARM00) is a special parameter intended for use during LOCKSMITH debugging.
+When this parm is set to 11, certain debugging options are enabled.  They are:
+
+1.  Inspector entry is allowed even with no resident RWTS.
+
+2.  Nibble-editor is entered without prompting the user for track to read.
+    This allows the previous track to be examined.
+
+3.  Invoking algorithms from the nibble-editor.  (see next section)
+
+
+INVOKING ALGORITHMS FROM NIBBLE-EDITOR
+--------------------------------------
+
+With DEBUG parm set (PARM00=11), the nibble-editor is sensitive to two
+additional commands.  These are control-S and control-A.  Control-S invokes
+LOCKSMITH track-analysis for the track currently in the nibble buffer.
+Control-A first allows the user to change parameters by entering the parameter
+modifier, and after the user has indicated the end of parameter changes with a
+<CR>, it prompts the user for algorithm number.  The user-entered algorithm
+number is executed immediately, and control is returned to the nibble-editor.
+In this way, the user can dynamically test the effects of specific LOCKSMITH
+algorithm sequences when attempting to copy unknown disks.  Algorithm 00 can
+be specified if no processing is to be done.  Algorithm 20 is very useful
+within the nibble editor to rapidly go to a specific address within the nibble
+buffer.
+
+
+PARMS AND THEIR DEFAULTS
+------------------------
+
+The following list shows the current default values for parameters of
+LOCKSMITH version 4.1:
+
+00: 00 01 03 01 0A 01 01 01		08: 00 01 02 01 03 01 01 01
+10: 0C 07 0B 09 0A 78 20 68		18: 00 01 08 26 00 16 0D 09
+20: FF 01 00 08 08 00 40 04		28: 10 01 10 0F 08 01 01 00
+30: 1A 10 07 7F FE FF 00 00		38: FF 00 0C 00 02 04 02 50
+40: 06 04 C1 0F D5 AA 00 00		48: 00 00 00 00 00 02 01 06
+50: 05 0D 07 03 09 A1 17 0C		58: FF 19 02 01 06 05 0D 03
+60: 09 A1 17 0C FF 1A 02 01		68: 0B 05 04 03 09 A1 17 0C
+70: FF 00 02 01 06 05 0D 07		78: 03 0E A1 17 13 00 00 00
+80: FF D5 AB 00 00 00 FF FE		88: FD FB F7 EF DF BF FF FC
+90: F3 CF FF FE F9 E7 9F FE		98: FE FC F9 F3 E7 CF 9F 00
+A0: 00 00 00 00 00 00 D5 AA		A8: 96 00 00 AA AA AA AA 00
+B0: 00 00 00 00 00 00 21 01		B8: 40 08 2C 08 00 21 02 40
+C0: 06 2C 06 00 3C 08 83 FF		C8: 00 38 02 1E 02 19 00 12
+D0: 01 36 01 00 00 00 00 00		D8: 00 00 00 00 01 00 00 00
+E0: 01 00 01 00 01 01 01 11		E8: 5F 00 00 00 00 00 00 00
+
+
+copyright 1982 Omega MicroWare, Inc.
+
+
+
+Steve
+-------
+
+
+
+

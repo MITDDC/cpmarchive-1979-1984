@@ -1,0 +1,167 @@
+ DOCUMENTATION FOR AMODEM VER.  4.2
+  TERMINAL PROGRAM.
+    
+  This file will permit the ATARI
+  to access an RCPM BBS that runs
+  under the CP/M operating system.
+  Also SOME ATARI BB Systems.
+  And allow ATARI to ATARI transfer.
+  It features uploading and downloading
+  at 300 baud and is extremely user
+  friendly.
+  The file may be listed here with
+  command D.     AMODEM4  <Y/N>N
+  Then captured and saved to disk.
+  Then ENTERed with the interface
+  "booted" by an AUTORUN.SYS file.
+    
+  When RUN, it will go into terminal
+  mode at which time the user should
+  dial the BBS. Some systems are of
+  the RING-BACK variety, so you should
+  be prepared to let the phone ring
+  ONCE. You will then hang up and
+  re-dial 10-15 seconds later.
+  When the system connects, type a
+  few <returns>s until the BBS responds.
+  Follow the HELP commands of the
+  system from here.
+    
+  TRANSLATION - SELECT T will toggle
+  the translation mode between ATARI
+  (No translation) and ASCII (Light
+  translation). Use ATARI on ATARI
+  Systems and ASCII on RCPM Systems.
+    
+  MENU - For ATARI Disk systems, you
+  may list your Menus with SELECT M
+  or SELECT 1 or 2 or 3 or 4.
+  To find files or space for new files.
+    
+  DUPLEX - For ATARI to ATARI file
+  transfer, you will need Half Duplex
+  Since AMODEM sends no echo.
+  You may toggle it with SELECT P.
+  NOTE; Use ATARI Mode on each end.
+    
+ ---------------------------------
+ NOTE: the commands XMODEM S and
+ XMODEM R are for RCPM boards only
+ For other boards, follow the
+ directions for that system!
+ For AMIS boards do function D or U
+ then answer Y to XMODEM Protocol?
+ ---------------------------------
+
+  DOWNLOADING - To download from the
+  BBS you must remember that it is
+  controlled by a file called XMODEM.
+  To have this file send a program to
+  your ATARI, you must press <SELECT>
+  key and type R to tell the ATARI to
+  get ready to receive from XMODEM.
+  You must then provide a FILESPEC
+  to which the ATARI will save the
+  program. This does not necessarily
+  have to be the same name as the BBS
+  has it saved as.
+  Once back in terminal mode, type the
+  command; XMODEM S <filename.ext>
+  and then RETURN at which time the
+  XMODEM controller will respond with
+  a statement that it has opened its
+  file and is prepared to transmit to
+  your ATARI. To begin the procedure,
+  press the START key and sit back
+  and relax. The XMODEM will send the
+  file, which can be of any type.
+  The screen will turn RED and when
+  the file has been downloaded, your
+  ATARI will save it to your filespec.
+  When the screen turns back to BLUE,
+  the process is complete.
+    
+  TO UPLOAD - Reverse the procedure
+  by pressing the SELECT and S keys
+  to indicate you will Send to XMODEM
+  the ATARI <filespec><RETURN>.
+  Then type; XMODEM R <filename.ext>
+  and RETURN which will tell XMODEM to
+  prepare a filearea under that name
+  to store the program you are going
+  to send TO the BBS. To initiate
+  the upload, press the START key and
+  the computers will take over. Your
+  screen will turn GREEN until the
+  transfer is completed.
+    
+  TO CAPTURE DATA - Press SELECT then
+  C and enter a filespec. To start 
+  press the START or OPTION key.
+  All data that you see on the screen
+  will be saved to memory. You may
+  toggle the capture on and off with
+  the OPTION key. When you are done,
+  or the buffer is full, you can press;
+  SELECT and D. This will Dump the
+  memory to your filespec.
+    
+  NOTE ABOUT ATARI <FILESPEC>
+  You may use any legal ATARI Device
+  and filename and type. Example;
+  D:MYFILE.BAS  or  D2:YOUR.PGM
+  C:  or  P:  or  R2:  or  E:
+  Remember that you can't send from
+  the Printer and you may send and
+  receive using the Editor (E:).
+    
+    
+  Please leave any questions on the
+  A.R.C.A.D.E. BBS at 313-978-8087
+  or Compuserve PEM-450: 70355,602
+  or write:  Jim Steinbrecher
+             37220 Tricia Drive
+             Sterling Hts, Mi 48077
+  
+  
+  ************************************
+
+  NOTE-
+  
+  There are many different versions of
+  the AMODEM terminal program in use.
+  The major versions <2.0, 3.0, 4.0>
+  were released by the author, while
+  the "sub-versions <3.1, 3.2, 4.1...>
+  were mostly prepared as personal
+  modifications by ATARI enthusiasts
+  from all over the USA. For the most
+  part, they added features such as 
+  mmultiple disk drive access or duplex
+  toggles that were gathered together
+  and refined by Jim, and included as
+  standard features in the subsequent
+  major version. 
+  
+  One such sequence of evolution that
+  illustrates this best, is the <M>enu
+  option.
+  
+  Version 3.0 had send/recieve/menu 
+  access from D1: only. Ver. 3.1 added
+  all 4 drive availability to this.
+  When 4.0 was released in 10/82 this
+  was a standard feature. Ver. 4.1
+  modifies line 4000 and adds 2 other
+  lines that permits the same <M>enu
+  scroll of every drive as 4.0, but
+  now permits the user to type simply
+  a single number <1,2,3,4> to have 
+  only that single menu shown. 
+  
+  
+                     SYSOP/Ron Luks
+                    CEMSIG <PEM-450>
+                        71645,253
+
+

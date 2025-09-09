@@ -1,0 +1,566 @@
+
+
+
+/*This program implements the Ward Christensen assembly language
+  program in C.  All of the original modes are available, and a
+  capture buffer was added to the terminal and computer modes.
+  The UNIX and PDP10 modes were added to facilitate sending files
+  to those systems.  Note that the original version of this program
+  was written for the D.C. Hayes modem board -  however, this
+  version is for the PMMI modem.
+
+                                  original by Jack M. Wierda
+                                  modified by Roderick W. Hart
+*/
+#include     <pmmi.h>
+
+#define      FALSE  0
+#define      TRUE  1
+#define      NUL  0
+#define      SOH  1
+#define      CTRLB 2
+#define      CTRLC  3
+#define      EOT  4
+#define      ERRORMAX  5
+#define      RETRYMAX  5
+#define      CTRLE  5
+#define      ACK  6
+#define      TAB  9
+#define      LF  10
+#define      CR  13
+#define      CTRLQ  17
+#define      SPS 2750           /*loops per second*/
+#define      CTRLS  19
+#define      NAK  21
+#define      CTRLZ  26
+#define      SPACE  32
+#define      DELETE  127
+#define      TIMEOUT  -1
+#define      SECSIZ  0x80
+#define      DATAMASK 0x7f
+#define      BUFSIZ  0x7f80	/*maximum size, 0x8000 will not work with
+				  with BDS C, reduce buffer size as necessary
+                                  for smaller systems*/
+ 
+char cntrlw0, cntrlw1, cntrlw2, cntrlw3;
+char hangup, option, option2, mode, baudrate, display, system;
+char asciiflg, showtrans, showrecv, view, dtrr;
+char buffer[BUFSIZ];
+ 
+moready()
+{
+   return (inp(STATPORT) & TBMT) == (MAHI ? TBMT : 0);
+   }
+miready()
+{
+   return (inp(STATPORT) & DAV) == (MAHI ? DAV : 0);
+   }
+ctsready()
+{
+   return (inp(MODEMCP2) & CTS) == (CTSHI ? CTS : 0);
+   }
+sendline(data)
+char data;
+{
+  while(!MOREADY());
+  outp(DATAPORT,data);
+  if(showtrans)
+    { if(asciiflg)
+        if(((data >= ' ') && (data <= 0x7f)) || data == LF || data == CR 
+            || data == TAB)
+          putchar(data);
+        else
+          printf("[%0x]",data);
+      if(option2 == 'H')
+        printf("[%0x]",data);
+    }
+}
+ 
+readline(seconds)
+int seconds;
+{
+  char data;
+  seconds = seconds * SPS;
+  while (!MIREADY() && seconds--);
+  if(seconds < 0)
+    return(TIMEOUT);
+  data = inp(DATAPORT);
+  if(showrecv)
+    { if(asciiflg)
+        if(((data >= ' ') && (data <= 0x7f)) || data == LF || data == CR 
+            || data == TAB)
+          putchar(data);
+        else
+          printf("[%0x]",data);
+      if(option2 == 'H')
+        printf("<%0x>",data);
+    }
+  return(data);
+}
+
+purgeline()
+{
+  while (MIREADY())
+    inp(DATAPORT);   /*PURGE THE RECEIVE REGISTER*/
+}
+
+initializemodem()
+{
+  char cdflg;
+  cdflg = TRUE;
+  if((option == 'R') || (option == 'S'))
+    { cntrlw0 = ORIG + NB1 + NB2 + NP;
+      cntrlw3 = dtrr;
+    }
+  else
+    { cntrlw0 = ORIG + NB2 + EPS;
+      cntrlw3 = dtrr;
+    }
+   if(!CTSREADY())
+    { printf("Waiting for carrier\n");
+      cdflg = FALSE;
+    }
+   while(!CTSREADY() && !bios(2))
+    { outp(STATPORT,cntrlw0);
+      outp(MODEMCP2,cntrlw2);
+      outp(MODEMCP3,cntrlw3);
+      outp(DATAPORT,cntrlw1);
+    }
+  if(CTSREADY() && !cdflg)
+    printf("Carrier detected\n");
+      outp(STATPORT, (cntrlw0 & 0xfe));
+  purgeline();
+}
+
+sendstr(str)
+char *str;
+{
+  while(*str)
+    if(option == 'U')
+      sendline(tolower(*str++));
+    else
+      sendline(*str++);
+}
+
+termcomp()
+{
+  char bflag, kbdata, moddata;
+  int fd;
+  int bufctr;
+  bflag = FALSE;
+  bufctr = 0;
+  initializemodem();
+  while((CTSREADY()) && (kbdata !=CTRLE))
+    { if(bios(2))
+        switch(kbdata = bios(3))
+          { case CTRLB:
+              bflag = ~bflag;
+              if(bflag)
+                printf("Capture initiated");
+              else
+                printf("Capture terminated");
+              printf(", %u bytes free\n",BUFSIZ - bufctr);
+              break;
+            case CTRLE:
+              break;
+            default:
+              if(option == 'C')
+                { putchar(kbdata);
+                  if(bflag && (bufctr < BUFSIZ))
+                    buffer[bufctr++] = kbdata;
+                }
+              outp(DATAPORT,kbdata);
+              break;
+          }
+      if(MIREADY())
+        { moddata = inp(DATAPORT);
+          if(option == 'C')
+            outp(DATAPORT,moddata);
+          if(bflag && (bufctr < BUFSIZ))
+            buffer[bufctr++] = moddata;
+          else if(bflag)
+            printf("Buffer overflow\n");
+          putchar(moddata);
+        }
+    }
+  if(bufctr)
+    { buffer[bufctr] = CTRLZ;
+      fd = creat("cmodem.tmp");
+      if(fd == -1)
+        { printf("Cannot create cmodem.tmp\n");
+          exit();
+        }
+      write(fd,buffer,1 + (bufctr/SECSIZ));
+      close(fd);
+    }
+}
+ 
+putbuffer(buffer,sectors)
+char *buffer;
+int sectors;
+{
+  char ch, moddata; 
+  unsigned  k;
+  ch = 0;
+  k = 0;
+  while((ch != CTRLZ) && (k < sectors * SECSIZ) && (CTSREADY()))
+        { k = k+1;
+          if((ch = *buffer++) == LF)        /*don't send LF's*/
+            putchar(LF);
+          else
+            if(ch != CTRLZ || option != 'U') /*don't send CTRLZ to UNIX*/
+              sendline(ch);
+          if(!(k & 0xff))                   /*let other end catch-up*/ 
+             while(readline(1) != TIMEOUT);
+        }
+}
+
+pdp10(file)
+char *file;
+{
+  char sectors;
+  int fd;
+  showrecv = FALSE;
+  asciiflg = showtrans = TRUE;
+  fd = open(file,0);
+  if(fd == -1)
+    { printf("Cannot open %s\n",file);
+      exit();
+    }
+  initializemodem();
+  if(option == 'P')
+    { sendstr("\nR PIP\n");
+      while((readline(1) != '*') && !bios(2));
+      if(*(++file) != ':')
+        sendstr(--file);
+      else
+        sendstr(++file);
+      sendstr("=TTY:\n");
+    }
+  else
+    { sendstr("\ncat > ");
+      if(*(++file) != ':')
+        sendstr(--file);
+      else
+        sendstr(++file);
+      sendstr("\n");
+    }
+  while((sectors = read(fd,buffer,BUFSIZ/SECSIZ)) == BUFSIZ/SECSIZ)
+    putbuffer(buffer,sectors);
+  if(sectors)
+    putbuffer(buffer,sectors);
+  close(fd);
+  while(readline(1) != TIMEOUT);
+  if(option == 'P')
+    sendline(CTRLC);
+  else
+    { sendline(CR);
+      sendline(LF);
+      sendline(EOT);
+    }
+  while(readline(10) != TIMEOUT);
+  sendline(CR);
+  sendline(LF);
+}
+ 
+readfile(file)
+char *file;
+{ int j, firstchar, sectnum, sectcurr, sectcomp, errors;
+  int checksum;
+  int errorflag, fd;
+  int bufctr;
+
+  if(view)
+    { showrecv = TRUE;
+      showtrans = FALSE;
+    }
+  option2 = 'A';
+  fd = creat(file);
+  if(fd == -1)
+    { printf("Cannot create %s\n",file);
+      exit();
+    }
+  sectnum = 0;
+  errors = 0;
+  bufctr = 0;
+  initializemodem();
+  sendline(NAK);
+  do
+    { errorflag = FALSE;
+      do
+        firstchar = readline(6);
+      while(firstchar != SOH && firstchar != EOT && firstchar != TIMEOUT);
+      if(firstchar == TIMEOUT)
+        { errorflag = TRUE;
+          printf("SOH timeout\n");
+        }
+      if(firstchar == SOH)
+        { sectcurr = readline(1);
+          sectcomp = readline(1);
+          if((sectcurr + sectcomp) == 255)
+            { if(sectcurr == sectnum + 1)
+                { checksum = 0;
+                  if(option2 == 'A')
+                    asciiflg = TRUE;
+                  for(j = bufctr;j < (bufctr + SECSIZ);j++)
+                    { buffer[j] = readline(1);
+                      checksum = (checksum + buffer[j]) & 0xff;
+                    }
+                  asciiflg = FALSE;
+                  if(checksum == readline(1))
+                    { errors = 0;
+                      sectnum = sectcurr;
+                      bufctr = bufctr + SECSIZ;
+                      if(bufctr == BUFSIZ)
+                        { bufctr = 0;
+                          write(fd,buffer,BUFSIZ/SECSIZ);
+                        }
+                      if(!showrecv)
+                        printf("Received sector %d\n",sectcurr);
+                      sendline(ACK);
+                    }
+                  else
+                    { printf("Checksum error, expected <%0x>\n",checksum);
+                      errorflag = TRUE;
+                    }
+                }
+              else
+                if(sectcurr == sectnum)
+                  { do;
+                    while(readline(1) != TIMEOUT);
+                    printf("Received duplicate sector %d\n", sectcurr);
+                    sendline(ACK);
+                  }
+                else
+                  { printf("Synchronization error\n");
+                    errorflag = TRUE;
+                  }
+              }
+            else
+              { printf("Sector number error\n");
+                errorflag = TRUE;
+              }
+          }
+       if(errorflag == TRUE)
+         { errors++;
+           printf("Error %d\n",errors);
+           while(readline(1) != TIMEOUT);
+           sendline(NAK);
+         }
+     }
+  while(firstchar != EOT && errors != ERRORMAX);
+  if((firstchar == EOT) && (errors < ERRORMAX))
+    { sendline(ACK);
+      write(fd,buffer,1 + (bufctr/SECSIZ));
+      close(fd);
+      printf("Transfer complete\n");
+    }
+  else
+    printf("Aborting\n");
+}
+
+sendfile(file)
+char *file;
+{
+  int j, sectnum, sectors, attempts;
+  int checksum;
+  int bufctr, fd;
+
+  if(view)
+    { showrecv = FALSE;
+      showtrans = TRUE;
+    }
+  option2 = 'A';
+  fd = open(file,0);
+  if(fd == -1)
+    { printf("Cannot open %s\n",file);
+      exit();
+    }
+  initializemodem();
+  attempts = 0;
+  sectnum = 1;
+  while((sectors = read(fd,buffer,BUFSIZ/SECSIZ)) && (attempts != RETRYMAX))
+    { if(sectors == -1)
+        printf("\nFile read error\n");
+      else
+        { bufctr = 0;
+          do
+            { attempts = 0;
+              do
+                { if(!showtrans)
+                    printf("\nSending sector %d\n",sectnum);
+                  sendline(SOH);
+                  sendline(sectnum);
+                  sendline(-sectnum-1);
+                  checksum = 0;
+                  if(option2 == 'A')
+                    asciiflg = TRUE;
+                  for(j = bufctr;j < (bufctr + SECSIZ);j++)
+                    { sendline(buffer[j]);
+                      checksum = (checksum + buffer[j]) & 0xff;
+                    }
+                  asciiflg = FALSE;
+                  sendline(checksum);
+                  purgeline();
+                  attempts++;
+                }
+              while((readline(10) != ACK) && (attempts != RETRYMAX));
+              bufctr = bufctr + SECSIZ;
+              sectnum++;
+              sectors--;
+            }
+          while((sectors != 0) && (attempts != RETRYMAX));
+        }
+    }
+      if(attempts == RETRYMAX)
+        printf("\nNo ACK on sector, aborting\n");
+      else
+        { attempts = 0;
+          do
+            { sendline(EOT);
+              purgeline();
+              attempts++;
+            }
+          while((readline(10) != ACK) && (attempts != RETRYMAX));
+          if(attempts == RETRYMAX)
+            printf("\nNo ACK on EOT, aborting\n");
+          else
+            printf("\nTransfer complete\n");
+        } 
+  close(fd);
+}
+
+ckfile(argc) int argc;
+{ if(!argc)
+    { printf("File required\n");
+      exit();
+    }
+}
+
+main(argc,argv)
+int argc;
+char **argv;
+{ char *s;
+  printf("Cmodem (Pmmi) ver 1.3  13-Apr-81\n");
+  printf("      mod. by Rod Hart\n");
+ cntrlw2 = 0;
+  asciiflg = hangup = showrecv = showtrans = view = FALSE;
+  if(**++argv != '-')
+    { printf("Command line format: cmodem -options file1 file2 ... file14\n");
+      printf("Available options are:\n");
+      printf("\ta: answer          t: terminal\n");
+      printf("\tc: computer        u: UNIX\n");
+      printf("\th: auto-hangup     v: view data\n");
+      printf("\to: originate       1: 110 baud\n");
+      printf("\tp: PDP10           3: 300 baud\n");
+      printf("\tr: receive file    4: 450 baud\n");
+      printf("\ts: send file       6: 600 baud\n");
+      printf("The p, r, s, and u options require one or more files.\n");
+      printf("Ctrl-B initiates and terminates data capture in file\n");
+      printf("cmodem.tmp in the terminal and computer modes.\n");
+      printf("Ctrl-E is used to initiate file transfers in the UNIX and\n");
+      printf("PDP10 modes. In the terminal mode Ctrl-E escapes to the\n");
+      printf("hangup question or CP/M.\n");
+      printf("Any character escapes the no carrier condition.\n");
+      exit();
+    }
+  --argv;
+  while(--argc && **++argv == '-')
+    for(s = *argv+1;*s;s++)
+      switch(*s)
+        { case 'C':
+          case 'P':
+          case 'R':
+          case 'S':
+          case 'T':
+          case 'U':
+            option = *s;
+            break;
+          case 'A':
+            cntrlw0 = cntrlw0 + ANS;
+            break;
+          case 'H':
+            hangup = TRUE;
+            break;
+          case 'V':
+            view = TRUE;
+            break;
+          case 'O':
+            cntrlw0 = cntrlw0 + ORIG;
+            break;
+          case '1':
+            cntrlw2 = BR110;
+            dtrr = UND300;
+            break;
+          case '3':
+            cntrlw2 =  BR300;
+            dtrr =  UND300;
+            break;
+          case '4':
+            cntrlw2 =  BR450;
+            dtrr =  OVR300;
+            break;
+          case '6':
+            cntrlw2 =  BR600;
+            dtrr =  OVR300;
+            break;
+          default:
+            printf("Unimplemented option %c\n\n",*s);
+            exit();
+            break;
+        }
+      switch(option)
+        { case 'C':
+          case 'T': 
+            termcomp();
+            break;
+          case 'P': 
+          case 'U':
+            ckfile(argc);
+            termcomp();
+            while(argc--)
+              { printf("\nSending %s\n",*argv);
+                pdp10(*argv++);
+              }
+            termcomp();
+            break;
+          case 'R': 
+            ckfile(argc);
+            while(argc--)
+              { printf("\nReceiving %s\n",*argv);
+                readfile(*argv++);
+              }
+            break;
+          case 'S': 
+            ckfile(argc);
+            while(argc--)
+              { printf("\nSending %s\n",*argv);
+                sendfile(*argv++);
+              }
+            break;
+        }
+      if(hangup)
+        outp(MODEMCP3,0x00);
+      else
+        { do
+            { printf("\nHangup : Y(es), N(o) ? ");
+              hangup = tolower(getchar());
+              printf("\n");
+            }
+          while((hangup != 'y') && (hangup != 'n'));
+          if(hangup == 'y')
+            outp(MODEMCP3,0x00);
+        }
+}
+
+
+
+
+
+
+
+
+
+
+
+

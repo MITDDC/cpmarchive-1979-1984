@@ -1,0 +1,195 @@
+;	SECURITY.ASM ver 2.0
+;	 (revised 4/24/81)
+;   by Keith Petersen and Bob Mathias
+;
+;--->For use with CP/M 2.x only.
+;
+;This program runs up in high RAM.  It gets there
+;by being moved there when 'MINICBBS' is typed.
+;
+;The program in high RAM does the following:
+;
+;Signs in on desired user number, selects desired
+;drive and loads and executes file 'MINICBBS.COM'.
+;When done with MINICBBS, the user will return to
+;whatever drive and user area was previously active.
+;
+;Why this program is useful:  It offers a means for
+;a remote CP/M system to allow execution of programs
+;residing in areas other than USER 0 without having
+;to give the user access to these areas.
+;
+;If you change the name at 'MYFCB', this program may
+;be used to load and execute any COM file that does
+;not need an arguement on the command line.
+;
+;------------------------------------------------
+;Change the following equate to an area in your
+;high memory where this program may patch itself in.
+;(This may be below BDOS, provided that sufficient
+;space exists below this program to load MINICBBS).
+;
+DEST	EQU	0FA00H	;RUNNING LOCATION OF CODE
+;
+;------------------------------------------------
+;
+;Change the following equate to the desired drive
+;(where 0=A, 1=B, etc).
+;
+DRIVE	EQU	0	;CURRENTLY SET FOR DRIVE A:
+;
+;Change the following equate to the USER area desired
+;
+USERNR	EQU	15	;CURRENT SET FOR USER 15
+;
+BASE	SET	0
+ALTCPM	EQU	0	;PUT 1 HERE FOR ALTERNATE CP/M
+;
+	IF	ALTCPM
+BASE	SET	4200H	;BASE ADDRESS OF ALT CP/M
+	ENDIF
+;
+PRINT	EQU	9
+SELDSK	EQU	14
+OPEN	EQU	15
+READ	EQU	20
+STDMA	EQU	26
+SGUSR	EQU	32	;SET/GET USER FUNCTION
+BDOS	EQU	BASE+5
+FCB	EQU	BASE+5CH 
+;
+CR	EQU	0DH
+LF	EQU	0AH
+;
+	ORG	BASE+100H
+;
+;Move the program up to high RAM and jump to it.
+;
+MOVEUP:	LXI	B,PEND-START+1	    ;NUMBER OF BYTES TO MOVE
+	LXI	H,DEST+PEND-START+1 ;END OF MOVED CODE
+	LXI	D,SOURCE+PEND-START ;END OF SOURCE CODE
+;
+MVLP:	LDAX	D	;GET BYTE
+	DCX	H	;BUMP POINTERS
+	MOV	M,A	;NEW HOME
+	DCX	D
+	DCX	B	;BUMP BYTE COUNT
+	MOV	A,B	;CHECK IF ZERO
+	ORA	C
+	JNZ	MVLP	;IF NOT, DO SOME MORE
+	PCHL		;JUMP TO "START"
+;
+SOURCE	EQU	$	;BOUNDARY MEMORY MARKER
+;
+OFFSET	EQU	DEST-SOURCE	;RELOC AMOUNT
+;-----------------------------------------------;
+;	The following code gets moved		;
+;	to high RAM located at "DEST",		;
+;	    where it is executed.		;
+;-----------------------------------------------;
+;XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+;XX   C A U T I O N :  If modifying anything 	XX
+;XX 	in this program from here on: 		XX
+;XX  	A-L-L  lables must be of the form:	XX
+;XX	LABEL	EQU	$+OFFSET		XX
+;XX	in order that the relocation to high  	XX
+;XX	RAM work successfully.  Forgetting to	XX
+;XX	specify '$+OFFSET' will cause the pro-	XX
+;XX	gram to JMP into whatever is currently	XX
+;XX	in LOW memory, with unpredictable	XX
+;XX	results.  Be careful....		XX
+;XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+;
+START	EQU	$+OFFSET
+	LXI	SP,STACK ;SET UP LOCAL STACK POINTER
+;Set user number
+	MVI	E,USERNR
+	MVI	C,SGUSR
+	CALL	BDOS
+;Select desired drive
+	MVI	E,DRIVE
+	MVI	C,SELDSK
+	CALL	BDOS
+;Open the file
+	XRA	A
+	STA	MYFCB+32 ;ZERO RECORD NUMBER
+	LXI	D,MYFCB
+	MVI	C,OPEN
+	CALL	BDOS
+;Did it exist?
+	INR	A	;A=> 0 MEANS "NO"
+	JZ	BYERR	;NO FILE, EXIT ERROR MSG
+;
+OPENOK	EQU	$+OFFSET
+	LXI	D,BASE+100H ;POINT TO TPA
+;
+READLP	EQU	$+OFFSET
+	PUSH	D	;SAVE BUFFER ADDRESS
+	PUSH	B
+	PUSH	H
+	MVI	C,STDMA
+	CALL	BDOS
+;Read a sector
+	LXI	D,MYFCB
+	MVI	C,READ
+	CALL	BDOS
+	POP	H
+	POP	B
+	ORA	A	;OK?
+	JNZ	EOF	;NOT OK, MUST BE EOF
+	POP	D	;GET DMA ADDR
+	LXI	H,80H	;LENGTH OF 1 SECT.
+	DAD	D	;CALC NEXT BUFF ADDR
+	XCHG		;PUT IT BACK IN DE
+	JMP	READLP	;LOOP
+;
+;Got return code on read, see if error or EOF
+;
+EOF	EQU	$+OFFSET
+	POP	D	;DELETE STACKED BUFFER ADDR
+;A has return code from read
+	DCR	A	;EOF?
+	JZ	RSDMA	;YES, EXIT
+;
+;Read error - exit with message
+;
+BYERR	EQU	$+OFFSET
+	CALL	ERXIT	;PRINT:
+	DB	CR,LF,'++DISK READ ERROR++',CR,LF,'$'
+;
+;Exit with error message
+;
+ERXIT	EQU	$+OFFSET
+	POP	D
+	MVI	C,PRINT
+	CALL	BDOS
+	XRA	A
+	STA	BASE+4	;SET DRIVE A:, USER 0
+	JMP	BASE
+;
+;Reset DMA address to normal
+;
+RSDMA	EQU	$+OFFSET
+	LXI	D,BASE+80H
+	MVI	C,STDMA
+	CALL	BDOS
+;
+;Leave warm boot address on stack, then execute MINICBBS
+	LXI	H,0
+	PUSH	H
+	JMP	BASE+100H	;EXECUTE MINICBBS
+;
+MYFCB	EQU	$+OFFSET
+	DB	0,'MINICBBSCOM',0
+;Filename goes here^^^^^^^^^^^
+;Default drive  ^		^extent number
+;
+PEND	EQU	$+OFFSET ;END OF RELOCATED CODE
+;
+	DS	20	 ;ROOM FOR OUR FCB
+	DS	40	 ;ROOM FOR LOCAL STACK
+STACK	EQU	$+OFFSET ;LOCAL STACK
+;
+	END
+
+

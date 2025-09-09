@@ -1,0 +1,4985 @@
+
+;/*
+;** Small-C Compiler Version 2.0
+;**
+;** Copyright 1982 J. E. Hendrix
+;**
+;** Part 1
+;*/
+        JMP CC1
+;#include "stdio.h"
+;/*
+;** stdiol.h -- header for local STDIO/CALL, and VM interfaces
+;*/
+;#define stdin 0
+;#define stdout 1
+;#define stderr 2
+;#define stdport 3
+;#define stdlist 4
+;#define ERR -2
+;#define EOF -1
+;#define YES 1
+;#define NO 0
+;#define NULL 0
+;#define CR 13
+;#define LF 10
+;#asm
+;STDIOL.R:LIBRY
+; STD I/O ROUTINES
+  EXTRN GETS
+  EXTRN INDEX  
+  EXTRN RINDEX 
+  EXTRN GETC   
+  EXTRN GETCHAR
+  EXTRN FGETC  
+  EXTRN FGETS  
+  EXTRN PUTC   
+  EXTRN PUTCHAR
+  EXTRN FPUTC  
+  EXTRN FPUTS  
+  EXTRN PUTS   
+  EXTRN FOPEN  
+  EXTRN FCLOSE 
+  EXTRN GETARG 
+; STD I/O ROUTINES MATCHING VM ROUTINES
+  EXTRN FFLUSH 
+  EXTRN ABORT  
+  EXTRN EXIT   
+  EXTRN UNLINK 
+; ARITHMETIC & LOGICAL ROUTINES
+  EXTRN CCARGC 
+  EXTRN CCSXT  
+  EXTRN CCDSGI 
+  EXTRN CCDDGI 
+  EXTRN CCINCI 
+  EXTRN CCDECI 
+  EXTRN CCGINT 
+  EXTRN CCPIDDPD
+  EXTRN CCPDPI 
+  EXTRN CCDSGC 
+  EXTRN CCDDGC 
+  EXTRN CCINCC 
+  EXTRN CCDECC 
+  EXTRN CCGCHAR
+  EXTRN CCPCDDPD
+  EXTRN CCPDPC 
+  EXTRN CCPCHAR
+  EXTRN CCPINT 
+  EXTRN CCOR   
+  EXTRN CCXOR  
+  EXTRN CCAND  
+  EXTRN CCEQ   
+  EXTRN CCNE   
+  EXTRN CCGT   
+  EXTRN CCLE   
+  EXTRN CCGE   
+  EXTRN CCLT   
+  EXTRN CCCMP  
+  EXTRN CCUGE  
+  EXTRN CCULT  
+  EXTRN CCUGT  
+  EXTRN CCULE  
+  EXTRN CCUCMP 
+  EXTRN CCASR  
+  EXTRN CCASL  
+  EXTRN CCSUB  
+  EXTRN CCNEG  
+  EXTRN CCCOM  
+  EXTRN CCMULT 
+  EXTRN CCDIV  
+  EXTRN CCLNEG 
+  EXTRN CCSWITCH
+; VM ROUTINES
+;VM.R:   LIBRY
+  EXTRN CCBOJ  
+  EXTRN CCEXIT 
+  EXTRN CCPOLL 
+  EXTRN CCHALT 
+  EXTRN CCOPEN 
+  EXTRN CCCLOSE
+  EXTRN CCDELIM
+  EXTRN CCREAD 
+  EXTRN CCWRITE
+  EXTRN CCSEEK 
+  EXTRN CCMODE 
+  EXTRN CCFILE 
+  EXTRN CCPURGE
+  EXTRN CCFLUSH
+  EXTRN CCALLOC
+  EXTRN CCFREE 
+  EXTRN CCAVAIL
+;#include "cc.def"
+;/*
+;** Small-C Compiler Version 2.0
+;**
+;** Copyright 1982 J. E. Hendrix
+;**
+;** Macro Definitions
+;*/
+;
+;/*
+;** compile options
+;*/
+;#define PHASE2   /* 2nd and later compiles */
+;#define SEPARATE /* compile separately */
+;#define OPTIMIZE /* compile output optimizer */
+;#define NOCCARGC /* no calls to CCARGC */
+;/* #define HASH     /* use hash search for macros */
+;/* #define SMALL_VM /* uses Small-VM interface */
+;/* #define CMD_LINE /* command line run options */
+;/* #define DYNAMIC  /* allocate memory dynamically */
+;/* #define POLL     /* poll for operator interruptions */
+;/* #define PDS      /* uses PDS assembler and loader */
+;#define COL      /* terminate labels with a colon */
+;#define TAB  9   /* put out tabs of this value */
+;#define UPPER    /* force symbols to upper case */
+;#define LINK     /* will use with linking loader */
+;
+;/*
+;** machine dependent parameters
+;*/
+;#define BPW     2   /* bytes per word */
+;#define LBPW    1   /* log2(BPW) */
+;#define SBPC    1   /* stack bytes per character */
+;#define ERRCODE 7   /* op sys return code */
+; 
+;/*
+;** symbol table format
+;*/
+;#define IDENT    0
+;#define TYPE     1
+;#define CLASS    2
+;#define OFFSET   3
+;#define NAME     5
+;#define OFFSIZE (NAME-OFFSET)
+;#define SYMAVG  10
+;#define SYMMAX  14
+;
+;/*
+;** symbol table parameters
+;*/
+;#define NUMLOCS   25
+;#define STARTLOC  symtab
+;#define ENDLOC   (symtab+(NUMLOCS*SYMAVG))
+;#define NUMGLBS   180
+;#define STARTGLB  ENDLOC
+;#define ENDGLB   (ENDLOC+((NUMGLBS-1)*SYMMAX))
+;#define SYMTBSZ   2770  /* NUMLOCS*SYMAVG + NUMGLBS*SYMMAX */
+; 
+;/*
+;** System wide name size (for symbols)
+;*/
+;#define NAMESIZE 9
+;#define NAMEMAX  8
+; 
+;/*
+;** possible entries for "IDENT"
+;*/
+;#define LABEL    0
+;#define VARIABLE 1
+;#define ARRAY    2
+;#define POINTER  3
+;#define FUNCTION 4
+; 
+;/*
+;** possible entries for "TYPE"
+;**    low order 2 bits make type unique within length
+;**    high order bits give length of object
+;*/
+;/*      LABEL   0 */
+;#define CCHAR   (1<<2)
+;#define CINT    (BPW<<2)
+; 
+;/*
+;** possible entries for "CLASS"
+;*/
+;/*      LABEL     0 */
+;#define STATIC    1
+;#define AUTOMATIC 2
+;#define EXTERNAL  3
+;
+;/*
+;** "switch" table
+;*/
+;
+;#define SWSIZ   (2*BPW)
+;#define SWTABSZ (25*SWSIZ)
+; 
+;/*
+;** "while" statement queue
+;*/
+;#define WQTABSZ  30
+;#define WQSIZ     3
+;#define WQMAX   (wq+WQTABSZ-WQSIZ)
+; 
+;/*
+;** entry offsets in while queue
+;*/
+;#define WQSP    0
+;#define WQLOOP  1
+;#define WQEXIT  2
+; 
+;/*
+;** literal pool
+;*/
+;#define LITABSZ 700
+;#define LITMAX  (LITABSZ-1)
+; 
+;/*
+;** input line
+;*/
+;#define LINEMAX  80
+;#define LINESIZE 81
+;
+;/*
+;** output staging buffer size
+;*/
+;#define STAGESIZE   800
+;#define STAGELIMIT  (STAGESIZE-1)
+; 
+;/*
+;** macro (define) pool
+;*/
+;#define MACQSIZE 950
+;#define MACMAX  (MACQSIZE-1)
+; 
+;/*
+;** statement types
+;*/
+;#define STIF      1
+;#define STWHILE   2
+;#define STRETURN  3
+;#define STBREAK   4
+;#define STCONT    5
+;#define STASM     6
+;#define STEXPR    7
+;#define STDO      8 /* compile "do" logic */
+;#define STFOR     9 /* compile "for" logic */
+;#define STSWITCH 10 /* compile "switch/case/default" logic */
+;#define STCASE   11
+;#define STDEF    12
+;#define STGOTO   13 /* compile "goto" logic */
+;
+;/*
+;** miscellaneous storage
+;*/
+;char
+;  optimize, /* optimize output of staging buffer */
+OPTIMIZE::       
+        DB 0
+;  alarm,    /* audible alarm on errors? */
+ALARM::  
+        DB 0
+;  monitor,  /* monitor function headers? */
+MONITOR::        
+        DB 0
+;  pause,    /* pause for operator on errors? */
+PAUSE::  
+        DB 0
+;  stage[STAGESIZE],
+STAGE::  
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+;  symtab[SYMTBSZ],
+SYMTAB:: 
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0
+;  litq[LITABSZ],
+LITQ::   
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0
+;  macq[MACQSIZE],
+MACQ::   
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+;  pline[LINESIZE],
+PLINE::  
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+;  mline[LINESIZE],
+MLINE::  
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+;  swq[SWTABSZ],
+SWQ::    
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        DB 0,0,0,0,0,0,0,0,0,0
+; *line,     /* points to pline or mline */
+LINE::   
+        DW 0
+; *lptr,     /* ptr to either */
+LPTR::   
+        DW 0
+; *glbptr,   /* ptrs to next entries */
+GLBPTR:: 
+        DW 0
+; *locptr,   /* ptr to next local symbol */
+LOCPTR:: 
+        DW 0
+; *stagenext,/* next addr in stage */
+STAGENEX::       
+        DW 0
+; *stagelast,/* last addr in stage */
+STAGELAS::       
+        DW 0
+;  quote[2], /* literal string for '"' */
+QUOTE::  
+        DB 0,0
+; *cptr,     /* work ptrs to any char buffer */
+CPTR::   
+        DW 0
+; *cptr2,
+CPTR2::  
+        DW 0
+; *cptr3,
+CPTR3::  
+        DW 0
+;  msname[NAMESIZE], /* macro symbol name array */
+MSNAME:: 
+        DB 0,0,0,0,0,0,0,0,0
+;  ssname[NAMESIZE]; /* static symbol name array */
+SSNAME:: 
+        DB 0,0,0,0,0,0,0,0,0
+;int
+;  nogo,     /* > 0 disables goto statements */
+NOGO::   
+        DW 0
+;  noloc,    /* > 0 disables block locals */
+NOLOC::  
+        DW 0
+;  op[16],   /* function addresses of binary operators */
+OP::     
+        DW 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+;  op2[16],  /* same for unsigned operators */
+OP2::    
+        DW 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+;  opindex,  /* index to matched operator */
+OPINDEX::        
+        DW 0
+;  opsize,   /* size of operator in bytes */
+OPSIZE:: 
+        DW 0
+;  swactive, /* true inside a switch */
+SWACTIVE::       
+        DW 0
+;  swdefault,/* default label #, else 0 */
+SWDEFAUL::       
+        DW 0
+; *swnext,   /* address of next entry */
+SWNEXT:: 
+        DW 0
+; *swend,    /* address of last table entry */
+SWEND::  
+        DW 0
+;  wq[WQTABSZ],
+WQ::     
+        DW 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+; *wqptr,    /* ptr to next entry */
+WQPTR::  
+        DW 0
+;  litptr,   /* ptr to next entry */
+LITPTR:: 
+        DW 0
+;  macptr,   /* macro buffer index */
+MACPTR:: 
+        DW 0
+;  mack,     /* variable k for findmac routine */
+MACK::   
+        DW 0
+;  pptr,     /* ptr to parsing buffer */
+PPTR::   
+        DW 0
+;  oper,     /* address of binary operator function */
+OPER::   
+        DW 0
+;  ch,       /* current character of line being scanned */
+CH::     
+        DW 0
+;  nch,      /* next character of line being scanned */
+NCH::    
+        DW 0
+;  declared, /* # of local bytes declared, else -1 when done */
+DECLARED::       
+        DW 0
+;  iflevel,  /* #if... nest level */
+IFLEVEL::        
+        DW 0
+;  skiplevel,/* level at which #if... skipping started */
+SKIPLEVE::       
+        DW 0
+;  func1,    /* true for first function */
+FUNC1::  
+        DW 0
+;  nxtlab,   /* next avail label # */
+NXTLAB:: 
+        DW 0
+;  litlab,   /* label # assigned to literal pool */
+LITLAB:: 
+        DW 0
+;  beglab,   /* beginning label -- first function */
+BEGLAB:: 
+        DW 0
+;  csp,      /* compiler relative stk ptr */
+CSP::    
+        DW 0
+;  argstk,   /* function arg sp */
+ARGSTK:: 
+        DW 0
+;  argtop,
+ARGTOP:: 
+        DW 0
+;  ncmp,     /* # open compound statements */
+NCMP::   
+        DW 0
+;  errflag,  /* non-zero after 1st error in statement */
+ERRFLAG::        
+        DW 0
+;  eof,      /* set non-zero on final input eof */
+EOF::    
+        DW 0
+;  input,    /* fd # for input file */
+INPUT::  
+        DW 0
+;  input2,   /* fd # for "include" file */
+INPUT2:: 
+        DW 0
+;  output,   /* fd # for output file */
+OUTPUT:: 
+        DW 0
+;  files,    /* non-zero if file list specified on cmd line */
+FILES::  
+        DW 0
+;  filearg,  /* cur file arg index */
+FILEARG::        
+        DW 0
+;  glbflag,  /* non-zero if internal globals */
+GLBFLAG::        
+        DW 0
+;  ctext,    /* non-zero to intermix c-source */
+CTEXT::  
+        DW 0
+;  ccode,    /* non-zero while parsing c-code */
+CCODE::  
+        DW 0
+;            /* zero when passing assembly code */
+;  listfp,   /* file pointer to list device */
+LISTFP:: 
+        DW 0
+;  lastst,   /* last executed statement type */
+LASTST:: 
+        DW 0
+; *iptr;     /* work ptr to any int buffer */
+IPTR::   
+        DW 0
+;
+;extern int
+;  addmac(),  addsym(),  addwhile(),  amatch(),  blanks(),
+  EXTRN ADDMAC 
+  EXTRN ADDSYM 
+  EXTRN ADDWHILE       
+  EXTRN AMATCH 
+  EXTRN BLANKS 
+;  bump(),  clearstage(),  col(),  delwhile(),  endst(),
+  EXTRN BUMP   
+  EXTRN CLEARSTA       
+  EXTRN COL    
+  EXTRN DELWHILE       
+  EXTRN ENDST  
+;  error(),  findglb(),  findloc(),  gch(),  getint(),
+  EXTRN ERROR  
+  EXTRN FINDGLB        
+  EXTRN FINDLOC        
+  EXTRN GCH    
+  EXTRN GETINT 
+;  getlabel(),  illname(),  inbyte(),  inline(),  junk(),
+  EXTRN GETLABEL       
+  EXTRN ILLNAME        
+  EXTRN INBYTE 
+  EXTRN INLINE 
+  EXTRN JUNK   
+;  kill(),  lout(),  match(),  multidef(),  needtoken(),
+  EXTRN KILL   
+  EXTRN LOUT   
+  EXTRN MATCH  
+  EXTRN MULTIDEF       
+  EXTRN NEEDTOKE       
+;  nextsym(),  nl(),  numeric(),  outbyte(),  outdec(),
+  EXTRN NEXTSYM        
+  EXTRN NL     
+  EXTRN NUMERIC        
+  EXTRN OUTBYTE        
+  EXTRN OUTDEC 
+;  postlabel(),  preprocess(),  printlabel(),  putint(),
+  EXTRN POSTLABE       
+  EXTRN PREPROCE       
+  EXTRN PRINTLAB       
+  EXTRN PUTINT 
+;  readwhile(),  setstage(),  sout(),  streq(),  symname(),
+  EXTRN READWHIL       
+  EXTRN SETSTAGE       
+  EXTRN SOUT   
+  EXTRN STREQ  
+  EXTRN SYMNAME        
+;  upper();
+  EXTRN UPPER  
+;
+;extern int
+;  constexpr(),  expression(),  number(),  qstr(),
+  EXTRN CONSTEXP       
+  EXTRN EXPRESSI       
+  EXTRN NUMBER 
+  EXTRN QSTR   
+;  test(),  stowlit();
+  EXTRN TEST   
+  EXTRN STOWLIT        
+;
+;extern int
+;  add(),  and(),  asl(),  asr(),  defstora(),
+  EXTRN ADD    
+  EXTRN AND    
+  EXTRN ASL    
+  EXTRN ASR    
+  EXTRN DEFSTORA       
+;  div(),  eq(),  entry(),  external(),  ge(),
+  EXTRN DIV    
+  EXTRN EQ     
+  EXTRN ENTRY  
+  EXTRN EXTERNAL       
+  EXTRN GE     
+;  gt(),  header(),  jump(),  le(),  lt(),  mod(),  modstk(),
+  EXTRN GT     
+  EXTRN HEADER 
+  EXTRN JUMP   
+  EXTRN LE     
+  EXTRN LT     
+  EXTRN MOD    
+  EXTRN MODSTK 
+;  mult(),  ne(),  or(),  point(),  ret(),  sub(),  sw(),
+  EXTRN MULT   
+  EXTRN NE     
+  EXTRN OR     
+  EXTRN POINT  
+  EXTRN RET    
+  EXTRN SUB    
+  EXTRN SW     
+;  trailer(),  uge(),  ugt(),  ule(),  ult(),  xor();
+  EXTRN TRAILER        
+  EXTRN UGE    
+  EXTRN UGT    
+  EXTRN ULE    
+  EXTRN ULT    
+  EXTRN XOR    
+;
+;#include "cc11.c"
+;
+;/*
+;** execution begins here
+;*/
+;main() {
+CC1:
+MAIN::   
+;  swend=(swnext=swq)+SWTABSZ-SWSIZ;
+        LXI H,SWQ
+        SHLD SWNEXT
+        LXI D,200
+        DAD D
+        XCHG;;
+        LXI H,8
+        CALL CCSUB
+        SHLD SWEND
+;  stagelast=stage+STAGELIMIT;
+        LXI H,STAGE
+        LXI D,799
+        DAD D
+        SHLD STAGELAS
+;  swactive=       /* not in switch */
+;  stagenext=      /* direct output mode */
+;  iflevel=        /* #if... nesting level = 0 */
+;  skiplevel=      /* #if... not encountered */
+;  macptr=         /* clear the macro pool */
+;  csp =           /* stack ptr (relative) */
+;  errflag=        /* not skipping errors till ";" */
+;  eof=            /* not eof yet */
+;  ncmp=           /* not in compound statement */
+;  files=
+;  filearg=
+;  quote[1]=0;
+        LXI H,QUOTE
+        LXI D,1
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPC
+        SHLD FILEARG
+        SHLD FILES
+        SHLD NCMP
+        SHLD EOF
+        SHLD ERRFLAG
+        SHLD CSP
+        SHLD MACPTR
+        SHLD SKIPLEVE
+        SHLD IFLEVEL
+        SHLD STAGENEX
+        SHLD SWACTIVE
+;  func1=          /* first function */
+;  ccode=1;        /* enable preprocessing */
+        LXI H,1
+        SHLD CCODE
+        SHLD FUNC1
+;  wqptr=wq;       /* clear while queue */
+        LXI H,WQ
+        SHLD WQPTR
+;  quote[0]='"';   /* fake a quote literal */
+        LXI H,QUOTE
+        PUSH H
+        LXI H,34
+        CALL CCPDPC
+;  input=input2=EOF;
+        LXI H,-1
+        SHLD INPUT2
+        SHLD INPUT
+;  ask();          /* get user options */
+        CALL ASK
+;  openin();       /* and initial input file */
+        CALL OPENIN
+;  preprocess();   /* fetch first line */
+        CALL PREPROCE
+;  glbptr=STARTGLB;
+        LXI H,SYMTAB
+        LXI D,250
+        DAD D
+        SHLD GLBPTR
+;  glbflag=1;
+        LXI H,1
+        SHLD GLBFLAG
+;  ctext=0;
+        LXI H,0
+        SHLD CTEXT
+;  header();          /* intro code */
+        CALL HEADER
+;  setops();          /* set values in op arrays */
+        CALL SETOPS
+;  parse();           /* process ALL input */
+        CALL PARSE
+;  outside();         /* verify outside any function */
+        CALL OUTSIDE
+;  trailer();         /* follow-up code */
+        CALL TRAILER
+;  fclose(output);
+        LHLD OUTPUT
+        PUSH H
+        CALL FCLOSE
+        POP B
+;  }
+        RET
+;
+;/*
+;** process all input text
+;**
+;** At this level, only static declarations,
+;**      defines, includes and function
+;**      definitions are legal...
+;*/
+;parse() {
+PARSE::  
+;  while (eof==0) {
+CC4:
+        LHLD EOF
+        MOV A,H
+        ORA L
+        JNZ CC5
+;    if(amatch("extern", 6))   dodeclare(EXTERNAL);
+        LXI H,CC3+0
+        PUSH H
+        LXI H,6
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC6
+        LXI H,3
+        PUSH H
+        CALL DODECLAR
+        POP B
+;    else if(dodeclare(STATIC));
+        JMP CC7
+CC6:
+        LXI H,1
+        PUSH H
+        CALL DODECLAR
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC8
+;    else if(match("#asm"))    doasm();
+        JMP CC9
+CC8:
+        LXI H,CC3+7
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC10
+        CALL DOASM
+;    else if(match("#include"))doinclude();
+        JMP CC11
+CC10:
+        LXI H,CC3+12
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC12
+        CALL DOINCLUD
+;    else if(match("#define")) addmac();
+        JMP CC13
+CC12:
+        LXI H,CC3+21
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC14
+        CALL ADDMAC
+;    else                      newfunc();
+        JMP CC15
+CC14:
+        CALL NEWFUNC
+CC15:
+CC13:
+CC11:
+CC9:
+CC7:
+;    blanks();       /* force eof if pending */
+        CALL BLANKS
+;    }
+        JMP CC4
+CC5:
+;  }
+        RET
+CC3:    DB 101,120,116,101,114,110,0,35,97,115
+        DB 109,0,35,105,110,99,108,117,100,101
+        DB 0,35,100,101,102,105,110,101,0
+;
+;/*
+;** dump the literal pool
+;*/
+;dumplits(size) int size; {
+DUMPLITS::       
+;  int j, k;
+;  k=0;
+        PUSH B
+        PUSH B
+        LXI H,0
+        DAD SP
+        XCHG;;
+        LXI H,0
+        CALL CCPINT
+;  while (k<litptr) {
+CC17:
+        POP D
+        PUSH D
+        LHLD LITPTR
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC18
+;    defstorage(size);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL DEFSTORA
+        POP B
+;    j=10;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,10
+        CALL CCPDPI
+;    while(j--) {
+CC19:
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        INX H
+        MOV A,H
+        ORA L
+        JZ CC20
+;      outdec(getint(litq+k, size));
+        LXI H,LITQ
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        POP D
+        DAD D
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL GETINT
+        POP B
+        POP B
+        PUSH H
+        CALL OUTDEC
+        POP B
+;      k=k+size;
+        LXI H,0
+        DAD SP
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        POP D
+        CALL CCPIDDPD
+;      if ((j==0)|(k>=litptr)) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,0
+        POP D
+        CALL CCEQ
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LHLD LITPTR
+        POP D
+        CALL CCGE
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC21
+;        nl();
+        CALL NL
+;        break;
+        JMP CC20
+;        }
+;      outbyte(',');
+CC21:
+        LXI H,44
+        PUSH H
+        CALL OUTBYTE
+        POP B
+;      }
+        JMP CC19
+CC20:
+;    }
+        JMP CC17
+CC18:
+;  }
+        POP B
+        POP B
+        RET
+;
+;/*
+;** dump zeroes for default initial values
+;*/
+;dumpzero(size, count) int size, count; {
+DUMPZERO::       
+;  int j;
+;  while (count > 0) {
+        PUSH B
+CC23:
+        LXI H,4
+        CALL CCDSGI
+        XRA A
+        ORA H
+        JM CC24
+        ORA L
+        JZ CC24
+;    defstorage(size);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL DEFSTORA
+        POP B
+;    j=30;
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,30
+        CALL CCPDPI
+;    while(j--) {
+CC25:
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        INX H
+        MOV A,H
+        ORA L
+        JZ CC26
+;      outdec(0);
+        LXI H,0
+        PUSH H
+        CALL OUTDEC
+        POP B
+;      if ((--count <= 0)|(j==0)) {
+        LXI H,4
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        PUSH H
+        LXI H,0
+        POP D
+        CALL CCLE
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,0
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC27
+;        nl();
+        CALL NL
+;        break;
+        JMP CC26
+;        }
+;      outbyte(',');
+CC27:
+        LXI H,44
+        PUSH H
+        CALL OUTBYTE
+        POP B
+;      }
+        JMP CC25
+CC26:
+;    }
+        JMP CC23
+CC24:
+;  }
+        POP B
+        RET
+;
+;/*
+;** verify compile ends outside any function
+;*/
+;outside()  {
+OUTSIDE::        
+;  if (ncmp) error("no closing bracket");
+        LHLD NCMP
+        MOV A,H
+        ORA L
+        JZ CC29
+        LXI H,CC28+0
+        PUSH H
+        CALL ERROR
+        POP B
+;  }
+CC29:
+        RET
+CC28:   DB 110,111,32,99,108,111,115,105,110,103
+        DB 32,98,114,97,99,107,101,116,0
+;
+;/*
+;** get run options
+;*/
+;
+;ask() {
+ASK::    
+;  optimize=
+;  monitor=alarm=pause=listfp=nxtlab=0;
+        LXI H,0
+        SHLD NXTLAB
+        SHLD LISTFP
+        MOV A,L
+        STA PAUSE
+        MOV A,L
+        STA ALARM
+        MOV A,L
+        STA MONITOR
+        MOV A,L
+        STA OPTIMIZE
+;  line=mline;
+        LXI H,MLINE
+        SHLD LINE
+;  while(1) {
+CC31:
+;    prompt("Output file: ", line, LINESIZE);
+        LXI H,CC30+0
+        PUSH H
+        LHLD LINE
+        PUSH H
+        LXI H,81
+        PUSH H
+        CALL PROMPT
+        POP B
+        POP B
+        POP B
+;    if(output=fopen(line, "w")) break;
+        LHLD LINE
+        PUSH H
+        LXI H,CC30+14
+        PUSH H
+        CALL FOPEN
+        POP B
+        POP B
+        SHLD OUTPUT
+        MOV A,H
+        ORA L
+        JZ CC33
+        JMP CC32
+;    else lout("open error", stderr);
+        JMP CC34
+CC33:
+        LXI H,CC30+16
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL LOUT
+        POP B
+        POP B
+CC34:
+;    }
+        JMP CC31
+CC32:
+;  while(1) {
+CC35:
+;    prompt("Monitor function headers? ", line, LINESIZE);
+        LXI H,CC30+27
+        PUSH H
+        LHLD LINE
+        PUSH H
+        LXI H,81
+        PUSH H
+        CALL PROMPT
+        POP B
+        POP B
+        POP B
+;    if(upper(*line)=='Y') monitor=YES;
+        LHLD LINE
+        CALL CCGCHAR
+        PUSH H
+        CALL UPPER
+        POP B
+        PUSH H
+        LXI H,89
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC37
+        LXI H,1
+        MOV A,L
+        STA MONITOR
+;    else if(upper(*line)!='N') continue;
+        JMP CC38
+CC37:
+        LHLD LINE
+        CALL CCGCHAR
+        PUSH H
+        CALL UPPER
+        POP B
+        PUSH H
+        LXI H,78
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC39
+        JMP CC35
+;    break;
+CC39:
+CC38:
+        JMP CC36
+;    }
+        JMP CC35
+CC36:
+;  while(1) {
+CC40:
+;    prompt("Sound alarm on errors? ", line, LINESIZE);
+        LXI H,CC30+54
+        PUSH H
+        LHLD LINE
+        PUSH H
+        LXI H,81
+        PUSH H
+        CALL PROMPT
+        POP B
+        POP B
+        POP B
+;    if(upper(*line)=='Y') alarm=YES;
+        LHLD LINE
+        CALL CCGCHAR
+        PUSH H
+        CALL UPPER
+        POP B
+        PUSH H
+        LXI H,89
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC42
+        LXI H,1
+        MOV A,L
+        STA ALARM
+;    else if(upper(*line)!='N') continue;
+        JMP CC43
+CC42:
+        LHLD LINE
+        CALL CCGCHAR
+        PUSH H
+        CALL UPPER
+        POP B
+        PUSH H
+        LXI H,78
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC44
+        JMP CC40
+;    break;
+CC44:
+CC43:
+        JMP CC41
+;    }
+        JMP CC40
+CC41:
+;  while(1) {
+CC45:
+;    prompt("Pause on errors? ", line, LINESIZE);
+        LXI H,CC30+78
+        PUSH H
+        LHLD LINE
+        PUSH H
+        LXI H,81
+        PUSH H
+        CALL PROMPT
+        POP B
+        POP B
+        POP B
+;    if(upper(*line)=='Y') pause=YES;
+        LHLD LINE
+        CALL CCGCHAR
+        PUSH H
+        CALL UPPER
+        POP B
+        PUSH H
+        LXI H,89
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC47
+        LXI H,1
+        MOV A,L
+        STA PAUSE
+;    else if(upper(*line)!='N') continue;
+        JMP CC48
+CC47:
+        LHLD LINE
+        CALL CCGCHAR
+        PUSH H
+        CALL UPPER
+        POP B
+        PUSH H
+        LXI H,78
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC49
+        JMP CC45
+;    break;
+CC49:
+CC48:
+        JMP CC46
+;    }
+        JMP CC45
+CC46:
+;  while(1) {
+CC50:
+;    prompt("Optimize for size? ", line, LINESIZE);
+        LXI H,CC30+96
+        PUSH H
+        LHLD LINE
+        PUSH H
+        LXI H,81
+        PUSH H
+        CALL PROMPT
+        POP B
+        POP B
+        POP B
+;    if(upper(*line)=='Y') optimize=YES;
+        LHLD LINE
+        CALL CCGCHAR
+        PUSH H
+        CALL UPPER
+        POP B
+        PUSH H
+        LXI H,89
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC52
+        LXI H,1
+        MOV A,L
+        STA OPTIMIZE
+;    else if(upper(*line)!='N') continue;
+        JMP CC53
+CC52:
+        LHLD LINE
+        CALL CCGCHAR
+        PUSH H
+        CALL UPPER
+        POP B
+        PUSH H
+        LXI H,78
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC54
+        JMP CC50
+;    break;
+CC54:
+CC53:
+        JMP CC51
+;    }
+        JMP CC50
+CC51:
+;/*
+;  while(1) {
+;    prompt("Listing file descriptor: ", line, LINESIZE);
+;    if(numeric(*line)&(line[1]==NULL)) listfp = *line-'0';
+;    else if(*line!=NULL) continue;
+;    break;
+;    }
+;*/ listfp = output;
+        LHLD OUTPUT
+        SHLD LISTFP
+;  }
+        RET
+CC30:   DB 79,117,116,112,117,116,32,102,105,108
+        DB 101,58,32,0,119,0,111,112,101,110
+        DB 32,101,114,114,111,114,0,77,111,110
+        DB 105,116,111,114,32,102,117,110,99,116
+        DB 105,111,110,32,104,101,97,100,101,114
+        DB 115,63,32,0,83,111,117,110,100,32
+        DB 97,108,97,114,109,32,111,110,32,101
+        DB 114,114,111,114,115,63,32,0,80,97
+        DB 117,115,101,32,111,110,32,101,114,114
+        DB 111,114,115,63,32,0,79,112,116,105
+        DB 109,105,122,101,32,102,111,114,32,115
+        DB 105,122,101,63,32,0
+;
+;/*
+;** get next input file
+;*/
+;openin() {
+OPENIN:: 
+;  input=EOF;
+        LXI H,-1
+        SHLD INPUT
+;  while(prompt("Input file: ", pline, LINESIZE)) {
+CC56:
+        LXI H,CC55+0
+        PUSH H
+        LXI H,PLINE
+        PUSH H
+        LXI H,81
+        PUSH H
+        CALL PROMPT
+        POP B
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC57
+;    if((input=fopen(pline,"r"))==NULL) {
+        LXI H,PLINE
+        PUSH H
+        LXI H,CC55+13
+        PUSH H
+        CALL FOPEN
+        POP B
+        POP B
+        SHLD INPUT
+        MOV A,H
+        ORA L
+        JNZ CC58
+;      lout("open error", stderr);
+        LXI H,CC55+15
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL LOUT
+        POP B
+        POP B
+;      abort(ERRCODE);
+        LXI H,7
+        PUSH H
+        CALL ABORT
+        POP B
+;      }
+;    files=YES;
+CC58:
+        LXI H,1
+        SHLD FILES
+;    kill();
+        CALL KILL
+;    return;
+        RET
+;    }
+        JMP CC56
+CC57:
+;  if(files++) eof=YES;
+        LHLD FILES
+        INX H
+        SHLD FILES
+        DCX H
+        MOV A,H
+        ORA L
+        JZ CC59
+        LXI H,1
+        SHLD EOF
+;  else input=stdin;
+        JMP CC60
+CC59:
+        LXI H,0
+        SHLD INPUT
+CC60:
+;  kill();
+        CALL KILL
+;  }
+        RET
+CC55:   DB 73,110,112,117,116,32,102,105,108,101
+        DB 58,32,0,114,0,111,112,101,110,32
+        DB 101,114,114,111,114,0
+;
+;prompt(msg, ans, anslen) char *msg, *ans; int anslen; {
+PROMPT:: 
+;  sout(msg, stderr);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL SOUT
+        POP B
+        POP B
+;/*fgets(ans, anslen, stdin); */
+;  gets(ans);
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        CALL GETS
+        POP B
+;  }
+        RET
+;
+;setops() {
+SETOPS:: 
+;  op2[00]=     op[00]=  or;  /* heir5 */
+        LXI H,OP2
+        PUSH H
+        LXI H,OP
+        PUSH H
+        LXI H,OR
+        CALL CCPDPI
+        CALL CCPDPI
+;  op2[01]=     op[01]= xor;  /* heir6 */
+        LXI H,OP2
+        LXI D,2
+        DAD D
+        PUSH H
+        LXI H,OP
+        LXI D,2
+        DAD D
+        PUSH H
+        LXI H,XOR
+        CALL CCPDPI
+        CALL CCPDPI
+;  op2[02]=     op[02]= and;  /* heir7 */
+        LXI H,OP2
+        LXI D,4
+        DAD D
+        PUSH H
+        LXI H,OP
+        LXI D,4
+        DAD D
+        PUSH H
+        LXI H,AND
+        CALL CCPDPI
+        CALL CCPDPI
+;  op2[03]=     op[03]=  eq;  /* heir8 */
+        LXI H,OP2
+        LXI D,6
+        DAD D
+        PUSH H
+        LXI H,OP
+        LXI D,6
+        DAD D
+        PUSH H
+        LXI H,EQ
+        CALL CCPDPI
+        CALL CCPDPI
+;  op2[04]=     op[04]=  ne;
+        LXI H,OP2
+        LXI D,8
+        DAD D
+        PUSH H
+        LXI H,OP
+        LXI D,8
+        DAD D
+        PUSH H
+        LXI H,NE
+        CALL CCPDPI
+        CALL CCPDPI
+;  op2[05]=ule; op[05]=  le;  /* heir9 */
+        LXI H,OP2
+        LXI D,10
+        DAD D
+        PUSH H
+        LXI H,ULE
+        CALL CCPDPI
+        LXI H,OP
+        LXI D,10
+        DAD D
+        PUSH H
+        LXI H,LE
+        CALL CCPDPI
+;  op2[06]=uge; op[06]=  ge;
+        LXI H,OP2
+        LXI D,12
+        DAD D
+        PUSH H
+        LXI H,UGE
+        CALL CCPDPI
+        LXI H,OP
+        LXI D,12
+        DAD D
+        PUSH H
+        LXI H,GE
+        CALL CCPDPI
+;  op2[07]=ult; op[07]=  lt;
+        LXI H,OP2
+        LXI D,14
+        DAD D
+        PUSH H
+        LXI H,ULT
+        CALL CCPDPI
+        LXI H,OP
+        LXI D,14
+        DAD D
+        PUSH H
+        LXI H,LT
+        CALL CCPDPI
+;  op2[08]=ugt; op[08]=  gt;
+        LXI H,OP2
+        LXI D,16
+        DAD D
+        PUSH H
+        LXI H,UGT
+        CALL CCPDPI
+        LXI H,OP
+        LXI D,16
+        DAD D
+        PUSH H
+        LXI H,GT
+        CALL CCPDPI
+;  op2[09]=     op[09]= asr;  /* heir10 */
+        LXI H,OP2
+        LXI D,18
+        DAD D
+        PUSH H
+        LXI H,OP
+        LXI D,18
+        DAD D
+        PUSH H
+        LXI H,ASR
+        CALL CCPDPI
+        CALL CCPDPI
+;  op2[10]=     op[10]= asl;
+        LXI H,OP2
+        LXI D,20
+        DAD D
+        PUSH H
+        LXI H,OP
+        LXI D,20
+        DAD D
+        PUSH H
+        LXI H,ASL
+        CALL CCPDPI
+        CALL CCPDPI
+;  op2[11]=     op[11]= add;  /* heir11 */
+        LXI H,OP2
+        LXI D,22
+        DAD D
+        PUSH H
+        LXI H,OP
+        LXI D,22
+        DAD D
+        PUSH H
+        LXI H,ADD
+        CALL CCPDPI
+        CALL CCPDPI
+;  op2[12]=     op[12]= sub;
+        LXI H,OP2
+        LXI D,24
+        DAD D
+        PUSH H
+        LXI H,OP
+        LXI D,24
+        DAD D
+        PUSH H
+        LXI H,SUB
+        CALL CCPDPI
+        CALL CCPDPI
+;  op2[13]=     op[13]=mult;  /* heir12 */
+        LXI H,OP2
+        LXI D,26
+        DAD D
+        PUSH H
+        LXI H,OP
+        LXI D,26
+        DAD D
+        PUSH H
+        LXI H,MULT
+        CALL CCPDPI
+        CALL CCPDPI
+;  op2[14]=     op[14]= div;
+        LXI H,OP2
+        LXI D,28
+        DAD D
+        PUSH H
+        LXI H,OP
+        LXI D,28
+        DAD D
+        PUSH H
+        LXI H,DIV
+        CALL CCPDPI
+        CALL CCPDPI
+;  op2[15]=     op[15]= mod;
+        LXI H,OP2
+        LXI D,30
+        DAD D
+        PUSH H
+        LXI H,OP
+        LXI D,30
+        DAD D
+        PUSH H
+        LXI H,MOD
+        CALL CCPDPI
+        CALL CCPDPI
+;  }
+        RET
+;#include "cc12.c"
+;/*
+;** open an include file
+;*/
+;doinclude()  {
+DOINCLUD::       
+;  char *p;
+;  blanks();       /* skip over to name */
+        PUSH B
+        CALL BLANKS
+;  if (*lptr == '"')  /* Ignore quotes around filename */
+        LHLD LPTR
+        CALL CCGCHAR
+        PUSH H
+        LXI H,34
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC64
+;    lptr++;
+        LHLD LPTR
+        INX H
+        SHLD LPTR
+        DCX H
+;  if ((p = rindex(lptr, '"')) != 0)
+CC64:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LHLD LPTR
+        PUSH H
+        LXI H,34
+        PUSH H
+        CALL RINDEX
+        POP B
+        POP B
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC65
+;    *p = 0;
+        POP D
+        PUSH D
+        LXI H,0
+        MOV A,L
+        STAX D
+;
+;  if((input2=fopen(lptr,"r"))==NULL) {
+CC65:
+        LHLD LPTR
+        PUSH H
+        LXI H,CC63+0
+        PUSH H
+        CALL FOPEN
+        POP B
+        POP B
+        SHLD INPUT2
+        MOV A,H
+        ORA L
+        JNZ CC66
+;    input2=EOF;
+        LXI H,-1
+        SHLD INPUT2
+;    error("open failure on include file");
+        LXI H,CC63+2
+        PUSH H
+        CALL ERROR
+        POP B
+;    }
+;  kill();         /* clear rest of line */
+CC66:
+        CALL KILL
+;      /* so next read will come from */
+;      /* new file (if open */
+;  }
+        POP B
+        RET
+CC63:   DB 114,0,111,112,101,110,32,102,97,105
+        DB 108,117,114,101,32,111,110,32,105,110
+        DB 99,108,117,100,101,32,102,105,108,101
+        DB 0
+;
+;/*
+;** test for global declarations
+;*/
+;dodeclare(class) int class; {
+DODECLAR::       
+;  if(amatch("char",4)) {
+        LXI H,CC67+0
+        PUSH H
+        LXI H,4
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC68
+;    declglb(CCHAR, class);
+        LXI H,4
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        CALL DECLGLB
+        POP B
+        POP B
+;    ns();
+        CALL NS
+;    return 1;
+        LXI H,1
+        RET
+;    }
+;  else if((amatch("int",3))|(class==EXTERNAL)) {
+CC68:
+        LXI H,CC67+5
+        PUSH H
+        LXI H,3
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC70
+;    declglb(CINT, class);
+        LXI H,8
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        CALL DECLGLB
+        POP B
+        POP B
+;    ns();
+        CALL NS
+;    return 1;
+        LXI H,1
+        RET
+;    }
+;  return 0;
+CC70:
+CC69:
+        LXI H,0
+        RET
+;  }
+CC67:   DB 99,104,97,114,0,105,110,116,0
+;
+;/*
+;** delcare a static variable
+;*/
+;declglb(type, class)  int type, class; {
+DECLGLB::        
+;  int k, j;
+;  while(1) {
+        PUSH B
+        PUSH B
+CC72:
+;    if(endst()) return;     /* do line */
+        CALL ENDST
+        MOV A,H
+        ORA L
+        JZ CC74
+        POP B
+        POP B
+        RET
+;    if(match("*")) {
+CC74:
+        LXI H,CC71+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC75
+;      j=POINTER;
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,3
+        CALL CCPDPI
+;      k=0;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;      }
+;    else {
+        JMP CC76
+CC75:
+;      j=VARIABLE;
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;      k=1;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;      }
+CC76:
+;    if (symname(ssname, YES)==0) illname();
+        LXI H,SSNAME
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL SYMNAME
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC77
+        CALL ILLNAME
+;    if(findglb(ssname)) multidef(ssname);
+CC77:
+        LXI H,SSNAME
+        PUSH H
+        CALL FINDGLB
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC78
+        LXI H,SSNAME
+        PUSH H
+        CALL MULTIDEF
+        POP B
+;    if(match("()")) j=FUNCTION;
+CC78:
+        LXI H,CC71+2
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC79
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCPDPI
+;    else if (match("[")) {
+        JMP CC80
+CC79:
+        LXI H,CC71+5
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC81
+;      k=needsub();    /* get size */
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL NEEDSUB
+        CALL CCPDPI
+;      j=ARRAY;   /* !0=array */
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,2
+        CALL CCPDPI
+;      }
+;    if(class==EXTERNAL) external(ssname);
+CC81:
+CC80:
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC82
+        LXI H,SSNAME
+        PUSH H
+        CALL EXTERNAL
+        POP B
+;    else j=initials(type>>2, j, k);
+        JMP CC83
+CC82:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCASR
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL INITIALS
+        POP B
+        POP B
+        POP B
+        CALL CCPDPI
+CC83:
+;    addsym(ssname, j, type, k, &glbptr, class);
+        LXI H,SSNAME
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,12
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,GLBPTR
+        PUSH H
+        LXI H,16
+        CALL CCDSGI
+        PUSH H
+        CALL ADDSYM
+        XCHG;;
+        LXI H,12
+        DAD SP
+        SPHL
+        XCHG;;
+;    if (match(",")==0) return; /* more? */
+        LXI H,CC71+7
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC84
+        POP B
+        POP B
+        RET
+;    }
+CC84:
+        JMP CC72
+CC73:
+;  }
+        POP B
+        POP B
+        RET
+CC71:   DB 42,0,40,41,0,91,0,44,0
+;
+;/*
+;** declare local variables
+;*/
+;declloc(typ)  int typ;  {
+DECLLOC::        
+;  int k,j;
+;  if(noloc) error("not allowed with goto");
+        PUSH B
+        PUSH B
+        LHLD NOLOC
+        MOV A,H
+        ORA L
+        JZ CC86
+        LXI H,CC85+0
+        PUSH H
+        CALL ERROR
+        POP B
+;  if(declared < 0) error("must declare first in block");
+CC86:
+        LHLD DECLARED
+        XRA A
+        ORA H
+        JP CC87
+        LXI H,CC85+22
+        PUSH H
+        CALL ERROR
+        POP B
+;  while(1) {
+CC87:
+CC88:
+;    while(1) {
+CC90:
+;      if(endst()) return;
+        CALL ENDST
+        MOV A,H
+        ORA L
+        JZ CC92
+        POP B
+        POP B
+        RET
+;      if(match("*")) j=POINTER;
+CC92:
+        LXI H,CC85+50
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC93
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,3
+        CALL CCPDPI
+;      else j=VARIABLE;
+        JMP CC94
+CC93:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+CC94:
+;      if (symname(ssname, YES)==0) illname();
+        LXI H,SSNAME
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL SYMNAME
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC95
+        CALL ILLNAME
+;      /* no multidef check, block-locals are together */
+;      k=BPW;
+CC95:
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,2
+        CALL CCPDPI
+;      if (match("[")) {
+        LXI H,CC85+52
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC96
+;        k=needsub();
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL NEEDSUB
+        CALL CCPDPI
+;        if(k) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        MOV A,H
+        ORA L
+        JZ CC97
+;          j=ARRAY;
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,2
+        CALL CCPDPI
+;          if(typ==CINT)k=k<<LBPW;
+        LXI H,6
+        CALL CCDSGI
+        XCHG;;
+        LXI H,8
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC98
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCASL
+        CALL CCPDPI
+;          }
+CC98:
+;        else j=POINTER;
+        JMP CC99
+CC97:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,3
+        CALL CCPDPI
+CC99:
+;        }
+;      else if(match("()")) j=FUNCTION;
+        JMP CC100
+CC96:
+        LXI H,CC85+54
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC101
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCPDPI
+;      else if((typ==CCHAR)&(j==VARIABLE)) k=SBPC;
+        JMP CC102
+CC101:
+        LXI H,6
+        CALL CCDSGI
+        XCHG;;
+        LXI H,4
+        CALL CCEQ
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC103
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;      declared = declared + k;
+CC103:
+CC102:
+CC100:
+        LHLD DECLARED
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        DAD D
+        SHLD DECLARED
+;      addsym(ssname, j, typ, csp - declared, &locptr, AUTOMATIC);
+        LXI H,SSNAME
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        LHLD CSP
+        XCHG;;
+        LHLD DECLARED
+        CALL CCSUB
+        PUSH H
+        LXI H,LOCPTR
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL ADDSYM
+        XCHG;;
+        LXI H,12
+        DAD SP
+        SPHL
+        XCHG;;
+;      break;
+        JMP CC91
+;      }
+        JMP CC90
+CC91:
+;    if (match(",")==0) return;
+        LXI H,CC85+57
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC104
+        POP B
+        POP B
+        RET
+;    }
+CC104:
+        JMP CC88
+CC89:
+;  }
+        POP B
+        POP B
+        RET
+CC85:   DB 110,111,116,32,97,108,108,111,119,101
+        DB 100,32,119,105,116,104,32,103,111,116
+        DB 111,0,109,117,115,116,32,100,101,99
+        DB 108,97,114,101,32,102,105,114,115,116
+        DB 32,105,110,32,98,108,111,99,107,0
+        DB 42,0,91,0,40,41,0,44,0
+;
+;/*
+;** initialize global objects
+;*/
+;initials(size, ident, dim) int size, ident, dim; {
+INITIALS::       
+;  int savedim;
+;  litptr=0;
+        PUSH B
+        LXI H,0
+        SHLD LITPTR
+;  if(dim==0) dim = -1;
+        LXI H,4
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JNZ CC106
+        LXI H,4
+        DAD SP
+        PUSH H
+        LXI H,-1
+        CALL CCPDPI
+;  savedim=dim;
+CC106:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        CALL CCPDPI
+;  entry();
+	CALL ENTRY
+;  if(match("=")) {
+        LXI H,CC105+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC107
+;    if(match("{")) {
+        LXI H,CC105+2
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC108
+;      while(dim) {
+CC109::
+        LXI H,4
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC110
+;        init(size, ident, &dim);
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL INIT
+        POP B
+        POP B
+        POP B
+;        if(match(",")==0) break;
+        LXI H,CC105+4
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC111
+        JMP CC110
+;        }
+CC111:
+        JMP CC109
+CC110:
+;      needtoken("}");
+        LXI H,CC105+6
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;      }
+;    else init(size, ident, &dim);
+        JMP CC112
+CC108:
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL INIT
+        POP B
+        POP B
+        POP B
+CC112:
+;    }
+;  if((dim == -1)&(dim==savedim)) {
+CC107:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,-1
+        POP D
+        CALL CCEQ
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC113
+;     stowlit(0, size=BPW);
+        LXI H,0
+        PUSH H
+        LXI H,10
+        DAD SP
+        XCHG;;
+        LXI H,2
+        CALL CCPINT
+        PUSH H
+        CALL STOWLIT
+        POP B
+        POP B
+;    ident=POINTER;
+        LXI H,6
+        DAD SP
+        PUSH H
+        LXI H,3
+        CALL CCPDPI
+;    }
+;  dumplits(size);
+CC113:
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL DUMPLITS
+        POP B
+;  dumpzero(size, dim);
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL DUMPZERO
+        POP B
+        POP B
+;  return ident;
+        LXI H,6
+        CALL CCDSGI
+        POP B
+        RET
+;  }
+        POP B
+CC105:  DB 61,0,123,0,44,0,125,0
+;
+;/*
+;** evaluate one initializer
+;*/
+;init(size, ident, dim) int size, ident, *dim; {
+INIT::   
+;  int value;
+;  if(qstr(&value)) {
+        PUSH B
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL QSTR
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC115
+;    if((ident==VARIABLE)|(size!=1))
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCEQ
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCNE
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC116
+;      error("must assign to char pointer or array");
+        LXI H,CC114+0
+        PUSH H
+        CALL ERROR
+        POP B
+;    *dim = *dim - (litptr - value);
+CC116:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        CALL CCGINT
+        PUSH H
+        LHLD LITPTR
+        XCHG;;
+        LXI H,4
+        CALL CCDSGI
+        CALL CCSUB
+        POP D
+        CALL CCSUB
+        CALL CCPDPI
+;    if(ident==POINTER) point();
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC117
+        CALL POINT
+;    }
+CC117:
+;  else if(constexpr(&value)) {
+        JMP CC118
+CC115:
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CONSTEXP
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC119
+;    if(ident==POINTER) error("cannot assign to pointer");
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC120
+        LXI H,CC114+37
+        PUSH H
+        CALL ERROR
+        POP B
+;    stowlit(value, size);
+CC120:
+        POP H
+        PUSH H
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        CALL STOWLIT
+        POP B
+        POP B
+;    *dim = *dim - 1;
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        CALL CCGINT
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCSUB
+        CALL CCPDPI
+;    }
+;  }
+CC119:
+CC118:
+        POP B
+        RET
+CC114:  DB 109,117,115,116,32,97,115,115,105,103
+        DB 110,32,116,111,32,99,104,97,114,32
+        DB 112,111,105,110,116,101,114,32,111,114
+        DB 32,97,114,114,97,121,0,99,97,110
+        DB 110,111,116,32,97,115,115,105,103,110
+        DB 32,116,111,32,112,111,105,110,116,101
+        DB 114,0
+;
+;/*
+;** get required array size
+;*/
+;needsub()  {
+NEEDSUB::        
+;  int val;
+;  if(match("]")) return 0; /* null size */
+        PUSH B
+        LXI H,CC121+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC122
+        LXI H,0
+        POP B
+        RET
+;  if (constexpr(&val)==0) val=1;
+CC122:
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CONSTEXP
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC123
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;  if (val<0) {
+CC123:
+        POP H
+        PUSH H
+        XRA A
+        ORA H
+        JP CC124
+;    error("negative size illegal");
+        LXI H,CC121+2
+        PUSH H
+        CALL ERROR
+        POP B
+;    val = -val;
+        LXI H,0
+        DAD SP
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCNEG
+        CALL CCPDPI
+;    }
+;  needtoken("]");      /* force single dimension */
+CC124:
+        LXI H,CC121+24
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;  return val;          /* and return size */
+        POP H
+        PUSH H
+        POP B
+        RET
+;  }
+        POP B
+CC121:  DB 93,0,110,101,103,97,116,105,118,101
+        DB 32,115,105,122,101,32,105,108,108,101
+        DB 103,97,108,0,93,0
+;
+;/*
+;** begin a function
+;**
+;** called from "parse" and tries to make a function
+;** out of the following text
+;**
+;** Patched per P.L. Woods (DDJ #52)
+;*/
+;newfunc()  {
+NEWFUNC::        
+;  char *ptr;
+;  nogo  =             /* enable goto statements */
+        PUSH B
+;  noloc = 0;          /* enable block-local declarations */
+        LXI H,0
+        SHLD NOLOC
+        SHLD NOGO
+;  lastst=             /* no statement yet */
+;  litptr=0;           /* clear lit pool */
+        LXI H,0
+        SHLD LITPTR
+        SHLD LASTST
+;  litlab=getlabel();  /* label next lit pool */
+        CALL GETLABEL
+        SHLD LITLAB
+;  locptr=STARTLOC;    /* clear local variables */
+        LXI H,SYMTAB
+        SHLD LOCPTR
+;  if(monitor) lout(line, stderr);
+        LDA MONITOR
+        CALL CCSXT
+        MOV A,H
+        ORA L
+        JZ CC126
+        LHLD LINE
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL LOUT
+        POP B
+        POP B
+;  if (symname(ssname, YES)==0) {
+CC126:
+        LXI H,SSNAME
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL SYMNAME
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC127
+;    error("illegal function or declaration");
+        LXI H,CC125+0
+        PUSH H
+        CALL ERROR
+        POP B
+;    kill(); /* invalidate line */
+        CALL KILL
+;    return;
+        POP B
+        RET
+;    }
+;  if(func1) {
+CC127:
+        LHLD FUNC1
+        MOV A,H
+        ORA L
+        JZ CC128
+;    postlabel(beglab);
+        LHLD BEGLAB
+        PUSH H
+        CALL POSTLABE
+        POP B
+;    func1=0;
+        LXI H,0
+        SHLD FUNC1
+;    }
+;  if(ptr=findglb(ssname)) {      /* already in symbol table ? */
+CC128:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,SSNAME
+        PUSH H
+        CALL FINDGLB
+        POP B
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC129
+;    if(ptr[IDENT]!=FUNCTION)       multidef(ssname);
+        POP H
+        PUSH H
+        CALL CCGCHAR
+        PUSH H
+        LXI H,4
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC130
+        LXI H,SSNAME
+        PUSH H
+        CALL MULTIDEF
+        POP B
+;    else if(ptr[OFFSET]==FUNCTION) multidef(ssname);
+        JMP CC131
+CC130:
+        POP H
+        PUSH H
+        LXI D,3
+        CALL CCDDGC
+        PUSH H
+        LXI H,4
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC132
+        LXI H,SSNAME
+        PUSH H
+        CALL MULTIDEF
+        POP B
+;    else ptr[OFFSET]=FUNCTION;
+        JMP CC133
+CC132:
+        POP H
+        PUSH H
+        LXI D,3
+        DAD D
+        PUSH H
+        LXI H,4
+        CALL CCPDPC
+CC133:
+CC131:
+;      /*  earlier assumed to be a function */
+;    }
+;  else
+        JMP CC134
+CC129:
+;    addsym(ssname, FUNCTION, CINT, FUNCTION, &glbptr, STATIC);
+        LXI H,SSNAME
+        PUSH H
+        LXI H,4
+        PUSH H
+        LXI H,8
+        PUSH H
+        LXI H,4
+        PUSH H
+        LXI H,GLBPTR
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL ADDSYM
+        XCHG;;
+        LXI H,12
+        DAD SP
+        SPHL
+        XCHG;;
+CC134:
+;  if(match("(")==0) error("no open paren");
+        LXI H,CC125+32
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC135
+        LXI H,CC125+34
+        PUSH H
+        CALL ERROR
+        POP B
+;  entry();
+CC135:
+	CALL ENTRY
+;  locptr=STARTLOC;
+        LXI H,SYMTAB
+        SHLD LOCPTR
+;  argstk=0;               /* init arg count */
+        LXI H,0
+        SHLD ARGSTK
+;  while(match(")")==0) {  /* then count args */
+CC136::
+        LXI H,CC125+48
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC137
+;    /* any legal name bumps arg count */
+;    if(symname(ssname, YES)) {
+        LXI H,SSNAME
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL SYMNAME
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC138
+;      if(findloc(ssname)) multidef(ssname);
+        LXI H,SSNAME
+        PUSH H
+        CALL FINDLOC
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC139
+        LXI H,SSNAME
+        PUSH H
+        CALL MULTIDEF
+        POP B
+;      else {
+        JMP CC140
+CC139:
+;        addsym(ssname, 0, 0, argstk, &locptr, AUTOMATIC);
+        LXI H,SSNAME
+        PUSH H
+        LXI H,0
+        PUSH H
+        LXI H,0
+        PUSH H
+        LHLD ARGSTK
+        PUSH H
+        LXI H,LOCPTR
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL ADDSYM
+        XCHG;;
+        LXI H,12
+        DAD SP
+        SPHL
+        XCHG;;
+;        argstk=argstk+BPW;
+        LHLD ARGSTK
+        LXI D,2
+        DAD D
+        SHLD ARGSTK
+;        }
+CC140:
+;      }
+;    else {error("illegal argument name");junk();}
+        JMP CC141
+CC138:
+        LXI H,CC125+50
+        PUSH H
+        CALL ERROR
+        POP B
+        CALL JUNK
+CC141:
+;    blanks();
+        CALL BLANKS
+;    /* if not closing paren, should be comma */
+;    if(streq(lptr,")")==0) {
+        LHLD LPTR
+        PUSH H
+        LXI H,CC125+72
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC142
+;      if(match(",")==0) error("no comma");
+        LXI H,CC125+74
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC143
+        LXI H,CC125+76
+        PUSH H
+        CALL ERROR
+        POP B
+;      }
+CC143:
+;    if(endst()) break;
+CC142:
+        CALL ENDST
+        MOV A,H
+        ORA L
+        JZ CC144
+        JMP CC137
+;    }
+CC144:
+        JMP CC136
+CC137:
+;  csp=0;        /* preset stack ptr */
+        LXI H,0
+        SHLD CSP
+;  argtop=argstk;
+        LHLD ARGSTK
+        SHLD ARGTOP
+;  while(argstk) {
+CC145:
+        LHLD ARGSTK
+        MOV A,H
+        ORA L
+        JZ CC146
+;    /* now let user declare what types of things */
+;    /*      those arguments were */
+;    if(amatch("char",4))     {doargs(CCHAR);ns();}
+        LXI H,CC125+85
+        PUSH H
+        LXI H,4
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC147
+        LXI H,4
+        PUSH H
+        CALL DOARGS
+        POP B
+        CALL NS
+;    else if(amatch("int",3)) {doargs(CINT);ns();}
+        JMP CC148
+CC147:
+        LXI H,CC125+90
+        PUSH H
+        LXI H,3
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC149
+        LXI H,8
+        PUSH H
+        CALL DOARGS
+        POP B
+        CALL NS
+;    else {error("wrong number of arguments");break;}
+        JMP CC150
+CC149:
+        LXI H,CC125+94
+        PUSH H
+        CALL ERROR
+        POP B
+        JMP CC146
+CC150:
+CC148:
+;    }
+        JMP CC145
+CC146:
+;  if(statement()!=STRETURN) ret();
+        CALL STATEMEN
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC151
+        CALL RET
+;  if(litptr) {
+CC151:
+        LHLD LITPTR
+        MOV A,H
+        ORA L
+        JZ CC152
+;    printlabel(litlab);
+        LHLD LITLAB
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;    col();
+        CALL COL
+;    dumplits(1); /* dump literals */
+        LXI H,1
+        PUSH H
+        CALL DUMPLITS
+        POP B
+;    }
+;  }
+CC152:
+        POP B
+        RET
+CC125:  DB 105,108,108,101,103,97,108,32,102,117
+        DB 110,99,116,105,111,110,32,111,114,32
+        DB 100,101,99,108,97,114,97,116,105,111
+        DB 110,0,40,0,110,111,32,111,112,101
+        DB 110,32,112,97,114,101,110,0,41,0
+        DB 105,108,108,101,103,97,108,32,97,114
+        DB 103,117,109,101,110,116,32,110,97,109
+        DB 101,0,41,0,44,0,110,111,32,99
+        DB 111,109,109,97,0,99,104,97,114,0
+        DB 105,110,116,0,119,114,111,110,103,32
+        DB 110,117,109,98,101,114,32,111,102,32
+        DB 97,114,103,117,109,101,110,116,115,0
+;
+;/*
+;** declare argument types
+;**
+;** called from "newfunc" this routine adds an entry in the
+;** local symbol table for each named argument
+;**
+;** rewritten per P.L. Woods (DDJ #52)
+;*/
+;doargs(t) int t; {
+DOARGS:: 
+;  int j, legalname;
+;  char c, *argptr;
+;  while(1) {
+        LXI H,-7
+        DAD SP
+        SPHL
+CC154:
+;    if(argstk==0) return; /* no arguments */
+        LHLD ARGSTK
+        MOV A,H
+        ORA L
+        JNZ CC156
+        LXI H,7
+        DAD SP
+        SPHL
+        RET
+;    if(match("*")) j=POINTER; else j=VARIABLE;
+CC156:
+        LXI H,CC153+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC157
+        LXI H,5
+        DAD SP
+        PUSH H
+        LXI H,3
+        CALL CCPDPI
+        JMP CC158
+CC157:
+        LXI H,5
+        DAD SP
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+CC158:
+;    if((legalname=symname(ssname, YES))==0) illname();
+        LXI H,3
+        DAD SP
+        PUSH H
+        LXI H,SSNAME
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL SYMNAME
+        POP B
+        POP B
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JNZ CC159
+        CALL ILLNAME
+;    if(match("[")) {   /* is it a pointer? */
+CC159:
+        LXI H,CC153+2
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC160
+;      /* yes, so skip stuff between "[...]" */
+;      while(inbyte()!=']') if(endst()) break;
+CC161:
+        CALL INBYTE
+        PUSH H
+        LXI H,93
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC162
+        CALL ENDST
+        MOV A,H
+        ORA L
+        JZ CC163
+        JMP CC162
+;      j=POINTER; /* add entry as pointer */
+CC163:
+        JMP CC161
+CC162:
+        LXI H,5
+        DAD SP
+        PUSH H
+        LXI H,3
+        CALL CCPDPI
+;      }
+;    if(legalname) {
+CC160:
+        LXI H,3
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC164
+;      if(argptr=findloc(ssname)) {
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,SSNAME
+        PUSH H
+        CALL FINDLOC
+        POP B
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC165
+;        /* add details of type and address */
+;        argptr[IDENT]=j;
+        POP H
+        PUSH H
+        PUSH H
+        LXI H,7
+        CALL CCDSGI
+        CALL CCPDPC
+;        argptr[TYPE]=t;
+        POP H
+        PUSH H
+        LXI D,1
+        DAD D
+        PUSH H
+        LXI H,11
+        CALL CCDSGI
+        CALL CCPDPC
+;        putint(argtop-getint(argptr+OFFSET, OFFSIZE), argptr+OFFSET, OFFSIZE);
+        LHLD ARGTOP
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,3
+        DAD D
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL GETINT
+        POP B
+        POP B
+        POP D
+        CALL CCSUB
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,3
+        DAD D
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL PUTINT
+        POP B
+        POP B
+        POP B
+;        }
+;      else error("not an argument");
+        JMP CC166
+CC165:
+        LXI H,CC153+4
+        PUSH H
+        CALL ERROR
+        POP B
+CC166:
+;      }
+;    argstk=argstk-BPW;        /* cnt down */
+CC164:
+        LHLD ARGSTK
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCSUB
+        SHLD ARGSTK
+;    if(endst())return;
+        CALL ENDST
+        MOV A,H
+        ORA L
+        JZ CC167
+        LXI H,7
+        DAD SP
+        SPHL
+        RET
+;    if(match(",")==0) error("no comma");
+CC167:
+        LXI H,CC153+20
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC168
+        LXI H,CC153+22
+        PUSH H
+        CALL ERROR
+        POP B
+;    }
+CC168:
+        JMP CC154
+CC155:
+;  }
+        LXI H,7
+        DAD SP
+        SPHL
+        RET
+CC153:  DB 42,0,91,0,110,111,116,32,97,110
+        DB 32,97,114,103,117,109,101,110,116,0
+        DB 44,0,110,111,32,99,111,109,109,97
+        DB 0
+;#include "cc13.c"
+;/*
+;** statement parser
+;**
+;** called whenever syntax requires a statement
+;**  this routine performs that statement
+;**  and returns a number telling which one
+;*/
+;statement() {
+STATEMEN::       
+;  if ((ch==0) & (eof)) return;
+        LHLD CH
+        PUSH H
+        LXI H,0
+        POP D
+        CALL CCEQ
+        PUSH H
+        LHLD EOF
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC170
+        RET
+;  else if(amatch("char",4))  {declloc(CCHAR);ns();}
+CC170:
+        LXI H,CC169+0
+        PUSH H
+        LXI H,4
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC172
+        LXI H,4
+        PUSH H
+        CALL DECLLOC
+        POP B
+        CALL NS
+;  else if(amatch("int",3))   {declloc(CINT);ns();}
+        JMP CC173
+CC172:
+        LXI H,CC169+5
+        PUSH H
+        LXI H,3
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC174
+        LXI H,8
+        PUSH H
+        CALL DECLLOC
+        POP B
+        CALL NS
+;  else {
+        JMP CC175
+CC174:
+;    if(declared >= 0) {
+        LHLD DECLARED
+        XRA A
+        ORA H
+        JM CC176
+;      if(ncmp > 1) nogo=declared; /* disable goto if any */
+        LHLD NCMP
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCGT
+        MOV A,H
+        ORA L
+        JZ CC177
+        LHLD DECLARED
+        SHLD NOGO
+;      csp=modstk(csp - declared, NO);
+CC177:
+        LHLD CSP
+        PUSH H
+        LHLD DECLARED
+        POP D
+        CALL CCSUB
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL MODSTK
+        POP B
+        POP B
+        SHLD CSP
+;      declared = -1;
+        LXI H,-1
+        SHLD DECLARED
+;      }
+;    if(match("{"))               compound();
+CC176:
+        LXI H,CC169+9
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC178
+        CALL COMPOUND
+;    else if(amatch("if",2))      {doif();lastst=STIF;}
+        JMP CC179
+CC178:
+        LXI H,CC169+11
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC180
+        CALL DOIF
+        LXI H,1
+        SHLD LASTST
+;    else if(amatch("while",5))   {dowhile();lastst=STWHILE;}
+        JMP CC181
+CC180:
+        LXI H,CC169+14
+        PUSH H
+        LXI H,5
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC182
+        CALL DOWHILE
+        LXI H,2
+        SHLD LASTST
+;    else if(amatch("do",2))      {dodo();lastst=STDO;}
+        JMP CC183
+CC182:
+        LXI H,CC169+20
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC184
+        CALL DODO
+        LXI H,8
+        SHLD LASTST
+;    else if(amatch("for",3))     {dofor();lastst=STFOR;}
+        JMP CC185
+CC184:
+        LXI H,CC169+23
+        PUSH H
+        LXI H,3
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC186
+        CALL DOFOR
+        LXI H,9
+        SHLD LASTST
+;    else if(amatch("switch",6))  {doswitch();lastst=STSWITCH;}
+        JMP CC187
+CC186:
+        LXI H,CC169+27
+        PUSH H
+        LXI H,6
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC188
+        CALL DOSWITCH
+        LXI H,10
+        SHLD LASTST
+;    else if(amatch("case",4))    {docase();lastst=STCASE;}
+        JMP CC189
+CC188:
+        LXI H,CC169+34
+        PUSH H
+        LXI H,4
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC190
+        CALL DOCASE
+        LXI H,11
+        SHLD LASTST
+;    else if(amatch("default",7)) {dodefault();lastst=STDEF;}
+        JMP CC191
+CC190:
+        LXI H,CC169+39
+        PUSH H
+        LXI H,7
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC192
+        CALL DODEFAUL
+        LXI H,12
+        SHLD LASTST
+;    else if(amatch("goto", 4))   {dogoto(); lastst=STGOTO;}
+        JMP CC193
+CC192:
+        LXI H,CC169+47
+        PUSH H
+        LXI H,4
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC194
+        CALL DOGOTO
+        LXI H,13
+        SHLD LASTST
+;    else if(dolabel())           ;
+        JMP CC195
+CC194:
+        CALL DOLABEL
+        MOV A,H
+        ORA L
+        JZ CC196
+;    else if(amatch("return",6))  {doreturn();ns();lastst=STRETURN;}
+        JMP CC197
+CC196:
+        LXI H,CC169+52
+        PUSH H
+        LXI H,6
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC198
+        CALL DORETURN
+        CALL NS
+        LXI H,3
+        SHLD LASTST
+;    else if(amatch("break",5))   {dobreak();ns();lastst=STBREAK;}
+        JMP CC199
+CC198:
+        LXI H,CC169+59
+        PUSH H
+        LXI H,5
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC200
+        CALL DOBREAK
+        CALL NS
+        LXI H,4
+        SHLD LASTST
+;    else if(amatch("continue",8)){docont();ns();lastst=STCONT;}
+        JMP CC201
+CC200:
+        LXI H,CC169+65
+        PUSH H
+        LXI H,8
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC202
+        CALL DOCONT
+        CALL NS
+        LXI H,5
+        SHLD LASTST
+;    else if(match(";"))          errflag=0;
+        JMP CC203
+CC202:
+        LXI H,CC169+74
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC204
+        LXI H,0
+        SHLD ERRFLAG
+;    else if(match("#asm"))       {doasm();lastst=STASM;}
+        JMP CC205
+CC204:
+        LXI H,CC169+76
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC206
+        CALL DOASM
+        LXI H,6
+        SHLD LASTST
+;    else                         {doexpr();ns();lastst=STEXPR;}
+        JMP CC207
+CC206:
+        CALL DOEXPR
+        CALL NS
+        LXI H,7
+        SHLD LASTST
+CC207:
+CC205:
+CC203:
+CC201:
+CC199:
+CC197:
+CC195:
+CC193:
+CC191:
+CC189:
+CC187:
+CC185:
+CC183:
+CC181:
+CC179:
+;    }
+CC175:
+CC173:
+CC171:
+;  return lastst;
+        LHLD LASTST
+        RET
+;  }
+CC169:  DB 99,104,97,114,0,105,110,116,0,123
+        DB 0,105,102,0,119,104,105,108,101,0
+        DB 100,111,0,102,111,114,0,115,119,105
+        DB 116,99,104,0,99,97,115,101,0,100
+        DB 101,102,97,117,108,116,0,103,111,116
+        DB 111,0,114,101,116,117,114,110,0,98
+        DB 114,101,97,107,0,99,111,110,116,105
+        DB 110,117,101,0,59,0,35,97,115,109
+        DB 0
+;
+;/*
+;** semicolon enforcer
+;**
+;** called whenever syntax requires a semicolon
+;*/
+;ns()  {
+NS::     
+;  if(match(";")==0) error("no semicolon");
+        LXI H,CC208+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC209
+        LXI H,CC208+2
+        PUSH H
+        CALL ERROR
+        POP B
+;  else errflag=0;
+        JMP CC210
+CC209:
+        LXI H,0
+        SHLD ERRFLAG
+CC210:
+;  }
+        RET
+CC208:  DB 59,0,110,111,32,115,101,109,105,99
+        DB 111,108,111,110,0
+;
+;compound()  {
+COMPOUND::       
+;  int savcsp;
+;  char *savloc;
+;  savcsp=csp;
+        PUSH B
+        PUSH B
+        LXI H,2
+        DAD SP
+        XCHG;;
+        LHLD CSP
+        CALL CCPINT
+;  savloc=locptr;
+        LXI H,0
+        DAD SP
+        PUSH H
+        LHLD LOCPTR
+        CALL CCPDPI
+;  declared=0;    /* may now declare local variables */
+        LXI H,0
+        SHLD DECLARED
+;  ++ncmp;        /* new level open */
+        LHLD NCMP
+        INX H
+        SHLD NCMP
+;  while (match("}")==0)
+CC212:
+        LXI H,CC211+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC213
+;    if(eof) {
+        LHLD EOF
+        MOV A,H
+        ORA L
+        JZ CC214
+;      error("no final }");
+        LXI H,CC211+2
+        PUSH H
+        CALL ERROR
+        POP B
+;      break;
+        JMP CC213
+;      }
+;    else statement();     /* do one */
+        JMP CC215
+CC214:
+        CALL STATEMEN
+CC215:
+        JMP CC212
+CC213:
+;  --ncmp;                 /* close current level */
+        LHLD NCMP
+        DCX H
+        SHLD NCMP
+;  csp=modstk(savcsp, NO); /* delete local variable space */
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL MODSTK
+        POP B
+        POP B
+        SHLD CSP
+;  cptr=savloc;            /* retain labels */
+        POP H
+        PUSH H
+        SHLD CPTR
+;  while(cptr < locptr) {
+CC216:
+        LHLD CPTR
+        XCHG;;
+        LHLD LOCPTR
+        CALL CCULT
+        MOV A,H
+        ORA L
+        JZ CC217
+;    cptr2=nextsym(cptr);
+        LHLD CPTR
+        PUSH H
+        CALL NEXTSYM
+        POP B
+        SHLD CPTR2
+;    if(cptr[IDENT] == LABEL) {
+        LHLD CPTR
+        CALL CCGCHAR
+        MOV A,H
+        ORA L
+        JNZ CC218
+;      while(cptr < cptr2) *savloc++ = *cptr++;
+CC219:
+        LHLD CPTR
+        PUSH H
+        LHLD CPTR2
+        POP D
+        CALL CCULT
+        MOV A,H
+        ORA L
+        JZ CC220
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        PUSH H
+        LHLD CPTR
+        INX H
+        SHLD CPTR
+        DCX H
+        CALL CCGCHAR
+        CALL CCPDPC
+        JMP CC219
+CC220:
+;      }
+;    else cptr=cptr2;
+        JMP CC221
+CC218:
+        LHLD CPTR2
+        SHLD CPTR
+CC221:
+;    }
+        JMP CC216
+CC217:
+;  locptr=savloc;          /* delete local symbols */
+        POP H
+        PUSH H
+        SHLD LOCPTR
+;  declared = -1;          /* may not declare variables */
+        LXI H,-1
+        SHLD DECLARED
+;  }
+        POP B
+        POP B
+        RET
+CC211:  DB 125,0,110,111,32,102,105,110,97,108
+        DB 32,125,0
+;
+;doif()  {
+DOIF::   
+;  int flab1,flab2;
+;  flab1=getlabel(); /* get label for false branch */
+        PUSH B
+        PUSH B
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL GETLABEL
+        CALL CCPDPI
+;  test(flab1, YES); /* get expression, and branch false */
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL TEST
+        POP B
+        POP B
+;  statement();      /* if true, do a statement */
+        CALL STATEMEN
+;  if (amatch("else",4)==0) {      /* if...else ? */
+        LXI H,CC222+0
+        PUSH H
+        LXI H,4
+        PUSH H
+        CALL AMATCH
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC223
+;    /* simple "if"...print false label */
+;    postlabel(flab1);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL POSTLABE
+        POP B
+;    return;         /* and exit */
+        POP B
+        POP B
+        RET
+;    }
+;  flab2=getlabel();
+CC223:
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL GETLABEL
+        CALL CCPDPI
+;  if((lastst != STRETURN)&(lastst != STGOTO)) jump(flab2);
+        LHLD LASTST
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCNE
+        PUSH H
+        LHLD LASTST
+        PUSH H
+        LXI H,13
+        POP D
+        CALL CCNE
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC224
+        POP H
+        PUSH H
+        PUSH H
+        CALL JUMP
+        POP B
+;  postlabel(flab1); /* print false label */
+CC224:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  statement();      /* and do "else" clause */
+        CALL STATEMEN
+;  postlabel(flab2); /* print true label */
+        POP H
+        PUSH H
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  }
+        POP B
+        POP B
+        RET
+CC222:  DB 101,108,115,101,0
+;
+;doexpr() {
+DOEXPR:: 
+;  int const, val;
+;  char *before, *start;
+;  while(1) {
+        LXI H,-8
+        DAD SP
+        SPHL
+CC226:
+;    setstage(&before, &start);
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL SETSTAGE
+        POP B
+        POP B
+;    expression(&const, &val);
+        LXI H,6
+        DAD SP
+        PUSH H
+        LXI H,6
+        DAD SP
+        PUSH H
+        CALL EXPRESSI
+        POP B
+        POP B
+;    clearstage(before, start);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL CLEARSTA
+        POP B
+        POP B
+;    if(ch != ',') break;
+        LHLD CH
+        PUSH H
+        LXI H,44
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC228
+        JMP CC227
+;    bump(1);
+CC228:
+        LXI H,1
+        PUSH H
+        CALL BUMP
+        POP B
+;    }
+        JMP CC226
+CC227:
+;  }
+        LXI H,8
+        DAD SP
+        SPHL
+        RET
+;
+;dowhile()  {
+DOWHILE::        
+;  int wq[4];              /* allocate local queue */
+;  addwhile(wq);           /* add entry to queue for "break" */
+        LXI H,-8
+        DAD SP
+        SPHL
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL ADDWHILE
+        POP B
+;  postlabel(wq[WQLOOP]);  /* loop label */
+        LXI H,0
+        DAD SP
+        LXI D,2
+        CALL CCDDGI
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  test(wq[WQEXIT], YES);  /* see if true */
+        LXI H,0
+        DAD SP
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL TEST
+        POP B
+        POP B
+;  statement();            /* if so, do a statement */
+        CALL STATEMEN
+;  jump(wq[WQLOOP]);       /* loop to label */
+        LXI H,0
+        DAD SP
+        LXI D,2
+        CALL CCDDGI
+        PUSH H
+        CALL JUMP
+        POP B
+;  postlabel(wq[WQEXIT]);  /* exit label */
+        LXI H,0
+        DAD SP
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  delwhile();             /* delete queue entry */
+        CALL DELWHILE
+;  }
+        LXI H,8
+        DAD SP
+        SPHL
+        RET
+;
+;dodo() {
+DODO::   
+;  int wq[4], top;
+;  addwhile(wq);
+        LXI H,-10
+        DAD SP
+        SPHL
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL ADDWHILE
+        POP B
+;  postlabel(top=getlabel());
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL GETLABEL
+        CALL CCPDPI
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  statement();
+        CALL STATEMEN
+;  needtoken("while");
+        LXI H,CC230+0
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;  postlabel(wq[WQLOOP]);
+        LXI H,2
+        DAD SP
+        LXI D,2
+        CALL CCDDGI
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  test(wq[WQEXIT], YES);
+        LXI H,2
+        DAD SP
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL TEST
+        POP B
+        POP B
+;  jump(top);
+        POP H
+        PUSH H
+        PUSH H
+        CALL JUMP
+        POP B
+;  postlabel(wq[WQEXIT]);
+        LXI H,2
+        DAD SP
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  delwhile();
+        CALL DELWHILE
+;  ns();
+        CALL NS
+;  }
+        LXI H,10
+        DAD SP
+        SPHL
+        RET
+CC230:  DB 119,104,105,108,101,0
+;
+;dofor() {
+DOFOR::  
+;  int wq[4], lab1, lab2;
+;  addwhile(wq);
+        LXI H,-12
+        DAD SP
+        SPHL
+        LXI H,4
+        DAD SP
+        PUSH H
+        CALL ADDWHILE
+        POP B
+;  lab1=getlabel();
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL GETLABEL
+        CALL CCPDPI
+;  lab2=getlabel();
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL GETLABEL
+        CALL CCPDPI
+;  needtoken("(");
+        LXI H,CC231+0
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;  if(match(";")==0) {
+        LXI H,CC231+2
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC232
+;    doexpr();            /* expr 1 */
+        CALL DOEXPR
+;    ns();
+        CALL NS
+;    }
+;  postlabel(lab1);
+CC232:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  if(match(";")==0) {
+        LXI H,CC231+4
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC233
+;    test(wq[WQEXIT], NO); /* expr 2 */
+        LXI H,4
+        DAD SP
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL TEST
+        POP B
+        POP B
+;    ns();
+        CALL NS
+;    }
+;  jump(lab2);
+CC233:
+        POP H
+        PUSH H
+        PUSH H
+        CALL JUMP
+        POP B
+;  postlabel(wq[WQLOOP]);
+        LXI H,4
+        DAD SP
+        LXI D,2
+        CALL CCDDGI
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  if(match(")")==0) {
+        LXI H,CC231+6
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC234
+;    doexpr();            /* expr 3 */
+        CALL DOEXPR
+;    needtoken(")");
+        LXI H,CC231+8
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;    }
+;  jump(lab1);
+CC234:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL JUMP
+        POP B
+;  postlabel(lab2);
+        POP H
+        PUSH H
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  statement();
+        CALL STATEMEN
+;  jump(wq[WQLOOP]);
+        LXI H,4
+        DAD SP
+        LXI D,2
+        CALL CCDDGI
+        PUSH H
+        CALL JUMP
+        POP B
+;  postlabel(wq[WQEXIT]);
+        LXI H,4
+        DAD SP
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  delwhile();
+        CALL DELWHILE
+;  }
+        LXI H,12
+        DAD SP
+        SPHL
+        RET
+CC231:  DB 40,0,59,0,59,0,41,0,41,0
+;
+;doswitch() {
+DOSWITCH::       
+;  int wq[4], endlab, swact, swdef, *swnex, *swptr;
+;  swact=swactive;
+        LXI H,-18
+        DAD SP
+        SPHL
+        LXI H,6
+        DAD SP
+        XCHG;;
+        LHLD SWACTIVE
+        CALL CCPINT
+;  swdef=swdefault;
+        LXI H,4
+        DAD SP
+        PUSH H
+        LHLD SWDEFAUL
+        CALL CCPDPI
+;  swnex=swptr=swnext;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,2
+        DAD SP
+        PUSH H
+        LHLD SWNEXT
+        CALL CCPDPI
+        CALL CCPDPI
+;  addwhile(wq);
+        LXI H,10
+        DAD SP
+        PUSH H
+        CALL ADDWHILE
+        POP B
+;  needtoken("(");
+        LXI H,CC235+0
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;  doexpr();      /* evaluate switch expression */
+        CALL DOEXPR
+;  needtoken(")");
+        LXI H,CC235+2
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;  swdefault=0;
+        LXI H,0
+        SHLD SWDEFAUL
+;  swactive=1;
+        LXI H,1
+        SHLD SWACTIVE
+;  jump(endlab=getlabel());
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL GETLABEL
+        CALL CCPDPI
+        PUSH H
+        CALL JUMP
+        POP B
+;  statement();   /* cases, etc. */
+        CALL STATEMEN
+;  jump(wq[WQEXIT]);
+        LXI H,10
+        DAD SP
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        CALL JUMP
+        POP B
+;  postlabel(endlab);
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  sw();          /* match cases */
+        CALL SW
+;  while(swptr < swnext) {
+CC236:
+        POP D
+        PUSH D
+        LHLD SWNEXT
+        CALL CCULT
+        MOV A,H
+        ORA L
+        JZ CC237
+;    defstorage(CINT>>2);
+        LXI H,2
+        PUSH H
+        CALL DEFSTORA
+        POP B
+;    printlabel(*swptr++);  /* case label */
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        INX H
+        CALL CCPDPI
+        DCX H
+        DCX H
+        CALL CCGINT
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;    outbyte(',');
+        LXI H,44
+        PUSH H
+        CALL OUTBYTE
+        POP B
+;    outdec(*swptr++);      /* case value */
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        INX H
+        CALL CCPDPI
+        DCX H
+        DCX H
+        CALL CCGINT
+        PUSH H
+        CALL OUTDEC
+        POP B
+;    nl();
+        CALL NL
+;    }
+        JMP CC236
+CC237:
+;  defstorage(CINT>>2);
+        LXI H,2
+        PUSH H
+        CALL DEFSTORA
+        POP B
+;  outdec(0);
+        LXI H,0
+        PUSH H
+        CALL OUTDEC
+        POP B
+;  nl();
+        CALL NL
+;  if(swdefault) jump(swdefault);
+        LHLD SWDEFAUL
+        MOV A,H
+        ORA L
+        JZ CC238
+        LHLD SWDEFAUL
+        PUSH H
+        CALL JUMP
+        POP B
+;  postlabel(wq[WQEXIT]);
+CC238:
+        LXI H,10
+        DAD SP
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  delwhile();
+        CALL DELWHILE
+;  swnext=swnex;
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        SHLD SWNEXT
+;  swdefault=swdef;
+        LXI H,4
+        CALL CCDSGI
+        SHLD SWDEFAUL
+;  swactive=swact;
+        LXI H,6
+        CALL CCDSGI
+        SHLD SWACTIVE
+;  }
+        LXI H,18
+        DAD SP
+        SPHL
+        RET
+CC235:  DB 40,0,41,0
+;
+;docase() {
+DOCASE:: 
+;  if(swactive==0) error("not in switch");
+        LHLD SWACTIVE
+        MOV A,H
+        ORA L
+        JNZ CC240
+        LXI H,CC239+0
+        PUSH H
+        CALL ERROR
+        POP B
+;  if(swnext > swend) {
+CC240:
+        LHLD SWNEXT
+        PUSH H
+        LHLD SWEND
+        POP D
+        CALL CCUGT
+        MOV A,H
+        ORA L
+        JZ CC241
+;    error("too many cases");
+        LXI H,CC239+14
+        PUSH H
+        CALL ERROR
+        POP B
+;    return;
+        RET
+;    }
+;  postlabel(*swnext++ = getlabel());
+CC241:
+        LHLD SWNEXT
+        INX H
+        INX H
+        SHLD SWNEXT
+        DCX H
+        DCX H
+        PUSH H
+        CALL GETLABEL
+        CALL CCPDPI
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  constexpr(swnext++);
+        LHLD SWNEXT
+        INX H
+        INX H
+        SHLD SWNEXT
+        DCX H
+        DCX H
+        PUSH H
+        CALL CONSTEXP
+        POP B
+;  needtoken(":");
+        LXI H,CC239+29
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;  }
+        RET
+CC239:  DB 110,111,116,32,105,110,32,115,119,105
+        DB 116,99,104,0,116,111,111,32,109,97
+        DB 110,121,32,99,97,115,101,115,0,58
+        DB 0
+;
+;dodefault() {
+DODEFAUL::       
+;  if(swactive) {
+        LHLD SWACTIVE
+        MOV A,H
+        ORA L
+        JZ CC243
+;    if(swdefault) error("multiple defaults");
+        LHLD SWDEFAUL
+        MOV A,H
+        ORA L
+        JZ CC244
+        LXI H,CC242+0
+        PUSH H
+        CALL ERROR
+        POP B
+;    }
+CC244:
+;  else error("not in switch");
+        JMP CC245
+CC243:
+        LXI H,CC242+18
+        PUSH H
+        CALL ERROR
+        POP B
+CC245:
+;  needtoken(":");
+        LXI H,CC242+32
+        PUSH H
+        CALL NEEDTOKE
+        POP B
+;  postlabel(swdefault=getlabel());
+        CALL GETLABEL
+        SHLD SWDEFAUL
+        PUSH H
+        CALL POSTLABE
+        POP B
+;  }
+        RET
+CC242:  DB 109,117,108,116,105,112,108,101,32,100
+        DB 101,102,97,117,108,116,115,0,110,111
+        DB 116,32,105,110,32,115,119,105,116,99
+        DB 104,0,58,0
+;
+;dogoto() {
+DOGOTO:: 
+;  if(nogo > 0) error("not allowed with block-locals");
+        LHLD NOGO
+        XRA A
+        ORA H
+        JM CC247
+        ORA L
+        JZ CC247
+        LXI H,CC246+0
+        PUSH H
+        CALL ERROR
+        POP B
+;  else noloc = 1;
+        JMP CC248
+CC247:
+        LXI H,1
+        SHLD NOLOC
+CC248:
+;  if(symname(ssname, YES)) jump(addlabel());
+        LXI H,SSNAME
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL SYMNAME
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC249
+        CALL ADDLABEL
+        PUSH H
+        CALL JUMP
+        POP B
+;  else error("bad label");
+        JMP CC250
+CC249:
+        LXI H,CC246+30
+        PUSH H
+        CALL ERROR
+        POP B
+CC250:
+;  ns();
+        CALL NS
+;  }
+        RET
+CC246:  DB 110,111,116,32,97,108,108,111,119,101
+        DB 100,32,119,105,116,104,32,98,108,111
+        DB 99,107,45,108,111,99,97,108,115,0
+        DB 98,97,100,32,108,97,98,101,108,0
+;
+;dolabel() {
+DOLABEL::        
+;  char *savelptr;
+;  blanks();
+        PUSH B
+        CALL BLANKS
+;  savelptr=lptr;
+        LXI H,0
+        DAD SP
+        PUSH H
+        LHLD LPTR
+        CALL CCPDPI
+;  if(symname(ssname, YES)) {
+        LXI H,SSNAME
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL SYMNAME
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC252
+;    if(gch()==':') {
+        CALL GCH
+        PUSH H
+        LXI H,58
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC253
+;      postlabel(addlabel());
+        CALL ADDLABEL
+        PUSH H
+        CALL POSTLABE
+        POP B
+;      return 1;
+        LXI H,1
+        POP B
+        RET
+;      }
+;    else bump(savelptr-lptr);
+CC253:
+        POP H
+        PUSH H
+        PUSH H
+        LHLD LPTR
+        POP D
+        CALL CCSUB
+        PUSH H
+        CALL BUMP
+        POP B
+CC254:
+;    }
+;  return 0;
+CC252:
+        LXI H,0
+        POP B
+        RET
+;  }
+        POP B
+;
+;addlabel()  {
+ADDLABEL::       
+;  if(cptr=findloc(ssname)) {
+        LXI H,SSNAME
+        PUSH H
+        CALL FINDLOC
+        POP B
+        SHLD CPTR
+        MOV A,H
+        ORA L
+        JZ CC256
+;    if(cptr[IDENT]!=LABEL) error("not a label");
+        LHLD CPTR
+        CALL CCGCHAR
+        MOV A,H
+        ORA L
+        JZ CC257
+        LXI H,CC255+0
+        PUSH H
+        CALL ERROR
+        POP B
+;    }
+CC257:
+;  else cptr=addsym(ssname, LABEL, LABEL, getlabel(), &locptr, LABEL);
+        JMP CC258
+CC256:
+        LXI H,SSNAME
+        PUSH H
+        LXI H,0
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL GETLABEL
+        PUSH H
+        LXI H,LOCPTR
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL ADDSYM
+        XCHG;;
+        LXI H,12
+        DAD SP
+        SPHL
+        XCHG;;
+        SHLD CPTR
+CC258:
+;  return (getint(cptr+OFFSET, OFFSIZE));
+        LHLD CPTR
+        LXI D,3
+        DAD D
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL GETINT
+        POP B
+        POP B
+        RET
+;  }
+CC255:  DB 110,111,116,32,97,32,108,97,98,101
+        DB 108,0
+;
+;doreturn()  {
+DORETURN::       
+;  if(endst()==0) {
+        CALL ENDST
+        MOV A,H
+        ORA L
+        JNZ CC260
+;    doexpr();
+        CALL DOEXPR
+;    modstk(0, YES);
+        LXI H,0
+        PUSH H
+        LXI H,1
+        PUSH H
+        CALL MODSTK
+        POP B
+        POP B
+;    }
+;  else modstk(0, NO);
+        JMP CC261
+CC260:
+        LXI H,0
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL MODSTK
+        POP B
+        POP B
+CC261:
+;  ret();
+        CALL RET
+;  }
+        RET
+;
+;dobreak()  {
+DOBREAK::        
+;  int *ptr;
+;  if ((ptr=readwhile())==0) return; /* no loops open */
+        PUSH B
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL READWHIL
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JNZ CC263
+        POP B
+        RET
+;  modstk((ptr[WQSP]), NO);          /* clean up stk ptr */
+CC263:
+        POP H
+        PUSH H
+        CALL CCGINT
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL MODSTK
+        POP B
+        POP B
+;  jump(ptr[WQEXIT]);                /* jump to exit label */
+        POP H
+        PUSH H
+        LXI D,4
+        CALL CCDDGI
+        PUSH H
+        CALL JUMP
+        POP B
+;  }
+        POP B
+        RET
+;
+;docont()  {
+DOCONT:: 
+;  int *ptr;
+;  if ((ptr=readwhile())==0) return; /* no loops open */
+        PUSH B
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL READWHIL
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JNZ CC265
+        POP B
+        RET
+;  modstk((ptr[WQSP]), NO);          /* clean up stk ptr */
+CC265:
+        POP H
+        PUSH H
+        CALL CCGINT
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL MODSTK
+        POP B
+        POP B
+;  jump(ptr[WQLOOP]);                /* jump to loop label */
+        POP H
+        PUSH H
+        LXI D,2
+        CALL CCDDGI
+        PUSH H
+        CALL JUMP
+        POP B
+;  }
+        POP B
+        RET
+;
+;doasm()  {
+DOASM::  
+;  ccode=0;                /* mark mode as "asm" */
+        LXI H,0
+        SHLD CCODE
+;  while (1) {
+CC267:
+;    inline();
+        CALL INLINE
+;    if (match("#endasm")) break;
+        LXI H,CC266+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC269
+        JMP CC268
+;    if(eof)break;
+CC269:
+        LHLD EOF
+        MOV A,H
+        ORA L
+        JZ CC270
+        JMP CC268
+;    lout(line, output);
+CC270:
+        LHLD LINE
+        PUSH H
+        LHLD OUTPUT
+        PUSH H
+        CALL LOUT
+        POP B
+        POP B
+;    }
+        JMP CC267
+CC268:
+;  kill();
+        CALL KILL
+;  ccode=1;
+        LXI H,1
+        SHLD CCODE
+;  }
+        RET
+CC266:  DB 35,101,110,100,97,115,109,0
+;
+        END
+

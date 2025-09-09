@@ -1,0 +1,421 @@
+     PUBLIC ACCESS MESSAGE (and file transfer) SYSTEMS
+             (P.A.M.S.) last updated 10/22/81
+
+     Compliments of Peoples' Message System, Santee CA.
+          ( 7 1 4 )  4 4 3 - 8 7 5 4 [new number]
+
+        *24 denotes 24-hour operation
+         #1  denotes original system of that type
+        -rb  denotes call, let ring once and call back
+        -so  sexually oriented messages
+          !  new system or new number to existing system
+          $  Supports VADIC 1200 baud operation
+          &  Supports 212A 1200 baud operation
+          %  Supports BAUDOT operation
+
+      Please send updates/corrections to P M S Santee
+
+
+ABBS A.C.E.S., Ft. Lauderdale, FL.............(305) 524 2237
+ABBS ABACUS II, Toledo, OH....................(419) 865 1594
+ABBS ACCESS I.I.S., Phoenix, AZ...............(602) 996 9709*24
+ABBS ACG-NJ, NJ...............................(201) 753 1225
+ABBS ABSS, Dallas, TX.........................(214) 661 2969*24
+ABBS AGS, Atlanta, GA.........................(404) 733 3461*24
+ABBS AIMS, Oak Brook IL.......................(312) 789 0499*24
+ABBS Akron Digital Group, Akron, OH...........(216) 745 7855*24
+ABBS Ames, IA.................................(515) 294 8204
+ABBS Apple Bin, Tacoma, WA....................(206) 937 0444
+ABBS Apple Cider, Las Vegas, NV...............(702) 454 3417
+ABBS Apple Crate II, Seattle, WA..............(206) 244 5438
+ABBS Apple Group N.J., Piscataway, NJ.........(201) 968 1074
+ABBS Apple-Med, Iowa City, IA.................(319) 353 6528
+ABBS Austin, TX...............................(512) 261 6860
+ABBS Baileys Computer Store, Augusta, GA......(404) 790 8614
+ABBS Baton Rouge, LA..........................(504) 291 1360
+ABBS Boston, MA...............................(617) 354 4682
+ABBS Bowling Green, OH........................(419) 352 4477
+ABBS Byte Shop, Ft. Lauderdale, FL............(305) 486 2983
+ABBS Byte Shop, Miami, FL.....................(305) 261 3639
+ABBS ACCESS Cactus Net, Scottsdale, AZ........(602) 998 9411*24
+ABBS CCNJ, Pompton Plains, NJ.................(201) 835 7228
+ABBS Century Next Computers, St. Louis, MO....(314) 442 6502
+ABBS Cleveland, OH............................(216) 779 1338
+ABBS CODE, Glen Ellyn IL.....................!(312) 537 7063*24
+ABBS Compumart, Ottawa, Ontario, Canada.......(613) 725 2243
+ABBS Computerland, Fremont, CA................(415) 794 9314
+ABBS Computer Center, Birmingham, AL..........(205) 945 1489
+ABBS Computer Corner, Amarillo, TX............(806) 355 5610
+ABBS Computer Crossroads, Columbia, MD........(301) 730 0922
+ABBS Computer Forum, Sante Fe Springs, CA.....(213) 921 2111
+ABBS Computer Forum, Sante Fe Springs, CA.....(714) 739 0711
+ABBS Computer Lab, Memphis, TN................(901) 761 4743
+ABBS Computer Room, Kalamazoo, MI.............(616) 382 0101
+ABBS Computer Store, Toledo, OH...............(419) 531 3845
+ABBS Computerland, Jackson, MS................(601) 362 8755
+ABBS Craig, Los Angeles, CA...................(213) 345 3670
+ABBS CTI, New York, NY........................(212) 799 9577
+ABBS Dallas Info Board........................(214) 248 4539
+ABBS Denver, CO...............................(303) 759 2625
+ABBS Desert Technology, Phoenix, AZ...........(602) 957 4428*24
+ABBS Detroit, MI..............................(313) 477 4471
+ABBS Downers Grove, IL........................(312) 964 7768
+ABBS El Paso, TX..............................(915) 533 6255
+ABBS El Paso, TX..............................(915) 533 7039
+ABBS Electro-Mart, Spokane, WA................(509) 534 2419*24
+ABBS Encino, CA...............................(213) 345 3670
+ABBS Fort Walton Beach, Destin, FL............(904) 243 1257
+ABBS Gamemaster, Chicago, IL..................(312) 475 4884*24
+ABBS Hayward, CA..............................(415) 881 5662
+ABBS Illini Microcomputer, Naperville, IL.....(312) 420 7995
+ABBS KA Computer Store, Dallas, TX............(214) 634 2668
+ABBS Ketchikan, AK............................(907) 225 6789
+ABBS Lafayette, CA............................(415) 284 9524
+ABBS Laguna Niguel, CA........................(714) 495 6458
+ABBS Lawton, Ok...............................(405) 353 2556
+ABBS Lincoln, NE..............................(402) 423 8086*24
+ABBS Long Beach, CA..........................!(213) 422 2704
+ABBS Louisville, KY...........................(502) 426 2975*24
+ABBS McGraw-Hill, New York, NY................(212) 997 2186
+ABBS Medical, Grand Forks, ND.................(701) 777 4380
+ABBS Memphis, TN..............................(901) 725 5691
+ABBS Michigan Apple-Fone, Southfield, MI......(313) 357 1422
+ABBS NJAUC, Marlton, NJ.......................(609) 983 5970
+ABBS OKC, Oklahoma City, Ok...................(405) 528 8009
+ABBS Oak Brook Computer, Oak Brook, IL........(312) 941 9009
+ABBS PCnet, San Francisco, CA.................(415) 863 4703*24
+ABBS Pacific Palasades, Los Angeles, CA.......(213) 459 6400
+ABBS Peoria, IL...............................(309) 692 6502
+ABBS Phoenix, AZ..............................(602) 898 0891
+ABBS Pirates Cove, Long Island, NY............(516) 698 4008
+ABBS Portland, OR.............................(503) 641 8555*24
+ABBS Rainbow Computing, Los Angeles, CA.......(213) 349 5728
+ABBS Rogers Park, Chicago, IL.................(312) 973 2227
+ABBS Saddlebrook, NJ..........................(201) 843 4563
+ABBS San Antonio, TX..........................(512) 737 0214*24
+ABBS Seattle, WA..............................(206) 248 2600
+ABBS Software Sorcery, Washington, DC.........(703) 255 2192
+ABBS South of Market, San Francisco, CA.......(415) 821 1714-so
+ABBS Spokane, WA..............................(509) 456 8900
+ABBS St. Louis, MO............................(314) 838 7784*24
+ABBS Stones, Los Angeles, CA..................(213) 859 0894
+ABBS The Moon, Dallas, TX.....................(214) 931 3437*24
+ABBS Turnersville, NJ.........................(609) 228 1149
+ABBS Vancouver, B.C...........................(604) 437 7001
+ABBS Vermont, Essex Junction, VT..............(802) 879 4981*24
+ABBS VIBBS, Nashua, NH.......................!(603) 888 6648
+ABBS West Palm Beach, FL......................(305) 689 3234
+ABBS Yakima, WA...............................(509) 575 7704
+ABBS Youngs Elect Svc., College Station, TX...(713) 693 3462*24
+ABBS #X, Atlanta, GA..........................(404) 256 1549
+
+ABC Vancouver, B.C...........................!(604) 682 6551
+
+Alpha Tampa, FL...............................(813) 251 4095*24
+
+ARBB Seattle, WA..............................(206) 546 6239
+
+Aviators Bulletin Board, Sacramento, CA.......(916) 393 4459
+
+Baton Rouge Data System, Baton Rouge, LA......(504) 926 0181
+Baton Rouge Download, Baton Rouge, LA.........(504) 928 0301*24
+
+BBS B.R., Los Angeles, CA....................!(213) 394 5950*24
+BBS Pensacola, FL.............................(904) 477 8783
+BBS Electronic Exchange, Chicago, IL..........(312) 541 6470*24
+BBS Living Videotext, Menlo Park, CA..........(415) 327 8876*24
+
+BBS-80 Cincinnati, OH.........................(513) 244 2983
+BBS-80 DALTRUG, Dallas, TX....................(214) 235 8784*24
+
+BSBB Tampa, FL................................(813) 885 6187*24
+
+BULLET-80 Akron, OH...........................(216) 645 0827*24
+BULLET-80 Clarks Summit, PA...................(717) 586 2112
+BULLET-80 Danbury, CT.........................(203) 744 4644
+BULLET-80 Hawkins, TX.........................(214) 769 3036
+BULLET-80 Riverside, CA.......................(714) 359 3189
+BULLET-80 Springfield, IL.....................(217) 529 1113
+
+Bronx BBS, NY.................................(212) 933 9459
+
+C-HUG Bulletin Board, Fairfax, VA.............(703) 360 3812*24
+
+Capital City BBS, Albany, NY.................!(518) 477 8917*24
+
+CBBS AMRAD, Washington, DC....................(703) 734 1387*24
+CBBS Atlanta, GA..............................(404) 394 4220*24
+CBBS Baton Rouge, LA..........................(504) 273 3116*24
+CBBS Bloomington, IN..........................(812) 334 2522
+CBBS Boston, MA...............................(617) 646 3610*24
+CBBS Cedar Rapids, IA.........................(319) 364 0811
+CBBS Chicago, IL...........................#1 (312) 545 8086*24
+CBBS Corpus Christi, TX.......................(512) 855 1512
+CBBS Detroit, MI..............................(313) 288 0335*24
+CBBS Lambda, Berkeley, CA.....................(415) 658 2919-so
+CBBS Lawrence General Hospital, Boston, MA....(617) 683 2119
+CBBS LICA LIMBS, Long Island, NY..............(516) 561 6590*24
+CBBS London, England..(European standard)...(044) 1 399 2136
+CBBS Long Island, NY..........................(516) 334 3134*24
+CBBS NW, Portland, OR.........................(503) 646 5510*24
+CBBS PACC, Pittsburgh, PA.....................(412) 822 7176*24
+CBBS Proxima, Berkeley, CA....................(415) 357 1130
+CBBS RAMS, Rochester, NY......................(716) 244 9531
+CBBS Richfield, MN............................(612) 869 5780
+CBBS Sunnyvale, CA............................(408) 737 7543
+CBBS TSG, Tucson, AZ..........................(602) 746 3956*24
+CBBS Vancouver, BC, Canada....................(604) 687 2640*24
+CBBS Waco, TX.................................(817) 776 1375
+
+CMS-80 Fort Lauderdale, FL....................(305) 462 8677
+
+COMM-80 Orange County, Fullerton, CA..........(714) 526 3687
+COMM-80 Queens, NY............................(212) 897 3392*24
+
+Communique-80, Livingston, NJ.................(201) 992 4847-so
+
+Compusystems, Columbia, SC....................(803) 771 0922
+
+Computer Arts Message System, Newhall, CA.....(805) 255 6445
+
+CONNECTION-80 Fremont, CA.....................(415) 651 4147*24
+CONNECTION-80 Centereach, NY..................(516) 588 5836
+CONNECTION-80 Denver, CO.....................!(303) 690 4566*24
+CONNECTION-80 Great Neck, NY..................(516) 482 8491*24
+CONNECTION-80 Lansing, MI.....................(517) 339 3367
+CONNECTION-80 Manhattan, NY...................(212) 991 1664
+CONNECTION-80 Orlando, FL.....................(305) 644 8327*24
+CONNECTION-80 PAUG, Portland, OR..............(503) 928 0301*24
+CONNECTION-80 Peterborough, NH................(603) 924 7920
+CONNECTION-80 Woodhaven, NY...................(212) 441 3755*24
+
+CONFERENCE-TREE #1, Berkeley, CA..............(415) 526 7733
+CONFERENCE-TREE #2, San Francisco, CA.........(415) 928 0641
+CONFERENCE-TREE #3, Hayward, CA...............(415) 538 3580
+CONFERENCE-TREE Santa Monica, CA..............(213) 394 1505
+
+CoxCo, Arvada, CO.............................(303) 423 5001*24
+
+EXPERIMENTAL-80 Kansas City, MO...............(913) 676 3613
+
+FORUM-80 Albany, NY...........................(518) 785 8478
+FORUM-80 Augusta, GA..........................(803) 279 5392
+FORUM-80 Boston, MA...........................(617) 431 1699
+FORUM-80 Charleston, SC.......................(803) 552 1612*24
+FORUM-80 Cleveland, OH.......................&(216) 486 4176
+FORUM-80 #1, Denver, CO.......................(303) 341 0636*24
+FORUM-80 #2, Denver, CO.......................(303) 399 8858
+FORUM-80 Family Historians, Fairfax, VA.......(703) 978 7561
+FORUM-80 Ft. Lauderdale, FL...................(305) 772 4444*24
+FORUM-80 Hull, England...................(011) 44 482 859169
+FORUM-80 Kansas City, MO..................#1 &(816) 861 7040
+FORUM-80 Kansas City, MO.....................&(816) 931 9316
+FORUM-80 Las Vegas, NV........................(702) 362 3609*24
+FORUM-80 Medical, Memphis, TN.................(901) 276 8196*24
+FORUM-80 Monmouth, Brielle, NJ................(201) 528 6623*24
+FORUM-80 Montgomery, AL.......................(205) 272 5069
+FORUM-80 Mt. Clemens, MI......................(313) 465 9531
+FORUM-80 Nashua, NH...........................(603) 882 5041
+FORUM-80 Orange County, Anaheim, CA...........(714) 952 2110
+FORUM-80 Pontiac, MI..........................(313) 335 8456
+FORUM-80 Prince William County, VA............(703) 670 5881*24
+FORUM-80 San Antonio, TX......................(512) 340 6720
+FORUM-80 Seattle, WA..........................(206) 723 3282
+FORUM-80 Shreveport, LA.......................(318) 631 7107*24
+FORUM-80 Tampa, FL............................(813) 935 8428*24
+FORUM-80 Tulsa, OK............................(918) 747 1310*24
+FORUM-80 Union, NJ...........................&(201) 688 7117
+FORUM-80 Westford, MA.........................(617) 692 3973
+FORUM-80 Wichita, KA..........................(316) 682 2113*24
+FORUM-80 Wichita Falls, TX....................(817) 855 3916
+
+HARD-80 Bethel, CT............................(203) 743 9281*24
+
+HEX, Silver Spring, MD........................(301) 593 7033
+
+HMS Horny Message System, Oakland, CA........!(415) 534 1090-so
+
+JCTS Redmond, WA..............................(206) 883 0403*24
+
+Kinky Kumputer, San Francisco, CA.............(415) 647 9524-so
+
+L.A. Interchange, Los Angeles, CA.............(213) 631 3186*24
+
+Lehigh Press BB, PA........................#1 (215) 435 3388
+
+MARS/RP Rogers Park, IL.......................(312) 743 8176*24
+
+MSG-80 CAMS, Chicago, IL......................(312) 927 1020
+MSG-80 Everett, WA............................(206) 334 7394
+MSG-80 Message-81, Chicago, IL................(312) 622 4442*24
+
+Market 80, Kansas City, MO....................(816) 931 9316
+
+MICRO-COM Computer City, West Hartford, CT....(203) 673 9959*24
+
+NET-WORKS AIS, Chicago, IL....................(312) 338 8827*24
+NET-WORKS Apple Jacks, Fontana, CA............(714) 823 1451
+NET-WORKS Apple Shack, Dallas, TX.............(214) 644 4781*24
+NET-WORKS BAMS&PC, St. Louis, MO..............(314) 227 8495
+NET-WORKS Big Apple, Miami, FL................(305) 948 8000
+NET-WORKS C.A.M.S., Decatur, IL...............(217) 429 5541
+NET-WORKS CLAH, Arlington Heights, IL.........(312) 255 6489
+NET-WORKS Coin Games, Los Angeles, CA.........(213) 336 5535
+NET-WORKS Computer Emporium, Des Moines, IA...(515) 279 8863
+NET-WORKS Computer Emporium, San Jose, CA.....(408) 227 5416
+NET-WORKS Computer Station, St. Louis, MO.....(314) 432 7120
+NET-WORKS Computer World, Los Angeles, CA....!(213) 859 0894*24
+NET-WORKS Crescent City, Baton Rouge, LA......(504) 454 6688
+NET-WORKS Dallas, TX..........................(214) 361 1386*24
+NET-WORKS Dayton, OH..........................(513) 223 3672
+NET-WORKS Granite City, IL...................!(618) 877 2904
+NET-WORKS Lab-Works, Nina, WI.................(414) 727 3637
+NET-WORKS Magnetic Fantasies, Los Angeles, CA.(213) 465 1431
+NET-WORKS Micro-Sys, Santa Rosa, CA...........(707) 528 3462
+NET-WORKS Portsmouth, NH......................(603) 436 3461
+NET-WORKS Sparklin' City, Corpus Christi, TX.!(512) 882 6569
+NET-WORKS St. Louis, MO.......................(314) 781 1308
+NET-WORKS Winesap, Dallas, TX.................(214) 824 7455
+NET-WORKS Zim Computers, Minneapolis, MN......(612) 561 6311
+
+New England Comp. Soc., Maynard, MA...........(617) 897 0346
+
+New Jersey TELECOM.........................#1 (201) 635 0705*24
+
+Novation CO., Los Angeles, CA....<pass=CAT>...(213) 881 6880
+
+Omega, Tampa, FL..............................(813) 257 2705*24
+
+Orange County Data Exchange, Garden Grove, CA.(714) 537 7913
+
+Orange County Technical Exchange..............(714) 990 0608
+
+PASBBS Torrance, CA...........................(213) 516 7089*24
+
+PBBS Co-operative Comp Svc, Palatine, IL......(312) 359 9450*24
+
+Pet BBS, Milwaukee, WI........................(414) 282 8118
+
+PHOTO-80, Haledon, NJ.........................(201) 790 6795
+
+PMS - **IF**, Anaheim, CA.....................(714) 772 8868*24
+PMS - Anchorage, AK..........................!(907) 344 8558
+PMS - Apple Bits, Kansas City, MO.............(913) 341 3502*24
+PMS - Apple Guild, Weymouth, MA...............(617) 767 1303*24
+PMS - Campbell, CA............................    < soon >
+PMS - Chicago, IL.............................(312) 373 8057*24
+PMS - Cincinnati, OH..........................(513) 671 2753
+PMS - Ellicott City, MD.......................(301) 465 3176
+PMS - Escondido, CA...........................(714) 746 0667
+PMS - Gulfcoast, Freeport, TX.................(713) 233 7943*24
+PMS - Indianapolis, IN........................(317) 862 6191*24
+PMS - Lafayette, CA...........................    < soon >
+PMS - Los Angeles, CA........................!(213) 334 7614*24
+PMS - McGraw-Hill Books, New York, NY.........(212) 997 2488
+PMS - Minneapolis, MN.........................(612) 929 6699*24
+PMS - Mission Valley, San Diego, CA...........(714) 295 8280*24
+PMS - NIAUG, Lake Forest, IL..................(312) 295 6926*24
+PMS - OAC, Woodland Hills, CA................!(213) 346 1849*24
+PMS - Palo Alto, CA...........................(415) 493 7691*24
+PMS - Portola Valley, CA......................(415) 851 3453*24
+PMS - RAUG, Akron, OH........................!(216) 867 7463*24
+PMS - Rutgers University, Boston, MA..........    < soon >
+PMS - San Diego, CA...........................(714) 582 9557*24
+PMS - San Jose, CA............................    < soon >
+PMS - Santa Clara, CA.........................    < soon >
+PMS - Santee, CA...........................#1 (714) 443 8754*24
+PMS - Shrewsbury, NJ..........................(201) 747 6768
+PMS - Software Unltd, Bellevue, WA...........!(206) 641 7340
+PMS - Tampa, FL...............................(813) 971 9515
+
+PSBBS Baltimore, MD...........................(301) 994 0399*24
+PSBBS Gaithersburg, MD........................(301) 840 8588*24
+PSBBS Washington, DC..........................(202) 337 4694*24
+
+Peachtree Apple Message System, Atlanta, GA...(404) 237 6846
+
+Personal Message System-80, Deerfield Bch, FL.(305) 427 6300*24
+
+Pet Bulletin Board, Ypsilanti, MI.............(313) 484 0732*24
+
+Potomac Micro Magic Inc., Falls Church, VA....(703) 379 0303*24
+
+Powercom 2.2, Largo, FL.......................(813) 577 3095*24
+
+RCP/M AABB New York, NY.......................(212) 787 5520
+RCP/M CBBS CCCC Lake Forest, IL...............(312) 234 9257
+RCP/M CBBS CP/M Net Simi Valley, CA...........(805) 527 9321
+RCP/M CBBS Columbus, OH.......................(614) 268 2227*24
+RCP/M CBBS HUG, Chicago, IL...................(312) 671 4992*24
+RCP/M CBBS Pasadena, CA.......................(213) 799 1632*24
+RCP/M CBBS Towson, MD.........................(301) 337 8825*24
+RCP/M CBBS Vancouver, BC, Canada..............(604) 687 2640*24
+RCP/M Detroit, MI.............................(313) 584 1044-rb
+RCP/M Logan Square, Chicago, IL...............(312) 252 2136
+RCP/M MAUDE Milwaukee, WI.....................(414) 241 8364*24
+RCP/M MCBBS Detroit, MI.....<pass=Sorcerer>...(313) 535 9186-rb
+RCP/M MCBBS Keith Petersen, Royal Oak, MI.....(313) 588 7054-rb
+RCP/M MCBBS Superbrain, Lexington, MA.........(617) 862 0781
+RCP/M MCBBS TCBBS Dearborn, MI................(313) 846 6127*24
+RCP/M Mississauga, Ontario, Canada............(416) 826 5394*24
+RCP/M Palatine, IL............................(312) 359 2553-rb
+RCP/M RAPM Chicago, IL........................(312) 384 4762*24
+RCP/M RBBS Allentown, PA......................(215) 398 3937*24
+RCP/M RBBS Baltimore, MD......................(301) 655 0393-rb
+RCP/M RBBS Brewster, NY.......................(914) 279 5693
+RCP/M RBBS Cranford, NJ.......................(201) 272 1874
+RCP/M RBBS Fort Mill, SC......................(803) 547 6576*24
+RCP/M RBBS Garden Grove, CA...................(714) 534 1547
+RCP/M RBBS GFRN Data Exch., Palos Verdes, CA.!(213) 541 2503*24
+RCP/M RBBS Huntsville, AL.....................(205) 895 6749-rb
+RCP/M RBBS Hyde Park, IL......................(312) 955 4493
+RCP/M RBBS Larkspur, CA.......................(415) 461 7726*24
+RCP/M RBBS Long Island, NY....................(516) 698 8619-rb
+RCP/M RBBS MUG, Mission, KS..................!(913) 362 9583*24
+RCP/M RBBS New York, NY.......................(516) 791 1767
+RCP/M RBBS Protieus, Bel Air, MD..............(301) 879 7841*24
+RCP/M RBBS Rochester, NY......................(716) 223 1100*24
+RCP/M RBBS San Diego, CA.....................!(714) 271 5615
+RCP/M RBBS Southfield, MI.....................(313) 559 5326*24
+RCP/M RBBS Westland, MI.......................(313) 729 1905-rb
+RCP/M RBBS Yelm, WA...........................(206) 458 3086-rb
+RCP/M Rick Martinek, Milwaukee, WI............(414) 774 2683-rb
+RCP/M SJBBS Bearsville, NY....................(914) 679 6559-rb
+RCP/M SJBBS Johnson City, NY..................(607) 797 6416
+RCP/M TRS-80 Chicago, IL......................(312) 949 6189
+RCP/M Terry O'Brien, Vancouver, BC, Canada....(604) 584 2543
+
+Remote Northstar Atlanta, GA...............#1 (404) 939 1520*24
+Remote Northstar NASA, Greenbelt, MD..........(301) 344 9156
+Remote Northstar Santa Barbara, CA............(805) 682 7876
+Remote Northstar Santa Barbara, CA............(805) 964 4115
+Remote Northstar Virginia Beach, VA...........(804) 340 5246
+
+SCANBOARD-80, Atlanta, GA.....................(404) 457 8384
+
+SEACOMM-80....................................(206) 763 8879
+
+SISTER Staten Island, NY......................(212) 442 3874*24
+
+SLAMS St. Louis, MO...........................(314) 839 4307
+
+SNAC Bill-Baud................................(603) 880 8746*24
+
+ST80-CC EAPBB & General Store, Tampa, FL......(813) 986 3128
+ST80-CC Lance Micklus, Inc., Burlington, VT.#1(802) 862 7023*24
+ST80-PBB, Monroe Camera Shop, Monroe, NY......(914) 782 7605
+
+TCUG BBS, Washington, DC......................(703) 960 2056*24
+                                              (202) 960 2056*24
+
+TFC New York, NY..............................(212) 799 9177*24
+
+TELEMESSAGE-80, Atlanta, GA...................(404) 962 0616
+
+Triple Cities Bulletin Board, Endicott, NY....(607) 754 5571*24
+
+Westside Download, Detroit, MI................(313) 533 0254
+
+XBBS Hamilton, OH.............................(513) 863 7681*24
+
+ZBBS Minneapolis, MN..........................(612) 426 9028

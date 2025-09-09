@@ -1,0 +1,490 @@
+;****************************************************************************
+; FILE DOWNLOAD UTILITY FOR CIS A PROTOCOL.
+; WRITTEN 3/10/82 BY BOB RICHARDSON
+; COPYRIGHT (C) 1982 PERFORMANCE BUSINESS MACHINES
+; Made available by permission - further distribution must include
+; the original copyright notice and author's name
+; INVOKED BY "DOW FNAME.FTP" AND USES DEFAULT FCB AND COMMAND LINE 
+;         
+;  THIS PROGRAM IS DEPENDENT ON BIOS TO PROVIDE PROPER SUPPORT FOR THE   
+;  MODEM AS A CONSOLE, READER AND PUNCH. THE IOBYTE IS NOT USED.  BYE
+;  WILL PROBABLY WORK, OR THE SOURCE MAY BE MODIFIED TO ACCESS THE SERIAL
+;  STUFF DIRECTLY AND ADD THE CODE TO HANDLE THE UART OR SIO OR WHATEVER
+;            
+;            3/24/82 -- FIRST SOURCE RELEASE
+.z80
+;    equates
+soh	equ	01h	; start of header
+etx	equ	03h	; end of text 
+eot	equ	04h	; end of transmission
+enq	equ	05h	; enq char - not used
+si	equ	0fh	; shift in - starts protocol on terminal
+so	equ	0eh	; shift out - ends protocol
+;
+knak	equ	15h	; nak
+dle	equ	10h	; data link escape - used to mask chars for transparency
+esc	equ	1bh	; escape
+eof	equ	1ah	; ctl-z
+ctlz	equ	1ah	; also
+cr	equ	0dh	; carriage return
+lf	equ	0ah	; line feed
+tof	equ	0ch	; top of form
+;
+cldboot	equ	00h	; bios coldboot vector
+iobyte	equ	0003h	; addr of iobyte
+deffcb	equ	05ch	; addr of default fcb
+command	equ	080h	; addr of command line	
+bdos	equ	05h	; addr of bdos jmp 
+; BDOS FUNCTIONS
+pstrg	equ	09h	; print string function
+rdcbuf	equ	0ah	; read console buffer
+fn$opn	equ	0fh	; open file function
+fn$rds	equ	014h	; read sequential disk
+fn$std  equ	01ah	; set dma addr
+fn$cls	equ	010h	; close file
+;
+;
+; BIOS OFFSETS FOR VARIOUS CALLS
+const	equ	03h	; constat call
+conin	equ	06h	; conin
+conout	equ	09h	; character out to console
+list	equ	0ch	; character to line printer
+punch	equ	0fh	; char to punch device
+rdr	equ	12h	; get char from reader device
+;
+;
+; Version Info
+vers	equ	'1'	; ascii version
+rev	equ	'2'	; ascii rev level
+;
+; Historical information
+;        3-21-1982      First complete version assembled and released 
+;                       by the author, Bob Richardson of Micropro Corp.
+;                       any and all source copys must retain this notice and
+;			the copyright notice - this file made available by
+;			permission. 
+;
+;****************************************************************************
+; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;   CODE BEGINS:
+;   MAIN DRIVER LOOP-
+downld:
+	ld	sp,downld	; set up local stack for Charlie Strom
+	call	announce	; give copyright notice and rev,vers info	
+	call 	procol		; turn on protocol, open file, and start
+dowrty:
+	call	sndhdr		; then send or resend protocol header
+	call	waitack		; and wait for ack response
+	jp	c,dowrty	; retry if nak response
+	jp	nz,comfail	; error so dump job
+downlp:
+	call	getrec		; get disk record
+	jp	nz,fin		; eof - send eot record
+downl1:
+	call	putrec		; send rec
+	call	waitack		; and wait for ack
+	jp	c,downl1	; try resend if nak
+	jp	nz,comfail	; send com failure and abort
+	jp	downlp		; loop till eof
+;
+fin:
+	call	puteot		; send eot message
+	call	waitack		; and wait for ack
+	jp	c,fin		; resend if nak
+	jp	nz,comfail	; abort if knak
+	call	complete	; turn off protocol and send all done message 
+	jp 	cldboot 	; terminate
+;****************************************************************************
+; end of driver - start of worker routines
+;
+;
+biosvct:
+	ld	hl,(cldboot+1)	;get start of bios table
+	add	hl,de		; get addr for branch
+	jp	(hl)		; return handled to inline location
+;
+;************************************************************************
+; Get rev and version and copyright notice to operator
+announce:
+	ld	de,cpyrite		; copyright notice
+	call	prnmes			; to console
+	ret				; to caller
+;
+cpyrite:
+	defb	cr,lf,'Download Vers. ',vers,'.',rev,cr,lf
+	defb	' Copyright (C) 1982  PBM Division MicroPro International Corporation ','$'
+;
+;
+;
+;****************************************************************************;
+; test for errors and then kick it off
+;
+procol:
+	ld	de,deffcb	; get default fcb
+	ld	c,fn$opn	; open file function
+	call	bdos		; see if we can open file
+	cp	04h		; test for successful open
+	jp	nc,nofil	; send no file message if not found
+	ld	a,0		; get zero
+	ld	(deffcb+32),a	; to current record
+	ld	(masking),a	; and start masking ctl chars in msg text
+	call	rmtnm		; get name for remote terminal
+	ld	a,(conbuff+1)	; start of data in buffer
+	ld	c,a		; is count for move
+	ld	b,0		; with high order=0
+	ld	hl,conbuff+2	; start of actual name
+	call	noblnk		; bypass all blanks
+	jp	z,comfail	; if this passes, we are in TROUBLE - processor
+				; or operator are down!
+	ld	de,filespec	; addr in esc a message
+	push	bc		; save number of bytes(non space)
+	ldir			; move filespec to message
+	pop	hl		; restore operator count
+	ld	a,cr		; terminate the string with cr
+	ld	(de),a		; in esc a message
+	inc	hl		; correct count to show cr included
+	ld	(tmpsav),hl	; and save for header xmit
+	ret			; and return to caller
+;
+;
+;
+tmpsav:
+	defw	00h		; temporary save for count of chars in name
+;
+;*************************************************************************
+; this routine actually turns the protocol on and sends header to terminal
+sndhdr:  
+	ld	a,si		; get shift in char
+	call 	punout		; send it
+	ld	a,esc		; send esc
+	call	punout		; charge
+	ld	a,'A'		; esc a for message
+	call	punout		; mush ye huskies mush
+	ld	hl,(tmpsav)	; get the restored count from save area
+	push	hl		; compatibility - yes, I know - could be less
+	ld	hl,escames	; get message balance addr
+	pop	bc		; restore count from command line
+	ld	a,c		; get count in accumulator
+	add	a,escalen	; and add in normal length
+	ld	b,a		; get in byte counter
+	call	prmesout	; send message as normal
+	xor	a		; set z flag
+	ret			; and return
+;
+noblnk:
+	ld	a,(hl)		; get char
+	cp	20h		; test blank
+	ret	nz		; non blank
+	dec	c		; reduce count
+	ret	z		; return with error
+	inc	hl		; increment buffer pointer
+	jp	noblnk
+
+;
+nofil:
+	ld	de,noflmes	; file not found message
+	call	prnmes		; to console
+	jp	cldboot		; and terminate abnormally
+;
+noflmes:
+	defb	cr,lf,'FILE NOT AVAILABLE ON HOST- CHECK DIRECTORY$'
+;
+;***********************************************************************
+; control record for a-protocol
+escames:
+	defb	'D'		; Download
+	defb	'B'		; Binary transfer is always used! why save time
+escalen equ	$-escames	; length for send routine
+filespec:
+	defs	16h 		; name of file to download
+;
+;***************************************************************************
+;get name for remote computer
+;
+rmtnm:
+	ld	de,remquery		; ask the terminal what it wants to call it
+	call	prnmes			; to the operating system such as it is
+	ld	de,conbuff		; get a response
+	call	mesinp			; and then
+	ld	hl,conbuff+2		; convert to insure upper case
+	ld	a,(conbuff+1)		; get char count xferred
+	cp	0			; insure some characters
+	jp	z,naminv		; else name is invalid
+	ld	c,a			; blank test counter
+	call	noblnk			; insure some non blank stuff
+	jp	z,naminv		; else name is invalid
+	ld	b,a			; in byte counter
+; roll lower to upper case if necessary
+rmtnm1:
+	ld	a,(hl)			; pick up char	
+	cp	061h			; test for lower case
+	jr	c,rmtntl		; not lower if carry
+	cp	07bh			; still looking if less than z
+	jr	nc,rmtntl		; so go on about business
+	and	05fh			; else roll
+	ld	(hl),a			; and save
+rmtntl:
+	inc	hl			; bump character pointer
+	djnz	rmtnm1			; and get next character
+	ret				; and return to caller
+; and then open and setup for further code
+;
+naminv:
+	ld	hl,command+1		; use the command line input
+	ld	de,conbuff+2		; for the remote name
+	ld	a,(command)		; length
+	ld	c,a			; to counter with
+	ld	(conbuff+1),a		; count in command line
+	ld	b,0			; zero high order
+	ldir				; move characters
+	ret				; to caller
+;
+
+conbuff:
+	defb	010h			; sixteen bytes max I'll allow
+	defb	00h			; initial count
+	defs	16			; and blank buffer
+;
+remquery:
+	defb	cr,lf,' I need a file name for your computer',cr,lf,'->','$'
+;
+
+;**************************************************************************
+; send a record in Cis protocol format
+; <soh> <rn>    text    <etx><chksum>
+;
+prmesout:
+	push	bc		; save byte count
+	push	hl		; save buffer pointer	
+	xor	a		; get zero
+	ld	(chksum),a	; and init checksum
+	ld	a,soh		; get start of header char
+	call	punout		; and send it
+	ld	a,(currec)	; get current record
+	call	sumupd		; and update checksum
+	call	punout		; and send it
+	pop	hl		; restore buffer addr
+	pop	bc		; restore count to b
+;
+pmeslp:
+	push	hl		; save pointer
+	push	bc		; and char count
+	ld	a,(hl)		; get char
+	call	sumupd		; update checksum
+	call	tstmsk		; test if masking necessary
+	call	punout		; send char
+	pop	bc		; restore count
+	pop	hl		; get buffer pointer
+	inc	hl		; increment it
+	djnz	pmeslp		; and loop until all done
+;
+	ld	a,etx		; get etx char
+	call	punout		; send it
+	ld	a,(chksum)	; get check sum
+	cp	020h		; test for < ascii space
+	jp	nc,pmesl1	; if = or greater, do not mask
+	or	040h		; else add to supply transparency
+	push	af		; save checksum
+	ld	a,dle		; send dle
+	call	punout		; to remote
+	pop	af		; restore char
+pmesl1: 
+	call	punout		; send it
+	ret			; and return
+;*************************************************************************
+; Test here for masking of control chars, handle if necessary
+; masking is selective, and in any case EOT is not masked 
+tstmsk:
+	push	af		; save char
+	ld	a,(masking)	; get switch value
+	cp	00h		; test for on status
+	jp	nz,tstmsr	; if off return immediate
+	pop	af		; restore original char
+	push	af
+	cp	05h		; test if one of the offending chars
+;				  NUL SOH STX ETX or EOT
+	jp	c,tstms1	; mask if so
+	cp	dle		; or if equal the dle
+	jp	z,tstms1	; go masked
+	cp	knak		; or if = to 
+	jp	z,tstms1	; the fatal nak mask it
+; common return
+tstmsr:
+	pop	af
+	ret			; common return if no masking necessary
+;
+tstms1:
+	ld	a,dle		; send dle char first
+	call	punout		; and send it
+	pop	af		; followed by char+40
+	or	040h		; to insure transparecy
+	ret	 
+;
+masking:
+	defb	00h		; flag for control char masking
+;
+;******************************************************************
+; Update the checksum
+;
+sumupd:
+	push	af		; save char
+	ld	e,a		; and leave it in reg
+	ld	a,(chksum)	; get old checksum
+	rlca			; and rotate it
+	add	a,e		; add new byte 
+	adc	a,0		; and possible carry
+	ld	(chksum),a	; and save it
+	pop	af		; restore character
+	ret			; and return		
+;
+;
+;**************************************************************************
+; Read a record from the disk and prepare to send it 
+;
+getrec:
+	ld	de,buffer	; buffer address
+	ld	c,fn$std	; set dma function
+	call	bdos		; set bufferaddr
+	ld	de,deffcb	; get fcb addr
+	ld	c,fn$rds	; read a record  
+	call	bdos		; helps to take this step
+	or	a		; set z flag if not eof
+	ret	
+;****************************************************************************
+; Actually send the record to the terminal
+putrec:
+	ld	hl,buffer	; get buffer address
+	ld	b,128		; get buffer length
+	call	prmesout	; and send record to terminal
+	ret
+;**************************************************************************
+; communications failure!!!
+comfail:
+	ld	a,knak		; turn off protocol mode
+	call	punout		; at terminal end
+	ld	de,failmes	; get comm failure message
+	call	prnmes		; send message
+	jp	cldboot		; and abort
+;
+failmes:
+	defb	CR,LF,' Communications Failure - Download aborted','$'
+
+; *******************************************************************
+; send an eot message
+puteot:
+	ld	a,0ffh		; turn of the switch to insure
+	ld	(masking),a	; that eot is sent unmasked
+;
+	ld	hl,eotmes	; get addr of eot char
+	ld	b,1		; setup
+	call	prmesout	; and send it
+	ret
+;************************************************************************
+; FINISHED - SEND SHIFT OUT TO TURN OFF PROTOCOL MODE AT REMOTE
+complete:
+	ld	a,so		; turn off protocol mode at term
+	call	punout		; now
+	ld	de,dcommes	; get download complete
+	call	prnmes		; send it 
+;
+	ret
+dcommes:
+	defb	cr,lf,' DOWNLOAD COMPLETE ','$'
+eotmes:
+	defb	eot
+;*************************************************************************
+; WAIT FOR AN ACK OR NAK FROM HOST - RETURN WHEN WE SEE ONE 
+;	THIS ROUTINE ALLOWS EASILY INSERTING TIME OUT CODE 
+;
+waitack:
+	call	pcharin		; get protocol char
+	cp	'.'		; is it ack
+	jp	z,gotack	; then handle
+	cp	'/'		; is it nak?
+	jp	z,rexmit	; then retransmit
+	cp	knak		; check for abort
+	jp	nz,waitack	; else loop
+;
+	ld	a,01		; set nz, clear carry
+	or	a		; and return
+	ret
+; received a nak
+rexmit:
+	scf			; return carry set
+	ret
+; received an ack - record ok - from terminal 
+gotack:
+	call	updrnum		; update current record number
+	scf			; return carry clear
+	ccf
+	xor	a		; set zero flag
+	ret	
+;*********************************************************************
+; SUBROUTINE TO UPDATE THE CURRENT RECORD NUMBER - NUMBER IS ASCII CHAR
+;
+updrnum:
+	ld	a,(currec)	; get current record number
+	inc	a		; and increment
+	cp	'9'+1		; test for overflow
+	jr	c,updrok	; still valid if carry
+	ld	a,'0'		; else change it
+updrok:		
+	ld	(currec),a	; and save result
+	ret			; then return
+;*************************************************************************
+;USER CONFIGURATION AREA - THESE ARE THE IO ROUTINES WHICH ARE USER MODIFIABLE
+; AT LEAST TO SOME EXTENT
+;
+;***********************************************************************
+; This routine uses the bios punch call to access the console port
+;  it could be changed easily to access the port directly
+;  it must send the char in the accumulator to the modem port as 8 bit byte
+punout:
+	push	af		; save char
+	ld	c,a		; get char in proper register
+	ld	de,punch	; get offset
+	call	biosvct		; go doit
+	pop	af		; restore char
+	ret
+;
+;
+;
+;********************************************************************
+; SUBROUTINE TO READ 1 CHAR FROM THE INPUT STREAM IN PROTOCOL MODE
+; CHAR IS NOT CHECKSUMMED, AND PARITY MAY BE STRIPPED - RETURN CHAR  IN  A
+pcharin:
+	ld	de,conin	; get 1 char via bios
+	call	biosvct		; and return
+	ret			; to caller
+;
+;
+
+;
+;**************************************************************************
+; ROUTINE TO PRINT A MESSAGE ON THE CONSOLE DEVICE- uses standard cp/m convention
+;
+prnmes:
+	ld	c,pstrg		; print string function	
+	call	bdos		; to cpm
+	ret			; to caller
+;
+;
+;**************************************************************************
+; ROUTINE TO READ A BUFFER FROM OPERATOR - RETURNS STANDARD CONSOLE BUFFER
+mesinp:
+	ld	c,rdcbuf	; read console buffer function	
+	call	bdos		; call op/sys
+	ret			; to caller
+
+; data areas
+;	
+currec:
+	defb	'1'		; initial record number
+chksum:
+	defb	00h		; initial check sum
+buffer  equ	$
+; record buffer for diskrecord
+;***************************************************************************
+; BEST OF LUCK AND BEST REGARDS  - BOB R.
+	end
+

@@ -1,0 +1,54 @@
+			GENDOC.DOC  11/03/82
+
+	      For North Star CP/M version 1.1.0 only.
+
+	   ***THROW AWAY PREVIOUS VERSIONS OF ALTFORM***
+	   ***AND THE FORMAT & COPY PROGRAMS BELOW.  ***
+	   ***ALWAYS USE THE NEW FORMAT & COPY PROGRAMS*
+	   ***AND RETIRE THE ORIGINALS TO THE ARCHIVES**
+
+See next to last paragraph regarding NEWFORM which adds the two new
+formats to your distribution version of North Star CP/M.
+
+
+
+VERSION 1.1 OF NEWFORM IS FIXED SO THAT WHEN ACCESSING FILES ON
+A QUAD FORMATTED DISKETTE WITH THE ALTERNATE 80 TRACK FORMAT BUT
+WITH THE DISKETTE MOUNTED IN AN OCTAL DRIVE, CORRECT READING IS
+DONE FOR ALL 80 TRACKS.  FIX IS MADE IN GENUSR45 ALSO.  11/3/82
+							RLP
+
+
+GENUSR45 is new version as of 11/3/82.  If anyone picked up a copy
+of this program prior to this date, it is strongly recommended that
+you start over with this new version.  GENSYS41 has been changed,
+and must be used instead of previous versions.
+
+GENUSR45 supports an alternate format for 96 tpi drives when using
+North Star CP/M version 1.1.0.  The format byte is now D2H and gives
+a block size of 2kb instead of the 4kb in the North Star release.
+Both 96 tpi formats are supported.  So your system can read and write
+disks with either format. (As well as other defined formats in the
+N* release)  The block shift factor in the additional format is 4
+instead of the 5 skew factor in the N* format (F2H).
+
+GENUSR45 also now supports an additional format for Quad drives that
+permits using 40 tracks per side.  This has been done in such a way
+as to retain the 35 track per side format and to provide complete
+compatibility between the two formats. You do not have to make all
+of your Quad disks either 35 or 40 track/side but can freely intermix
+them.  The format byte is D0H.
+
+You will need a formatter that will generate the necessary formatting.
+See NEWFRMAT.COM for a formatter that will do this.  Also get a copy
+of NEWCOPY.COM from my system for a copy program that will tolerate
+the D0/D2H format bytes.  You can also put these additional formats into
+the distribution version of your CP/M system with NEWFORM.ASM without
+all of the other features of GENUSR.  It's a good idea to do this
+because your distribution version will not be able to read disks
+that you have written with these alternate formats otherwise.
+
+For general information on GENUSR, see GENDOC30.DOC that accompanies
+GENUSR37 which is for the Lifeboat bios version of CP/M.
+
+					R. L. Plouffe

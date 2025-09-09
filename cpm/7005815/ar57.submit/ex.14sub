@@ -1,0 +1,158 @@
+;
+;   EX 1.4 INSTALLATION .SUB FILE 11-20-82
+;
+;	1. ERASE ANY FILES FROM PREVIOUS .SUB EXECUTIONS
+;
+ERA EX14?.HEX
+Y
+ERA EX14?.SYM
+Y
+ERA EX14?.PRN
+Y
+;
+;	2. USE CPM 2.2 XSUB (not required if using previous version of EX)
+;
+XSUB
+;
+;	3. CREATE EX14.LIB FOR ASSEMBLY OF ORG 0 RELOCATED CODE SEGMENT
+;
+ED EX14.LIB
+#A
+#K
+IBASE EQU FALSE ;SUPPRESS EX14 INITIATOR CODE (ENABLE RELOCATED CODE)
+IREL EQU 0 ;SET RELOCATED CODE SEGMENT TO ORG 0
+E
+;
+;	4. ASSEMBLE ONLY ORG 0 RELOCATED CODE SEGMENT
+;
+MAC EX14
+;
+;	5. RENAME STEP 4 FILES
+;
+REN EX140.HEX=EX14.HEX
+REN EX140.SYM=EX14.SYM
+REN EX140.PRN=EX14.PRN
+;
+;	6. CHANGE EX14.LIB FOR ASSEMBLY OF ORG 100H RELOCATED CODE SEGMENT
+;
+ED EX14.LIB
+#A
+#K
+IBASE EQU FALSE ;SUPPRESS EX14 INITIATOR CODE (ENABLE RELOCATED CODE)
+IREL EQU 0100H ;SET RELOCATED CODE SEGMENT TO ORG 0+100H
+E
+;
+;	7. ASSEMBLE ONLY ORG 100H RELOCATED CODE SEGMENT
+;
+MAC EX14 $$PZ SZ
+;
+;	8. RENAME STEP 7 FILE
+;
+REN EX141.HEX=EX14.HEX
+;
+;	9. CHANGE EX14.LIB FOR ASSEMBLY OF EX INITIATOR CODE ONLY
+;
+ED EX14.LIB
+#A
+#K
+IBASE EQU TRUE ;ENABLE EX14 INITIATOR CODE GENERATION (SUPPRESS RELOCATED CODE)
+IREL EQU 0 ;RESET RELOCATED CODE SEGMENT TO ORG 0
+E
+;
+;	10. ASSEMBLE EX INITIATOR CODE ONLY
+;
+MAC EX14
+;
+;	11. USE SID AND RELS.UTL TO CREATE EX14.COM
+;
+;	    [note: If only REL.UTL is available, comment out the lines
+;		   starting with IEX14.COM below and change the line
+;		   SID RELS.UTL to SID REL.UTL and a SAVE 10 EX14.COM
+;		   must be added at the end of this file.]
+;
+;	    EX14.HEX  contains EX Initiator Code
+;	    EX14.SYM  contains symbols for SID for EX Initiator Code
+;
+;	    EX140.HEX contains EX ORG 0 Relocated Code Segment
+;	    EX140.SYM contains symbols for SID for EX ORG 0 Relocated Code
+;
+;	    EX141.HEX contains EX ORG 100H Relocated Code Segment
+;
+;	    BEGREL  is the symbol for the start of the Relocated Code
+;		    Segment in EX14.COM
+;
+;	    DRVERL  is the symbol for the length of the Relocated Code
+;		    Segment
+;
+;	    DRVL8   is the symbol for the length of the storage required
+;		    for the relocation table bit map to be created by
+;		    RELS.UTL
+;
+;	    RELOCL  is the symbol for the DW in EX14.COM that will contain
+;		    the length of the Relocated Code Segment
+;
+;
+;	A.  SID is invoked and the .SYM files for the ORG 0 Relocated Code
+;	    Segment and the Initiator Code Segment are loaded.
+;
+;	B.  The DW at symbol RELOCL is updated with the value of DRVERL
+;	    from the ORG 0 Relocated Code Segment.
+;
+;	C.  Memory for the two copies of the Relocated Code Segment
+;	    (ORG 0 and ORG 100H) and the relocation table bit map is zeroed.
+;
+;	D.  The ORG 0 Relocated Code Segment is loaded starting at
+;	    location BEGREL.
+;
+;	E.  The ORG 100H Relocated Code Segment is loaded after the
+;	    segment loaded in step C plus the length of the relocation
+;	    table bit map.
+;
+;	F.  RELS.UTL routine SETADRS sets the starting addresses of
+;	    the two Relocated Code Segments for creation of the relocation
+;	    table bit map.
+;
+;	G.  RELS.UTL routine SETLEN sets the length of the Relocated
+;	    Code Segment and builds the relocation table bit map.
+;
+;      *H.  RELS.UTL routine SAVE saves the EX Initiator Code Segment,
+;	    the ORG 0 Relocated Code Segment, and the relocation table
+;	    bit map created by RELS.UTL.
+;
+;	   * [note: not used if only REL.UTL is available]
+;
+;	I.  CP/M is returned to by G0.
+;
+;     **J.  SAVE 10 EX14.COM saves the EX Initiator Code Segment,
+;	    the ORG 0 Relocated Code Segment, and the relocation table
+;	    bit map created by REL.UTL.
+;
+;	  ** [note: used ONLY if REL.UTL is used]
+;
+SID RELS.UTL
+IEX14.HEX EX140.SYM
+R
+I* EX14.SYM
+R
+SW.RELOCL
+.DRVERL
+.
+F.BEGREL .BEGREL+.DRVERL+.DRVL8+.DRVERL 0
+IEX140.HEX
+R.BEGREL
+IEX141.HEX
+R.BEGREL+.DRVERL+.DRVL8-100
+C.SETADRS .BEGREL .BEGREL+.DRVERL+.DRVL8
+C.SETLEN .DRVERL .BEGREL+.DRVERL
+IEX14.COM
+C.SAVE 100 .BEGREL+.DRVERL+.DRVL8
+G0
+;SAVE 10 EX14.COM (only if using REL.UTL)
+;
+;	EX14.COM is now ready for execution.
+;
+.SAVE 100 .BEGREL+.DRVERL+.DRVL8
+G0
+;SAVE 10 EX14.COM (only if using REL.UTL)
+;
+;	EX14.COM is now ready for ex

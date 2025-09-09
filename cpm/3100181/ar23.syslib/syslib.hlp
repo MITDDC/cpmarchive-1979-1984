@@ -1,0 +1,782 @@
+Directory Manipulation Routines -- DIRECT, DIR, DIRSEL, DIRALP
+Numeric String Evaluation Routines -- EVAL, EVAL16, EVAL10, EVAL8, EVAL2
+Byte-Oriented File Input/Output Routines
+FI$OPEN and FO$OPEN, et al -- Byte-Oriented Input and Output File Open
+FI$CLOSE and FO$CLOSE, et al -- Byte-Oriented Input and Output File Close
+F$GET and F$PUT, et al -- Byte-Oriented Input and Output
+CP/M File Input/Output Routines
+INITFCB -- Initialize FCB
+File Manipulation -- F$OPEN, F$CLOSE, F$MAKE, F$DELETE
+File Input/Output Routines -- F$READ and F$WRITE
+Input Line Editor -- INLINE
+String Output Routines -- PRINT, LPRINT, PSTR, LPSTR
+Numeric  Output Routines -- PHL4HC,PHL5DC,PHLDC,PA2HC,PA3DC,PADC, L's, M's
+String and Value Comparison Routines -- COMPHD,COMPB,COMPBC,SCANNER,INSTR
+<CR> <LF> Output -- CRLF and LCRLF
+Conditional Input -- CONDIN
+General Input Routines -- CST, CIN, RIN
+General Output Routines -- COUT, LOUT, POUT, CCOUT, CLOUT, CPOUT
+Misc Routines -- BDOS, CAPS, CIO, EN, FILLB, FILLBC, MOVEB, MOVEBC, CATH
+:Directory Manipulation Routines -- DIRECT, DIR, DIRSEL, DIRALP
+     Routine Name:  DIRECT
+     Function:   DIRECT  loads  a copy of the directory  of  the  currently 
+logged-in disk drive into the 32 x 64 byte buffer pointed to by HL, selects 
+all  file entries which match the contents of the 11-byte file name  buffer 
+pointed  to  by  DE (buffer may contain ?'s as  wild  specifications),  and 
+alphabetizes the entries in the buffer either by file name/type or by  file 
+type/name.   Only  entries  where the extent is zero (1st file  entry)  are 
+returned.
+     Inputs:  HL points to the 32 x 64 byte buffer for the directory
+              DE points to the 11-byte file name/type buffer containing the 
+file name/type to select
+              A  is alphabetization indicator;  A=0 => alphabetize by  file 
+name and type, A<>0 => alphabetize by file type and name
+     Outputs:  A = number of entries in directory buffer
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None- (All calls within module)
+     Special Error Conditions:  -None-
+
+     Routine Name:  DIR
+     Function:   DIR loads a copy of the directory of the currently logged-
+in disk drive into the 32 x 64 byte buffer pointed to by L.   On return,  A 
+contains a count of the number of entries in the directory.
+     Inputs:  HL points to the 32 x 64 byte buffer for the directory
+     Outputs:  A = number of entries in directory buffer
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Name:  DIRSEL (DIRSELECT)
+     Function:  DIRSEL scans the directory buffer pointed to by HL for  the 
+file   name/type  pointed  to  by  DE  (may  contain  ?'s  for  wild   card 
+specifications).   It restructures the directory buffer to contain only the 
+matching entries.   On return, A=number of entries in buffer.  Only entries 
+with extents equal to zero are selected;  all entries with non-zero extents 
+are rejected.
+     Inputs:  HL points to the 32 x 64 byte buffer for the directory
+              DE points to the 11-byte file name/type buffer
+              A = number of entries in directory buffer
+     Outputs:  A = number of entries in directory buffer
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Name:  DIRALP (DIRALPHABETIZE)
+     Function:   DIRALP alphabetizes the directory buffer pointed to by  HL 
+according  to the compare option passed in C (if C=0,  alphabetize by  file 
+name & type; if C<>0, alphabetize by file type & name).
+     Inputs:  HL points to the 32 x 64 byte buffer for the directory
+              C = alphabetization flag (FN & FT if C=0, FT & FN if C<>0)
+              A = number of entries in directory buffer
+     Outputs:  -None- (buffer is alphabetized)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+:Numeric String Evaluation Routines -- EVAL, EVAL16, EVAL10, EVAL8, EVAL2
+     Routine Name:  EVAL
+     Function:  This routine converts the character string pointed to by HL 
+into  the  16-bit  binary  number represented by  it.   EVAL  performs  the 
+conversion until a non-hexadecimal character is encountered,  at which time 
+it  looks at the last character and the previous character to determine  if 
+the string is representing a binary, octal, decimal, or hexadecimal number.  
+Input string characters may be upper- or lower-case.  Valid formats for the 
+input string are --
+          bbbbbbbbbbbbbbbbB -- b=0 or b=1; Binary string
+          ttttt or tttttD -- 0 <= t <= 9; Decimal string
+          hhhhH or hhhhX -- 0 <= h <= F; Hexadecimal string
+          oooooooO or oooooooQ -- 0 <= o <= 7; Octal string
+
+
+     Inputs:  HL points to the first byte of the string to convert
+              String is loaded in a buffer
+     Outputs:  HL points to next character after converted string
+               DE contains 16-bit value
+               A = E
+               CARRY  Flag  Set means an error was  encountered  in  string 
+format
+     Registers Affected:  PSW, DE, HL
+     SYSLIB Routines Called:  CAPS, EVAL16, EVAL10, EVAL8, EVAL2
+     Special  Error Conditions:  CARRY Flag Set indicates that an error was 
+encountered  in  the evaluation of the string;  if so,  HL  points  to  the 
+offending character
+
+     Routine Name:  EVAL16
+     Function:   EVAL16 converts the string of ASCII hexadecimal characters 
+pointed to by HL into a 16-bit binary value.   Conversion progresses  until 
+an invalid hexadecimal digit (0-9, A-F) is encountered.
+     Inputs:  HL points to the first byte of the string to convert
+              String is loaded in a buffer
+     Outputs:  HL points to the offending character
+               DE contains the 16-bit value
+               A = E
+     Registers Affected:  PSW, DE, HL
+     SYSLIB Routines Called:  CAPS
+     Special Error Conditions:  -None-
+
+     Routine Name:  EVAL10
+     Function:   EVAL10  converts  the string of ASCII  decimal  characters 
+pointed to by HL into a 16-bit binary value.   Conversion progresses  until 
+an invalid decimal digit (0-9) is encountered.
+     Inputs:  HL points to the first byte of the string to convert
+              String is loaded in a buffer
+     Outputs:  HL points to the offending character
+               DE contains the 16-bit value
+               A = E
+     Registers Affected:  PSW, DE, HL
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Name:  EVAL8
+     Function:  EVAL8 converts the string of ASCII octal characters pointed 
+to  by  HL  into a 16-bit binary value.   Conversion  progresses  until  an 
+invalid octal digit (0-7) is encountered.
+     Inputs:  HL points to the first byte of the string to convert
+              String is loaded in a buffer
+     Outputs:  HL points to the offending character
+               DE contains the 16-bit value
+               A = E
+     Registers Affected:  PSW, DE, HL
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Name:  EVAL2
+     Function:   EVAL2  converts  the  string of  ASCII  binary  characters 
+pointed to by HL into a 16-bit binary value.   Conversion progresses  until 
+an invalid binary digit (0-1) is encountered.
+     Inputs:  HL points to the first byte of the string to convert
+              String is loaded in a buffer
+     Outputs:  HL points to the offending character
+               DE contains the 16-bit value
+               A = E
+     Registers Affected:  PSW, DE, HL
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+:Byte-Oriented File Input/Output Routines
+     The  following  documentation covers the series of byte-oriented  file 
+input/output  routines  in  SYSLIB.   These  routines  allow  the  user  to 
+sequentially  read from (GET) and write to (PUT) a file on a  byte-for-byte 
+basis.   Hence,  these routines provide an exceptionally simple method  for 
+handling input from and output to a file.
+     A  typical program which employs these routines must open the required 
+files before doing any processing,  must then perform the processing on the 
+opened  files,  and  must  then  close the files  when  the  processing  is 
+complete  (closing the files is optional for input files and mandatory  for 
+output files).
+     SYSLIB provides four sets of routines for byte-oriented file input and 
+output.  These routines are --
+
+   Input Open     Output Open     GET    PUT   Input Close  Output Close
+   ----------     -----------     ---    ---   -----------  ------------
+    FI$OPEN        FO$OPEN       F$GET  F$PUT   FI$CLOSE     FO$CLOSE
+    F1I$OPEN       F1O$OPEN      F1$GET F1$PUT  F1I$CLOSE    F1O$CLOSE
+    F2I$OPEN       F2O$OPEN      F2$GET F2$PUT  F2I$CLOSE    F2O$CLOSE
+    F3I$OPEN       F3O$OPEN      F3$GET F3$PUT  F3I$CLOSE    F3O$CLOSE
+
+     This system allows the user to have up to 8 files open  simultaneously 
+-- four  are  open for input using GET and four are open for  output  using 
+PUT.   For  example,  the  following is a sample code section  using  these 
+routines for two files:
+
+
+          EXT  FI$OPEN   ; DECLARE LIBRARY REFERENCES
+          EXT  FO$OPEN
+          EXT  FI$CLOSE
+          EXT  FO$CLOSE
+          EXT  F$GET
+          EXT  F$PUT
+          ...
+          LXI  D,FCBI    ; PT TO FCB OF INPUT FILE
+          CALL FI$OPEN
+          LXI  D,FCBO    ; PT TO FCB OF OUTPUT FILE
+          CALL FO$OPEN
+          ...
+          [body containing CALL F$GET and CALL F$PUT where required]
+          ...
+          CALL FI$CLOSE  ; CLOSE FILE
+          CALL FO$CLOSE
+          ...
+          END
+
+     Note  that  only  the routines to be used are referenced  in  the  EXT 
+statements.   If you do not need a particular routine, do not reference it.  
+Not  referencing  an unneeded routine generally saves the  overhead  memory 
+space of loading it from the library.
+     Each set of OPEN,  CLOSE,  GET,  and PUT routines is contained in  one 
+library  module,  so  referencing any of these routines causes  the  entire 
+module  to  be  loaded,  and all the routines are accessable  to  the  user 
+(provided  they  are  mentioned  in the extenal  definitions)  without  any 
+additional memory  overhead.   Specifically,  FI$OPEN,  FI$CLOSE,  FO$OPEN, 
+FO$CLOSE,  F$GET,  and F$PUT are contained in one module,  and reference to 
+any  of  these routines loads the entire module;  the same is true for  the 
+other sets of routines.
+     The  CLOSE routine for output (FO$CLOSE) is ALWAYS required;  it fills 
+the  rest  of the current block with Ctrl-Z followed by  <NULL>  bytes  and 
+properly  closes file.   The CLOSE routine for input (FI$CLOSE) is required 
+ONLY  IF  you  are going to later open another file  for  input  using  the 
+corresponding  OPEN routine (FI$OPEN).   FI$CLOSE only serves to reset  the 
+OPEN  flag  (used  to  GET to ascertain that the  file  has  been  properly 
+opened).
+:FI$OPEN and FO$OPEN, et al -- Byte-Oriented Input and Output File Open
+     Routine Names:  FI$OPEN, F1I$OPEN, F2I$OPEN, F3I$OPEN
+     Function:  Open the file whose FCB is pointed to by DE for input  (use 
+with F$GET).
+     Inputs:  DE = ptr to FCB of file to open
+     Outputs:  -None- (File is Opened)
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  F$OPEN, PRINT
+     Special Error Conditions:  Failure to properly open aborts to CP/M.
+
+     Routine Names:  FO$OPEN, F1O$OPEN, F2O$OPEN, F3O$OPEN
+     Function:  Open the file whose FCB is pointed to by DE for output (use 
+with F$PUT).
+     Inputs:  DE = ptr to FCB of file to open
+     Outputs:  -None- (File is Opened)
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  F$OPEN, PRINT
+     Special Error Conditions:  Failure to properly open aborts to CP/M.
+:FI$CLOSE and FO$CLOSE, et al -- Byte-Oriented Input and Output File Close
+     Routine Names:  FI$CLOSE, F1I$CLOSE, F2I$CLOSE, F3I$CLOSE
+     Function:   Close  the  file previously opened  by  the  corresponding 
+FI$OPEN  routine.   Use  of these routines is optional if the another  file 
+will  not  be  opened later in the program  by  the  corresponding  FI$OPEN 
+routine.
+     Inputs:  -None-
+     Outputs:  -None- (File is Closed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  F$OPEN, PRINT
+     Special  Error  Conditions:   If a file is not already opened  by  the 
+corresponding FI$OPEN routine, no error results.
+
+     Routine Names:  FO$CLOSE, F1O$CLOSE, F2O$CLOSE, F3O$CLOSE
+     Function:   Close  the  file previously opened  by  the  corresponding 
+FO$OPEN  routine.   Use of these routines is MANDATORY after output to  the 
+file (using the corresponding F$PUT routine) is complete.
+     Inputs:  -None-
+     Outputs:  -None- (File is Closed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  F$OPEN, PRINT
+     Special  Error  Conditions:  If a file is  not  already  opened,  this 
+routine aborts to CP/M.
+:F$GET and F$PUT, et al -- Byte-Oriented Input and Output
+     Routine Names:  F$GET, F1$GET, F2$GET, F3$GET
+     Function:   Get  the  next byte in sequence from the  file  previously 
+opened by the corresponding FI$OPEN routine.   Byte is returned in Register 
+A.
+     Inputs:  -None-
+     Outputs:  A = Next byte from file
+               Carry Flag is Set (C) if EOF or past EOF read occurs
+               Carry Flag is Reset (NC) if read was OK
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  F$OPEN, PRINT
+     Special  Error Conditions:  Error condition is returned in Carry Flag.  
+If  a file was not previously opened by the corresponding FI$OPEN  routine, 
+aborts to CP/M.
+
+     Routine Names:  F$PUT, F1$PUT, F2$PUT, F3$PUT
+     Function:   Put  the  byte  in Register A onto the  end  of  the  file 
+previously opened by the corresponding FO$OPEN routine.
+     Inputs:  A = Byte to PUT
+     Outputs:  -None-
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  F$OPEN, PRINT
+     Special  Error Conditions:  If a file was not previously opened by the 
+corresponding  FO$OPEN  routine,  aborts to CP/M.   If an error  occurs  in 
+writing to the disk, aborts to CP/M.
+:CP/M File Input/Output Routines
+     The  following  routines are general-purpose file I/O  routines  which 
+interface to CP/M through the Entry Point at location 5.  They preserve BC, 
+DE,  and  HL,  and  they return with the standard CP/M error codes for  the 
+corresponding routines.
+     Specifically, these routines are --
+
+          INITFCB   Initialize FCB from a string of the form "filename.typ"
+          F$OPEN    Open a file
+          F$CLOSE   Close a file
+          F$MAKE    Create a file
+          F$DELETE  Delete a file
+          F$READ    Read a block (128 bytes) from a file
+          F$WRITE   Write a block (128 bytes) to a file
+:INITFCB -- Initialize FCB
+     Routine Name:  INITFCB
+     Function:   Given the name of a file (filename.typ) pointed to  by  HL 
+and  a 33-byte buffer pointed to by DE,  INITFCB initializes this buffer as 
+an  FCB  containing  the file name and file type correctly  placed  in  the 
+buffer  and  all  other entries zero.   The input string  consists  of  1-8 
+characters for the file name,  a decimal point (optional),  1-3  characters 
+for  the file type (optional),  and a trailing character of space (<SP>) or 
+less.  Wild cards (?,*) may be included in the string.  A sample usage is: 
+
+          ...
+          LXI  H,NAME
+          LXI  D,FCB     ; HL PTS TO FILE NAME, DE PTS TO BUFFER
+          CALL INITFCB
+          ...
+NAME:     DB   'FILE.TYP',0
+FCB:      DS   33
+          ...
+
+
+     Inputs:  HL = pointer to file name string "filename.typ<SP>"
+              DE = pointer to FCB buffer
+     Outputs:  A = Error Code
+                   0 --> No Error
+                   1 --> File name > 8 characters
+                   2 --> File type > 3 characters
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+:File Manipulation -- F$OPEN, F$CLOSE, F$MAKE, F$DELETE
+     Routine Name:  F$OPEN
+     Function:   Open the file specified by the FCB pointed to by  DE.   If 
+file is not found, F$OPEN asks the user (on CON:) if he wishes to create it 
+and  does  so if the answer is 'Y' or 'y' (F$OPEN simply  returns  with  an 
+appropriate error code if answer is negative).
+     Inputs:  DE = pointer to FCB
+     Outputs:  A = Error Code
+                   0    --> No Error
+                   0FFH --> File not opened or created
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS, CAPS, CIN, COUT, CRLF, PRINT
+     Special Error Conditions:  -None-
+
+     Routine Name:  F$CLOSE
+     Function:  Close the file whose FCB is pointed to by DE.
+     Inputs:  DE = pointer to FCB
+     Outputs:  A = Error Code
+                   0    --> No Error
+                   0FFH --> Error in closing file
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS
+     Special Error Conditions:  -None-
+
+     Routine Name:  F$MAKE
+     Function:  Create (Make) the file whose FCB is pointed to by DE.
+     Inputs:  DE = pointer to FCB
+     Outputs:  A = Error Code
+                   0FFH --> No directory space available
+                   Not 0FFH --> No Error; Value is byte address in
+                                TBUFF (80H-0FFH) of directory entry
+                                allocated to the FCB
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS, F$DELETE
+     Special Error Conditions:  -None-
+
+     Routine Name:  F$DELETE
+     Function:   Delete  the file whose FCB is pointed to by DE.   If  file 
+does not exist, nothing happens (no error message or code is given).
+     Inputs:  DE = pointer to FCB
+     Outputs:  -None-
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS
+     Special Error Conditions:  -None-
+:File Input/Output Routines -- F$READ and F$WRITE
+     Routine Name:  F$READ
+     Function:  Read next block (128 bytes) from the opened file whose  FCB 
+is pointed to by DE into TBUFF (buffer at 80H - 0FFH).
+     Inputs:  DE = pointer to FCB
+     Outputs:  A = Error Code
+                   0 --> No Error
+                   1 --> Read past end of file
+                   2 --> Reading unwritten data in random access
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS
+     Special Error Conditions:  -None-
+
+     Routine Name:  F$WRITE
+     Function:   Write  next block (128 bytes) from TBUFF (buffer at 80H  - 
+0FFH) to the opened file whose FCB is pointed to by DE.
+     Inputs:  DE = pointer to FCB
+     Outputs:  A = Error Code
+                   0    --> No Error
+                   1    --> Error in extending file
+                   2    --> End of disk data
+                   0FFH --> No more directory space
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS
+     Special Error Conditions:  -None-
+:Input Line Editor -- INLINE
+     Routine Name:  INLINE
+     Function:   INLINE allows the user to input a line of text  from  CON: 
+into the buffer pointed to by HL.   The user is allowed to edit the text as 
+he types it, and INLINE responds to the following editor commands:
+
+   Key Command      Function
+   -----------      --------
+     <BS>           Delete previous character and back up cursor
+     <DEL>          Delete previous character and echo it (like CP/M)
+     <CR>           Input complete -- return to calling program
+     <LF>           Skip down to next physical line and insert a <CR> <LF>
+                      into buffer
+     <TAB>          Tabulate to next tab stop (every 8, as in CP/M)
+     Ctrl-U,        Erase current line (clear buffer) and restart input
+       Ctrl-X
+     Ctrl-R         Retype current line
+
+On exit,  the buffer contains the text entered followed by a <NULL> (binary 
+0); the <CR> typed to end the input is NOT placed in the buffer.
+
+     Inputs:  HL = pointer to input line buffer
+     Outputs:  -None- (Input line buffer contains text typed by user)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  CCOUT, CIN, COUT, CRLF
+     Special  Error Conditions:  <BEL> (Beep at CON:) is output if  attempt 
+is made to delete character (<BS> or <DEL>) before beginning of  line.   No 
+limit  or  error  checking  is done on the size of the  input  line  buffer 
+(buffer  overflow  is possible,  so it is recommended that buffer  is  made 
+arbitrarily large).   Hash mark (#) is printed in response to Ctrl-R, Ctrl-
+U, and Ctrl-X.
+:String Output Routines -- PRINT, LPRINT, PSTR, LPSTR
+     Routine Names:  PRINT, LPRINT
+     Function:   Print  string  pointed to by the return  address  on  CON: 
+(PRINT) or LST: (LPRINT).   String is terminated by a binary 0.  Control is 
+returned to byte following string.
+     Inputs:  Return Address = pointer to string to be printed
+     Outputs:  HL points to byte after string
+               (string is printed on CON: or LST:)
+     Registers Affected:  HL
+     SYSLIB Routines Called:  PSTR (for PRINT); LSTR (for LPRINT)
+     Special  Error Conditions:  The string MUST be terminated by a  binary 
+0!!!
+
+     Routine Names:  PSTR, LPSTR
+     Function:   Print  string  pointed to by HL on  CON:  (PSTR)  or  LST: 
+(LPSTR).  String is terminated by a binary 0.
+     Inputs:  HL = pointer to string to be printed
+     Outputs:  -None- (string is printed on CON: or LST:)
+     Registers Affected:  -None-
+     SYSLIB  Routines Called:  CCOUT,  COUT (for PSTR);  LCOUT,  LOUT  (for 
+LPSTR)
+     Special  Error Conditions:  The string MUST be terminated by a  binary 
+0!!!
+:Numeric Output Routines -- PHL4HC,PHL5DC,PHLDC,PA2HC,PA3DC,PADC, L's, M's
+     Routine Names:  PHL4HC, LHL4HC
+     Function:   Print  HL  as  four (4)  hexadecimal  characters  on  CON: 
+(PHL4HC) or LST: (LHL4HC).
+     Inputs:  HL = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  PA2HC (for PHL4HC); LA2HC (for LHL4HC)
+     Special Error Conditions:  -None-
+
+     Routine Name:  MHL4HC
+     Function:   Store HL as four (4) hexadecimal characters in the  4-byte 
+memory buffer pointed to by DE.  On return, DE points to the byte following 
+this buffer.
+     Inputs:  HL = value to be converted and stored
+              DE points to 4-byte buffer
+     Outputs:  DE points to byte after buffer
+     Registers Affected:  DE
+     SYSLIB Routines Called:  MA2HC
+     Special Error Conditions:  -None-
+
+     Routine Names:  PHL5DC, LHL5DC
+     Function:  Print HL as five (5) decimal characters on CON: (PHL5DC) or 
+LST: (LHL5DC).
+     Inputs:  HL = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  POUT (for PHL5DC); LOUT (for LHL5DC)
+     Special Error Conditions:  -None-
+
+     Routine Name:  MHL5DC
+     Function:  Store HL at five (5) decimal characters in memory in the 5-
+byte buffer pointed to by DE.   On return, DE points to the byte after this 
+buffer.
+     Inputs:  HL = value to be converted and stored
+              DE points to a 5-byte buffer
+     Outputs:  DE points to the byte following the buffer
+     Registers Affected:  DE
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Names:  PHLDC, LHLDC
+     Function:  Print HL as up to five (5) decimal characters with  leading 
+spaces (<SP>) on CON: (PHLDC) or LST: (LHLDC).
+     Inputs:  HL = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  POUT (for PHLDC); LOUT (for LHLDC)
+     Special Error Conditions:  -None-
+
+     Routine Name:  MHLDC
+     Function:   Store HL as up to five (5) decimal characters with leading 
+spaces in the 5-byte memory buffer pointed to by DE.
+     Inputs:  HL = value to be converted and printed
+              DE points to the 5-byte buffer
+     Outputs:  DE points to the byte after the buffer
+     Registers Affected:  DE
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Names:  PA2HC, LA2HC
+     Function:   Print A as two (2) hexadecimal characters on CON:  (PA2HC) 
+or LST: (LA2HC).
+     Inputs:  A = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB  Routines Called:  EN (for both);  POUT (for PA2HC);  LOUT (for 
+LA2HC)
+     Special Error Conditions:  -None-
+
+     Routine Name:  MA2HC
+     Function:   Store  A as two (2) hexadecimal characters in  the  2-byte 
+memory buffer pointed to by HL.  On return, HL points to byte after buffer.
+     Inputs:  A = value to be converted and stored
+              HL points to 2-byte buffer
+     Outputs:  HL points to byte after this buffer
+     Registers Affected:  HL
+     SYSLIB Routines Called:  EN
+     Special Error Conditions:  -None-
+
+     Routine Names:  PA3DC, LA3DC
+     Function:  Print A as three (3) decimal characters on CON: (PA3DC)  or 
+LST: (LA3DC).
+     Inputs:  A = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  POUT (for PA3DC); LOUT (for LA3DC)
+     Special Error Conditions:  -None-
+
+     Routine Name:  MA3DC
+     Function:   Store  A  as three (3) decimal characters  in  the  3-byte 
+memory buffer pointed to by HL.  On return, HL points to the byte after the 
+buffer.
+     Inputs:  A = value to be converted and stored
+              HL points to the 3-byte buffer
+     Outputs:  HL points to the byte after the buffer
+     Registers Affected:  HL
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Names:  PADC, LADC
+     Function:   Print A as up to three (3) decimal characters with leading 
+spaces (<SP>) on CON: (PADC) or LST: (LADC).
+     Inputs:  A = value to be printed
+     Outputs:  -None- (Value is printed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  POUT (for PADC); LOUT (for LADC)
+     Special Error Conditions:  -None-
+
+     Routine Name:  MADC
+     Function:  Store A as up to three (3) decimal characters with  leading 
+spaces in the 3-byte memory buffer pointed to by HL.   On return, HL points 
+to the byte after the buffer.
+     Inputs:  A = value to be converted and stored
+              HL points to the 3-byte memory buffer
+     Outputs:  HL points to the byte after the buffer
+     Registers Affected:  HL
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+:String and Value Comparision Routines -- COMPHD,COMPB,COMPBC,SCANNER,INSTR
+     Routine Name:  COMPHD
+     Function:  Compare HL to DE.  On return, Zero Flag Set => HL=DE, Carry 
+Flag Set => HL<DE.
+     Inputs:  HL, DE -- Values to compare
+     Outputs:  Zero and Carry Flags
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Names:  COMPB, COMPBC
+     Function:  Vector Compare Routines.   Compare the vector pointed to by 
+HL with that pointed to by DE (Vectors are of equal length).  Vectors are B 
+bytes long for COMPB and BC bytes long for COMPBC.   On exit, Zero Flag Set 
+indicates  that  vectors are identical;  Carry Flag Set indicates that  the 
+vector pointed to by HL is less than the vector pointed to by DE.
+     Inputs:  HL, DE -- Pointers to vectors to compare
+              B (for COMPB), BC (for COMPBC) -- number of bytes in vectors
+     Outputs:  Zero and Carry Flags
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Name:  SCANNER
+     Function:  SCANNER scans the vector of bytes pointed to by HL for  the 
+vector  of bytes pointed to by DE.   The HL-byte vector is B bytes long and 
+the DE-byte vector is C bytes long.   On return, if found, HL points to the 
+beginning location within the original HL vector of the located vector  and 
+the  Zero  Flag is Set;  if not found,  Zero Flag is not set and HL is  not 
+affected (points to the beginning of the original HL-byte vector).
+     Inputs:  HL = Pointer to vector to be scanned
+              DE = Pointer to vector to scan for
+              B = Number of bytes in HL-vector
+              C = Number of bytes in DE-vector
+     Outputs:  If found, Zero Set and HL pts to located vector
+               If not found, Zero Reset and HL unaffected
+     Registers Affected:  PSW, HL
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  Automatic success if vector searched for is 
+null.
+
+     Routine Name:  INSTR
+     Function:   INSTRING Function.   Scan the string pointed to by HL  for 
+the string pointed to by DE.  A string is a vector of bytes terminated by a 
+binary 0.
+          On return,  if found,  Zero Flag is Set and HL points to 1st byte 
+of substring within scanned string;  if not found, Zero Flag is not set and 
+HL is not affected.
+     Inputs:  HL = Pointer to string to be scanned
+              DE = Pointer to string to scan for
+     Outputs:  If found, Zero Set and HL pts to located substring
+               If not found, Zero Reset and HL unaffected
+     Registers Affected:  PSW, HL
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  Automatic success if string searched for is 
+null.
+:<CR> <LF> Output -- CRLF and LCRLF
+     Routine Names:  CRLF, LCRLF
+     Function:  Print <CR> and <LF> on CON: (CRLF) or LST: (LCRLF).
+     Inputs:  -None-
+     Outputs:  -None- (<CR> <LF> is printed)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  POUT (for CRLF); LOUT (for LCRLF)
+     Special Error Conditions:  -None-
+:Conditional Input -- CONDIN
+     Routine Name:  CONDIN
+     Function:  Input a character from CON: if one is available; otherwise, 
+return a flag stating that a character is not available on CON:.
+     Inputs:  -None-
+     Outputs:  A = character typed at CON: (if available)
+               Zero Flag is set (Z) if no character is available
+               Zero Flag is reset (NZ) if character is available
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  CST, CIN
+     Special Error Conditions:  -None-
+:General Input Routines -- CST, CIN, RIN
+     Routine Name:  CST
+     Function:   Input  the status on CON: in Register  A.   If  Read  Data 
+Available, A=0; otherwise, A=1.
+     Inputs:  -None-
+     Outputs:  A = Console Status
+                   0 --> Read Data Available (RDA)
+                   1 --> Read Data Not Available (Not RDA)
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Names:  CIN, RIN
+     Function: Input character from CON: (CIN) or RDR: (RIN) in Register A.
+     Inputs:  -None-
+     Outputs:  A = Character input from CON: or RDR:
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+:General Output Routines -- COUT, LOUT, POUT, CCOUT, CLOUT, CPOUT
+     Routine Names:  COUT, LOUT, POUT
+     Function:  Output character in Register A to CON: (COUT), LST: (LOUT), 
+or PUN: (POUT).
+     Inputs:  A = Character to output
+     Outputs:  -None- (Character is output)
+     Registers Affected:  -None-
+     SYSLIB Routine Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Names:  CCOUT, CLOUT, CPOUT
+     Function:  Output character in Register A to CON: (COUT), LST: (LOUT), 
+or  PUN:  (POUT) with control character processing.   All  characters  with 
+ASCII  codes  less than <SP> (space = 20H) in value except  <NULL>,  <BEL>, 
+<BS>,  <LF>,  and  <CR>  are  output  as an uparrow  (^)  followed  by  the 
+corresponding letter generated by adding 40H to the character value  (i.e., 
+1 outputs as "^A",  2 as "^B", etc.).  Again, the characters less than <SP> 
+in value NOT output in this manner are --
+
+          <NULL>  <BEL>  <BS>  <LF>  <CR>
+
+Any character of value greater than <SP> is output normally.
+     Inputs:  A = Character to output
+     Outputs:  -None- (Character/Code is output)
+     Registers Affected:  PSW (only the Flags; Register A is NOT affected)
+     SYSLIB Routines Called:  COUT (for CCOUT); LOUT (for CLOUT); POUT (for 
+CPOUT)
+     Special Error Conditions:  -None-
+:Miscellaneous Routines -- BDOS,  CAPS,  CIO,  EN,  FILLB,  FILLBC,  MOVEB, 
+MOVEBC, CATH
+     Routine Name:  BDOS
+     Function:   Call CP/M Entry Point at location 5 and preserve Registers 
+HL and DE.
+     Inputs:  -As Required by User-
+     Outputs:  PSW, BC
+     Registers Affected:  PSW, BC
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -Determined by Routines Called-
+
+     Routine Name:  CAPS
+     Function:   Capitalize ASCII character in Register A if it  is  lower-
+case alphabetic (a-z); otherwise, return A unaffected.
+     Inputs:  A = character to capitalize
+     Outputs:  A = capitalized character
+     Registers Affected:  PSW
+     SYSLIB Routins Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Name:  CIO
+     Function:   CP/M  I/O through BIOS Jump Table.   This routine  indexes 
+into the CP/M BIOS Jump Table and allows the user to address any routine in 
+the  BIOS  (accessable  routines  only).   It is  called  with  Register  A 
+containing  the index offset (see table below) and Registers BC  containing 
+any required input arguments.  The following table summarizes the BIOS Jump 
+Table entries --
+
+Offset Function                    Offset Function
+   0   Warm Start                     7   Home Disk Head
+   1   Console Status; A=0FFH if      8   Select Disk; C=Disk Number (A=0,
+       char ready, A=0 if not             B=1, C=2, D=3) passed
+   2   Console Input; A=result        9   Set Track Number; C=Track Number
+   3   Console Output; C=char passed      passed
+   4   List Output; C=char passed    10   Set Sector Number; C=Sector
+   5   Punch Output; C=char passed        Number passed
+   6   Reader Input; A=result        11   Set DMA Address; BC=adr passed
+                                     12   Read Disk; A=0 if ok, 1 if err
+                                     13   Write Disk; A=0 if ok, 1 if err
+Any other offset results in a Cold Start being performed.
+
+     Inputs:  A = Offset
+              BC = Data Passed to Routine
+     Outputs:  A = Output or Error Indicator
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Name:  EN
+     Function:   Exchange Nybbles in Register A;  High-order four bits  are 
+exchanged with Low-order four bits of Register A.
+     Inputs:  A = Byte input
+     Outputs:  A = Byte output
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Names:  FILLB, FILLBC
+     Function:   These routines fill an area of memory with a constant byte 
+value.  FILLB can fill up to a 256-byte buffer, and FILLBC can fill up to a 
+65,536-byte (within reason) buffer.
+     Inputs:  HL points to the first byte of the buffer to be filled
+              B (for FILLB) or BC (for FILLBC) = number of bytes in buffer
+              A = byte value to fill buffer with
+     Outputs:  -None- (Buffer is filled)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Names:  MOVEB, MOVEBC
+     Function:   Move  the block of memory pointed to by HL to  the  memory 
+location  pointed to by DE.   MOVEB can move up to a 256-byte  buffer,  and 
+MOVEBC can move up to a 65,536-byte buffer.
+     Inputs:  HL points to the first byte of the buffer to move
+              DE points to the first byte of the buffer to move to
+              B (for MOVEB) or BC (for MOVEBC) = number of bytes in buffer
+     Outputs:  -None- (Buffer is moved)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+     Routine Name:  CATH
+     Function:   Convert the ASCII Hexadecimal character in the A  Register 
+to binary in the A Register.   If invalid character (not 0-9,  A-F), return 
+<SP> (20 Hex) in A Register as error code.
+     Input:  A = ASCII Hex Character (0-9, A-F)
+     Output:  A = Binary value represented by char
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  If invalid hex char, <SP> (20 Hex) returned 
+in A Register.

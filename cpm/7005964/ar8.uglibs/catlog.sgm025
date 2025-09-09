@@ -1,0 +1,33 @@
+Sig/M volume 25		database seed system
+			multi-track system BIOS
+			fixed length disk sort system
+			print format program
+			
+          (original materials from Pascal Z User Group volume 7)
+
+	-CATALOG.025		contents of Sig/M volume 25
+	-CATALOG.ACK		acknowledgement file
+	ABSTRACT.025		comments on Sig/M volume 25
+        CRCKFILE.025            CRC of Sig/M volume 25
+
+25.1	DATABASE.DOC	32K	database seed program by Dr. Bowles
+25.2	DBBUILDE.CPM	22K	      /
+25.3	DBDEMO.CPM	 1K	     /
+25.4	DBUNIT.1	 8K	    /
+25.5	DBUNIT.2	19K	   /
+25.6	DBUNIT.3	22K	  /
+25.7	DBUNIT.4	17K	 /
+25.8	DBUNIT.CPM	 1K	/
+25.9	SGEN.COM	 2K	BIOS for greater than 2 system tracks
+25.10	SGEN.MAC	10K	   /
+25.11	MACROZ.MAC	18K	  /
+25.12	CLIB.MAC	 9K	 /
+25.13	SGEN.DOC	 5K	/
+25.14	BSORT.ASM	40K	fixed length disk sort program
+25.15	BSORT.COM	 4K	 /
+25.16	BSORT.NOT	 4K	/	
+25.17	PGLST.PAS	 3K	print format program
+25.18	PGLST.COM	 8K	  /
+25.19	PGLST.NOT	 1K	 /
+25.20	W3UA.LIB	 6K	/
+

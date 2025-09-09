@@ -1,0 +1,89 @@
+;
+;  TEST PROGRAM FOR SYSLIB.REL ROUTINES
+;
+
+;  Externals --
+	EXT	INLINE
+	EXT	PHL5DC
+	EXT	PHL4HC
+	EXT	EVAL
+	EXT	CONDIN
+	EXT	PRINT
+	EXT	CIN
+	EXT	LADC
+	EXT	PADC
+	EXT	LCRLF
+	EXT	CRLF
+	EXT	CAPS
+
+;  Equates --
+CPM	EQU	0
+CR	EQU	0DH
+LF	EQU	0AH
+ESC	EQU	1BH
+
+;  Start --
+	CALL	PRINT
+	DB	'This Program tests several routines within SYSLIB.REL',0
+	CALL	PRINT
+	DB	CR,LF,'  Please put printer online and type <CR> to cont - ',0
+	CALL	CIN
+	CALL	CRLF
+	CALL	PRINT
+	DB	'  COUNTING -- Type <ESC> to stop ',0
+	MVI	A,0	; SET COUNT
+	STA	COUNT
+	CALL	CRLF
+LP1:	LDA	COUNT
+	CALL	LADC
+	CALL	PADC
+	INR	A
+	STA	COUNT
+	ANI	0FH	; NEW LINE IF ZERO
+	CZ	CRLFS
+	CALL	CONDIN	; CONDITIONAL INPUT
+	JZ	LP1	; NO INPUT?
+	CPI	ESC	; <ESC>?
+	JNZ	LP1
+	JMP	CONT1
+CRLFS:	CALL	CRLF
+	CALL	LCRLF
+	RET
+
+CONT1:
+	CALL	PRINT
+	DB	CR,LF,'String evaluation test --'
+	DB	CR,LF,'  Input numeric strings in binary, octal, decimal,'
+	DB	' or hexadecimal'
+	DB	CR,LF,'  String suffixes are B=binary; O,Q=octal; H,X=hex,'
+	DB	' D,other=dec',CR,LF,0
+;
+;  TEST ROUTINE FOR EVAL
+;
+
+LOOP:	CALL	PRINT
+	DB	0DH,0AH,'Input Number (<CR>=done)? ',0
+	LXI	H,IBUF
+	CALL	INLINE
+	LDA	IBUF	; GET 1ST CHAR
+	CPI	0	; DONE?
+	JZ	CONT2
+	LXI	H,IBUF	; CONVERT
+	CALL	EVAL
+	CALL	PRINT
+	DB	0DH,0AH,'Input Value is -- ',0
+	XCHG		; VALUE IN HL
+	CALL	PHL5DC
+	CALL	PRINT
+	DB	' Decimal or ',0
+	CALL	PHL4HC
+	CALL	PRINT
+	DB	' Hexadecimal',0
+	JMP	LOOP
+
+CONT2:	JMP	CPM
+
+IBUF:	DS	100
+COUNT:	DS	1	; COUNT BUFFER
+
+	END

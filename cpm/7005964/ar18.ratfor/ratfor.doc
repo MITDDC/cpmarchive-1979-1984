@@ -1,0 +1,58 @@
+	RATFOR is a preprocessor for FORTRAN source programs
+which facilitates control constructs and text insertions.
+With a few exceptions, acceptable FORTRAN syntax is passed
+through, so that all the capabilities of FORTRAN are retained,
+although syntax must be changed in certain cases.î	RATFOR.COM is distributed by the CP/M Users' Group(V. 24).
+RATFOR.FOR is marketed for various systems by Addison-Wesley,
+who publish the book "Software Tools" by Kernighan and Plauger
+in which it is described.
+	RATFOR source code is free form, with statements
+separated by [CR] or ;  There is no statement continuation
+mark; if [CR] occurs where a statement cannot end syntactically
+continuation is assumed.  Blanks are significant and must not
+appear within names or key words.  Comments begin with # and
+end with [CR].  Statements may be grouped into blocks begin-
+ning with { and ending with }.  Other symbols such as $( $) may
+be used depending on the system employed.  Blocks are treated
+as one statement in control constructions.
+	The 3-way arithmetic IF is not permitted.  Statement
+labels must be less than 23000 since RATFOR will generate
+additional labels beginning at 23001.
+	The following operators are synonymous:
+	<	.LT.
+	<=	.LE.
+	==	.EQ.
+	>=	.GE.
+	!=	^=	.NE.
+	!	^	.NOT.
+	&	.AND.
+	|	.OR.
+
+	The logical IF may be extended by an ELSE, and nesting
+is permitted.  RATFOR iteration constructs are:
+	
+WHILE(condition)statement
+	
+REPEATstatement[UNTIL(condition)]
+	
+DO limits;statement (same as FORTRAN, label optional)
+FOR(initialize;condition;reinitialize)statement
+is equivalent to
+{initialize;WHILE(condition){statement;reinitialize}}
+
+BREAK passes control to the instruction following the current
+loop.
+
+NEXT skips the remainder of the "statement" block (but executes
+the "reinitialize").
+
+	The text insertion instructions are:
+
+define(name,text) causes all occurences of "name" to be
+replaced by text.  define must be lower case; otherwise upper or
+ lower case is generally accepted.
+
+
+
+INCLUDE filename inserts the named file.
+

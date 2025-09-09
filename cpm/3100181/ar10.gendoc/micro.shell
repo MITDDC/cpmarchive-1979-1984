@@ -1,0 +1,48 @@
+ Microshell is a package that simulates the Unix shell on a CP/M
+system, with such features as redirected input (BDOS calls 1, 6,
+10, and 11), redirected output (BDOS calls 2, 6, and 9), shell
+scripts and pipes. Microshell completely replaces the CCP of the
+CP/M, so it also does all those commands, plus a few extensions,
+like 32 user areas, automatic search of 3 disks for .COM files,
+and an integrated SUBMIT and XSUB facility. The user can also
+define his/her own prompts, upper/lower case filenames, echoing
+commands during the scripts (.SUB files), any control characters
+within the scripts, and logging in disks without rebooting.
+
+ Pipes, in case you dont know, are nifty things. You can
+redirect the output of the DIR command to a file, like DIR *.*
+>FILES and get a file called FILES that has all your disk files
+on it. Do this twice a few days apart and use SSED on the two
+files and you get a list of the files that are new or missing
+between the two times. More elaborate are programs that inten-
+tionally massage the data, like sort the names into alphabetic
+sequence, or eliminate duplicates, and you get very fancy
+things. For example, to print your directory, just enter
+ DIR | PIP LST:=CON:
+
+ It does have disadvantages, such as wiping out an extra 9K from
+your system, and there are no UNIX-like filters, such as CAT or
+SRT. I am not a real UNIX expert, but Microshell sure makes CP/M
+a lot more user friendly like all those UNIX freaks keep com-
+plaining about. Microshell does work with all Digital Research
+programs except MOVCPM, and with all other programs I have been
+able to test, including BYE, MODEM, SD, XD, Wordstar, Microsoft
+Basic, CBASIC, EBASIC, and dozens of the Public Domain CP/M pro-
+grams. The principle exceptions are those programs that overlay
+the CCP and BDOS. In that case, Microshell just goes away and
+you are back to regular CP/M.
+
+ If you need that extra 9K that Microshell gobbles up, there is
+a script given that will run a program under regular CP/M and
+then re-instate Microshell when done. The script files cannot be
+nested, but Microshell itself can be to simulate the same thing.
+The only thing lacking is lots of freebee filters for the users,
+and some of the filters available on UNIX should be written for
+us CP/M folks anyway, like a good general sort.
+
+ Microshell is sold by New Generation Systems for $150 and I
+think it is worth the price for anyone but the confirmed hacker
+that has completely dis-assembled his CCP anyway and re-wrote
+MAC in 1978. Contact New Generation Systems at 2153 Golf Course
+Dr, Reston VA 22091 or see recent ads in Microsystems or BYTE.
+Chuck Weingart

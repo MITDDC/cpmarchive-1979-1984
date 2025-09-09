@@ -1,0 +1,69 @@
+10 '          XFER UTILITY FOR BUILDING SUBMIT FILES
+20 '                      version 1.1
+30 '                   11/11/81 AL JEWER
+40 '
+50 '        This program will create the submit file "XFER.SUB" used
+60 '  to transfer programs over the phone lines with a minimum of
+70 '  delays, using the SENDOUT and MODEM programs.
+80 '  1.  Use the Command to Remote line for commands such as User disk etc.
+90 '  2.  FILENAME is the file you wish to send or receive.
+96 '  3.  If you need more than one command to the remote, such as move to
+97 '      user 2 them to disk B:, type USER 1, then type $$$ for the filename,
+98 '      and the Command line will reappear. Type B: and continue.
+100 ' 4.  Enter other modem options if you desire. (CR to skip)
+110 ' 5.   Specify YOUR (local) disk when asked. (A:,B:,etc) Use the colon!
+120 ' 6.   A CR for filename will end input.
+130 '
+140 '
+150 '===================================================================
+160 ' Modifications listed in reverse order to minimize read time.
+170 '
+180 ' 11/19/81  Added routine to allow user to select additional modem
+190 '   options.  (Wayne M. Hammerly)
+191 '       Added routine to allow user to select drive to send or
+192 '   receive from or to. Original version would default to remote
+193 '   drive. ie if you received a file from drive D it would try to
+194 '   write that file on YOUR drive D! That's bad news if you only have
+195 '   two drives! (The only other alternative was to write to the default
+196 '   drive, and I like to be able to speficy such things.)  (wmh)
+197 '       Renamed prompts to make them more accurate.        (wmh)
+198 '       Added routine to enable more than one command to the remote
+199 '   per file by using $$$ as a filename to get additional command prompts.
+200 '   Usefull when you want to move to a differnt drive AND user area. (wmh)
+210 '           Added REM's for clearer documentation           (wmh)
+260 '           Re-wrote header and DOC file to reflect changes and enhance-
+270 '   ments. Cleaned up file and Revised version number to 1.1 and
+280 '   re-numbered to allow room for future revisions.          (wmh)
+285 '
+290 '=====================================================================
+300 CLEAR 1000
+310 INPUT"DO YOU WANT TO SEND OR RECIEVE (S/R) ";A$
+320 IF A$="S" THEN B$="R" ELSE B$="S"
+330 INPUT"WHAT BAUD RATE (110, 300, 450, 600, 710) ";BR$
+340 ON ERROR GOTO 360
+350 KILL "XFER.SUB"                          'so there won't be two
+360 OPEN "O",#1,"XFER.SUB"
+370 GOTO 510                                 'make command to remote first
+380 PRINT"FILE NAME >";                      'filename.filetype for xfer
+390 LINE INPUT X$
+395 IF X$="$$$" THEN 510
+400 IF LEN(X$)=0 THEN 570                    'no more files? then done
+410 PRINT "OTHER MODEM OPTIONS >";           '(Q)uiet mode ect
+420 LINE INPUT O$
+430 IF LEN(O$)=0 THEN 440                    'if no option then continue
+440 PRINT "DISK TO SEND/RECEIVE FROM/TO >";  'your disk, not the remote's
+450 LINE INPUT D$
+460 IF LEN(D$)=0 THEN 570
+470 S$="SENDOUT XMODEM "+B$+" "+X$
+480 G$="MODEM "+A$++O$+"."+BR$+" "+D$++X$
+490 PRINT #1, S$                             'write XMODEM command line to SUB
+500 PRINT #1, G$                             'write MODEM command line to SUB
+510 PRINT"COMMAND TO REMOTE >";              'log to different disk, user area etc.
+520 LINE INPUT X$
+530 IF LEN(X$)=0 THEN 380
+540 X$="SENDOUT "+X$
+550 PRINT #1, X$                             'execute submit
+560 GOTO 380
+570 CLOSE                                    'close the open sub file
+580 SYSTEM                                   'all done, do a warmboot!!
+

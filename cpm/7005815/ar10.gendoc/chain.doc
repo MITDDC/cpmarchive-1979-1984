@@ -1,0 +1,220 @@
+THE  FOLLOWING  IS  A TRANSCRIPT OF AN  "APPLICATION  NOTE"  FROM 
+DIGITAL  RESEARCH,  THOUGH THE ORIGINAL BEARS NO NOTICE OF SOURCE 
+OR COPYRIGHT:
+
+
+                 CHAINING PROGRAMS UNDER CPM 2.2
+                               by
+                           DOUG HUSKEY
+
+
+I  have  often been asked how to write menu  driven  applications 
+which  will  run  under CP/M.   If  the  applications  are  being 
+developed using PL/I-80,  this can be accomplished by writing the 
+programs  as  a set of overlays.  Often,  however,  some  of  the 
+programs may be written in assembly language, or require too much 
+memory  to  make  the  use  of the  overlay  feature  of  PL/I-80 
+appropriate.    Without  using  overlays,   there  are  only  two 
+effective ways of chaining under CP/M 2.2.   First,  you can  use 
+the  CP/M  submit facility.   The trick is to have the main  menu 
+program  create  a submit file with the programs  to  be  chained 
+listed in it.  The file must be written to drive A,  and have the 
+name "$$$.SUB".
+
+The  submit file  consists of command lines exactly  as  would be
+typed at the console following the system prompt.   The  commands 
+are  placed in reverse order so that the last command in the file 
+is  the first to be executed.   Each command is placed in  a  128 
+byte record with the following format:
+
+              |---|----|----|-----|----|---|-----|
+              | n | c1 | c2 | ... | cn | 0 | ... |
+              |---|----|----|-----|----|---|-----|
+
+The first byte of the record contains the number of characters in 
+the  command  (n),   followed  by  the  characters  (c1-cn),  and 
+terminated with a zero.   The number of characters in the command 
+is  written as a binary number and each character is  represented 
+in its normal ASCII format.   It does not matter what follows the 
+terminating zero in the record.   For example, if the command was 
+"STAT *.*",  the first byte would be a binary 8,  followed by the 
+letters "STAT *.*" and terminated with a zero.
+
+The  second  approach to program chaining is  simpler.   In  this 
+approach,  you  simply  include a procedure in the  menu  program 
+which  will load the next program and chain to it.   Each program 
+that  might chain to another program must include a copy  of  the 
+procedure.   The trick here is that the procedure must first move 
+itself  out  of  the  way so that it is not  overwritten  by  the 
+program it is loading.
+
+The  assembly language program listed at the end of this  article 
+accomplishes  this.   It  was written to be linked  with  PL/I-80 
+modules as an external procedure.   Of course,  it could also  be 
+used  in an assembly language menu program.   If you wish to link 
+it  to a PL/I-80 program the following entry declaration must  be 
+included in the PL/I-80 program doing the chaining:
+
+          dcl chain entry (char(12));
+
+The  character  12 variable consists of the  standard  CP/M  file 
+control  block (FCB) format.   This can be created in the PL/I-80 
+program as a structure.  A char(12) variable can then be based at 
+the same address as the structure for the purpose of  interfacing 
+to  the chain procedure.   The PL/I-80 program below  illustrates 
+this.  Note that the drive is not an ASCII character but a binary 
+number between 0 and 16, where 0 is the current default drive and 
+1 through 16 represent the CP/M drives A through P, respectively.
+
+
+chainl: proc options(main);   /* chain subroutine tester */
+
+     dcl 1 fcb static,
+               2 drive fixed(7) init(0),
+               2 name char(8) init('CHAIN2'),
+               2 type char(3) init('COM'),
+
+          dummy char(12) based(dp),
+          dp pointer,
+     chain entry(char(12));
+
+     put skip list ('Chain Test program 1');
+     dp = addr(fcb);
+     call chain(dummy);
+     put skip(2) list('Shouldn''t be here!!');
+end chainl;
+
+This  program will print the message "Chain Test program 1",  and 
+chain to the program CHAIN2.COM on the default drive.   CHAIN2 is 
+a  program identical to CHAIN1 except that it prints "Chain  Test 
+program  2"  and chains to CHAIN1.COM.   Thus chain1  and  chain2 
+continue to chain back and forth to each other,  not real  useful 
+but  an  interesting  demonstration.   Note that  any  statements 
+following the call to the chain procedure will never be  executed 
+as the chain procedure never returns, it chains.
+
+The  chain procedure consists of two routines,  an initialization 
+routine  and  the loader  routine.   The  initialization  routine 
+initializes  the  FCB  for  the program to  be  loaded  and  then 
+relocates  the  loader and FCB to the very top of  the  transient 
+program area (TPA),  immediately below the BDOS, so that it won't 
+be  overwritten by the loaded program.   The loader begins at the 
+label  "code:"  and ends at the end of the FCB at  the  statement 
+"codelen equ $-code".
+
+The initialization portion first copies the drive,  file name and 
+type  into the FCB using the "move" routine.   It then fills  the 
+rest  of the FCB with zeros using the "fill" routine.   Now comes 
+the tricky part.  It picks up the BDOS base address from the jump 
+at  location 5 in low memory.   Next the routine  subtracts  from 
+this  the length of the loader and fcb and fills in the jump back 
+to "code:" in the loader.   It calculates  the address of the FCB 
+after  it is moved and fills in the lxi instruction at the  label 
+"fcbr:".   Then  another call to the move routine moves the  code 
+and  fcb into the proper location below the BDOS.   It opens  the 
+file  to be loaded,  tests the A register to see it the open  was 
+successful,  and  signals an error ("Bad Chain Attempt")  if  the 
+file was not found.  Finally, it pops the address of the start of  
+the  loader routine,  sets the stack to grow down from below  the 
+loader  and pushes the address back onto the stack in preparation 
+for  a  return.   Only one thing left to do,  initialize  the  HL 
+register to the beginning of the TPA at 100H,  where the  program 
+will be loaded.  The return fires off the loader.
+
+The  loader routine simply sets the DMA address,  reads a sector, 
+checks  for  an end of file,  increments the DMA address  by  128 
+bytes,  and  repeats  the  process.   When the  end  of  file  is 
+detected, it jumps to the chained program.
+
+This  routine provides an effective and relatively simple  method 
+of chaining programs under CP/M, MP/M II and CP-NET.  In addition 
+to being compatible with all of these systems,  it is also faster 
+than  the  submit file method described at the beginning of  this 
+article.
+
+          public chain ; (char(12))          
+          extrn    ?signal
+          ; /* loads another COM file and executes it */
+bdos      equ      5
+openf     equ      15
+readf     equ      20
+dmaf      equ      26
+
+          cseg
+chain:    move e,m ! inx h ! mov d,m ! xchg  ;get first arg address
+          lxi d,fcb ! mvi c,12 ! call move   ;move string to fcb
+          lxi d,fcb+12 ! mvi a,0 ! mvi c,21 ! call fill
+                                             ;zero rest of fcb
+          lhld bdos+1 ! lxi b,-code$len ! dad b
+                                             ;make space at top of TPA
+          shld jmpr+1                        ;jump address
+          push h                             ;save code address for RET
+          xchg ! lxi h,fcb-code ! dad d      ;make address of FCB
+          shld fcbr+1                        ;and fix LXI
+          push h                             ;save FCB destination add.
+          lxi h,code ! mvi c,code$len ! call move
+                                             ;destination in DE
+          pop d                              ;recover FCB address
+          mvi c,openf ! call bdos            ;open file
+          inr a ! jz sig                     ;signal if error
+          pop h ! sphl ! push h              ;point stack to top of
+                                             ;TPA and save address
+          lxi h,100h                         ;point to start of TPA
+          ret
+
+code:     push h ! xchg ! mvi c,dmaf ! call bdos
+                                             ;set DMA address
+fcbr:     lxi d,$-$ ! mvi c,readf ! call bdos
+                                             ;read next record
+          ora a ! jnz 100h                   ;EOF -> start TPA
+          pop h ! lxi d,128 ! dad d          ;recover and bump DMA
+                                             ;address
+jmpr:     jmp $-$                            ;jump to code
+
+fcb:      ds       1                         ;drive code
+          ds       8                         ;file name
+          ds       3                         ;file type
+          ds       4                         ;control info
+          ds       16                        ;disk map
+          ds       1                         ;rrec
+codelen   equ      $-code
+
+move:     ; c = # bytes, hl = source, de = destination
+          mov a,m ! stax d
+          inx  h ! inx d ! dcr c
+          jnz move
+          ret
+
+fill:     ; a =byte to fill, c = # bytes, de = start address
+          stax d ! inx d
+          dcr c ! jnz fill 
+          ret
+
+sig:      lxi h,siglist ! call ?signal ! jmp 0
+                                             ;signal error
+siglist:  dw       sigcode,sigsub,sigfil,message
+                                             ;(fixed(6),bit(8),ptr,p
+sigcode   db       6                         ;undefined file error
+sigsub    db       2                         ;arbitrary subcode
+sigfil    dw       fpb                       ;ptr to file parameter
+message   dw       quack                     ;auxiliary oper. msg.
+
+fpb:                                         ;PL/I file parameter blk
+fcbptr    dw       fcb-1                     ;.fcb-1
+fpblst    dw       0                         ;(unused)ptr
+column    dw       0                         ;current col fixed (15)
+curline   dw       0                         ;current line  "
+curpage   dw       0                         ;current page  "
+currec    dw       0                         ;(unused) 
+lookchr   db       0                         ;lookahead char (1)
+ioend     dw       0                         ;i/o end address
+iostk     dw       0                         ;user stack upon sio entry
+spacer    ds       4                         ;spacer
+linesz    dw       0                         ;line size fixed (15)
+pagesz    dw       0                         ;page size   "
+fixedsz   dw       0                         ;fixed size  "
+blocksz   dw       0                         ;block size  "
+filedes   dw       0                         ;file descriptor
+dtitle    db       0,''                      ;default title
+                                             ;  char(14) varying
+quack     db       17,'Bad Chain Attempt',0  ;error message

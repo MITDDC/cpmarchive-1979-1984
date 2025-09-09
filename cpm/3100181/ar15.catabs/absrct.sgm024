@@ -1,0 +1,83 @@
+
+
+                    CONTENTS OF VOLUME #6
+
+     Ray Penley sent me another disk full of goodies. I sure wish 
+I could program like he can, in fact, I would be happy if I could 
+type in as many programs as he has.   Anyway,  there are lots  of 
+useable  programs on this disk.  The sort routines alone make  it 
+worth while.
+     These sort routines are set up so that they can be part of a 
+library and yet be demonsrated by a COM file.  So the PAS file is 
+the  source of the COM file whereas the LIB file is what you  can 
+use  to pull in with your editor at the proper spot.  These three 
+sort programs are compared with each other to give you an idea of 
+their speed.(Look in the front of the PAS file for that info)
+
+1.   SHELL.COM/PAS/LIB   A pascal Shell sort routine.
+
+2.   QSORT.COM/PAS/LIB   A pascal Quick sort routine.
+
+3.   QQSORT.COM/PAS/LIB  A pascal Quicker sort routine.
+
+4.   RECIPE.COM/PAS      Latest version of the recipe program,
+         RCPDAT.MST      many  changes  plus  improvements   for 
+         RCPDAT.XXX      Version 3.2, you will notice it has a 
+         RCPDAT.YYY      much smaller COM file.
+
+5.   NAD4.COM/PAS        Ray is proud of this one, it is from 
+     COMPUTER.NAD        scratch. It is a NAME ADDRESS data entry
+                         program.
+
+6.   PTRS2.COM/PAS       Excellent updated demo for pointers.
+                         It has some interesting ideas. 
+
+I couldn't let Ray do it all so I threw in this little extract.
+
+7.   LONGLINE.COM/PAS    I extracted this out of Ithaca's manual.
+                         It  is  a  demo  on  words  being  added 
+                         togeather into lines.
+
+8.     PTABLE.COM/PAS    I  modified  this  one  for  a  table 
+                         generating demo. Generating a table by
+                         algorithms is quicker that looking up 
+                         a table.
+
+9.   FINDBAD.COM/MAC     The orginal program came from a mag but
+                         this has been heavily modified to run
+                         on CPM 2.2 and to locate the bad sectors
+                         completely  out  of your  way.  Everyone 
+                         needs this one. An excellent utility.
+
+10.  ZCOMPAR.COM/PAS     Bob Harsch came through again for us. He
+              F1.DAT     was trying to compare some programs but 
+              F2.DAT     the first error would kill the compare.
+                         So he sat down and wrote a Pascal/Z 
+                         compare  that  compared ALL the 
+                         differences, HEX,DEC,and CHAR. To run,
+                         change the two programs to compare to
+                         F1.DAT AND F2.DAT and then type ZCOMPAR.
+                         I added these DAT files as a demo, I 
+                         injected one error into the second copy.
+                         So all you have to do is type ZCOMPAR to
+                         see it work.
+
+11.  CURSOR.COM/PAS      I have a SD SALES Video board and wanted
+           .LIB          to use the XYcursor positioning feature.
+                         But when I tried to write it in assembly
+                         I run into some problems. So I said why
+                         not Pascal/Z. This is a DEMO to test the
+                         XYcontrols and the LIB is the subroutine
+                         to put in your library. It works.
+
+12.  XREF.COM/PAS        Ithaca Intersystems donated this to our
+                         group. It is rough but look it over.
+      
+13.  SNOOPY81.CAL        I thought it would be nice to have a
+                         1981 calendar. So I updated Snoopy.
+
+14.  OTHELLO.PAS         This is a project for someone interested
+     OTHELL1.PAS         in advanced Pascal Programing. It is an
+     OTHELL2.PAS         excellent game with a superior algorithm
+     OTHELLIN.PAS        But,it is written in UCSD. So we need it
+                         converted.

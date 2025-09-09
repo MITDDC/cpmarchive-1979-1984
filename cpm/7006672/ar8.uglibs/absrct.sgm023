@@ -1,0 +1,85 @@
+               CONTENTS OF VOLUME #5
+
+  I  am starting to get feedback from the membership now and this 
+disk is the beginning.   I am very happy to pass on most anything 
+that  anyone writes.   I only ask that it work.   If your program 
+has  special requirements be sure and include  that  information.  
+At  first,  I was going to only include source on these disks  so 
+that  I could get more items on them.   But,  so many people  are 
+either just starting out and don't have enough knowledge or can't 
+afford  everything that may be necessary.   So that is why I  put 
+both  source  and running programs on these disks.  That way  the 
+advanced  can modify to their hearts content and yet  the  novice 
+can use the programs.  
+
+      Kenneth Kuller of Eagan, Maine submitted these programs.
+
+1. EXPO.PAS/COM          He  wanted a benchmark program  so  he 
+                         wrote this. It is a good Demo on the use
+                         of exponents.
+2. COMPARE.DOC           Ken feels, as I do, that credit should
+                         be given when due. On disk#1 there is a
+                         UCSD program called Compare that needed
+                         to be converted to Pascal/Z. I didn't
+                         receive the Doc file with the program
+                         but Ken found it.So here it is and the
+                         proper credits are included.
+
+     This next large group was submitted by Scott Custin of
+Washington,DC.
+
+3.   DISASMB.DOC-----Read this first because there are a lot  of 
+     small program associated with this disassembler. It is in
+     MICROSOFT Basic,Version 5.1 which I would not normally use
+     but since it does disassemble TDL plus Z80 plus 8080 plus
+     8085 I figured someone, somewhere would be tickled to get
+     this.
+
+8085      LST            8085      TAB            XREF      BAS
+ZILOG     LST            ZILOG     TAB            XREF      SUB
+INTEL     LST            INTEL     TAB            TDL       LST
+TDL       TAB            LST8085   BAS            LSTINTEL  BAS
+LSTTDL    BAS            LSTZILOG  BAS            TAB8085   BAS
+TABINTEL  BAS            TABTDL    BAS            TABZILOG  BAS
+DISASMB   BAS            
+
+4.   DATE.DOC-----Again, read this first since Scott has included
+     several programs, all dealing with dates. These routines 
+     treat a date as one of a series of consecutive integers.
+     The concept is similar to Julian dates, used by a number of
+     "BIG" computer programs, and has a number of advantages over
+     storing the month, day and year separately.
+
+PROMT     LIB            MAKEDATE  LIB            RMAKEDA  LIB
+BRKDATE   LIB            DASTRLON  LIB            DASTRSH  LIB
+DASTRFIX  LIB            DATE      PAS            DATEFUNC LIB
+
+5.  MISC.DOC-----Yep, read this first. Scott tossed in some odds
+     and ends. You have to give Scott credit, he sure has been
+     creative. Keep this up folks, and we will have a excellent
+     LIBRARY.
+
+GETINT    LIB            CAPCHAR   LIB            PADSTR   LIB
+CAPSTR    LIB            DEPAD     LIB            STRVAL   LIB
+
+6.  HANOI COM/PAS        I included this not for its game value
+                         but it is an excellent Demo on recursive
+                         procedures. If you can see how this works
+                         (its deep) you'll certainly understand
+                         local versus global variables.
+     
+7.  DIS.ASM/DOC          This was given to me for our TDL use.
+                         However, the three or four assemblers
+                         I had available would not assemble it
+                         without massive errors. So if anyone
+                         does make a COM file that works good
+                         be sure and send me a copy. Let me
+                         know what assembler you used also.
+
+8.  CONFER.PAS/COM       Just to show you how long Ray has been
+                         chipping away at Pascal/Z, I thought
+                         I would include this old one.  It 
+                         does have some useful ideas and can
+                         be used as is. It sets up a schedule
+                         for a conference.
+

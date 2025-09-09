@@ -1,0 +1,82 @@
+A FIX (AND SOME COMMENTS) FOR BYE V7.9
+AS IT APPEARS IN CP-MIG XACCESS
+
+1.  Baud Rate Divisors
+
+Every recent version of BYE that I've noticed on various RCPM'S and
+here in CP-MIG has included equates for the WD8250 UART.  When I
+got my copy, it didn't work, so I did a bit of detective work, and
+the main thing I found was that the equates for the baud rate divisors
+are all wrong.	I looked them up in the back of the H89 operations manual,
+changed them to the correct values, and got a working BYE program.
+The correct values appear below:
+
+;******************BAUD RATE DIVISORS*********************
+;
+BR300LS EQU	080H	;300 BAUD
+BR300MS EQU	001H	
+BR450LS EQU	000H	;450 BAUD
+BR450MS EQU	001H	
+BR600LS EQU	0C0H	;600 BAUD
+BR600MS EQU	000H	
+BR120LS EQU	060H	;1200 BAUD
+BR120MS EQU	000H
+
+Note:  While these values are correct from the book, and I am sure
+of the 300 baud setting from testing, values above 450 haven't been
+tested as I don't have a modem that will go that fast.
+
+In addition, there is a problem with 450 baud that I haven't been able
+to locate:  some characters (maybe 1 in 100 or so) are garbled.  I am sure
+it's not the modem as I can normally operate at 450 baud with no problem.
+If anybody else has the same problem and figures out what's wrong, I
+would appreciate hearing about it.
+
+By the way, for anybody who hasn't tried it, most modems (I have used
+the UDS 103, Hayes Smartmodem, and Radio Shack Modem II) which are not
+supposed to operate above 300 baud work just fine at 450.  You have to
+be able to set your UART to this baud rate, however, which is not pos-
+sible for some, but which is easy with the 8250.
+
+2.  Carrier Detection
+
+The value given below for P2CTS (Clear to Send) is actually the mask
+for RLSD (Received Line Signal Detect), but this normally doesn't matter
+if your modem supplies this signal.
+
+If you don't have an auto answer modem, however, BYE can be made to
+work manually (you have to turn on the modem) by changing this value
+to 10H, which is the actual mask for CTS, or alternately, commenting
+out the areas in BYE where carrier checks are made.  I used the first
+method for a while with a UDS 103 modem (manual answer), which doesn't
+supply the RLSD signal.
+
+;****************MODEM STATUS MASKS***********************
+;
+P2DSR	EQU	20H	;DATA SET READY
+P2CTS	EQU	080H	;CARRIER DETECT
+P2RDET	EQU	040H	;RING DETECT
+
+3. Hayes Smartmodem
+
+It seems to me that a lot of the conditional equates for the Hayes
+Smartmodem in the version here are a bit superfluous. I have used
+the BYE program with 2 H89's and an H8 (8250 UARTS), all with
+Smartmodems.  The conditionals were set for WD8250 and NORING
+(on a BYE version without Smartmodem equates), and it worked fine.
+
+I haven't tested this version, and it may work fine too, but there
+is an implication that special port assignments and modem status
+masks, etc., are required for the Smartmodem.  As far as the UART
+is concerned, the Smartmodem is just another external modem, and
+the way BYE handles the modem in the HANGUP routine (turn DTR/RTS
+off and back on) is sufficient for the Smartmodem.  Make sure, though
+that the modem is set not to echo characters and result codes to
+the local console.  If a result code is sent when the modem answers,
+the BYE program will determine the baud rate from that and start
+sending the HOW MANY NULLS? question immediately, making it impos-
+sible to set the baud rate to match the incoming call.
+
+Good luck!
+				-- Skip Gilbrech 71445,534
+

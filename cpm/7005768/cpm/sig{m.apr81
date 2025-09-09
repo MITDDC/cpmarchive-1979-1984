@@ -1,0 +1,191 @@
+    
+                   The SIG/M Report
+
+                          By   
+
+                   Henry "Hank" Kee
+
+
+ By the time the Trenton Computer Festival rolls around, the 
+SIG/M  library will have grown to at least 18 volumes.  Some 
+of the latest releases  are listed below.  These volumes may 
+be  picked  up  at the Trenton  Computer  Festival  for  the 
+standard donation of $4 each.   Due to time restrictions, no 
+copying  onto your own media will be possible at TCF.   This 
+may  be done for the usual donation of $1 per volume at  the 
+next    NYACC   Computer   Flea   Market   or   ACG-NJ    S-
+100/SIG/M/8080/Z-80/TRS-80 Users Group Meeting.   All monies 
+go back into the support of the SIG/M group.
+
+ We (Bruce, Bill and myself) started this effort about seven 
+months ago and we have come a long way.  We have developed a 
+network  of SIG/M co-ordinators throughout the  country.  We 
+need  your  continual support.  Keep up  with  your  program 
+contributions.
+
+Honor Roll :
+
+ From time to time I would like to select my nominations for 
+the Honor Roll of contributed software from both the CP/M UG 
+and  SIG/M libraries.  For this month I have chosen  Basic-E 
+from  volume  5 of the CP/M UG and Expanded  Adventure  from 
+volume  #11  of the SIG/M group.  The choice of  Basic-E  is 
+quite  obvious.  It has been a major work which in turn  has 
+spawned   CBASIC  and  CBASIC-2  which  are  among  accepted 
+software  systems widely used by both the hobbiests as  well 
+as  business people.  Gordon Eubanks has made a  significant 
+contribution to the state of the art of microcomputing. 
+
+ Within a very short space of time,  the Expanded  Adventure 
+in  our library has been the most often requested for  copy. 
+Mike  Goetz  of  the  NYACC  did  a  very  credible  job  of 
+converting the original implementation written in Fortran 77 
+by  hand onto CP/M.  This version supercedes a like  version 
+contained  in  volume 3 of the SIG/M  library.  This  latest 
+release  will determine if the  processing CPU is either  an 
+8080   or   Z80  processor  and  selects   the   appropriate 
+instruction   set  accordingly  without  user  intervention. 
+Naturally the Z80 version runs faster than the 8080 version. 
+For  those who wish to tinker with the original source  code 
+as  written by Willie Crowthers it is contained in volume  2 
+of the SIG/M library.
+
+            *** N E W    R E L E A S E S ***
+
+ Volume  12 is a catch-up volume.  It is a  cross  reference 
+index of the CP/M UG volumes 1-42 and the SIG/M volumes 1-3. 
+This  should be used with volume 15 which is a collection of 
+all the documentation to date.
+
+SIG/M volume 12		cross reference index of CP/M UG volumes 1-47
+			and SIG/M volumes 1-11
+
+number	name		size	description
+
+12.1	CATALOG.SRT	23KIcross reference of CP/M VOLUMES 1-47
+12.2	CAT.COM		 1K	               and SIG/M VOLUMES 1-11
+12.3	MAST.CAT	34K	     /
+12.4	WIDE.COM	 1K	    /
+12.5	P4		24K	   /
+12.6	P5		24K	  /
+12.7	P6		24K	 /
+12.8	P7		24K	/
+
+  
+ Volume  13  contains  a very useful  HELP  file  system,  a 
+variant of FORTH, and a MITS to CP/M file conversion system. 
+A  super DIRectory system is available so that one  can  see 
+the disk allocaton requirements of each entry as well as the 
+total  disk space available without resorting to a  separate 
+pass of STAT.  A space compression utility was submitted for 
+those  of  you who want to minimize disk  storage  usage.  A 
+Fortran  utility is available to manipulate arrays.  It  was 
+done with a minimum amount of code. Finally a loopback check 
+program to verify a PMMI board.
+
+
+SIG/M volume 13		a) MITS to CP/M file conversion system
+			b) HELP file system
+			c) related system support programs
+                        d) FIG-FORTH 1.1 system
+
+number	name		size	description
+
+13.1	MITSCNVT.ASM	28K	MITS to CP/M file conversion
+13.2	MITSCNVT.COM	 7K	   /
+13.3	MITSCNVT.CPM	 3K	  /
+13.4	MITSCNVT.DOC	 7K	 /
+13.5	MITSCNVT.HEX	 8K	/
+13.6	ABORTSUB.COM	 2K	HELP file system
+13.7	HELP.ASM	13K	       /
+13.8	SYSLIB.HLP	37K	      /
+13.9	SYSLIB.REL	 9K	     /
+13.10	HELP.COM	 2K	    /
+13.11	MASM.SUB	 1K	   /
+13.12	PHELP.COM	 2K	  /
+13.13	PHELP.MAC	 6K	 /
+13.14	HELP.DOC	 4K	/
+13.15	SD-2/6.ASM	18K	updated SUPER DIRECTORY display
+13.16	SD.COM		 2K	/	
+13.17	ENTAB.ASM	 6K	space suppression program
+13.18	ENTAB.COM	 1K	/
+13.19	UTIL.FOR	 2K	FORTRAN array handling subroutine
+13.20	LOOPBAK1.BAS	 2K	PMMI loop back test
+13.21   FORTH11.ASM     40K     FIG-FORTH version 1.1
+13.22   FORTH11.COM     23K      /
+13.23   FORTH11.DOC      4K     /  
+
+
+ Using  the  HELP file system,  the author has built a  very 
+impressive repetoire of software references.
+
+
+SIG/M volume 14		HELP file system on major system level software
+
+number	name		size	description
+
+14.1	HELP.COM	 2K	HELP file system describing
+14.2	HELP.HLP	 7K	   HELP file system
+14.3	CPM.HLP		31K	   CP/M 1.4
+14.4	CPM2.HLP	37K	   CP/M 2.2
+14.5	ASM.HLP		 4K	   CP/M 1.4 ASM (assembler)
+14.6	ASM2.HLP	 4K	   CP/M 2.2 ASM (assembler)
+14.7	MAC.HLP		 8K	   CP/M MAC (macro assembler)
+14.8	MBASIC.HLP	21K	   Microsoft BASIC
+14.9	CBASIC.HLP	14K	   CBasic
+14.10	EBASIC.HLP	12K	   Basic-E
+or.11	CBASIC2.HLP	22K	   CBasic-2
+14.12	MASM.HLP	 8K	   MACRO-80 (M80)
+14.13	ALGOLM.HLP	13K	   ALGOL-M
+14.14	C.HLP		17K	   BDS 'C'
+14.15	FORTRAN.HLP	 7K	   Microsoft Fortran
+14.16	PASCAL.HLP	10K	   PASCAL/MT
+
+
+ As previously stated,  volume 15 is a collation of all  the 
+documentation  to date corresponding to the cross references 
+in volume 12. This diskette also contains the same materials 
+published by the NYACC in a nicely bound volume. 
+
+
+SIG/M	volume 15	documentation catalog of CP/M UG volumes 1-42
+			and SIG/M volumes 1-3 as published by the NYACC
+
+ This  volume  contains  the  various   *.DOC,   ABSTRACT.*, 
+READ.ME,  etc  files  as contained in the CP/M UG and  SIG/M 
+volumes.  This  was compiled and published by the  NYACC  to 
+facilitate ready reference of public domain software for the 
+micro-hobbiests.  SIG/M volume 12 is the corresponding cross 
+reference to this release.
+
+       CATALOG.nnn refers to a CP/M UG release volume nnn
+       SIGMLOG.nnn refers to a SIG/M release volume nnn
+
+
+ Volume 16 is a collection of CP/M utilities. The submission 
+of  materials has improved with the quantity and quality  of 
+documentation.
+
+SIG/M     volume 16      miscellaneous CP/M utilities  
+
+number    name           size      description
+
+16.1      BYE67.ASM      39K       remote console program for PMMI
+16.2      BYE67.DOC      12K       /
+16.3      MLIST42.ASM    12K       multiple file list utility
+16.4      DU-V75.OBJ      6K       disk utility system
+16.5      DU-V75.DOC      5K        /
+16.6      DU-V75.ASM     40K       /
+16.7      FINDBD42.ASM   33K       creates file of badspots
+16.8      APLMODEM.ASM   36K       CP/M file transfer for Apple 2
+                                   using DC Hayes Micromodem 2
+16.9      COMAND.LIB      7K       console string processor
+16.10     COMBINE.ASM     7K       merges multiple files
+16.11     FILE-XT2.ASM    8K       system disk utility display
+16.12     MNEMON21.ASM   28K       multi-pass CP/M memory tester
+
+
+ There  will  be comments on the other volumes of the  SIG/M 
+library  at  a  later  date.  Please  let  me  know  of  any 
+suggestions you may have to improve the current SIG/M format 
+of distribution as well as materials submitted to date.

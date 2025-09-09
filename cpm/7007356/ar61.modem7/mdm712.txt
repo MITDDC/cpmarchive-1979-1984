@@ -1,0 +1,64 @@
+TOPIC :  MDM712 PHONE MODEM PROGRAM GENERAL INTEREST DATA
+
+FROM  :  IRV HOFF W6FFC
+
+DATE  :  27 JULY 83
+
+
+     MDM712 is the latest in the "MODEM7" telephone modem series.  After
+MODEM 7.98, the program became known as MDM700, etc.  At that time the
+external macro library was combined into the source code plus other
+changes.  Numerous overlay files were added for various computers to
+make the program useful for a large number of different systems.  Orig-
+inally it worked only with the PMMI plug-in modem for the S-100 bus.  It
+now also supports the Hayes 300 and 1200 and U. S. Robotics modems.  It
+is the only modem program that offers auto-dialing and auto-continuous
+redialing for all these modems.  It also supports up to two different
+alternate long distance systems such as 'ALLNET', 'MCI' or 'SPRINT'.  It
+can also auto-dial for TYNMET, etc.
+
+     Overlay files are included for  Apple, (several versions), Altos,
+Datapoint 1560, Heath H89, Heath -100 series, Hewlett Packard 125, In-
+terfacer 3/4, Kaypro, Morrow, NEC, Osborne OS-1, Osborne Executive One,
+Otrona, PMMI, Telecon Zorba, Televideo, Xerox and Zenith Z90 and -100
+series.  There is also a "general purpose" overlay to readily adapt to
+other systems not mentioned.  An additional file makes it simple to
+change the phone number library.  Others are being added that may not
+be mentioned in this list.
+
+     The MDM712.UPD file lists the most recent changes that have been
+added to the program.  MDM712.INF explains what each of the programs is
+for, plus has some comments similar to these, regarding how to use the
+overlays in the easiest manner.  Under normal circumstances you would
+have no need for the source code, as the overlays have the beginning of
+the program.  This includes all the various options you may select.
+
+     Let's say you have a Heath H89, for example.  You would wish to get
+(download) the following files:
+
+     MDM712.COM		(Master object code, ready to use for PMMI)
+     M712H8.ASM		(Heath overlay file)
+     M712NM.ASM		(to easily change the phone number library
+			   if using the Smartmodem or Robotics)
+
+and perhaps MDM712.UPD (update file) and MDM712.DOC (instruction manual):
+
+     You would then edit the options in M712H8.ASM if not already set
+the way you prefer, then assemble it (ASM.COM is fine).  Refer to the
+instructions in the overlay file to combine the MDM712.COM file with the
+M712H8.HEX file you just got when assembling M712H8.ASM.  All this will
+only take a few minutes.   It is actually very simple.  The program is
+then ready to use.  If unfamilar with this type modem program, read the
+MDM712.DOC file and try it out.
+
+     0103H  FF for PMMI, 00 if not PMMI
+     0104H  FF for Hayes Smartmodem 300 or 1200 or US Robotics
+     0105H  54 for touch-tone dialing or 50 for pulse-dialing
+                   (only applicable for the Hayes or Robotics)	
+
+     These bytes are automatically selected when edited into the approp-
+riate overlay.
+
+
+					- Irv Hoff
+

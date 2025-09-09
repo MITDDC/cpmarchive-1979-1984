@@ -1,0 +1,785 @@
+			BATCH Reference Manual
+
+		    Writing started Feb. 4, 1981
+		    Revised Feb. 18, 1981
+
+			by:
+			Daniel Ross
+			Succinct Systems
+			1346 River St.
+			Santa Cruz, Calif. 95060
+			phone (408) 426-4197
+
+This document is entered into the public domain by its author, Daniel
+Ross.  Please do not remove this notice.
+
+
+INTRODUCTION
+------------
+
+BATCH is a user program which runs on 8080, 8085, or Z80 CP/M systems.
+It copies a small amount of code, and some textual data supplied by the
+user, into a user-designated "safe" region of main memory.  Then it
+temporarily modifies some of the entry addresses of CP/M BIOS, so that
+the copied code will intercept subsequent requests for character input.
+Instead of normal character input from the console terminal, character
+input will be taken from the textual data that had been copied into
+safe memory.  Thus any repetitive aspect of typing, either to the CP/M
+Console Command Processor or to any other user program, can be
+preprogrammed into a text file to be supplied to BATCH.
+
+Certain sequences of input characters are recognized as commands to
+BATCH.  One command changes the source of character input, to be the
+console terminal.  Other commands change the source of character input,
+to be the stored textual data.  By including the appropriate commands
+in the stored textual data, it is possible to intermix typed input with
+preprogrammed input.  Thus, if part of the input is constant and part
+is variable, the constant part can be preprogrammed with provision for
+typing in the variable part.  The typed-in information can either be
+passed along directly to CP/M or a user program, or it can be stored
+into a program variable within the BATCH processor, to be fetched later
+and used perhaps several times.  Observe that the value of any BATCH
+variable always is a character string.
+
+One characteristic of using computers, is that the best-laid plans of
+mice and men gang oft agley.  If some preprogrammed sequence of
+computer operation has gung agley, it may become necessary to intervene
+in some unplanned manner from the console terminal.  BATCH can accept
+unsolicited character input from the console terminal.  If the
+unsolicited characters are commands to BATCH, BATCH will interpret them
+and respond accordingly.  Any other unsolicited characters are passed
+along to CP/M or to the currently running user program, just as though
+the unsolicited characters had been typed in with BATCH absent.  Any
+unsolicited character which does not start a command to BATCH, also
+changes the source of character input, to be the console terminal.
+Thus once unsolicited intervention occurs, that intervention can
+continue until BATCH is commanded to resume preprogrammed input.
+Alternatively, BATCH may be commanded to terminate its operation
+prematurely.
+
+In addition to the features mentioned above, BATCH has 2 commands for
+generating typed output.
+
+The comment command is intended for use in typing out lengthy
+explanations or instructions to the human operator.  Comment commands
+are interpreted out of sequence from any other BATCH commands.  All
+comments are typed out at the start of BATCH execution, prior to
+interpreting any other BATCH commands.  Comment text is not copied into
+safe memory; therefore comments can be lengthy without requiring that a
+large amount of safe memory be withdrawn from accessibility to other
+CP/M user programs.
+
+The output command is intended for use in typing out brief prompting
+messages prior to accepting typed input, or for other applications
+involving only a small amount of textual data.  Text used for output is
+copied into safe memory.  Output commands are interpreted in sequence
+with the other BATCH commands.
+
+BATCH terminates operation either in response to a command, or when all
+the preprogrammed text has been supplied as character input.  When
+BATCH terminates, it restores the original entry addresses of CP/M
+BIOS, so that normal character input from the console terminal will
+resume.
+
+The distribution diskette contains 2 versions of the BATCH program.
+The version with full capabilities requires (hex) 3DD = (decimal) 989
+bytes of safe memory, exclusive of the safe memory needed to hold the
+textual data.  A version with reduced capabilities requires (hex) 1E2 =
+(decimal) 482 bytes of safe memory, exclusive of the safe memory
+needed to hold the textual data.  The reduced version lacks the output
+command and lacks the program variables.
+
+When you are deciding whether to use BATCH at all, or choosing which
+version of BATCH to use, consider some of the possible reasons for
+using BATCH:
+
+   To reduce the tedium of repetitive typing of the same input, or of
+   input which is almost the same except for a few variables.
+
+   To prepare a canned procedure of operations, for use by untrained
+   personnel.
+
+   To eliminate typing errors in standard sequences of typed input.
+
+   To document a sequence of operations, with the aid of the BATCH
+   comment and output commands.
+
+
+HOW TO START BATCH PROCESSING
+-----------------------------
+
+Before BATCH can be used at any particular computer installation, the
+BATCH program must be customized for that installation.  A later
+section of this manual describes how to perform the customization.  In
+the remainder of this section, we will assume that a customized BATCH
+program already exists.
+
+Any CP/M-compatible text editor program may be used to prepare a file
+of preprogrammed textual data.  No special editing precautions are
+needed when preparing the file.  In particular:
+
+   Normal CP/M text files contain a line feed character following
+   every carriage return character.  However, users at the console
+   terminal are not expected to type in line feed after carriage
+   return.  BATCH automatically deletes a line feed if it follows
+   carriage return, but permits isolated line feed characters to remain
+   in the text file.
+
+   BATCH automatically appends a command to terminate BATCH processing,
+   after the end of the text in the file.
+
+The text file may have any name, and may have any file name extension.
+(The file name extension is the 3 characters following the period.  The
+"file name extension" also may be called the "file type".)  Let us
+assume for example that the file is named PREPROG.RAM.  Then BATCH
+processing is initiated by typing in the CP/M command line:
+BATCH PREPROG.RAM
+If the file name extension is omitted from the CP/M command line, as in:
+BATCH PREPROG
+then BATCH assumes that the file has the default file name extension
+BAT.
+
+Once started, BATCH processing continues until commanded to stop, or
+until all the preprogrammed text has been supplied as input.
+
+
+EXAMPLE BATCH PROCESSING
+------------------------
+
+Before proceeding with the explanation of BATCH, it might be helpful to
+try running an example BATCH program.
+
+Please copy files VARBATCH.COM and EXAMPLE.BAT, from the distribution
+diskette to some other diskette that you use for scratchwork.  Although
+you might later decide to rename file VARBATCH.COM, or to customize it,
+the example should be run with the original file name VARBATCH.COM and
+no customization.  Also, you must copy CP/M program DDT.COM onto the
+scratch diskette.  DDT.COM is not supplied on the distribution
+diskette.
+
+If necessary, type in the CP/M command line which will make CP/M use
+the scratch diskette as the CP/M "system" diskette.  Then start BATCH
+execution by typing in the CP/M command line:
+VARBATCH EXAMPLE
+The computer will prompt you for the remaining type-in.
+
+If the example BATCH program worked properly for you, fine!  If it did
+not work properly, do not give up.  Skip over the example for now,
+continue reading this manual, and return to the example at some later
+convenient time.  There is a section near the end of this manual which
+describes some possible reasons why BATCH might not have worked, and
+suggests remedies for the problems.
+
+
+COMMANDS
+--------
+
+Each command to BATCH consists of an Escape character followed by a
+single letter which distinguishes the various commands.
+
+The Escape character is not the ASCII ESC (hex value 1B), because some
+text editor programs interpret ESC, thereby preventing ESC from being
+included in the stored text.  Instead, the Escape character is ASCII
+SOH (Ctrl-A, hex value 01), chosen because it is easy to type and
+because it is not in frequent use for any other purpose.
+
+The Escape character may be changed as part of the optional
+customization of BATCH.  The chosen Escape character should be a
+nonprinting control character, so that it will be least likely to have
+any other use in conventional programming languages.
+
+The commands are:
+
+   Escape C				(comment)
+
+      The subsequent text is interpreted to be a comment, and is typed
+      out on the console terminal.  The comment extends to the next
+      BATCH command, or to the end of the file of preprogrammed
+      textual data.
+
+      Comment commands are interpreted out of sequence from any other
+      BATCH commands.  All comments are typed out at the start of
+      BATCH execution.  The comment text is not copied into safe
+      memory.
+
+   Escape O				(typed output)
+
+      The subsequent text is typed out on the console terminal.
+      Output text extends to the next BATCH command, or to the end of
+      the file of preprogrammed textual data.
+
+      Output commands are interpreted in sequence with other BATCH
+      commands.  The text used for output is copied into safe memory.
+
+      The reduced version of BATCH lacks this command.
+
+   Escape I				(typed input)
+
+      This command has differing interpretations, depending upon the
+      current source of character input.
+
+      If the current source is preprogrammed text, the source is
+      changed immediately to be the console terminal.
+
+      If the current source is the console terminal being used normally,
+      no change occurs.
+
+      If the current normal source is preprogrammed text, but this
+      command is typed in as unsolicited input from the console
+      terminal, then the source will remain preprogrammed text until
+      the end of the current line.  After the end of the line, the
+      source will be changed to be the console terminal.  The line can
+      be ended by any of the following characters:
+	 carriage return
+	 Ctrl-U
+	 Ctrl-C
+      Observe that immediate change to console input occurs if any
+      unsolicited character except Escape is typed in.
+
+      (See also TYPING CONVENTIONS below.)
+
+   Escape B				(batch input)
+
+      This command changes the source to be preprogrammed text.  If the
+      source already is preprogrammed text, this command has no effect
+      other than to cancel out any planned change that was due to an
+      unsolicited Escape I command having been typed in.
+
+      Before explaining how to use this command, it is necessary to
+      describe the typing conventions.
+
+      (TYPING CONVENTIONS)
+
+      Once the console terminal becomes the source of input, it remains
+      the source until Escape B, Escape Z, Ctrl-C, or carriage return
+      is typed in.  If several lines of input are to be typed in, all
+      but the last line should be ended with line feed instead of
+      carriage return.  BATCH passes along a carriage return in place
+      of the line feed that was typed in, but does not change the
+      source of character input.
+
+      If an unsolicited Ctrl-C is typed in from the console terminal,
+      BATCH passes along the Ctrl-C character and also immediately
+      terminates all BATCH processing.
+
+      Thus the BATCH command Escape B is needed only to change the
+      source without passing along either carriage return or Ctrl-C.
+      It makes possible the typing in of only part of a line, with the
+      remainder of the line coming from the preprogrammed text.
+
+   Escape R				(ring for attention)
+
+      This command enables a mechanism which may be actuated later.  If
+      enabled, the bell on the console terminal will ring whenever the
+      source of input changes from preprogrammed text to the console
+      terminal, if the change was due to preprogramming.  The bell
+      also will ring at the end of BATCH processing.  This permits
+      BATCH processing to run unattended, yet have the human operator
+      alerted when intervention is required.
+
+      The bell does not ring if the source is changed due to unsolicited
+      type-in.  In that circumstance the human operator obviously does
+      not need to be alerted, and there is no point in being any
+      noisier than necessary.
+
+   Escape Q				(quiet)
+
+      This command disables the bell-ringing mechanism.
+
+   Escape Y				("yes" from CONST)
+   Escape N				("no" from CONST)
+
+      CONST is called by some other user programs, when they want to
+      detect unsolicited type-in.  Generally, they stop execution
+      when unsolicited type-in occurs.  Unsolicited type-in is defined
+      to be type-in which occurs prior to any programmed request for
+      type-in.  Thus, unsolicited type-in is distinguished from
+      requested type-in by the time at which the typed-in character
+      first becomes available to the user program.  But character
+      input from BATCH preprogrammed text always is available in
+      advance of any request, because the text had been stored in safe
+      memory prior to executing the user programs.  Therefore, BATCH
+      must be instructed how to respond to queries about time-
+      dependent data availability.
+
+      The above commands determine what the BATCH version of BIOS
+      procedure CONST passes back as an output parameter, when the
+      source of character input is preprogrammed text.  Escape Y causes
+      CONST to pass back value (decimal) 255 = (hex) FF.  Escape N
+      causes CONST to pass back value 0.
+
+      If the source of character input is the console terminal, whether
+      the input is normal or due to an unsolicited character being
+      typed in, CONST will pass back an output parameter which is
+      appropriate for the current state of type-in.  However, if an
+      unsolicited BATCH command is being typed in, the command is
+      intended only for interpretation by BATCH, and therefore does not
+      directly affect the output parameter of CONST.
+
+   Escape Z				(terminate BATCH processing)
+
+      This command causes BATCH processing to terminate immediately.
+      The entry addresses of BIOS are restored to their former values,
+      and all subsequent character input will come from the console
+      terminal.
+
+   Escape S0				(store into BATCH variable 0)
+      to
+   Escape S9				(store into BATCH variable 9)
+
+      The subsequent text is stored into the designated variable.
+      Storage continues until the carriage return which ends the input
+      line.  A Ctrl-C character in the line, or any BATCH commands in
+      the line, are stored without interpretation; they will be
+      interpreted when they are fetched back from the variable.
+
+      Assume for the moment that the source of character input is
+      preprogrammed text.  Then unsolicited type-in of any of the
+      commands Escape S0 to Escape S9, causes immediate change of the
+      source of character input, to be the console terminal.  Console
+      input continues to the end of the line (coinciding with the end
+      of the value of the variable), at which time the source of
+      character input reverts back to being preprogrammed text.
+
+      Preprogrammed storage into variables can be used to provide
+      initial default values, which later can be overridden by type-in
+      from the console terminal.  In the absence of any storage into
+      variables, the BATCH processor has the following initial values:
+
+	 Variable 0 through variable 6 are initialized to the empty
+	 string, consisting of no characters.
+
+	 Variable 7 is initialized to a string consisting of the single
+	 character Ctrl-P.
+
+	 Variable 8 is initialized to a string consisting of the single
+	 character Ctrl-Z.
+
+	 Variable 9 is initialized to a string consisting of the single
+	 character Ctrl-C.
+
+      It is not possible to store into a variable and fetch from a
+      variable simultaneously.
+
+      The reduced version of BATCH lacks this set of commands.
+
+   Escape F0				(fetch from BATCH variable 0)
+      to
+   Escape F9				(fetch from BATCH variable 9)
+
+      The designated variable becomes the source of character input.
+      Characters are fetched from the variable up to, but not
+      including, the carriage return that ends the value of the
+      variable.  After fetching from the variable, subsequent
+      character input is taken from its previous source.
+
+      Any BATCH commands that were stored as part of the value of the
+      variable, are interpreted when the value is fetched.  In
+      particular, the value of one variable may include BATCH commands
+      to fetch from other variables.  (Caution:  In order to limit the
+      amount of code in the BATCH processor, there is no built-in test
+      to prevent recursive fetching from the same variable.  You just
+      will have to exercise care, because recursive fetching is
+      guaranteed to have unpleasant consequences.)
+
+      Any line feed character fetched from a variable, is passed along
+      as a carriage return to CP/M or the user program.
+
+      The reduced version of BATCH lacks this set of commands.
+
+   Escape A0				(answer into BATCH variable 0)
+      to
+   Escape A9				(answer into BATCH variable 9)
+
+      These commands have the same effect as Escape S0 to Escape S9,
+      except that the source of character input is changed to be the
+      console terminal, until the end of the value of the variable
+      being stored.  After storing into the variable, subsequent
+      character input is taken from its previous source.
+
+      These commands are intended for use in the preprogrammed text.
+      They combine the 2 functions of changing the source of character
+      input, and designating the variable for storage, so that the
+      human operator needs to type in only the value of the designated
+      variable.
+
+      The reduced version of BATCH lacks this set of commands.
+
+   Escape V				(variable choice of a variable)
+
+      After this command, the next character input always is taken
+      from the console terminal.  The input character must be a decimal
+      digit, 0 to 9.  The digit designates the choice of program
+      variable to become the source for subsequent character input.
+      Fetching from the designated variable is performed in the same
+      manner as though the corresponding Escape Fn command had been
+      used (n = 0, ..., 9).
+
+      This command is intended for use in the preprogrammed text.  It
+      provides a means whereby the human operator can control the
+      branching of BATCH processing, merely by typing in a single
+      digit.
+
+      The reduced version of BATCH lacks this command.
+
+   Escape X				(error, or no-op)
+
+      This command has no effect on BATCH.  It is useful if you already
+      have typed in Escape, then change your mind and decide that you
+      do not want to type in any other command to BATCH.
+
+   Escape any-other-character		(invalid command)
+
+      If the source of character input is preprogrammed text, an
+      invalid command causes immediate termination of BATCH
+      processing.
+
+      If the source of character input is the console terminal, then
+      BATCH rings the bell and waits for a valid command letter to be
+      typed in.
+
+
+SAFE MEMORY
+-----------
+
+BATCH starts operation as a conventional user program.  That program
+copies part of itself into "safe" memory, and then terminates execution
+as a conventional user program.  The part that was copied into safe
+memory, will execute whenever CP/M subsequently calls BIOS procedures
+CONST or CONIN.  Since other user programs may be executing at that
+time, the safe memory must be chosen such that it will not be affected
+by the normal operation of CP/M or the other user programs.
+
+The choice of where that safe memory is located, depends upon the
+particulars of the computer installation, the version of CP/M, and the
+BIOS being used.  Therefore the determination of addresses for safe
+memory, is a required customization of the BATCH program.
+
+A recommended, but not required, location for safe memory is:  starting
+just after the end of BIOS, and ending at the end of actually existing
+memory.  The customization code may be written to accept a single
+version of CP/M and BIOS, running in differing amounts of main memory.
+For example, it may accept 32K, 48K, and 64K versions of CP/M, by using
+the contents of the word at address 0006 to find the starting address
+of BDOS.
+
+
+SOURCE CODE FILES
+-----------------
+
+The BATCH program is assembled from 5 files of source code.  2 of the
+files, named COMPENS8.SIL and SMALCPLR.SIL, contain declarations of
+general-purpose macros.  These copyrighted files are standard
+components of every program written in the systems implementation
+language of the Succinct Systems macro assembler SIL80Z80.
+
+The remaining 3 files are specific to the BATCH program.  The files
+are named VARBATCH.1, VARBATCH.2, and VARBATCH.3 for the full version
+of BATCH, or BATCH.1, BATCH.2, and BATCH.3 for the reduced version of
+BATCH.  All files named VARBATCH or BATCH are in the public domain.
+Unless there is need to distinguish VARBATCH from BATCH, just the name
+BATCH will be used in the following discussion.
+
+File BATCH.1 contains the data and code which program BATCH will copy
+into safe memory.
+
+File BATCH.3 contains the code which performs the copying, and which
+reads the file of preprogrammed textual data.  The code that is
+assembled from file BATCH.3, executes as a conventional user program.
+
+Before the code from file BATCH.3 can copy the data and code from file
+BATCH.1 into safe memory, all the internal address references in the
+BATCH.1 data and code must be relocated to the newly-discovered
+addresses in safe memory.  In order to distinguish the constant
+information (data or code) from the relocatable addresses, there exists
+a second copy of this data and code.  The second copy is assembled from
+file BATCH.2, at different addresses than the data and code from file
+BATCH.1.  The code from file BATCH.3 compares these 2 copies.  Where
+they are alike, the information is constant.  Where they differ, the
+addresses in the copy from file BATCH.1 must be relocated.  After the
+comparison and relocation has been completed, the copy from file
+BATCH.2 is of no further use, and is ignored.
+
+File BATCH.2 is created from file BATCH.1 by translating all lower case
+letters to upper case.  The translation may be performed by using the
+"U" option in either CP/M program PIP.COM or CP/M program ED.COM.  Every
+statement label in file BATCH.1 includes at least 1 lower case letter,
+so translation to upper case creates a completely new set of statement
+labels.  Thus there are no naming conflicts when the source code from
+files BATCH.1 and BATCH.2 are assembled together (as 2 of the total of
+5 source code files).
+
+
+INTERNAL OPERATION
+------------------
+
+When BATCH starts execution as a conventional user program, it performs
+the following steps in sequence:
+
+1.  Open the file of preprogrammed textual data.
+
+2.  Discover the address of safe memory.  This step is customized for
+    each computer installation.
+
+3.  Relocate the addresses in the data and code which later will be
+    copied into safe memory.
+
+4.  Copy some of the CP/M BIOS entry addresses, from BIOS to the data
+    which later will be copied into safe memory.
+
+5.  Copy the data and code into safe memory.
+
+6.  Read the file of preprogrammed textual data, process it (typing out
+    and then deleting comments, deleting line feeds after carriage
+    return, appending the Escape Z command), and copy it into safe
+    memory following the code in safe memory.
+
+7.  Close the file of preprogrammed textual data.
+
+8.  Copy the entry addresses of the BATCH versions of procedures CONST
+    and CONIN, into CP/M BIOS.  This instates the BATCH code in safe
+    memory, as the new provider of character input.  The BATCH code in
+    safe memory, decides whether the source of subsequent character
+    input is to be preprogrammed text or the console terminal.
+
+9.  Terminate execution as a conventional user program.  As a result,
+    the CP/M Console Command Processor starts execution.  The Console
+    Command Processor calls the BATCH version of procedure CONIN for its
+    first character input.
+
+
+CUSTOMIZATION
+-------------
+
+All instructions in the preassembled object code version of the BATCH
+program, are executable on 8080, 8085, and Z80 computers.
+
+In addition to the required customization, BATCH also has provision for
+some optional customization.  None of the customization requires
+reassembling the BATCH program.
+
+The preassembled object code version of the BATCH program, starts at
+memory address (hex) 0100.  The first few bytes of the program are:
+
+0100:	An instruction which transfers execution to the start of the
+	main portion of BATCH.
+
+0103:	A word which ultimately must contain the starting address of
+	safe memory.  If the address is a known constant, it may be
+	patched directly into this word, so that no address calculation
+	will be required.  If the address is variable, a customized
+	procedure must be written to calculate the address and store
+	the result into this word.
+
+0105:	A word which ultimately must contain the size in bytes of safe
+	memory.  If the size is a known constant, it may be patched
+	directly into this word, so that no size calculation will be
+	required.  If the size is variable, a customized procedure must
+	be written to calculate the size and store the result into this
+	word.
+
+0107:	A word which already contains the size in bytes of the BATCH
+	data and code that will be copied into safe memory.  Safe
+	memory must be at least this size, and must have whatever
+	additional space is needed to hold the preprogrammed text.  If
+	safe memory is too small, the BATCH program will not execute
+	correctly.
+
+0109:	These 2 words contain the addresses of the 2 copies of the data
+and	and code, one of which will be copied into safe memory, and the
+010B:	other of which is used to distinguish relocatable addresses.
+	These words are of interest only if optional customization is
+	to be performed.
+
+010D:	This word contains the address of the customization procedure
+	which calculates the address and size of safe memory.  The
+	contents of this word must not be changed.  Instead, you should
+	examine this word to determine where to assemble your
+	customization procedure.
+
+	You must provide some customization procedure, even if both the
+	address and the size of safe memory are known constants that
+	have been patched into the words at addresses 0103 and 0105.
+	In that case, the customization procedure may consist of just
+	the single instruction:   RET
+
+	There already exists a customization procedure at the designated
+	address.  It is the procedure used by the author of the BATCH
+	program.  Although this procedure will not be directly usable
+	at any other computer installation, it may serve as a source of
+	ideas for writing other customization procedures.
+
+	The customization procedure occupies the highest addresses of
+	the conventional user program part of BATCH.  Therefore the
+	procedure may be as large as necessary for any given computer
+	installation, and may extend arbitrarily far upward in user
+	memory address space.
+
+010F:	These 4 words = 8 bytes initially contain the value 0.  They
+0111:	may be used to contain diagnostic information for any errors
+0113:	that are detected during the conventional user program part of
+0115:	BATCH processing.  The nature of the diagnostic information may
+	depend upon the specific error that was detected.
+
+The optional customization is performed only by patching.  Each 1
+customized change requires 2 patches.  The patches must be of identical
+values, but be performed at 2 different addresses.  The addresses are
+the 2 corresponding relative addresses, within the 2 copies of the data:
+one copy will later be copied into safe memory, the other copy is used
+to distinguish relocatable addresses.  The starting addresses of these
+2 copies are contained in the words at addresses 0109 and 010B.  These
+copies initially have identical data, except for the relocatable
+addresses.  The first few bytes in each of these copies are:
+
+Rel. addr. 0000:  Either 0 or (decimal) 255 = (hex) FF.  This is the
+		  initial default output parameter of the BATCH version
+		  of procedure CONST, when the source of character
+		  input is preprogrammed text.  This value may be
+		  changed during BATCH processing, by the Escape Y and
+		  Escape N commands.
+
+Rel. addr. 0001:  Either 0 or any chosen nonzero value.  This is the
+		  initial default value for enabling BATCH to ring the
+		  bell of the console terminal.  0 means ringing is
+		  disabled; any nonzero value means ringing is enabled.
+		  This value may be changed during BATCH processing, by
+		  the Escape R and Escape Q commands.
+
+Rel. addr. 0002:  This byte contains the ASCII value of the Escape
+		  character.
+
+Rel. addr. 0003 and onward:
+		  Starting at relative address 0003 is a table.  Each
+		  entry in the table occupies 3 bytes.  The 1st byte of
+		  each entry contains the ASCII value of a BATCH
+		  command letter.  The 2nd and 3rd bytes of each entry
+		  contain the relocatable address of the BATCH
+		  procedure which executes the designated command.  The
+		  relocatable addresses must not be changed, but the
+		  letters may be changed if so desired.  The table
+		  entries contain command letters in the sequence:
+		  I, B, R, Q, Y, N, X, Z, F, O, A, V, S.
+
+
+ASSEMBLY NOTES
+--------------
+
+If you plan on reassembling the BATCH source code, using the SIL80Z80
+assembler, be sure to redefine the value of symbol _x in file
+SMALCPLR.SIL, to have the value (decimal) 200.
+
+All 5 source code files must be concatenated into a single temporary
+file for assembly.  Succinct Systems utility program NOCOMENT may be
+used to perform the concatenation.  The order of the original files
+within the temporary file must be:
+   COMPENS8.SIL
+   SMALCPLR.SIL
+   BATCH.1
+   BATCH.2
+   BATCH.3
+
+
+IF THE EXAMPLE BATCH PROGRAM DID NOT WORK PROPERLY
+--------------------------------------------------
+
+Some people have tried running the example program, and found that it
+did not work properly for them.  There are 2 possible causes.
+
+1. Symptom:  The program types out about 2/3 of a screen full of text,
+   performs a warm boot, and then disappears.  CP/M continues to
+   operate normally, as though BATCH never had been run.
+
+   Probable cause:  This usually occurs on double-density disk systems,
+   in which 256-byte blocks are read instead of the CP/M standard 128-
+   byte blocks.  The problem occurs because CP/M occupies an odd number
+   of 128-byte blocks.  During the course of warm boot, the first 128
+   bytes of BIOS are overwritten by initialized data from the disk,
+   thereby overwriting the pointers that BATCH has stored into BIOS.
+
+   Solution:  Change warm boot so that it does not overwrite BIOS.  The
+   solution conforms with Digital Research's description of warm boot:
+   that it overwrites CP/M but does not alter BIOS.  The reason for
+   this rule is that BIOS may contain other context relating to disk
+   status, which must not be lost during warm boot.
+
+2. Symptom:  The program types out about 2/3 of a screen full of text,
+   performs a warm boot, and then runs wild.
+
+   Probable cause:  Program VARBATCH.COM on the distribution diskette
+   uses memory starting at address (hex) 3000 as its safe memory.
+   This memory is not safe for general use, but it is safe for just the
+   example program.  The example program requires only that the chosen
+   safe memory not be used by DDT.COM or by CP/M.  However, if warm
+   boot uses memory starting at (hex) 3000, it will destroy the example
+   BATCH program.
+
+   Solution:  Choose some other 2K region to be safe memory, and
+   customize VARBATCH.COM to use that region.
+
+
+SOURCE CODE NOTATION
+--------------------
+
+The source code of the BATCH program is written in the systems
+implementation language of macro assembler SIL80Z80.  SIL80Z80 is a
+commercial product of Succinct Systems, Santa Cruz, Calif.
+
+For the most part, each source code statement (terminated by semicolon)
+assembles into a single 8080 instruction.  The notation is:
+
+^   represents the assembler's pseudo-location counter.
+A   represents accumulator register A.
+B   represents register B.
+C   represents register C.
+D   represents register D.
+E   represents register E.
+H   represents register H.
+L   represents register L.
+?   represents the condition code register.
+SP  represents stack pointer register SP.
+A?  represents register pair A and ?.
+BC  represents register pair B and C.
+DE  represents register pair D and E.
+HL  represents register pair H and L.
+CY  represents the condition code bit Carry-Borrow.
+LSB represents the least significant bit of a byte.
+N   is a self-reference to the operand.
+.   means "contents of", or indicates absolute addressing for the GO
+    instructions (written:  GO.)
+
+><  represents the least significant byte of a word.
+<>  represents the most significant byte of a word.
+\/  represents pushing a word into the program stack.
+/\  represents popping a word from the program stack.
+<-  represents copying a byte or word of data, to be read "gets".
+->  represents copying a byte or word of data, to be read "goes to".
+<-> represents exchanging bytes or words of data, to be read "exchanged
+	with".
+<<  represents copying bits of data, or setting condition codes.
+>>  represents copying bits of data, or setting condition codes.
+
+Rules:
+1.  Where either data direction <- or -> could be used, that direction
+	is chosen which avoids the need for a self-reference N.
+2.  If Rule 1 does not determine the data direction, -> is used.
+3.  Where shifts or rotations are performed, << or >> is chosen such
+	that the most significant bit is represented by the leftmost
+	character of the notational symbol.
+
+Source code notation:
+    ? << <- .  parameter;
+is a macro call which expands into the following 2 instructions:
+    A <- .  parameter;
+    A >> ?;
+
+Source code notation:  PROCEDURE, END PROCEDURE, DO, END DO, IF = THEN,
+ELSE, END IF, REPEAT, EXIT, etc. all are macro calls.
+
+The destination of a REPEAT statement is the innermost nested PROCEDURE
+or DO, unless specifically designated otherwise.  The destination of an
+EXIT statement is the innermost nested END PROCEDURE or END DO, unless
+specifically designated otherwise.  IF and END IF do not delimit
+REPEAT and EXIT statements.
+
+(End of document.)
+

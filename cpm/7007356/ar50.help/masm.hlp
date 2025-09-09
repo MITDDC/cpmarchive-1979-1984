@@ -1,0 +1,209 @@
+Invoking MACRO-80
+MACRO-80 Switches
+MACRO-80 Pseudo-Ops
+MACRO-80 In-Line Error Messages
+MACRO-80 Console Error Messages
+Invoking LINK-80
+LINK-80 Switches
+Invoking LIB-80
+LIB-80 Switches
+Invoking CREF-80
+Debugging MACRO-80 Programs Using DEBUG.MAC
+:Invoking MACRO-80
+
+     MACRO-80 is invoked by the following command --
+
+          M80 obj:fn1.ext,lst:fn2.ext=src:fn3.ext
+
+where
+     obj:fn1.ext  is the device/filename for the object program
+     lst:fn2.ext  is the device/filename for the listing
+     src:fn3.ext  is the device/filename for the source
+
+:MACRO-80 Switches
+
+     The following switches may be specified in the command line --
+
+          O    Print all listing addresses in octal
+          H    Print all listing addresses in hexadecimal
+
+          R    Force generation of an object file
+          L    Force generation of a listing file
+          C    Force generation of a cross reference file
+
+          Z    Assemble Zilog (Z80) mnemonics
+          I    Assemble Intel (8080) mnemonics
+
+          P     Each /P allocates an extra 256 bytes of stack space for use 
+during assembly.  Use /P if stack overflow errors occur during assembly.
+:MACRO-80 Pseudo-Ops
+
+     The following are the pseudo-ops recognized by MACRO-80 --
+
+          ASEG      COMMON    CSEG      DB        DC
+          DS        DSEG      DW        END       ENTRY
+          PUBLIC    EQU       EXT       EXTRN     NAME
+          ORG       PAGE      SET       SUBTTL    TITLE
+          .COMMENT  .PRINTX   .RADIX    .REQUEST  .Z80
+          .8080     IF        IFT       IFE       IFF
+          IF1       IF2       IFDEF     IFNDEF    IFB
+          IFNB      ENDIF     .LIST     .XLIST    .CREF
+          .XCREF    REPT      ENDM      MACRO     IRP
+          IRPC      EXITM     LOCAL     COND      ENDC
+          *EJECT    DEFB      DEFS      DEFW      DEFM
+          DEFL      GLOBAL    EXTERNAL  INCLUDE   MACLIB
+          ELSE      .LALL     .SALL     .XALL
+:MACRO-80 In-Line Error Messages
+
+     A    Argument Error           O    Bad opcode or objectionable syntax
+     C    Conditional nesting err  P    Phase error
+     D    Double Defined Symbol    Q    Questionable
+     E    External error           R    Relocation
+     M    Multiply Defined Symbol  U    Undefined symbol
+     N    Number error             V    Value error
+:MACRO-80 Console Error Messages
+
+     No end statement encountered in input file
+          -- no END statement
+
+     Unterminated conditional
+          -- at least one conditional is unterminated
+
+     Unterminated REPT/IRP/IRPC/MACRO
+          -- at least one block is unterminated
+
+     [xx] [No] Fatal error(s) [,xx warnings]
+          -- the number of fatal errors and warnings
+:Invoking LINK-80
+
+     LINK-80 is invoked by typing --
+
+          L80 obj1:filename.ext/sw1,obj2:filename.ext/sw2,...
+
+where  objn:filename.ext  denotes a .REL file to be linked and swn  denotes 
+switches which control the linking process.
+:LINK-80 Switches
+
+     /R        Reset -- put loader back in initial state
+
+     /E or /E:Name
+               Exit LINK-80 and return to CP/M.   Search the system library 
+for any undefined references.   /E:Name uses Name for the start address  of 
+the program.
+
+     /G or /G:Name
+               Start  execution  of  the program.   Again,  if  /G:Name  is 
+specified, Name defines the start address of execution.
+
+     <filename>/N
+               Save the binary on disk under the name 'filename.COM'.
+
+     /P:adr and /D:adr
+               Set  the Program and Data area origins for the next  program 
+to be loaded.
+
+
+     /U
+               List the origin and end of the program and data area as well 
+as all undefined globals.
+
+     /M
+               List  the origin and end of the program and data  area,  all 
+defined globals and their values,  and all undefined globals followed by an 
+asterisk.
+
+     <filename>/S
+               Search 'filename.REL' to satisfy references.
+
+     /X        If a filename/N was specified,  /X will cause the file to be 
+saved in Intel HEX format with a extension of .HEX.
+
+     /Y        If a filename/N was specified, /Y will create a filename.SYM 
+file when /E is entered.  This file contains the names and addresses of all 
+globals for use with SID or ZSID.
+:Invoking LIB-80
+
+     To invoke LIB-80, type --
+
+          LIB
+
+     Commands  to LIB-80 consist of an optional destination filename  which 
+sets  the  name of the library being created,  followed by an  equal  sign, 
+followed by module names separated by commas or filenames with module names 
+enclosed in angle brackets separated by commas.
+
+     To  select  a  given module from a file,  use the  name  of  the  file 
+followed  by  the  module(s)  specified  enclosed  in  angle  brackets  and 
+separated  by  commas.   If no modules are selected from a file,  then  all 
+modules are selected.
+
+:LIB-80 Switches
+
+     /O   Set listing radix to Octal
+     /H   Set listing radix to Hexadecimal
+     /U   List undefineds
+     /L   List cross reference
+     /C   Create -- start LIB over
+     /E   Exit -- rename .LIB to .REL and exit
+     /R   Rename -- rename .LIB to .REL
+:Invoking CREF-80
+
+     CREF-80 is invoked by typing --
+
+          CREF80 listing=source
+
+where  'listing'  is  the  name of the  file  'listing.LST'  generated  and 
+'source'  s  the  name  of the file  'source.CRF'  generated  by  MACRO-80.  
+'listing' is optional, and, if omitted, the listing file generated is named 
+'source.LST'.
+:Debugging MACRO-80 Programs Using DEBUG.MAC
+
+     DEBUG.MAC  is  a  package of MACROs which the user may employ  to  aid 
+himself  in debugging MACRO-80 programs.   This package contains two  print 
+MACROs,  one  register display MACRO,  and one exit MACRO.   In all  cases, 
+these MACROs have no net affect on any register.
+
+     DEBUG.MAC is used by first specifying it as a MACRO Library within the 
+user's program.  This is accomplished by the statement --
+
+          MACLIB    DEBUG.MAC
+
+as an assembly-language instruction at the beginning of his program.   This 
+statement  loads the library DEBUG.MAC and makes its MACROs  available  for 
+use.  These MACROs are --
+
+
+ Name  # Args  Size (Bytes)   Function                 Example
+ ----  ------  ------------   --------                 -------
+
+ EXIT    0/1   275 or 263+    Print an exit message,   EXIT
+                              print the contents of    EXIT <Exit Cond 1>
+                              all registers, and warm
+                              boot CP/M
+ PRINT     1   19+            Print a message on CON:  PRINT <Message>
+ PRINTC    1   17+            Print a char string on   PRINTC <'M1',0DH>
+                              CON:
+ REGS      0   241            Print the contents of    REGS
+                              all registers on CON:
+
+Note:  The + after a size indicates that one must add to the indicated size 
+the number of characters specified in the parameter.
+
+Note:   Messages specified for EXIT and PRINT should not contain restricted 
+MACRO-80 symbols (such as !) or an error message will result.
+
+     An example of the use of these MACROs follows --
+
+          MACLIB    DEBUG.MAC
+          -- code --
+          REGS                ; print all register values at this point
+          -- code --
+          PRINT     <Ck Pt 1> ; got to check point 1
+          -- code --
+          EXIT      <Exit error 1> ; should not have taken this path
+          -- code --
+          PRINT     <Ck Pt 2> ; got to check point 2
+          -- code --
+          EXIT                ; normal exit
+          -- code --
+

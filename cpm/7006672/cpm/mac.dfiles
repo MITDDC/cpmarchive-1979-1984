@@ -1,0 +1,822 @@
+!<arch>
+2650.d          360840425   99    31    100644  3139      `
+header
+pc	pre
+byte	8
+word	1
+mac	"CD 2650 ver 1.1"
+dc	b	a:8
+dc	w	a:16
+defmt		a:8
+%
+labels
+r0	0b00
+r1	0b01
+r2	0b10
+r3	0b11
+gt	0b01
+eq	0b00
+lt	0b10
+p	0b01
+z	0b00
+n	0b10
+t	0b00
+f	0b10
+%
+formats
+1	o:8 a:8			;0
+0	o:8			;1
+1	o:6 a:2			;2
+2	o:6 a:2 b:8		;3
+2	o:6 b:2 #0b011:3 a:13	;4
+2	o:6 b:2 #0b111:3 a:13	;5
+2	o:6 a:2 #0b0:1 b:15	;6
+2	o:6 a:2 #0b1:1 b:15	;7
+1	o:8 #0b0:1 pa:7		;8
+1	o:8 #0b1:1 pa:7		;9
+2	o:6 a:2 #0b0:1 pb:7	;10
+2	o:6 a:2 #0b1:1 pb:7	;13
+1	o:8 #0b0:1 a:15		;14
+1	o:8 #0b1:1 a:15		;15
+2	o:6 b:2 #0b001:3 a:13	;16
+2	o:6 b:2 #0b101:3 a:13	;17
+2	o:6 b:2 #0b010:3 a:13	;18
+2	o:6 b:2 #0b110:3 a:13	;19
+2	o:6 a:2 #0b000:3 b:13	;20
+2	o:6 a:2 #0b100:3 b:13	;21
+%
+args
+""
+				{ 0b0010	0	0	1
+expr				{ 0b0010	0	0	0
+* expr				{ 0b0010	0	1	0
+expr , expr			{ 0b0010	0	0	0
+expr , * expr			{ 0b0010	0	1	0
+expr ( expr )			{ 0b0011	0	0	4
+* expr ( expr )			{ 0b0011	0	1	5
+expr ( expr ) +			{ 0b0011	0	0	14
+* expr ( expr ) +		{ 0b0011	0	1	15
+expr ( expr ) -			{ 0b0011	0	0	16
+* expr ( expr ) -		{ 0b0011	0	1	17
+%
+opcodes
+adda	(0 18 0b100011)  (1 19 0b100011)
+addi	(0 3 0b100001)  
+addr	(0 10 0b100010)  (1 11 0b100010)
+addz	(0 2 0b100000)  
+anda	(0 18 0b010011)  (1 19 0b010011)
+andi	(0 3 0b010001)  
+andr	(0 10 0b010010)  (1 11 0b010010)
+andz	(0 2 0b010000)  
+bcfa	(0 6 0b100111)  (1 7 0b100111)
+bcfr	(0 10 0b100110)  (1 11 0b100110)
+bcta	(0 6 0b000111)  (1 7 0b000111)
+bctr	(0 10 0b000110)  (1 11 0b000110)
+bdra	(0 6 0b111111)  (1 7 0b111111)
+bdrr	(0 10 0b111110)  (1 11 0b111110)
+bira	(0 6 0b110111)  (1 77 0b110111)
+birr	(0 10 0b110110)  (1 11 0b110110)
+brna	(0 6 0b010111)  (1 7 0b010111)
+brnr	(0 10 0b010110)  (1 11 0b010110)
+bsfa	(0 6 0b101111)  (1 7 0b101111)
+bsfr	(0 10 0b101110)  (1 11 0b101110)
+bsna	(0 6 0b011111)  (1 7 0b011111)
+bsnr	(0 10 0b011110)  (1 11 0b011110)
+bsta	(0 6 0b001111)  (1 7 0b001111)
+bstr	(0 10 0b001110)  (1 11 0b001110)
+bsxa	(0 12 0xbf)  (1 13 0xbf)
+bxa	(0 12 0x9f)  (1 13 0x9f)
+coma	(0 18 0b111011)  (1 19 0b111011)
+comi	(0 3 0b111001)  
+comr	(0 10 0b111010)  (1 11 0b111010)
+comz	(0 2 0b111000)  
+cpsl	(0 0 0x75)  
+cpsu	(0 0 0x74)  
+dar	(0 2 0b100101)  
+eora	(0 18 0b001011)  (1 19 0b001011)
+eori	(0 3 0b001001)  
+eorr	(0 10 0b001010)  (1 11 0b001010)
+eorz	(0 2 0b001000)  
+halt	(0 1 0x40)  
+iora	(0 18 0b011011)  (1 19 0b011011)
+iori	(0 3 0b011001)  
+iorr	(0 10 0b011010)  (1 11 0b011010)
+iorz	(0 2 0b011000)  
+loda	(0 18 0b000011)  (1 19 0b000011)
+lodi	(0 3 0b000001)  
+lodr	(0 10 0b000010)  (1 11 0b000010)
+lodz	(0 2 0b000000)  
+lpsl	(0 1 0x93)  
+lpsu	(0 1 0x92)  
+nop	(0 1 0xc0)  
+ppsl	(0 0 0x77)  
+ppsu	(0 0 0x76)  
+redc	(0 2 0b001100)  
+redd	(0 2 0b011100)  
+rede	(0 3 0b010101)  
+retc	(0 2 0b000101)  
+rete	(0 2 0b001101)  
+rrl	(0 2 0b110100)  
+rrr	(0 2 0b010100)  
+spsl	(0 1 0x13)  
+spsu	(0 1 0x12)  
+stra	(0 18 0b110011)  (1 19 0b110011)
+strr	(0 10 0b110010)  (1 11 0b110010)
+strz	(0 2 0b110000)  
+suba	(0 18 0b101011)  (1 19 0b101011)
+subi	(0 3 0b101001)  
+subr	(0 10 0b101010)  (1 11 0b101010)
+subz	(0 2 0b101000)  
+tmi	(0 3 0b111101)  
+tpsl	(0 0 0xb5)  
+tpsu	(0 0 0xb4)  
+wrtc	(0 2 0b101100)  
+wrtd	(0 2 0b111100)  
+wrte	(0 3 0b110101)  
+zbrr	(0 8 0x9b)  (1 9 0x9b)
+zbsr	(0 8 0xbb)  (1 9 0xbb)
+%
+end
+
+6502.d          360840532   99    31    100644  2549      `
+header
+pc	pre
+byte	8
+word	2
+dc	w	r8a:16
+defmt		a:8
+mac	"APPLE II"
+%
+literals
+a
+x
+y
+%
+formats
+0	o:8
+1	o:8 a:8
+1	o:8 r8a:16
+1	o:8 pa:8
+%
+args
+
+" "
+# expr				{ 0b0010	0	1	1
+$ expr				{ 0b0010	0	2	1
+$ expr , x			{ 0b0010	0	3	1
+$ expr , y			{ 0b0010	0	4	1
+expr				{ 0b0010	0	5	0
+expr , x			{ 0b0010	0	6	0
+expr , y			{ 0b0010	0	7	0
+( $ expr , x )			{ 0b0010	0	8	1
+( $ expr ) , y			{ 0b0010	0	9	1
+a				{ 0b0010	0	10	0
+( expr )			{ 0b0010	0	11	0
+%
+opcodes
+adc	(1 1 0x69)  (2 1 0x65)  (3 1 0x75)  (5 2 0x6d)  (6 2 0x7d)  (7 2 0x79)  (8 1 0x61)  (9 1 0x71)  
+and	(1 1 0x29)  (2 1 0x25)  (3 1 0x35)  (5 2 0x2d)  (6 2 0x3d)  (7 2 0x39)  (8 1 0x21)  (9 1 0x31)  
+asl	(2 1 0x06)  (3 1 0x16)  (5 2 0x0e)  (6 2 0x1e)  (10 0 0x0a)  
+bcc	(5 3 0x90)  
+bcs	(5 3 0xb0)  
+beq	(5 3 0xf0)  
+bit	(2 1 0x24)  (5 2 0x2c)  
+bmi	(5 3 0x30)  
+bne	(5 3 0xd0)  
+bpl	(5 3 0x10)  
+brk	(0 0 0x00)  
+bvc	(5 3 0x50)  
+bvs	(5 3 0x70)  
+clc	(0 0 0x18)  
+cld	(0 0 0xd8)  
+cli	(0 0 0x58)  
+clv	(0 0 0xb8)  
+cmp	(1 1 0xc9)  (2 1 0xc5)  (3 1 0xd5)  (5 2 0xcd)  (6 2 0xdd)  (7 2 0xd9)  (8 1 0xc1)  (9 1 0xd1)  
+cpx	(1 1 0xe0)  (2 1 0xe4)  (5 2 0xec)  
+cpy	(1 1 0xc0)  (2 1 0xc4)  (5 2 0xcc)  
+dec	(2 1 0xc6)  (3 1 0xd6)  (5 2 0xce)  (6 2 0xde)  
+dex	(0 0 0xca)  
+dey	(0 0 0x88)  
+eor	(1 1 0x49)  (2 1 0x45)  (3 1 0x55)  (5 2 0x4d)  (6 2 0x5d)  (7 2 0x59)  (8 1 0x41)  (9 1 0x51)  
+inc	(2 1 0xe6)  (3 1 0xf6)  (5 2 0xee)  (6 2 0xfe)  
+inx	(0 0 0xe8)  
+iny	(0 0 0xc8)  
+jmp	(5 2 0x4c)  (11 2 0x6c)
+jsr	(5 2 0x20)  
+lda	(1 1 0xa9)  (2 1 0xa5)  (3 1 0xb5)  (5 2 0xad)  (6 2 0xbd)  (7 2 0xb9)  (8 1 0xa1)  (9 1 0xb1)  
+ldx	(1 1 0xa2)  (2 1 0xa6)  (3 1 0xb6)  (5 2 0xae)  (6 2 0xbe)  
+ldy	(1 1 0xa0)  (2 1 0xa4)  (3 1 0xb4)  (5 2 0xac)  (6 2 0xbc)  
+lsr	(2 1 0x46)  (3 1 0x56)  (5 2 0x4e)  (6 2 0x5e)  (10 0 0x4a)  
+nop	(0 0 0xea)  
+ora	(1 1 0x09)  (2 1 0x05)  (3 1 0x15)  (5 2 0x0d)  (6 2 0x1d)  (7 2 0x19)  (8 1 0x01)  (9 1 0x11)  
+pha	(0 0 0x48)  
+php	(0 0 0x08)  
+pla	(0 0 0x68)  
+plp	(0 0 0x28)  
+rol	(2 1 0x26)  (3 1 0x36)  (5 2 0x2e)  (6 2 0x3e)  (10 0 0x2a)  
+ror	(2 1 0x66)  (3 1 0x76)  (5 2 0x6e)  (6 2 0x7e)  (10 0 0x6a)  
+rti	(0 0 0x40)  
+rts	(0 0 0x60)  
+sbc	(1 1 0xe9)  (2 1 0xe5)  (3 1 0xf5)  (5 2 0xed)  (6 2 0xfd)  (7 2 0xf9)  (8 1 0xe1)  (9 1 0xf1)  
+sec	(0 0 0x38)  
+sed	(0 0 0xf8)  
+sei	(0 0 0x78)  
+sta	(2 1 0x85)  (3 1 0x95)  (5 2 0x8d)  (6 2 0x9d)  (7 2 0x99)  (8 1 0x81)  (9 1 0x91)  
+stx	(2 1 0x86)  (4 1 0x96)  (5 2 0x8e)  
+sty	(2 1 0x84)  (3 1 0x94)  (5 2 0x8c)  
+tax	(0 0 0xaa)  
+tay	(0 0 0xa8)  
+tya	(0 0 0x98)  
+tsx	(0 0 0xba)  
+txa	(0 0 0x8a)  
+txs	(0 0 0x9a)  
+%
+end
+
+6800.d          360840649   99    31    100644  2812      `
+header
+pc	pre
+byte	8
+word	1
+addr	16
+dc	a	a:16
+dc	b	a:8
+defmt		a:8
+mac	"MOTOROLA 6800"
+%
+literals
+a
+b
+x
+%
+args
+expr(x)		{ 0b0010 0 2 1
+#expr		{ 0b0010 0 4 2
+expr		{ 0b0010 0 3 0
+a,expr(x)	{ 0b0010 0 6 0
+b,expr(x)	{ 0b0010 0 9 0
+a,#expr		{ 0b0010 0 5 0
+b,#expr		{ 0b0010 0 8 0
+a,expr		{ 0b0010 0 7 2
+b,expr		{ 0b0010 0 10 2
+a		{ 0b0010 0 0 0
+b		{ 0b0010 0 1 0
+""
+
+%
+formats
+0	o:8
+1	o:8a:8
+1	o:8a:16
+1	o:8pa:8
+%
+opcodes
+nop	(0 0 0x01)  
+tap	(0 0 0x06)  
+tpa	(0 0 0x07)  
+inx	(0 0 0x08)  
+dex	(0 0 0x09)  
+clv	(0 0 0x0a)  
+sev	(0 0 0x0b)  
+clc	(0 0 0x0c)  
+sec	(0 0 0x0d)  
+cli	(0 0 0x0e)  
+sei	(0 0 0x0f)  
+sba	(0 0 0x10)  
+cba	(0 0 0x11)  
+tab	(0 0 0x16)  
+tba	(0 0 0x17)  
+daa	(0 0 0x19)  
+aba	(0 0 0x1b)  
+bra	(3 3 0x20)  
+bhi	(3 3 0x22)  
+bls	(3 3 0x23)  
+bcc	(3 3 0x24)  
+bcs	(3 3 0x25)  
+bne	(3 3 0x26)  
+beq	(3 3 0x27)  
+bvc	(3 3 0x28)  
+bvs	(3 3 0x29)  
+bpl	(3 3 0x2a)  
+bmi	(3 3 0x2b)  
+bge	(3 3 0x2c)  
+blt	(3 3 0x2d)  
+bgt	(3 3 0x2e)  
+ble	(3 3 0x2f)  
+tsx	(0 0 0x30)  
+ins	(0 0 0x31)  
+pul	(0 0 0x32)  (1 0 0x33)  
+des	(0 0 0x34)  
+txs	(0 0 0x35)  
+psh	(0 0 0x36)  (1 0 0x37)  
+rts	(0 0 0x39)  
+rti	(0 0 0x3b)  
+wai	(0 0 0x3e)  
+swi	(0 0 0x3f)  
+neg	(0 0 0x40)  (1 0 0x50)  (2 1 0x60)  (3 2 0x70)  
+com	(0 0 0x43)  (1 0 0x53)  (2 1 0x63)  (3 2 0x73)  
+lsr	(0 0 0x44)  (1 0 0x54)  (2 1 0x64)  (3 2 0x74)  
+ror	(0 0 0x46)  (1 0 0x56)  (2 1 0x66)  (3 2 0x76)  
+asr	(0 0 0x47)  (1 0 0x57)  (2 1 0x67)  (3 2 0x77)  
+asl	(0 0 0x48)  (1 0 0x58)  (2 1 0x68)  (3 2 0x78)  
+rol	(0 0 0x49)  (1 0 0x59)  (2 1 0x69)  (3 2 0x79)  
+dec	(0 0 0x4a)  (1 0 0x5a)  (2 1 0x6a)  (3 2 0x7a)  
+inc	(0 0 0x4c)  (1 0 0x5c)  (2 1 0x6c)  (3 2 0x7c)  
+tst	(0 0 0x4d)  (1 0 0x5d)  (2 1 0x6d)  (3 2 0x7d)  
+jmp	(2 1 0x6e)  (3 2 0x7e)  
+clr	(0 0 0x4f)  (1 0 0x5f)  (2 1 0x6f)  (3 2 0x7f)  
+sub	(5 1 0x80)  (6 1 0xa0)  (7 2 0xb0)  (8 1 0xc0)  (9 1 0xe0)  (10 2 0xf0)
+cmp	(5 1 0x81)  (6 1 0xa1)  (7 2 0xb1)  (8 1 0xc1)  (9 1 0xe1)  (10 2 0xf1)
+sbc	(5 1 0x82)  (6 1 0xa2)  (7 2 0xb2)  (8 1 0xc2)  (9 1 0xe2)  (10 2 0xf2)
+and	(5 1 0x84)  (6 1 0xa4)  (7 2 0xb4)  (8 1 0xc4)  (9 1 0xe4)  (10 2 0xf4)
+bit	(5 1 0x85)  (6 1 0xa5)  (7 2 0xb5)  (8 1 0xc5)  (9 1 0xe5)  (10 2 0xf5)
+lda	(5 1 0x86)  (6 1 0xa6)  (7 2 0xb6)  (8 1 0xc6)  (9 1 0xe6)  (10 2 0xf6)
+sta	(6 1 0xa7)  (7 2 0xb7)  (9 1 0xe7)  (10 2 0xf7)
+eor	(5 1 0x88)  (6 1 0xa8)  (7 2 0xb8)  (8 1 0xc8)  (9 1 0xe8)  (10 2 0xf8)
+adc	(5 1 0x89)  (6 1 0xa9)  (7 2 0xb9)  (8 1 0xc9)  (9 1 0xe9)  (10 2 0xf9)
+ora	(5 1 0x8a)  (6 1 0xaa)  (7 2 0xba)  (8 1 0xca)  (9 1 0xea)  (10 2 0xfa)
+add	(5 1 0x8b)  (6 1 0xab)  (7 2 0xbb)  (8 1 0xcb)  (9 1 0xeb)  (10 2 0xfb)
+cpx	(2 1 0xac)  (3 2 0xbc)  (4 2 0x8c)  
+bsr	(3 3 0x8d)  
+jsr	(2 1 0xad)  (3 2 0xbd)  
+lds	(2 1 0xae)  (3 2 0xbe)  (4 2 0x8e)  
+ldx	(2 1 0xee)  (3 2 0xfe)  (4 2 0xce)  
+sts	(2 1 0xaf)  (3 2 0xbf)  
+stx	(2 1 0xef)  (3 2 0xff)  
+%
+end
+8085.d          360909076   99    31    100644  1986      `
+header
+pc	pre
+byte	8
+word	1
+instr	1
+addr	16
+mac	"SDK 8085 ver 1.1"
+dc	b	a:8
+dc	w	r8a:16
+defmt		a:8
+%
+labels
+a	0b111
+b	0b000
+c	0b001
+d	0b010
+e	0b011
+h	0b100
+l	0b101
+m	0b110
+bc	0b00
+de	0b01
+hl	0b10
+sp	0b11
+%
+formats
+0	o:8
+1	o:5a:3
+1	o:8a:8
+1	o:8r8a:16
+1	#0b00:2a:2o:4
+1	#0b00:2a:3o:3
+2	#0b00:2a:3o:3b:8
+2	#0b00:2a:2o:4r8b:16
+2	#0b01:2a:3b:3
+1	#0b11:2a:3o:3
+1	#0b11:2a:2o:4
+%
+args
+ " "
+ expr			{ 0b0010	0	0	0
+ expr , expr		{ 0b0010	0	0	0
+# expr			{ 0b0010	0	1	0
+ expr , # expr		{ 0b0010	0	1	0
+
+%
+opcodes
+aci	(0 2 0xce)  
+adc	(0 1 0b1001)  (1 2 0xce)
+add	(0 1 0b10000)  
+adi	(0 2 0xc6)  
+ana	(0 1 0b10100)  (1 2 0xe6)
+ani	(0 2 0xe6)  
+call	(0 3 0xcd)  
+cc	(0 3 0xdc)  
+cm	(0 3 0xfc)  
+cma	(0 0 0x2f)  
+cmc	(0 0 0x3f)  
+cmp	(0 1 0b10111)  (1 2 0xfe)
+cnc	(0 3 0xd4)  
+cnz	(0 3 0xc4)  
+cp	(0 3 0xf4)  
+cpe	(0 3 0xec)  
+cpi	(0 2 0xfe)  
+cpo	(0 3 0xf4)  
+cz	(0 3 0xcc)  
+daa	(0 0 0x27)  
+dad	(0 4 0b1001)  
+dcr	(0 5 0b101)  
+dcx	(0 4 0b1011)  
+di	(0 0 0xf3)  
+ei	(0 0 0xfb)  
+hlt	(0 0 0x76)  
+in	(0 2 0xdb)  
+inr	(0 5 0b100)  
+inx	(0 4 0b0011)  
+jc	(0 3 0xda)  
+jm	(0 3 0xfa)  
+jmp	(0 3 0xc3)  
+jnc	(0 3 0xd2)  
+jnz	(0 3 0xc2)  
+jp	(0 3 0xf2)  
+jpe	(0 3 0xea)  
+jpo	(0 3 0xe2)  
+jz	(0 3 0xca)  
+lda	(0 3 0x3a)  
+ldax	(0 4 0b1010)  
+lhld	(0 3 0x2a)  
+lxi	(0 7 0b0001)  
+mov	(0 8 0)  (1 6 0b110)
+mvi	(0 6 0b110)  
+nop	(0 0 0x76)  
+ora	(0 1 0b10110)  (1 2 0xf6)
+ori	(0 2 0xf6)  
+out	(0 2 0xd3)  
+pchl	(0 0 0xe9)  
+pop	(0 10 0b0001)  
+push	(0 10 0b0101)  
+ral	(0 0 0x17)  
+rar	(0 0 0x1f)  
+rc	(0 0 0xd8)  
+ret	(0 0 0xc9)  
+rim	(0 0 0x20)  
+rlc	(0 0 0x07)  
+rm	(0 0 0xf8)  
+rnc	(0 0 0xd0)  
+rnz	(0 0 0xc0)  
+rp	(0 0 0xf0)  
+rpe	(0 0 0xf0)  
+rpo	(0 0 0xe0)  
+rrc	(0 0 0x0f)  
+rst	(0 9 0b111)  
+rz	(0 0 0xc8)  
+sbb	(0 1 0b10011)  (1 2 0x9e)
+sbi	(0 2 0x9e)  
+shld	(0 3 0x22)  
+sim	(0 0 0x30)  
+sphl	(0 0 0xf9)  
+sta	(0 3 0x32)  
+stax	(0 4 0b0010)  
+stc	(0 0 0x37)  
+sub	(0 1 0b10010)  (1 2 0xd6)
+sui	(0 2 0xd6)  
+xchg	(0 0 0xeb)  
+xra	(0 1 0b10101)  (1 2 0xee)
+xri	(0 2 0xee)  
+xthl	(0 0 0xe3)  
+%
+end
+
+8086.d          360909393   99    31    100644  8304      `
+header
+pc	pre
+byte	8
+word	1
+instr	1
+addr	16
+dc	b	a:8
+dc	w	r8a:16
+defmt		a:8
+mac	"MCS-86"
+%
+literals
+b			; byte operand prefix
+s			; short form word operand prefix
+r			; register or register/ac operand prefix
+%
+labels
+ax	0b000		; whole register labels
+cx	0b001
+dx	0b010
+bx	0b011
+sp	0b100		; pointer and index registers
+bp	0b101
+si	0b110
+di	0b111
+al	0b000		; low byte registers
+cl	0b001
+dl	0b010
+bl	0b011
+ah	0b100		; high byte registers
+ch	0b101
+dh	0b110
+bh	0b111
+es	0b00		; segment registers
+cs	0b01
+ss	0b10
+ds	0b11
+bx.si	0b000		; (bx) + (si) + disp
+bx.di	0b001		; (bx) + (di) + disp
+bp.si	0b010		; (bp) + (si) + disp
+bp.di	0b011		; (bp) + (di) + disp
+.si	0b100		; (si) + disp
+.di	0b101		; (di) + disp
+.bp	0b110		; (bp) + disp
+.bx	0b111		; (bx) + disp
+%
+formats
+0	o:8						;0
+0	o:16						;1
+1	o:8 a:8						;2
+2	o:6 #0b1011:4 a:3 b:3				;3
+1	o:5 a:3						;4
+2	o:6 #0b1000:4 a:3 #0b110:3 r8b:16		;5
+2	n:7 #0b11:3 o:3 a:3 b:8				;6
+2	o:6 #0b0:4 a:3 #0b110:3 r8b:16			;7
+2	n:7 #0b0:3 o:3 #0b110:3 r8a:16 b:8		;8
+2	o:6 #0b1111:4 a:3 b:3				;9
+2	o:6 #0b1100:4 a:3 #0b110:3 r8b:16		;10
+2	n:7 #0b111:3 o:3 a:3 r8b:16			;11
+2	o:6 #0b100:4 b:3 #0b110:3 r8a:16		;12
+2	n:7 #0b100:3 o:3 #0b110:3 r8a:16 r8b:16		;13
+3	o:6 #0b1010:4 a:3 c:3 r8b:16			;14
+3	o:6 #0b0010:4 c:3 b:3 r8a:16			;15
+3	n:7 #0b110:3 o:3 b:3 r8a:16 r8c:16		;16
+3	n:7 #0b010:3 o:3 b:3 r8a:16 c:8			;17
+3	o:6 #0b1110:4 a:3 c:3 r8b:16			;18
+3	o:6 #0b0110:4 c:3 b:3 r8a:16			;19
+1	o:8 pa:8					;20
+1	n:8 #0x0:2 o:3 #0b110:3 r8a:16			;21
+1	n:8 #0b11:2 o:3 a:3				;22
+1	o:8 r8pa:16					;23
+2	n:8 #0b11:2 o:3 a:3 b:8				;24
+2	n:8 #0b00:2 o:3 #0b110:3 r8a:16 b:8		;25
+3	n:8 #0b10:2 o:3 b:3 r8a:16 c:8			;26
+1	n:3 a:2 o:3					;27
+2	n:8 #0b10:2 o:3 b:3 r8a:16			;28
+1	n:8 #0b00:2 o:3 a:3				;29
+1	n:8 #0b11:2 o:3 a:3				;30
+2	o:6 #0b1000:4 a:3 b:3				;31
+2	o:6 #0b0000:4 b:3 a:3				;32
+2	n:7 #0b100:3 o:3 a:3 r8b:16			;33
+2	n:7 #0b000:3 o:3 a:3 b:8			;34
+2	o:6 #0b0100:4 a:3 b:3				;35
+2	o:6 #0b1100:4 b:3 a:3				;36
+2	n:8 #0b00:2 o:3 a:3 b:8				;37
+2	o:8 r8a:16 r8b:16				;38
+1	o:8 r8a:16					;39
+%
+args
+;		Argument types
+;
+;	expr		- displacement expression
+;	b:expr		- byte register expression
+;	:expr		- word register expression
+;	b#expr		- byte immediate expression
+;	#expr		- word immediate expression
+;	s#expr		- short word immediate expression
+;
+;	general two-argument form
+;
+;	opcode	dest, source
+;
+ " "					{ 0b0010 0 8 0
+
+  expr					{ 0b0010 0 1 0
+ b:expr , b:expr			{ 0b0011 0 2 3
+ r:expr					{ 0b0010 0 4 4
+ b:expr ,  expr				{ 0b0011 0 2 5
+ b:expr , b#expr			{ 0b0011 0 3 6
+  expr , b:expr				{ 0b0011 0 2 7
+  expr , b#expr				{ 0b0011 0 3 8
+ :expr , :expr				{ 0b0011 0 2 9
+ :expr ,  expr				{ 0b0011 0 2 10
+ :expr , #expr				{ 0b0011 0 3 11
+  expr , :expr				{ 0b0011 0 2 12
+  expr , #expr				{ 0b0011 0 3 13
+ b:expr ,  expr(expr)			{ 0b0011 0 2 14
+  expr(expr) , b:expr			{ 0b0011 0 2 15
+  expr(expr) , #expr			{ 0b0011 0 3 16
+  expr(expr) , b#expr			{ 0b0011 0 3 17
+ :expr , expr(expr)			{ 0b0011 0 2 18
+  expr(expr) , :expr			{ 0b0011 0 2 19
+ :expr , s#expr				{ 0b0011 0 5 24
+  expr , s#expr				{ 0b0011 0 5 25
+  expr(expr) , s#expr			{ 0b0011 0 5 26
+   expr(expr)				{ 0b0011 0 6 28
+   (expr)				{ 0b0011 0 6 29
+  :expr					{ 0b0011 0 6 30
+ b:expr ,  (expr)			{ 0b0011 0 2 31
+  (expr) , b:expr			{ 0b0011 0 2 32
+  (expr) , #expr			{ 0b0011 0 3 33
+  (expr) , b#expr			{ 0b0011 0 3 34
+ :expr , (expr)				{ 0b0011 0 2 35
+  (expr) , :expr			{ 0b0011 0 2 36
+  (expr) , s#expr			{ 0b0011 0 5 37
+  expr:expr				{ 0b0011 0 7 38
+%
+opcodes
+mov	(2 0 0x0022)  (3 0 0x0063)  
+push	(1 21 0x06ff)  (4 4 0x000a)  (6 0 0x06ff)  
+pop	(1 21 0x008f)  (4 4 0x000b)  (6 0 0x008f)  
+xchg	(2 0 0x0021)  (4 4 0x0012)  
+in	(0 0 0x00ec)  (1 2 0x00e4)  
+inw	(0 0 0x00ed)  (1 2 0x00e5)  
+out	(0 0 0x00ee)  (1 2 0x00e6)  
+outw	(0 0 0x00ef)  (1 2 0x00e7)  
+xlat	(0 0 0x00d7)  
+lea	(2 0 0x008d)  
+lds	(2 0 0x00c5)  
+les	(2 0 0x00c4)  
+lahf	(0 0 0x009f)  
+sahf	(0 0 0x009e)  
+pushf	(0 0 0x009c)  
+popf	(0 0 0x009d)  
+add	(2 0 0x0000)  (3 0 0x0040)  (5 0 0x0083)  
+adc	(2 0 0x0004)  (3 0 0x0140)  (5 0 0x0283)  
+inc	(1 21 0x00ff)  (4 4 0x0008)  (6 0 0x00ff)  
+incb	(1 21 0x00ff)  (6 0 0x00ff)  
+aaa	(0 0 0x0037)  
+daa	(0 0 0x0027)  
+sub	(2 0 0x000a)  (3 0 0x02c0)  (5 0 0x0583)  
+sbb	(2 0 0x0006)  (3 0 0x01c0)  (5 0 0x0383)  
+dec	(1 21 0x01ff)  (4 4 0x0009)  (6 0 0x01ff)  
+decb	(1 21 0x01fe)  (6 0 0x01fe)  
+neg	(1 21 0x03f7)  (4 22 0x03f7)  (6 0 0x03f7)  
+negb	(1 21 0x03f6)  (4 22 0x03f6)  (6 0 0x03f6)  
+cmp	(2 0 0x000e)  (3 0 0x03c0)  (5 0 0x0783)  
+aas	(0 0 0x003f)  
+das	(0 0 0x002f)  
+mul	(1 21 0x04f7)  (4 22 0x04f7)  (6 0 0x04f7)  
+mulb	(1 21 0x04f6)  (4 22 0x04f6)  (6 0 0x04f6)  
+imul	(1 21 0x05f7)  (4 22 0x05f7)  (6 0 0x05f7)  
+imulb	(1 21 0x05f6)  (4 22 0x05f6)  (6 0 0x05f6)  
+aam	(0 1 0xd40a)  
+div	(1 21 0x06f7)  (4 22 0x06f7)  (6 0 0x06f7)  
+divb	(1 21 0x06f6)  (4 22 0x06f6)  (6 0 0x06f6)  
+idiv	(1 21 0x07f7)  (4 22 0x07f7)  (6 0 0x07f7)  
+idivb	(1 21 0x07f6)  (4 22 0x07f6)  (6 0 0x07f6)  
+aad	(0 1 0xd50a)  
+cbw	(0 0 0x0098)  
+cwd	(0 0 0x0099)  
+not	(1 21 0x02f7)  (4 22 0x02f7)  (6 0 0x02f7)  
+notb	(1 21 0x02f6)  (4 22 0x02f6)  (6 0 0x02f6)  
+shl1	(1 21 0x04d1)  (4 22 0x04d1)  (6 0 0x04d1)  
+shl1b	(1 21 0x04d0)  (4 22 0x04d0)  (6 0 0x04d0)  
+sal1	(1 21 0x04d1)  (4 22 0x04d1)  (6 0 0x04d1)  
+sal1b	(1 21 0x04d0)  (4 22 0x04d0)  (6 0 0x04d0)  
+shr1	(1 21 0x05d1)  (4 22 0x05d1)  (6 0 0x05d1)  
+shr1b	(1 21 0x05d0)  (4 22 0x05d0)  (6 0 0x05d0)  
+sar1	(1 21 0x07d1)  (4 22 0x07d1)  (6 0 0x07d1)  
+sar1b	(1 21 0x07d0)  (4 22 0x07d0)  (6 0 0x07d0)  
+rol1	(1 21 0x00d1)  (4 22 0x00d1)  (6 0 0x00d1)  
+rol1b	(1 21 0x00d0)  (4 22 0x00d0)  (6 0 0x00d0)  
+ror1	(1 21 0x01d1)  (4 22 0x01d1)  (6 0 0x01d1)  
+ror1b	(1 21 0x01d0)  (4 22 0x01d0)  (6 0 0x01d0)  
+rcl1	(1 21 0x02d1)  (4 22 0x02d1)  (6 0 0x02d1)  
+rcl1b	(1 21 0x02d0)  (4 22 0x02d0)  (6 0 0x02d0)  
+rcr1	(1 21 0x03d1)  (4 22 0x03d1)  (6 0 0x03d1)  
+rcr1b	(1 21 0x03d0)  (4 22 0x03d0)  (6 0 0x03d0)  
+shl	(1 21 0x04d3)  (4 22 0x04d3)  (6 0 0x04d3)  
+shlb	(1 21 0x04d2)  (4 22 0x04d2)  (6 0 0x04d2)  
+sal	(1 21 0x04d3)  (4 22 0x04d3)  (6 0 0x04d3)  
+salb	(1 21 0x04d2)  (4 22 0x04d2)  (6 0 0x04d2)  
+shr	(1 21 0x05d3)  (4 22 0x05d3)  (6 0 0x05d3)  
+shrb	(1 21 0x05d2)  (4 22 0x05d2)  (6 0 0x05d2)  
+sar	(1 21 0x07d3)  (4 22 0x07d3)  (6 0 0x07d3)  
+sarb	(1 21 0x07d2)  (4 22 0x07d2)  (6 0 0x07d2)  
+rol	(1 21 0x00d3)  (4 22 0x00d3)  (6 0 0x00d3)  
+rolb	(1 21 0x00d2)  (4 22 0x00d2)  (6 0 0x00d2)  
+ror	(1 21 0x01d3)  (4 22 0x01d3)  (6 0 0x01d3)  
+rorb	(1 21 0x01d2)  (4 22 0x01d2)  (6 0 0x01d2)  
+rcl	(1 21 0x02d3)  (4 22 0x02d3)  (6 0 0x02d3)  
+rclb	(1 21 0x02d2)  (4 22 0x02d2)  (6 0 0x02d2)  
+rcr	(1 21 0x03d3)  (4 22 0x03d3)  (6 0 0x03d3)  
+rcrb	(1 21 0x03d2)  (4 22 0x03d2)  (6 0 0x03d2)  
+and	(2 0 0x0008)  (3 0 0x0240)  
+test	(2 0 0x0021)  (3 0 0x007b)  
+or	(2 0 0x0002)  (3 0 0x00c0)  
+xor	(2 0 0x000c)  (3 0 0x0340)  
+repnz	(0 0 0x00f2)  
+repz	(0 0 0x00f3)  
+movb	(0 0 0x00a4)  
+movw	(0 0 0x00a5)  
+cmpb	(0 0 0x00a6)  
+cmpw	(0 0 0x00a7)  
+scab	(0 0 0x00ae)  
+scaw	(0 0 0x00af)  
+lodb	(0 0 0x00ac)  
+lodw	(0 0 0x00ad)  
+stob	(0 0 0x00aa)  
+stow	(0 0 0x00ab)  
+call	(1 23 0x00e8)  (6 0 0x02ff)  
+jmp	(1 23 0x00e9)  (6 0 0x04ff)  
+lcall	(6 0 0x03ff)  (7 0 0x009a)  
+ljmp	(6 0 0x05ff)  (7 0 0x00ea)  
+ret	(0 0 0x00c3)  (1 39 0x00c2)  
+lret	(0 0 0x00cb)  (1 39 0x00ca)  
+je	(1 20 0x0074)  
+jz	(1 20 0x0074)  
+jl	(1 20 0x007c)  
+jnge	(1 20 0x007c)  
+jle	(1 20 0x007e)  
+jng	(1 20 0x007e)  
+jb	(1 20 0x0072)  
+jnae	(1 20 0x0072)  
+jbe	(1 20 0x0076)  
+jna	(1 20 0x0076)  
+jp	(1 20 0x007a)  
+jpe	(1 20 0x007a)  
+jo	(1 20 0x0070)  
+js	(1 20 0x0078)  
+jne	(1 20 0x0075)  
+jnz	(1 20 0x0075)  
+jnl	(1 20 0x007d)  
+jge	(1 20 0x007d)  
+jnle	(1 20 0x007f)  
+jg	(1 20 0x007f)  
+jnb	(1 20 0x0073)  
+jae	(1 20 0x0073)  
+jnbe	(1 20 0x0077)  
+ja	(1 20 0x0077)  
+jnp	(1 20 0x007b)  
+jpo	(1 20 0x007b)  
+jno	(1 20 0x0071)  
+jns	(1 20 0x0079)  
+loop	(1 20 0x00e2)  
+loopz	(1 20 0x00e1)  
+loope	(1 20 0x00e1)  
+loopnz	(1 20 0x00e0)  
+loopne	(1 20 0x00e0)  
+jcxz	(1 20 0x00e3)  
+int	(0 0 0x00cc)  (1 2 0x00cd)  
+into	(0 0 0x00ce)  
+iret	(0 0 0x00cf)  
+clc	(0 0 0x00f8)  
+cmc	(0 0 0x00f5)  
+stc	(0 0 0x00f9)  
+cld	(0 0 0x00fc)  
+std	(0 0 0x00fd)  
+cli	(0 0 0x00fa)  
+sti	(0 0 0x00fb)  
+hlt	(0 0 0x00f4)  
+wait	(0 0 0x0096)  
+lock	(0 0 0x00f0)  
+sov	(1 27 0x0031)  
+pushsr	(4 27 0x0030)  
+popsr	(4 27 0x0038)  
+%
+end
+READ_ME         360909415   99    31    100644  180       `
+The format for d-files has changed -- conv.awk is an 'awk'
+program which should convert old d-files to the new format
+
+The files may need some prettying up of the opcodes section.
+conv.awk        360909447   99    31    100644  505       `
+BEGIN {
+	flag = 0;
+	ii = 0;
+}
+
+/^ii/ {
+	if(NF < 2) {
+		print "; bad ii "
+		ii = 0;
+	} else {
+		ii = $2;
+	}
+	ii = "" ii;
+	next;
+}
+
+/^class/ {
+	if(flag == 0) {
+		print;
+	} else {
+		next;
+	}
+}
+
+{
+	if(flag && NF > 2 && substr($0, 1, 1) != ";") {
+		out = $1 "	";
+		for(i = 2; i < NF; i += 2) {
+			if(("" $(i+1)) != ("" ii)) {
+				out = out "(" (i-2)/2 " " $i " " $(i+1) ")";
+				if( i < NF-2 )
+					out = out "  ";
+			}
+		}
+		print out;
+	} else {
+		print;
+	}
+}
+
+/^opcodes/ {
+	flag = 1;
+}
+
+/^%$/ {
+	flag = 0;
+}
+

@@ -1,0 +1,59 @@
+;**********************************************************
+;
+;			BYEPATCH.LIB
+;
+;	This file gives patches to BYE69, BYE70 and BYE71
+;	which when upgraded should be versions 6.91, 7.01
+;	and 7.11.
+;
+;**********************************************************
+;
+*ADD THE FOLLOWING MODIFICATION NOTICE TO THE PROLOGUE
+;
+;10/24/81 Modified NOPASS so that COM files that look for
+;	  a second file on the command line (such as HELP18)
+;	  will find a 20H at FCB+1 for default purposes.  Also
+;	  added RUNCOM at the end of NOPASS and changed the
+;	  jumps to the TPA (100h) to a CALL so that a COM file
+;	  will return to BYE where a clean jump to warm boot
+;	  can be done instead of going off to never-never land.
+;					R. L. Plouffe
+;
+;
+;
+*FIND THE ROUTINE 'NOPASS' AND LOOK FOR THE CODE THAT MATCHES
+*BELOW. (NEARLY).  MAKE THE CHANGES SO THAT THE CODE MATCHES.
+;
+	IF	COMFILE
+	MVI	A,20H	;FOOL THE SYSTEM
+	STA	FCB+1	;SO THAT COM FILE WILL SEE
+			;20H AT FCB+1 FOR DEFAULT PURPOSES.
+	LDA	OPTION
+	CPI	'A'	;SYSOP CAN BYPASS COM FILE BY..
+	JZ	0	;..TYPING "BYE /A"
+	CPI	'C'	;OPER CAN ALSO GO TO COM..
+	JNZ	RUNCOM	;..FILE LOAD WITH "BYE /C"
+	CALL	ILPRT	;PRINT THIS MESSAGE:'
+	DB	'Loading system...',CR,LF,0
+	CALL	LODCOM
+RUNCOM	EQU	$+OFFSET ;EVERYONE ELSE GETS COM FILE
+	CALL	100H
+	ENDIF		;COMFILE
+;
+	JMP	0	***BE SURE TO REMOVE THE CONDITIONALS
+			***AROUND THIS STATEMENT.
+;
+;
+*CHANGE THE NAME OF THE COM FILE TO HELP IF YOU WISH TO
+*USE HELP.COM AS A START UP COM FILE.. THE REASON FOR THIS
+*MOD IN THE FIRST PLACE WAS SO THAT HELP.COM WILL WORK
+*PROPERLY AND DEFAULT TO HELP.HLP ON START UP. WOULD BE
+*REQUIRED AS WELL FOR ANY OTHER COM FILES THAT LOOK FOR
+*A SECOND FILE ON A COMMAND LINE.
+;
+COMFCB	EQU	$+OFFSET
+	DB	0,'HELP    COM'
+;COM file name	   ^^^^^^^^^^^ (must be 11 characters)
+;
+;
+*END OF PATCHES

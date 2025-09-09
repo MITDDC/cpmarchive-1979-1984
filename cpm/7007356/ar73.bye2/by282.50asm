@@ -1,0 +1,280 @@
+;*****************************************************************
+;		Western Digital 8250 routines
+;		Version 1.0    by Paul Traina
+;
+;	This is adapted from the WD8250 routines in Bye80.
+;
+;	These routines will allow the easy patching of ByeII for any 
+;type of modem/serial port combination.  Certain routines must return
+;status flags, so please be careful to set the flags as directed.
+;
+;This version is for the Western Digital 8250 chip that is hooked up to
+;an external modem.  If your modem cannot detect a ring, then set NORING true.
+;
+;Current revision history: (in reverse order to minimize reading time)
+;
+;10/04/82: Routines added, no fuss, mess, or frills...
+;
+;The following define the port address to use.
+;
+BASEP	EQU	60h		;Base port modem port
+;
+DPORT	EQU	BASEP		;Data port
+LPORT	EQU	BASEP+3		;Line control
+CPORT	EQU	BASEP+4		;Modem control
+SPORT	EQU	BASEP+5		;Line status port
+MSPORT	EQU	BASEP+6		;Modem status port
+RPORT	EQU	BASEP+6		;Ring indicator port
+;
+;**************** Line Status Bits ***********************
+;
+DAV	EQU	00000001b	;Data available
+ORUN	EQU	00000010b	;Overrun error
+RPE	EQU	00000100b	;Parity error
+FERR	EQU	00001000b	;Framing error
+BRK	EQU	00010000b	;Break detect
+TBMT	EQU	00100000b	;Transmitt buffer empty
+;
+;**************** Modem Status Bits **********************
+;
+DSR	EQU	00100000b	;Data set ready
+RDET	EQU	01000000b	;Ring detect
+CTS	EQU	10000000b	;Carrier detect
+;
+;***************** Baud Rate Divisors ********************
+;
+BR300LS EQU	080H		;300 baud
+BR300MS	EQU	001H
+BR450LS	EQU	000H		;450 baud
+BR450MS	EQU	001H
+BR600LS	EQU	0C0H		;600 baud
+BR600MS	EQU	000H
+BR120LS	EQU	060H		;1200 baud
+BR120MS	EQU	000H
+;
+;***************** Modem Control Bits *********************
+;
+DTR	EQU	00000001b	;Data terminal ready
+RTS	EQU	00000010b	;Request to send
+OUT1	EQU	00000100b	;Aux output #1
+OUT2	EQU	00001000b	;Aux output #2
+;
+;****************** Line Control Bits ************************
+;
+WLS0	EQU	00000001b	;Word length select 0
+WLS1	EQU	00000010b	;Word length select 1
+STB	EQU	00000100b	;Stop bit select
+PEN	EQU	00001000b	;Parity enable
+PES	EQU	00010000b	;Even parity select
+SPS	EQU	00100000b
+BRK	EQU	01000000b	;Break
+DLAB	EQU	10000000b
+;
+;
+;****************************************************************************
+;If any of your routines zaps anything other than the Accumulator, then you *
+;must preserve all other registers.  If you don't,  ByeII may barf.         *
+;****************************************************************************
+;
+;This routine should turn off everything on the modem, and get it ready
+;to wait for a ring.  (Also hang it up)
+;
+MDINST	EQU	$+OFFSET
+	XRA	A		;Shut off DTR & RTS
+	OUT	CPORT		;..which turns off modem.
+;
+	IF	NORING
+	PUSH	B		;Preserve since we need it
+	MVI	B,150		;Wait 15 seconds
+OFFTI	EQU	$+OFFSET
+	CALL	DELAY		;Wait .1 seconds
+	DCR	B	
+	JNZ	OFFTI		;Loop until done
+	POP	B		;restore BC
+	MVI	A,DTR+RTS	;Turn on DTR and RTS & wait for call
+	OUT	CPORT
+	ENDIF	;NORING
+;
+;The following routine will make the modem answer the phone.
+;It should also set 300 baud.
+;
+MDANSW:	EQU	$+OFFSET
+;
+	IF	NOT NORING
+	MVI	A,DTR+RTS	;Turn on DTR and let modem answer phone
+	OUT	CPORT
+	ENDIF 	;NOT NORING
+;
+	CALL	SET300		;Set 300 baud
+	MVI	A,WLS0+WLS1	;8 data bits, 1 stop bit, no parity
+	OUT	LPORT
+	RET
+;
+;The following is a routine to determine if there is a character waiting
+;to be received,  if none are there,  the Zero flag will be set, otherwise,
+;255 will be returned in register A.  Remember that the system will like you
+;a little more if you also mask out framing, parity, and overrun errors.
+;
+MDINST:	EQU	$+OFFSET
+	IN	SPORT		;Get status
+	ANI	DAV		;Data available
+	RZ			;Return if not ready
+	IN	SPORT		;Get status again
+	ANI	0EH		;Check parity, framing and overrun
+	JZ	MDINST1		;No, we're ok
+	IN	DPORT		;Swallow garbage character
+	XRA	A		;Return false
+	RET
+MDINST1	EQU	$+OFFSET
+	ORI	0FFH		;We have a character
+	RET
+;
+;
+;The following is a routine to determine if the transmit buffer is empty.
+;If it is empty, it will return with the Zero flag clear.  If the transmitter
+;is busy, then it will return with the Zero flag set.
+;
+MDOUTST	EQU	$+OFFSET
+	IN	SPORT
+	ANI	TBMT
+	RET
+;
+;The following is a routine that will check to make sure we still have carrier.
+;If there is no carrier, it will return with the Zero flag set.
+;
+MDCARCK EQU	$+OFFSET
+	IN	MSPORT			;Get modem status
+	ANI	CTS			;Got a carrier?
+	RET
+;
+;The following routine will check to see if the phone is ringing, if it isn't,
+;it will return with Zero set, otherwise Zero will be cleared.
+;
+MDRING:	EQU	$+OFFSET
+	IN	RPORT		;Ringing?
+	ANI	RDET		;1=yes, 0=no
+	RET
+;
+;The following is a routine that will input one character from the modem
+;port.  If there is nothing there, it will return garbage... so use the
+;MDINST routine first.
+;
+MDINP:	EQU	$+OFFSET
+	IN	DPORT		;get character
+	ANI	7FH		;strip parity and other garbage
+	RET
+;
+;The following is a routine that will output one character in register A
+;to the modem.  REMEMBER, that is register A, not register C.
+; ** Use MDOUTST first to see if buffer is empty **
+;
+MDOUTP:	EQU	$+OFFSET
+	OUT	DPORT		;send it
+	RET
+;
+;These next routines set the proper baud rates for the modem.  If you do
+;not support the particular rate, then simply put in a JMP to SETINV.
+;If the baud rate change was successful, make SURE the Zero flag is set.
+;
+;The following routine returns a 255 because we were not able to set to
+;the proper baud rate because either the serial port or the modem can't handle
+;it.
+;
+SETINV:	EQU	$+OFFSET
+	MVI	A,0FFH
+	ORA	A		;make sure the Zero flag isn't set
+	RET
+;
+;The follwing sets us for 110 baud. You may wish to remove this and replace
+;it with a JMP to SETINV because you hate creeps that call in at 110 baud and
+;want to download a 200k long files (arrrrgh)
+;
+SET110:	EQU	$+OFFSET
+	JMP	SETINV		;invalid baud rate
+;
+;Set up for 300 baud
+;
+SET300:	EQU	$+OFFSET	;Set 300 baud
+	PUSH	D		;Save DE
+	MVI	D,BR300MS
+	MVI	E,BR300LS
+	CALL	SETBAUD
+	POP	D
+	XRA	A		;Tell them 300 baud is OK (it better be...)
+	RET
+;
+;Set up for 450 baud
+;
+SET450:	EQU	$+OFFSET	;Set 450 baud
+	PUSH	D		;Save DE
+	MVI	D,BR450MS
+	MVI	E,BR450LS
+	CALL	SETBAUD
+	POP	D
+	XRA	A		;Tell them 450 baud is OK
+	RET
+;
+;Set up for 600 baud
+;
+SET600:	EQU	$+OFFSET	;Set 600 baud
+	PUSH	D		;Save DE
+	MVI	D,BR600MS
+	MVI	E,BR600LS
+	CALL	SETBAUD
+	POP	D
+	XRA	A		;Tell them 600 baud is OK
+	RET
+;
+;Set up for 1200 baud
+;
+SET1200	EQU	$+OFFSET	;Set 600 baud
+	PUSH	D		;Save DE
+	MVI	D,BR120MS
+	MVI	E,BR120LS
+	CALL	SETBAUD
+	POP 	D
+	XRA	A
+	RET
+;
+;This routine takes the baud rate divisors passed in the DE register and
+;sets the modem port accordingly.
+;
+SETBAUD EQU	$+OFFSET
+	MVI	A,83H		;Set DLAB
+	OUT	LPORT
+	MOV	A,E		;Get LSB
+	OUT	DPORT
+	MOV	A,D		;Get MSB
+	OUT	DPORT+1
+	CPI	04H		;110 baud?
+	JNZ	ONESTOP	
+	MVI	A,WLS0+WLS1+STB	;Yes, so set 8 data bits
+	OUT 	LPORT		;..no parity, 2 stop bits
+	JMP	DLOOP
+ONESTOP EQU	$+OFFSET	;No, so set 8 data bits
+	MVI	A,WLS0+WLS1	;..no parit, 1 stop bit
+	OUT 	LPORT
+DLOOP	EQU	$+OFFSET
+	XCHG			;Put divsor in HL
+	DAD H ! DAD H		;Multiply by 16 so we delay
+	DAD H ! DAD H		;..about 2 character times
+
+DLOOP1:	EQU	$+OFFSET
+	DCX	H		;Loop some more
+	MOV	A,L		;..sigh, why didn't he just use the
+	ORA	H		;stupid DELAY routines... urgh.
+	JNZ	DLOOP1
+	XCHG
+	IN	DPORT		;Clear out crap
+	IN	DPORT
+	RET
+;
+;Ok, that's all of the modem dependant routines that ByeII uses, so if
+;you patch this file into your copy of ByeII, then it should work out well.
+;
+;If you have any problems, give me a call and I can specify further details.
+;				Paul Traina -- 10/4/82
+;
+;	END (of Bye8250 but not program)
+;******************************************************************************
+

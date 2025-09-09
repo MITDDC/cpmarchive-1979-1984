@@ -1,0 +1,241 @@
+;**********************************************************************
+;	    Novation Apple-Cat routines for ByeII
+;		Version 1.0    by Paul Traina
+;
+;	These routines will allow the easy patching of ByeII for any 
+;type of modem/serial port combination.  Certain routines must return
+;status flags, so please be careful to set the flags as directed.
+;
+;This version is for the Apple ][ running with an Apple-Cat modem card.
+;
+;For the Apple, you should set BYELOW true and use the following values
+;for WMLOC and OLDBD. DEST0   EQU   0BB00H  Should be correct for the  
+;Apple.
+;
+;WMLOC  |  OLDBD  | System type
+;-------+---------+------------------------------------------------
+; DAF1  |  CC06   | Microsoft 56k CP/M
+; DBB0  |  CC06   | Vista CP/M (56k) - boots on 5.25" disks
+; DBC1  |  CC06   | Vista CP/M (56k) - boots on 8" disks
+; ????  |  ????   | ALS 60k CP/M
+; ????  |  ????   | PCPI 63k CP/M
+;
+;If you know the values for the other OS's, please let me know (Paul)
+;
+;Current revision history: (in reverse order to minimize reading time)
+;
+;10/04/82: Routines added, no fuss, mess, or frills...
+;
+;The following define the slot address to use.
+;
+SLOT	EQU	2		;Apple-Cat residing in Slot #2
+;
+;******************************************************************************
+;
+;Apple-Cat modem address equates
+;
+SLOTVAL	EQU	SLOT*16		;number to add for proper slot
+;
+MCSTATP	EQU	0E080h+SLOTVAL	;Carrier status
+LNCTL	EQU	0E081h+SLOTVAL	;Line control
+PHCTL	EQU	0E082h+SLOTVAL	;Phone control
+BSRINT	EQU	0E083h+SLOTVAL	;BSR and interrupts
+RCVCTL	EQU	0E089h+SLOTVAL	;Receiver control
+MDPORT	EQU	0E08Ah+SLOTVAL	;Mode (parity/stop bits) port
+BAUDPT	EQU	0E08Bh+SLOTVAL	;Baud rate port
+XRINT	EQU	0E08Ch+SLOTVAL	;Transmitt/Receive interrupts
+TRXCTL	EQU	0E08Dh+SLOTVAL	;Transmitter control
+MODSEL	EQU	0E08Fh+SLOTVAL	;Modem select port
+;
+RSPORT	EQU	0E08Fh+SLOTVAL	;Receive status port
+RDPORT	EQU	0E08Bh+SLOTVAL	;Receive data port
+TSPORT	EQU	0E08Fh+SLOTVAL	;Transmit status port
+TDPORT	EQU	0E08Eh+SLOTVAL	;Transmit data port
+;
+;Values to poke into ports
+;
+MAINM	EQU	0		;Select main modem
+HANG	EQU	0		;Hang up phone
+RDET	EQU	1		;Ring detect
+SQLT	EQU	1		;Squeltch cat
+ANSW	EQU	2		;Answer phone
+NOXRINT	EQU	5		;No transmitt/recv interrupts
+NOINT	EQU	6		;No BSR interrupts
+DAV	EQU	8		;Data available
+TBMT	EQU	10h		;Transmit buffer empty
+XMT103	EQU	10h		;Transmitter 103 mode (also used to clear rx)
+XMITOFF	EQU	1Fh		;Turn of transmitter
+CTS	EQU	20h		;Carrier detect
+ANS103	EQU	64h		;Receiver 103 mode
+CATERR  EQU	0C0h		;Framing/Overrun errors
+B110    EQU     55H		;SELECT 110 BAUD
+B300    EQU     22H		;SELECT 300 BAUD
+B8NO1   EQU     03H		;8DATA,NO PARITY,1STOP
+B8NO2   EQU     0BH		;8DATA,NO PARITY,2STOP
+;
+;****************************************************************************
+;If any of your routines zaps anything other than the Accumulator, then you *
+;must preserve all other registers.  If you don't,  ByeII may barf.         *
+;****************************************************************************
+;
+;This routine should turn off everything on the modem,  hang up the phone, and
+;get it ready to wait for a ring.
+;
+MDINIT:	EQU	$+OFFSET
+	MVI	A,XMITOFF	;Turn off transmitter
+	STA	TRXCTL
+	MVI	A,HANG		;Hang up phone
+	STA	PHCTL
+	RET
+;
+;The following is a routine to determine if there is a character waiting
+;to be received,  if none are there,  the Zero flag will be set, otherwise,
+;255 will be returned in register A.  Remember that the system will like you
+;a little more if you also mask out framing, parity, and overrun errors.
+;
+MDINST:	EQU	$+OFFSET
+	LDA	RSPORT		;Get modem status
+	ANI	DAV		;Data available?
+	RZ			;nope
+	LDA	RSPORT		;Check this time for
+	ANI	CATERR   	;Framing and overflow
+	JZ	MDINS1		;No errors, we're ok
+	CALL	MDINP		;Clear crappy character
+	XRA	A		;return false
+	RET
+MDINS1:	EQU	$+OFFSET
+	ORI	0FFH		;return true
+	RET
+;
+;
+;The following is a routine to determine if the transmit buffer is empty.
+;If it is empty, it will return with the Zero flag clear.  If the transmitter
+;is busy, then it will return with the Zero flag set.
+;
+MDOUTST	EQU	$+OFFSET
+	LDA	TSPORT		;Get modem status
+	ANI	TBMT		;mask out junk
+	RET
+;
+;The following is a routine that will check to make sure we still have carrier.
+;If there is no carrier, it will return with the Zero flag set.
+;
+MDCARCK EQU	$+OFFSET
+	LDA	MCSTATP		;Get carrier status
+	ANI	CTS		;got a carrier?
+	RET
+;
+;The following routine will check to see if the phone is ringing, if it isn't,
+;it will return with Zero set, otherwise Zero will be cleared.
+;
+MDRING:	EQU	$+OFFSET
+	LDA	TRXCTL		;get ring status
+	ANI	RDET		;ringing?
+	RET
+;
+;The following is a routine that will input one character from the modem
+;port.  If there is nothing there, it will return garbage... so use the
+;MDINST routine first.
+;
+MDINP:	EQU	$+OFFSET
+	MVI	A,XMT103	;Clear receiver
+	STA	TRXCTL
+	LDA	RDPORT		;Read character
+	ANI	7FH		;strip parity and other garbage
+	RET
+;
+;The following is a routine that will output one character in register A
+;to the modem.  REMEMBER, that is register A, not register C.
+; ** Use MDOUTST first to see if buffer is empty **
+;
+MDOUTP:	EQU	$+OFFSET
+	STA	TDPORT		;send character
+	RET
+;
+;The following routine will make the modem answer the phone.
+;It should set baudrate to 300 baud.
+;
+MDANSW:	EQU	$+OFFSET
+	MVI	A,ANSW		;Answer phone
+	STA	PHCTL
+	MVI	A,SQLT		;Squelch Cat
+	STA	LNCTL
+	MVI	A,NOINT		;Disable BSR and interupts
+	STA	BSRINT
+	MVI	A,ANS103	;Set receiver to 103, answer mode
+	STA	RCVCTL
+	CALL	SET300		;300 baud
+	MVI	A,NOXRINT	;No XMIT/RCV interrupts
+	STA	XRINT
+	MVI	A,XMT103	;Transmitter 103, answer mode
+	STA	TRXCTL
+	MVI	A,MAINM		;Select main modem
+	STA	MODSEL
+	RET
+;
+;These next routines set the proper baud rates for the modem.  If you do
+;not support the particular rate, then simply put in a JMP to SETINV.
+;If the baud rate change was successful, make SURE the Zero flag is set.
+;
+;The following routine returns a 255 because we were not able to set to
+;the proper baud rate because either the serial port or the modem can't handle
+;it.
+;
+SETINV:	EQU	$+OFFSET
+	ORI	0FFH		;make sure the Zero flag isn't set
+	RET
+;
+;The follwing sets us for 110 baud. You may wish to remove this and replace
+;it with a JMP to SETINV because you hate creeps that call in at 110 baud and
+;want to download a 200k long files (arrrrgh)
+;
+SET110:	EQU	$+OFFSET
+	CALL	MDINP		;CLEAR OUT GARBAGE SINCE THE MODEM WAS
+	CALL	MDINP		;SET TO 300 BAUD UPON ANSWER
+	MVI	A,B110		;Set 110 baud
+	STA	BAUDPT
+	MVI	A,B8NO2		;Set 8 data bits, no parity, 2 stop bits
+	STA	MDPORT
+	XRA	A		;FORCE ZERO FLAG
+	RET
+;
+;Set up for 300 baud
+;
+SET300:	EQU	$+OFFSET
+	CALL	MDINP
+	CALL	MDINP
+	MVI	A,B300		;Set 300 baud
+	STA	BAUDPT
+	MVI	A,B8NO1		;Set 8 data bits, no parity, 1 stop bit
+	STA	MDPORT
+	XRA	A
+	RET
+;
+;Set up for 450 baud
+;
+SET450:	EQU	$+OFFSET
+	JMP	SETINV		;Not supported by AppleCat
+;
+;Set up for 600 baud
+;
+SET600:	EQU	$+OFFSET
+	JMP	SETINV		;Not supported by AppleCat
+;
+;Set up for 710 baud (for all of those folks with PMMI's)
+;
+SET710:	EQU	$+OFFSET
+	JMP	SETINV		;Not supported by AppleCat
+;
+;Set up for 1200 baud
+;
+SET1200	EQU	$+OFFSET
+	JMP	SETINV		;Dave Roznar's working on it
+;
+;Ok, that's all of the modem dependant routines that ByeII uses, so if
+;you patch this file into your copy of ByeII, then it should work out well.
+;
+;If you have any problems, give me a call and I can specify further details.
+;				Paul Traina -- 10/4/82
+;
+;	END (of ByeACAT but not program)
+;**************************************************************************

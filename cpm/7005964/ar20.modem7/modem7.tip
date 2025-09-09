@@ -1,0 +1,41 @@
+FILE:   MODEM7.TIP
+DISK:   31:1
+DATE:   811122
+FOR:    Documentation of CAL command fix and dialer improvement
+
+1. CAL command fix:
+   All versions of MODEM7 including MODEM73 are supposed to be
+able to accept "CAL n" (where n is either a library letter or
+a phone-number string) as a valid form of the CAL command.  In
+fact, however, the "n" will simply be ignored.  This is because
+routine DIALPL checks for a command length >= 4 as a signal to
+skip the library display, but the menu routine, after
+recognizing CAL, sets the length to 1 so the L in CAL doesn't
+look like an illegal secondary option.
+   The following kludge repairs this defect.  In routine
+DIALPL, two lines above label DIALPL0, change CMDBUF+5 to
+CMDBUF+6.  Also, in routine GETCMD, three lines above label
+NXTOPT2, change MVI A,1 to MVI A,20H and change the next line
+from STA CMDBUF+1 to STA CMDBUF+4.  This makes the command
+look to the option processor like "CA  n", and since A is a
+legal secondary option (which in this case is never used) the
+line passes muster.  If an actual telephone number is used,
+you have to type an extra blank: CAL  000-0000, whereas
+with library numbers one blank only must be typed: CAL A.
+
+2.  Dialer improvement for older pulse-dial exchanges.
+   In 48- land here in Toronto, the pulse-dialer machines are
+so antiquated as to need time BETWEEN digits to make sense of
+what has been entered.  If you have trouble auto-dialing to
+certain exchanges, you may have the same problem.  Try changing
+routine DIAL as follows: replace the seventh line below label
+TIMEB by MVI B,8 (was MVI B,2).  This worked for me.
+
+All of these changes can be made by patching the .COM file,
+but the exact addresses to look for depend on your version
+and customizations if any.  For MODEM7, change 1706 (21 D7 21)
+to (21 D8 21), 18FD (06 02) to (06 08), 1D77 (3E 01) to
+(3E 20), and 1D79 (32 D3 21) to (32 D6 21).
+
+END: MODEM7.TIP
+

@@ -1,0 +1,34 @@
+PROCEDURE Shellsort(VAR A : ScalarTyp;
+			n : INDEX);
+{
+The array A[1..n] is sorted in ascending order. The method is that
+of D.A. Shell, (A high-speed sorting procedure, Comm. ACM 2 (1959),
+30-32) with subsequences chosen as suggested by T.N. Hibberd.
+}
+VAR
+  i, j, k, m	: integer;
+  done 		: BOOLEAN;
+  temp		: SCALAR;
+begin (*$C-,M-,F-*)
+  m := n;
+  While m <> 0 do
+    begin
+      m := m DIV 2;
+      k := n - m;
+      for j:=1 to k do
+	begin
+	  i := j;
+	  done := FALSE;
+	  repeat
+	    if A[i+m] >= A[i] then
+	      done := TRUE
+	    else
+	      begin
+		temp := A[i]; A[i] := A[i+m]; A[i+m] := temp;
+		i := i - m;
+	      end;
+	  until (i<1) OR ( done );
+	end{for j};
+    end{While};
+end;{Shellsort}{$C+,M+,F+}
+

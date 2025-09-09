@@ -1,0 +1,191 @@
+QUIKIES
+
+Version:  3
+ Update:  October 21, 1981
+   Home:  HP/RCPM, 312-955-4493, 1am-5pm
+ Editor:  Roy Lipscomb, Logic Associates, Chicago
+
+
+Permission has been granted to copy any of these
+items for non-commercial use, provided each copy
+properly credits the sources.  Reproduction for
+other uses must receive prior permission from the
+individual sources.
+
+Comments and contributions are invited, and may be
+forwarded to the home system.
+
+
+
+1.--------------------------------------------------
+ITEM:  The "re-execute" command.
+
+DESCRIPTION:  After exiting to CP/M from a program,
+the program may be re-executed without reloading it
+into RAM from disk.
+
+REQUIREMENTS:  Issue the command SAVE 0 @.COM to
+create the null command "@".
+
+PROCEDURE:  Issue the null command:  @
+This will cause CP/M to load precisely nothing into
+the transient program area (thus leaving the old
+program intact), then transfer control to the TPA.
+
+SOURCE:  (Anyone know?)
+
+
+
+2.--------------------------------------------------
+ITEM:  Using the I command of DDT to read files from
+disks other than A.
+
+PROCEDURE:  Translate the desired drive's name into
+its alphabetic sequence number; for instance, "1"
+for "A", "2" for "B", and so on.  Then perform the
+following sequence of commands to install the file's
+name and drive number, and read the file into RAM:
+
+     -Ifilenam.typ<cr> (desired file's name)
+     -S5C<cr>
+     005C 00 x<cr> ("x" = the above sequence number)
+     005D yy .<cr> ("yy" = don't care)
+     -R
+
+SOURCE:  Hal Walchli, Pittsburg Area Computer Club
+Newsletter, June 17, 1981.  (Also seen in other
+newsletters.)
+
+
+3.--------------------------------------------------
+ITEM:  Fix for bug in SUBMIT.COM (2.X only)
+
+DESCRIPTION:  SUBMIT will not accept pseudo-control
+characters.
+
+DIAGNOSIS:  Create a file X.SUB consisting of one
+line--
+
+     PIP X.SUB=X.SUB[S^Z]
+
+where "^" and "Z" are separate characters.  Then
+issue the command SUBMIT X.  The faulty version
+of SUBMIT will display the message "Error on line
+001 Invalid Control Character," then exit to CP/M.
+
+FIX:  Execute the following procedure:
+
+     A>DDT SUBMIT.COM<cr>
+     DDT VERS 2.2
+     NEXT  PC
+     0600 0100
+     -S442<CR>
+     0042 61 41<CR>
+     0443 32 .<CR>
+     -^C
+     A>SAVE 5 SUBMIT.COM<CR>
+
+RETEST:  Issue the command SUBMIT X.  No error
+should occur, and X.SUB should remain unchanged.
+
+SOURCE:  Dave Marschall of AMSI.
+
+
+4.--------------------------------------------------
+ITEM:  Comparing two .COM files via DDT.
+
+PROCEDURE:  Load one file and dump a stretch of RAM.
+Load the second file, and dump the same location.
+If both dumps are small enough to fit together on
+the screen, the areas can be compared visually.
+
+(To perform the actual program loads, use the I and
+the R commands.  If either program is not on the
+logged-in disk, you can read it by using the pro-
+cedure described in item #2 above.)
+
+SOURCE:  Hal Walchli, Pittsburg Area Computer Club
+Newsletter, June 17, 1981
+
+
+
+5.--------------------------------------------------
+ITEM:  Insert any control code into an ED file.
+
+DESCRIPTION:  ^C, ^E, ^L, ^P, ^S, ^R, ^U, and ^X
+are command codes for ED; when encountered, they
+are executed instead of inserted into the file.  It
+is possible to have ED insert these codes instead
+of executing them.
+
+PROCEDURE:  1)  Create CODES.LIB by issuing the
+command PIP CODES.LIB=CON: and typing the above
+control codes (they will not echo to the screen),
+followed by a control-Z.  2)  Whenever you are
+in ED now, and wish to insert one of these codes,
+read the codes in with the R command (specifi-
+cally, RCODES), then use the C and D commands to
+remove the unwanted codes.
+
+SOURCE:  Roy Lipscomb, Logic Associates
+
+
+
+6.--------------------------------------------------
+ITEM:  Counting records in a file.
+
+PROCEDURE:  PIP CON:=filename.typ[ND6]
+
+EFFECT:     The "virtual" record numbers for
+each record will be output to the screen.  The
+last number will be the record count of the
+file.  (Records are assumed to be terminated
+by a carriage return.)
+
+EXTENSION:  Instead of CON:, you can substitute any
+valid CP/M filename, and the "count up" will
+be entered into that file instead.  (Numbers under
+6 digits are preceded by blank fill.)  This type
+of file can be useful during program testing.
+
+This option reveals a slight anomaly in PIP: if a line
+begins with tabs, those tabs will not be deleted
+but will be retained and appended to the line number.
+
+SOURCE:  Roy Lipscomb, Logic Associates
+
+
+
+
+7.--------------------------------------------------
+ITEM:  Execute any commands by pressing only 2 keys.
+
+REQUIREMENT:  Public domain program SYNONYM.COM,
+version 2 or later, available on various RCPMs.
+
+PROCEDURE:  Select an unused alphanumeric, or other
+character allowable as part of a file name.
+As an example, let's take "A".  Let "command"
+be a command-plus-parameters.  Issue this command:
+
+        SYNONYM A command
+
+Now whenever you wish to execute "command", just
+A and carriage return.
+
+EXTENSION1:  To create a single name for a sequence
+of several commands, 1)  place the commands into a
+.SUB file (eg, TESTIT.SUB), and 2) follow the above
+procedure to create a name for the command
+"SUBMIT TESTIT".
+
+EXTENSION2:  Better yet, use /.COM or SUPERSUB.COM
+to eliminate the need for a separate .SUB file.
+That way, all the commands to be executed can be
+coded as part of "command" above.
+
+SOURCE:  Roy Lipscomb, Logic Associates
+
+
+
+

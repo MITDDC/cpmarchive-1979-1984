@@ -1,0 +1,43 @@
+;
+; A sample function in CSM format. This is "getchar", out of the std
+; library:
+;
+	maclib <bds>
+
+	function	getchar
+
+	lda ungetl	;any character pushed back?
+	ora a
+	mov l,a
+	jz gch2
+	xra a		;yes. return it and clear the pushback
+	sta ungetl	;byte in C.CCC.
+	mvi h,0
+	ret
+
+gch2:	push b
+	mvi c,conin
+	call bdos
+	pop b
+	cpi cntrlc	;control-C ?
+	jz base		;if so, reboot.
+	cpi 1ah		;control-Z ?
+	lxi h,-1	;if so, return -1.
+	rz
+	mov l,a
+	cpi cr		;carriage return?
+	jnz gch3
+	push b
+	mvi c,conout	;if so, also echo linefeed
+	mvi e,lf
+	call bdos
+	pop b
+	mvi l,newlin	;and return newline (linefeed)..
+
+gch3:	mvi h,0
+	ret
+
+	endfunc getchar
+
+
+

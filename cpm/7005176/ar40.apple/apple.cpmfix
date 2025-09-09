@@ -1,0 +1,54 @@
+Date: 30 March 1982 15:36-EST
+From: Glenn A. Iba <GAI at MIT-AI>
+Subject: Apple CPM / Softcard intermittancy and patch
+To: Boebert.SCOMP at MIT-MULTICS
+cc: GAI at MIT-AI, INFO-APPLE at MIT-AI
+Via:  Mit-Ai; 30 Mar 82 15:46-EDT
+
+   After trying out my softcard (in slot 4) with a videx videoterm
+in slot 3, I too experienced severe problems with intermittancy,
+in particular the cpm system would not even boot reliably.
+I called Microsoft and discovered that this problem is common (they
+extimate 20% but we got burned 2 out of 2 times) with Softcards
+older than a few months. Apparently RF noise is the culprit and the
+video boards create a lot more of it.
+  FIX (fortunately there is a fairly simple fix):
+What is needed is a 220 pF (50 VDC or greater) ceramic capacitor
+(I got 2 for 30 cents at Radio Shack). This capacitor should be
+installed between pins 10 and 11 of the chip at position U15 on
+the Softcard board (this is at the extreme upper right of board,
+and the pins are at the right hand end of chip). I did the modification
+myself against the advice of Microsoft, who said they will pay any
+dealer $7.50 to do the work (though this is a time-limited offer).
+But for $.30 do you really trust a dealer with your $250 board??
+  DO YOU NEED A FIX???
+Your card already has the fix if there is a conspicuous insulated wire
+on the backside of your Softcard (yes it runs to a 220 pF capacitor).
+The newer Softcards have this installed.
+  This patch immediately solved my intermittancy problems (I left the
+Softcard in slot 4 right next to the videoterm).
+
+Date: 30 March 1982 18:46-EST
+From: Glenn A. Iba <GAI at MIT-AI>
+Subject: Configuring Mince for Apple CPM with Videx Videoterm
+To: AMETHYST-USERS at MIT-AI, INFO-APPLE at MIT-AI
+cc: GAI at MIT-AI
+Via:  Mit-Ai; 30 Mar 82 18:54-EDT
+
+Now that I got my Softcard working properly I set out to configure
+my MINCE system, but I had a real rough time trying to define
+a new terminal type for the videx 80 column board. Then I decided
+to try out each of the standard terminal types offered, and what do
+you know, but 2 of them seemed to work perfectly!! The two were:
+the SOROC IQ120 and the ADM31 (not the ADM3A). What I'm wondering
+is:
+   1. Are there any differences between these two (particularly
+effeciency) that would recommend one over the other?
+   2. Are there any hidden incompatibilities between either of these
+terminal types and the videx videoterm?
+   3. What was I doing wrong when I tried to specify new terminal
+type (I copied the character sequences right out of the videx manual)??
+Alternatively, what are the sequences used by Mince when either of 
+those terminal types is selected?
+
+

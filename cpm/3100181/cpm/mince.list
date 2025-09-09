@@ -1,0 +1,105 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; AMETHYST-USERS  ;; People who use Amethyst, a software package of
+;; programs: MINCE (an ersatz EMACS) and SCRIBBLE (an ersatz SCRIBE).
+;;
+;; This list is provided for the sole purpose of promoting the
+;; exchange of information concerning the use of these programs.
+;;
+;; Please - do NOT add yourself to this list.
+;; Send a request to AMETHYST-USERS-REQUEST@MIT-MC
+;; for any additions/deletions/changes.
+;;
+(FILE [MC:JCAF;AUG ARCH])	;; The archives
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(BLUE   MC)
+(DEVON  MC)
+(FJW    MC)
+(EGBERT MC)
+(JEFFC  MC)
+(LEOR   MC)
+(PLK    MC)
+(SJK	MC)
+(SK     MC)
+;;
+(BADOB  AI)
+(BANDY  AI)
+(CAL    AI)
+(CSTACY AI)
+(DANIEL AI)
+(DANNY  AI)
+(GAI    AI)
+(GAVAN  AI)
+(GEOFFM AI)
+(GERBER AI)
+(GUMBY  AI)
+(GYRO   AI)
+(KAWALA AI)
+(MEADER AI)
+(MITCHW AI)
+(MINSKY AI)
+(PNH    AI)
+(SWAIN  AI)
+;;
+(BNH    ML)
+(DAN    ML)
+(LEO    ML)
+(MADLER ML)
+(PGA    ML)
+;;
+(EBM    XX)
+(RI     XX)
+;;
+(TEN  MIT-VAX)
+;;
+(Pool.Datanet     MIT-MULTICS)
+(Schauble.Multics MIT-MULTICS)
+;;
+(BHUBER      USC-ECL)
+(NMAX        USC-ECL)
+(STERNLIGHT  USC-ECL)
+;;
+(MOORE       USC-ISIB)
+;;
+(ATHEY       LLL-MFE)
+(DWS         LLL-MFE)
+;;
+(CLEMENTS    BBNA)
+(MBARNES     BBNA)
+;;
+(MALIS       BBNE)		;;interested non-user
+;;
+(BROBERTS    BBNG)
+(TAPPAN      BBNG)
+;;
+(CSL.SUN.GMO SU-SCORE)          ;;interested non-user
+;;
+(david       UTEXAS-11)
+;;
+(Ed.DeHart   CMU-10B)
+;;
+(SHOLAR      CMUA)
+;;
+(KENNER      NYU)
+;;
+(JP          SU-AI)
+(MMD         SU-AI)
+;;
+(Lauren      UCLA-SECURITY)
+(gray        UCLA-SECURITY)
+;;
+(mclure      sri-unix)
+;;
+(ROODE       SRI-KL)
+;;
+(WHITE       SUMEX-AIM)
+;;
+(Heiby.APSE  HI-Multics)
+;;
+(bridger     RAND-UNIX)
+;;
+(decvax!duke!uok!mwm Berkeley)
+;;
+;; End of list
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

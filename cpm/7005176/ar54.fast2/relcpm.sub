@@ -1,0 +1,12 @@
+;this assumes that bias equ 0000h in bvios and bvboot
+mac bvios $$pzsz
+era bvios0.hex
+ren bvios0.hex=bvios.hex
+wm bvios.asm ;change bias equ 0000h to bias equ 0100h
+mac bvios $$pzsz
+mac bvboot $$pzsz
+era bvboot0.hex
+ren bvboot0.hex=bvboot.hex
+wm bvboot.asm ;change bias equ 0000h to bias equ 0100h
+mac bvboot $$pzsz
+sid rel.utl

@@ -1,0 +1,74 @@
+--------------------------------
+       THE CALL STATEMENT
+--------------------------------
+There have been a number of requests for clarification of the 
+CALL statement in the various Microsoft langauges.  Hopefully, 
+the following explanations will clear up several 
+misunderstandings.
+  First, let's look at the "Microsoft CALL standard".  When any 
+Microsoft program issues a CALL statement, such as "CALL MYROUT", 
+control is passed to the address specified by MYROUT.  In all 
+cases except the Basic Interpreter, MYROUT must be the name of a 
+SUBROUTINE program, or a GLOBAL/PUBLIC label within a Macro-80 
+routine.  The calling and the called program must be linked 
+together by L80 into a single file.
+  In the Basic Interpreter (MBASIC), the variable MYROUT must be 
+set to the beginning address of the subroutine.  If we complicate 
+things by adding a few paramaters to the CALL, such as:  "CALL 
+MYROUT(A,B);  the parameters are passed as follows.  The 
+*ADDRESS* of the first parameter is passed in registers HL, the 
+second in DE, and the third in BC.  If there are more than three 
+parameters, BC points to a block of memory containing the 
+*ADDRESS* of parameters three through N.  Note that the address 
+and *NOT* the parameter itself is passed.
+  The arguments themselves correspond to the standard Microsoft 
+variable format, (2 bytes for an integer, 4 bytes for single 
+precision floating point, and 8 bytes for a double precision 
+floating point number) with two exceptions.
+  COBOL passes variables as they would appear to another COBOL 
+program (DISPLAY, COMP, or COMP-3).
+  Strings are also handled a bit differently.  The address 
+pointed to by the register contains a three byte "string 
+descriptor".  This string descriptor contains the length of the 
+string in byte one, and the address of the string in bytes two 
+and three.  When passing strings, take care not to modify this 
+string descriptor, or unpredictable results will occur.  
+  In all cases, it is the user's responsibility to ensure that 
+the arguments correspond *EXACTLY*, in both type and number.  
+Also, be sure to preserve *ALL* of the registers and use your own 
+local stack when you call Macro routines.
+  With the preliminaries out of the way, let's look at which 
+languages can call which other languages.  In the following 
+table, "B" represents the Basic Interpreter (MBASIC), "BC" the 
+Basic Compiler (BASCOM), "F" the Fortran Compiler (F80), "C" the 
+Cobol Compiler, and "M" the Macro Assembler (M80).  A "Y" in the 
+appropriate entry means that a CALL is possible.
+             CALLed Program
+ CALLing   B   BC   F   C   M  
+ Program  +---+---+---+---+---+
+      B   |   |   |   |   | Y |
+      BC  |   |   | 1 |   | Y |
+      F   |   |   | Y |   | Y |
+      C   |   |   | 2 | Y | Y |
+      M   |   |   | 3 |   | Y |
+          +---+---+---+---+---+
+      
+
+Notes:
+
+1 - When calling a FORTRAN routine from the Basic Compiler, only 
+one of the two languages may be used to perform I/O.  When the 
+programs are linked, link the Basic program first, then search 
+BASLIB, then load the Fortran program, then search FORLIB.  The 
+multiply defined global message may be ignored.
+
+2 - When calling FORTRAN from COBOL, remember that the variable 
+types are different.  Only COMP data items will be passed in such 
+a way that FORTRAN can deal with them without an ENCODE statement.
+
+3 - While Macro-80 may not directly CALL Fortran subroutines, you 
+may make use of the routines in the FORTRAN Library.  For more 
+information, see the Fortran Manual.  Of course, from within M80, 
+you may initiate execution of any other .COM file by reading the 
+file and then jumping to the appropriate address.
+

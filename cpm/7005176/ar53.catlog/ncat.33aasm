@@ -1,0 +1,2265 @@
+;	title	'Newcat Ver 3.3a (Cat2 Mods)'
+	page 42
+; NCAT - DISK CATALOG MAINTANENCE PROGRAM
+;
+;	THIS PROGRAM UPDATES THE 'MAST.CAT' FILE WHICH
+;	HAS PREVIOUSLY BEEN STARTED BY THE USER WITH HIS
+;	EDITOR.  'MAST.CAT' MUST HAVE AT LEAST ONE 'IGNORE'
+;	FILE.  EACH DISK TO BE PROCESSED MUST HAVE AN "ID
+;       NUMBER" DIFFERENT FROM ANY OTHER DISK.  THIS NUMBER
+;	MUST GO IN THE "FILE TYPE" AREA.  EXAMPLE:
+;
+;	A>SAVE 0 -.123
+;
+;	THE '-' IDENTIFIES THIS AS A SPECIAL NUMBER TO THE
+;	NCAT PROGRAM.  A TYPCIAL 'MAST.CAT' FILE MIGHT HAVE
+;	A FEW NAMES IN THE "IGNORE" LIST (THOSE FILES WHICH
+;	ARE PLENTIFUL ENOUGH YOU DO NOT NEED TO KNOW THEIR
+;	QUANTITY OR LOCATION):
+;
+;	(CONFIG.COM	    (note opening left parenthesis)
+;	LOAD.COM
+;	PIP.COM
+;	STAT.COM)	    (note closing right parenthesis,
+;			    which must be followed with a RET)
+;
+;
+;	IF ALL FILES ARE TO BE CATALOGED, THIS COULD BE USED:
+;
+;	(A)		    followed with a RET
+;
+;
+; HOW TO USE:
+; ----------
+;
+;	NCAT	    FOR ONE DRIVE SYSTEMS, OR CATALOGING THE MAIN
+;		    DISK ITSELF
+;
+;	NCAT B:     MAIN DISK IN A: WITH DISKS TO BE CATALOGED PUT
+;		    IN B: DRIVE 
+;		
+;	NCAT B: A:  MAIN DISK IN B: WITH DISKS TO BE CATALOGED
+;		    PUT IN A: DRIVE
+;
+; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+;
+; Version 3.3a (11/04/82) -- tabified file; small cosmetic changes
+;	(pjh)
+;
+; Version 3.3 of 10/23/82 -- Mods for CAT2 User number compatibility
+;     - CAT2 descended from the original Christensen CAT.COM
+;	programs at about the same time as NEWCAT, but
+;	independently.	The major enhancement that CAT2
+;	brought was keeping track of the user numbers
+;	that the files are in on the master catalog itself.
+;	My catalog system is not as well organized as it
+;	probably could be.  Therefore I tend to pay attention
+;	to both the disk name and the extension number.
+;	These mods support displaying both the disk name
+;	and extent number where the previous version
+;	would only display the disk number (extension.)
+;	Also when collecting CP/MUG, SIG/M, RCPM, and other
+;	disks, it is impossible to keep the extension
+;	numbers unique. 
+;
+;	Also fixed up TEST mode
+;					- Ron Schwabel, Tampa, FL
+;
+;	
+; VERSION 3.2 of 09/07/82 -- Shows disk ID being processed.
+;						     -Irv Hoff
+;
+; VERSION 3.1 of 08/01/82 -- The directory file names buffer can
+;	now be set externally at addresses 0103 and 0104.  (See
+;	NCAT.SET file for values to use.)  This makes it simple
+;	to keep the buffer length optimum without reassemby.
+;	(You can still edit the NAMES: option and reassemble.)
+;
+;	       64 file names/disk  =   896 Bytes set aside
+;	      128 file names/disk  =  1792 Bytes set aside
+;	      256 file names/disk  =  3584 Bytes set aside
+;	      512 file names/disk  =  7168 Bytes set aside
+;	     1024 file names/disk  = 14336 Bytes set aside
+;
+;	As more people get Winchester drives this feature
+;	will become more beneficial.		     - Irv Hoff
+;
+; VERSION 3.0 of 07/04/82 -- Buffer length automatically set
+;	to maximum length, overwriting 'CCP' if needed.  This
+;	eliminates the need for the run-time memory size check
+;	and abort of v2.8.  (A warm reboot was added as 'CCP'
+;	may be overwritten on longer catalogs.)  You can now
+;	abort any part of the program with a 'N' key.  'Y' or
+;	'RET' or 'SPACE' are all acceptable for "continue".
+;	Rewrote HELP instructions somewhat.  Renamed to NCAT
+;	from NEWCAT to accomodate COMPUSERVE (MICRONET) which
+;	limits file name length plus revision number to six
+;	characters.  SEQIO.LIB no longer used.	Some minor
+;	esthetic changes.  Labels all have a trailing ":" now
+;	for easy searching.  All comments now in upper case
+;	for uniformity.  Included an option for number of dir-
+;	ectory file names.  (The fixed 512 names of v2.4 chews
+;	up 7k.	Many double-sided, double-density systems only
+;	allow a total of 128 file names for both sides.)
+;						     - Irv Hoff
+;	
+; VERSION 2.9 of 03/18/82 -- Add 'ALLUSR' assembly time option,
+;	allowing 'NCAT' to catalog all files on the disk (in
+;	all user areas), rather than only those files in the
+;	current user area.  See the 'USER MODIFIABLE EQUATES'
+;	box.					     - Dave Goodman
+;
+; VERSION 2.8 OF 01/8/82 -- Filter commas out of the file names
+;	(replacing same with slashes) to keep odd-ball file
+;	names such as "CPM2,2.DOC" from crapping out the data-
+;	base.  Added run-time memory size check and error abort.
+;						     -Lewis Moseley, Jr.
+;
+; VERSION 2.7 OF 01/6/82 -- Added routines to keep track of
+;	the free space remaining on each disk.	Also added
+;	an equate to control when the MAST.BAK file is erased.
+;	See discussion in the 'USER MODIFIABLE EQUATES' BOX.
+;						     - Dave Goodman
+;
+; VERSION 2.6 OF 12/81 -- Generalize further to allow MAST.CAT
+;	to be on any specified drive and 'DISK TO BE CAT' to be
+;	on any specified drive.  OOOPS, must redo part of v2.4
+;	mods.  File-counter was an 8-bit value and could not
+;	handle more than 256 file names in the directory.
+;	Changed to 16-bit value.  Modified HELP to reflect
+;	these new capabilities. 		     -Lewis Moseley, Jr.
+;
+; VERSION 2.5 OF 10/81 -- Allows the disk TO BE CATALOGED to be
+;	on any specified drive, not just A: or B: drives.
+;						     -Lewis Moseley, Jr.
+;
+; VERSION 2.4 OF 09/81 -- Added HELP function, increased
+;	directory table to 512 entries for DD and hard disk,
+;	changed defaults on some prompts.  (BUG: See v2.6 mods.)
+;						     -Lewis Moseley, Jr.
+;
+; VERSION 2.3: Stripped hi-order bits from file names to keep
+;	files written via CP/M 2.2 (with 7th bit set high for
+;	R/O and/or SYS files) from messing up the sort order.	
+;						     -Lewis Moseley, Jr.
+; VERSIONS 2.1 & 2.2: Bug-fixes and prompt changes.
+;						     -Lewis Moseley, Jr.
+; VERSION 2.0 Of 3/1/80
+;    *Unified FMAP, QCAT and UCAT functions into one program.
+;	These programs originally written by Ward Christensen
+;	and made public domain through the CP/M user's group.
+;    *Made program "recursive".  Thus you can feed in a stack
+;	of disks without having to alternately run FMAP, then
+;	UCAT (or QCAT) sequentially.
+;    *Directory info for catalog update is placed into and taken
+;	from memory, rather than making a temporary disk file
+;	"NAMES.SUB" which speeds operation.
+;						     -Lewis Moseley, Jr.
+;
+;
+	ORG	0100H	   ;NORMAL PROGRAM START
+;
+	JMP	NCAT	   ;PROGRAM START
+;
+;
+FALSE	EQU	0
+TRUE	EQU	NOT FALSE
+;
+;
+TEST	EQU	FALSE		   ;TESTING?
+FILERR	SET	EXIT	   ;EXIT IF ERRORS
+;
+BDOS	EQU	0005	   ;ADDRESS OF BDOS ENTRY POINT
+CR	EQU	0DH	   ;CARRIAGE RETURN CHARACTER
+CONIN	EQU   02H	   ;DISPLAY A CHARACTER ON THE CONSOLE
+EOF	EQU   1AH	   ;END OF FILE MARKER
+LF	EQU   0AH	   ;LINE FEED CHARACTER
+KEY	EQU   1 	   ;BDOS ROUTINE TO GET KEYBOARD CHAR.
+;
+;
+; SEE COMMENTS IN HELP MESSAGE AT END OF FILE
+;
+;
+; USER MODIFIABLE EQUATES:
+;
+;--------------------------------------------------------------
+;
+; Space for the IGNORE buffer (for file names not to be cata-
+; loged.)  Each name uses 14 characters.  Few lists use more
+; than 10-12 names.  Change the first number below if it does
+; not offer enough file names.
+;
+IGNSIZE	EQU   (40*14)+2	;BUFFER SIZE FOR IGNORED NAMES
+;
+;--------------------------------------------------------------
+;
+; Some CP/M systems offer only 64 file names per disk.	Some offer
+; up to 1024.  At 14/16 bytes per file name, this is the difference
+; between 896 and 13,336 Bytes.  Few would wish to discard that 
+; much ram unless required.  Most double-sided, double-density
+; 8" systems only offer 128 file names on both sides combined.  
+; Change the following number for your system:
+;
+NAMES:  DW	(256*namsize)	 ;BUFFER SIZE FOR DIRECTORY NAMES	;v3.1
+;
+;       NOTE:  If you DO change this to another value, you may
+;              want to change the similar number in the "Help"
+;	       area, opposite label: NAMES$NUMBER:
+;
+;--------------------------------------------------------------
+;
+; If the DSKFRE equate is set true, a 'phantom file' is 
+; automatically created in MAST.CAT for each disk catalogued.
+; The 'phantom file' format:
+;
+;	FN = Free space (k's), padded with leading +'s
+;	FT = FRE
+;
+; A MAST.CAT entry of ++213k.FRE indicates 213k free on that
+; disk.  Thus, CAT *.FRE (or CAT +*) returns free space on all
+; your disks, or CAT *.FRE DSKNAME.NUM returns free space on a
+; particular disk, etc.  If DSKFRE is set true, file type .FRE
+; should not be used for actual files on your disk(s).
+;
+DSKFRE	EQU   TRUE
+;
+;--------------------------------------------------------------
+;
+; If DSKFRE was set true, COUNTEM controls whether or not the
+; 'phantom files' in the MAST.CAT are counted in the display
+; of number of entries in MAST.CAT.  If you regard this display
+; as a measure of the size of the MAST.CAT file, you will want
+; to set COUNTEM true, so the phantom files will be counted.  If
+; you regard this display as a count of the files on your disks,
+; you will want to set COUNTEM false, so the phantom files are
+; not counted.	If DSKFRE was set false, COUNTEM is irrelevant
+; and may be set either true or false.
+;
+COUNTEM EQU   FALSE
+;
+;--------------------------------------------------------------
+;
+; Normally, NCAT writes a new catalog file called NEW.CAT to
+; the disk, then erases MAST.BAK, renames the present MAST.CAT
+; as MAST.BAK, then renames NEW.CAT as MAST.CAT.  This gives
+; good data integrity, but does require space on the catalog
+; disk for three copies of the master catalog.	If you set
+; ERAFRST false, you will keep the above described operation.
+; If you set ERAFRST true, MAST.BAK will be erased before NEW.CAT
+; is written to the disk, then MAST.CAT will be renamed as
+; MAST.BAK, then NEW.CAT renamed as MAST.CAT.  In this case you
+; only need disk space for two copies of the master catalog.
+;
+ERAFRST EQU   false
+;
+;--------------------------------------------------------------
+;
+; If ALLUSR is set false, only the files in the current user
+; area of the disk to be cataloged will be placed in the master
+; catalog.  If you want all files in all user areas cataloged,
+; set ALLUSR true.  If ALLUSR is set true and the program is run
+; under CP/M 1.x, the program will be exited with a fatal error
+; message.
+;
+ALLUSR	EQU   TRUE
+;
+;--------------------------------------------------------------
+;
+; If ALLUSR is TRUE, you may also set CAT2 to TRUE to get
+; compatibility with the program CAT2 which saves the USER
+; number of each file on MAST.CAT after the disk name with
+; a semicolon to delimit it. In order to take advantage of
+; this option, you must already have the "CAT2" program which
+; displays the User Number along with the file and disk names.
+; If ALLUSR is not true, CAT2 should not be set true.
+; The CAT2 opton also makes the program much more interested in
+; the full disk name, rather than just the 3 character extension
+; field.
+;
+	if	allusr
+CAT2	equ	TRUE
+	else
+cat2	equ	false	;ignore CAT2 if not ALLUSR
+	endif
+;
+;**************************************************************
+;							      ;
+;							      ;
+; ..... PROGRAM STARTS HERE .....			      ;
+;							      ;
+;							      ;
+;**************************************************************
+;
+;
+NCAT:	POP   H
+	SHLD  EXIT1+1
+	LXI   SP,STACK
+	CALL  ILPRT
+	DB	 CR,LF,'CATALOG MAINTENANCE PGM v3.3x - 10/23/82'     ;v3.3x
+	DB	CR,LF
+	DB	'Free Space ('
+;
+	IF	DSKFRE						   ;v2.8
+	DB	'ENABLED)   '
+	ELSE
+	DB	'DISABLED)  '
+	ENDIF
+;
+	IF	ALLUSR						   ;v2.9
+	DB	' '
+	ENDIF
+;	
+	DB	'All Users ('
+;
+	IF	ALLUSR
+	DB	'ENABLED'
+	
+	if	cat2						;v3.2x
+	db	' - CAT2 Compatible)'
+	else
+	db	')'
+	endif	;cat2
+
+	ELSE
+	DB	'DISABLED)'
+	ENDIF							   ;v2.9
+;
+	DB	CR,LF,'For help, reboot and type:  NCAT ?',0   ;v2.4 & 3.0
+	LDA	FCB+1						   ;v2.4
+	CPI	'?'	   ;HELP WANTED?
+P1:	JZ	HELP	   ;JUMP IF SO
+	LXI	H,EXIT	   ;DISABLE 'HELP' CODE FOR SUBSEQUENT RUNS AS
+	SHLD	P1+1	   ;   IT WILL BE OVEWRITTEN BY BUFFERS AT END
+;
+;
+; FINDS AMOUNT OF SPACE AVAILABLE FOR BUFFERS, DIVIDES			v3.0
+; INTO 2 EQUAL PARTS FOR THE IN/OUT BUFFERS
+;
+	
+	LXI	D,NABUF		;START OF NAME BUFFER
+	LHLD	NAMES		;GET LENGTH OF BUFFER
+	DAD	D		;START OF MAIN BUFFER
+	INX	H		;ONE EXTRA FOR ISOLATION
+	SHLD	MASTINADR	;MAIN BUFFER START ADDRESS			v3.1
+	SHLD	MASTINPTR	;MAIN BUFFER START POINTERS
+	SHLD	NAMEND		;NAMES BUFFER STOPPING ADDRESS
+	XCHG			;BUFFER ADDRESS TO 'DE'
+	LDA	BDOS+2		;GET 'BDOS' ENTRY POINT, EVEN PAGE
+	MOV	H,A		;STORE IN 'H'
+	XRA	A		;NULLS THE 'A' REG.
+;
+; CALCULATE THE DIFFERENCE TO GET FREE SPACE
+;
+	SUB	E
+	MOV	L,A
+;
+	MOV	A,H
+	SBB	D
+	MOV	H,A
+;
+; NOW HAVE THE DIFFERENCE IN 'HL' PAIR, SO DIVIDE
+; INTO 2 EQUAL PARTS
+;
+	XRA	A 	;CLEAR CARRY IF SET
+	MOV	A,H
+	RAR
+	MOV	H,A
+;
+	XRA	A
+	MOV	L,A	   ;MAKE BUFFERS FULL 256-BYTE PAGES
+;
+; NOW STORE THE BUFFER LENGTH AT APPROPRIATE PLACES
+;
+	SHLD	BUFFERSIZE
+	SHLD	MASTINLEN
+	SHLD	MASTOUTLEN
+;
+;
+; SET UP THE OUTPUT BUFFER ADDRESS
+;
+	DAD	D 	   ;ADD END OF PROGRAM TO BUFFER LENGTH
+	SHLD	MASTOUTADR
+	SHLD	MASTOUTPTR
+;
+;
+	IF	ALLUSR						   ;v2.9
+;
+	MVI	C,VERSNO	;IF ALLUSR ENABLED, SEE THAT WE ARE
+	CALL	BDOS		;  RUNNING UNDER CP/M 2.X OR LATER; IF
+	MOV	A,H	  	;  NOT, DO AN ERROR EXIT
+	ORA	L
+	JZ	BADVERS
+;
+	ENDIF							   ;v2.9
+;
+; ALL ERROR CHECKING DONE, START ACTUAL PROGRAM CODE
+;
+NEW1:	MVI	C,QDFC		;WHICH DISK IS LOGGED		   ;v2.6
+	CALL	BDOS		;DISK IN REG 'A'
+	LXI	H,CDRIVE	;ASSUME CAT TO BE ON THIS DRIVE
+	MOV	M,A
+	INX	H		;POINT TO MAST.CAT DRIVE
+	MOV	M,A		;ASSUME TO BE ON THIS DRIVE, TOO
+	LDA	FCB+16		;DRIVE FOR MAST.CAT SPECIFIED?
+	ORA	A
+	JZ	NEW2		;NOPE, STICK WITH LOGGED DRIVE
+	DCR	A		;ELSE MAKE INTO DRIVE SELECT CODE
+	MOV	M,A		;AND STASH FOR USE LATER (IN MDRIVE)
+;
+NEW2:	LDA	FCB		;DRIVE FOR DISK TO BE CAT SPECIFIED?
+	ORA	A
+	JZ	NEW4		;NOPE, STICK WITH LOGGED DRIVE
+	DCR	A
+	STA	CDRIVE		;DITTO, ABOVE
+;
+NEW4:	LDA	CDRIVE		;RE-GET CAT DRIVE
+	CMP	M		;SAME AS MAST.CAT DRIVE
+	MVI	A,0		;ASSUME SO
+	JZ	NEW6
+	DCR	A		;ELSE MAKE NON-ZERO
+;
+NEW6:	STA	DRIVE
+	JNZ	NEW8		;JUMP IF MULTI-DRIVE SYSTEM
+;
+; HERE IF INSTRUCTED TO USE THE SAME DRIVE FOR CATALOG AND MAST.CAT
+;
+	LDA	MDRIVE
+	ADI	'A'		;MAKE DRIVE CODE ASCII [A..P]
+	STA	DR1		;HOT-PATCH MESSAGE TEXTS
+	STA	CDR1
+	STA	MDR1
+	STA	MDR2
+;
+	CALL	DISKA		;TELL 'EM TO LEAVE A DISK IN DRIVE A:?
+	CALL	ILPRT		;TELL USER ABOUT DRIVE USEAGE
+	DB	CR,LF,LF
+	DB	'The DISK TO BE CATALOGED and the CATALOG SYSTEM DISK'
+	DB	CR,LF
+	DB	'will alternately be inserted in Drive '
+;
+DR1:	DB	'A:'	   ;HOT-PATCHED AT RUN-TIME
+	DB	CR,LF,0
+	JMP	AGAIN
+;
+;
+; HERE IF DISK TO BE CATALOGED AND MAST.CAT DISK ARE ON DIFFERENT DRIVES
+;
+NEW8:	LDA	CDRIVE	   ;HOT PATCH MESSAGE TEXTS WITH
+	ADI	'A'	   ;DRIVE TO BE CATALOGED...
+	STA	CDR1
+;
+	LDA	MDRIVE	   ;AND MAST.CAT DRIVE
+	ADI	'A'	
+	STA	MDR1
+	STA	MDR2
+;
+	CALL	DISKA	   ;TELL 'EM TO LEAVE DISK IN DRIVE A:?
+	CALL	ILPRT	   ;TELL USER ABOUT DRIVE USEAGE
+	DB	CR,LF,0
+	JMP	AGAIN
+;.....
+;
+;
+DISKA:	LDA	CDRIVE	   ;DRIVE A FOR CATALOG DISK?
+	ORA	A
+	RZ	           ;DONE IF SO
+	LDA	MDRIVE	   ;DRIVE A FOR MAST.CAT?
+	ORA	A
+	RZ		   ;DONE IF SO
+	CALL	ILPRT	   ;ELSE TELL USER
+	DB	CR,LF
+	DB	'A scratch disk must remain in Drive A:',0
+	RET
+;.....
+;
+;
+AGAIN:	LXI	SP,STACK	   ;RESET STACK EACH TIME THRU
+	LXI	H,NABUF	   ;SET UP FILE NAME BUFFER
+	SHLD	BUFPTR
+;
+	IF	DSKFRE
+	SHLD	FREPTR	   ;INITIALIZE 'PHANTOM FILE' POINTER
+	LXI	H,0
+	SHLD	BLKSFRE	   ;INITIALIZE BLOCKS FREE
+;
+	ENDIF
+;
+	LXI	H,2020H	   ;GET 2 SPACES
+	SHLD	COUNT	   ;BLANK OUT ENTRY COUNTER
+	SHLD	COUNT+2	   ;(NEEDED FOR MULTIPLE PASSES)
+	MVI	A,')'	   ;FIX IGNORE TABLE
+	STA	IGNORE
+	XRA	A 	   ;GET A ZERO...
+	STA	MIEOFLG	   ;FIX END-OF-FILE FLAGS
+	STA	NAEOFLG
+;
+	IF	DSKFRE	   ;IF FREE SPACE FEATURE IS ENABLED,
+	LXI	H,1	   ;  INITIALIZE FILE COUNTER TO ONE, TO
+	ELSE		   ;  PRE-COUNT THE 'PHANTOM FILE',
+;
+	LXI	H,0	   ;ELSE INITIALIZE FILE COUNTER TO ZERO
+	ENDIF
+;
+	SHLD	FCT	   ;SAVE 16-BIT VALUE
+;
+CATMSG:	CALL	ILPRT
+	DB	CR,LF,'Mount DISK TO BE CATALOGED in Drive '
+;
+CDR1:	DB	'B:'		  ;HOT-PATCHED TO SHOW CORRECT DRIVE
+	DB	'  Ready? (Y/N) ',0				   ;v2.5
+	MVI	C,KEY	   ;GET A KEYBOARD CHAR.
+	CALL	BDOS
+	CPI	3 	   ;ABORT ON CTRL-C
+	JZ	EXIT
+	CPI	CR	   ;ACCEPT 'CR' AS YES
+	JZ	CATMS2
+	CPI	' '	   ;ACCEPT 'SPACE' CHAR. AS YES
+	JZ	CATMS2
+	ANI	5FH	   ;MAKE UPPER CASE
+	CPI	'N'
+	JZ	EXIT	   ;ABORT IF AN 'N'
+	CPI	'Y'
+	JNZ	CATMSG	   ;ASK AGAIN IF NO MATCH
+;
+;
+CATMS2:	CALL	CRLF	   ;ACKNOWLEDGE WITH A NEW LINE
+;
+; THE FOLLOWING IS NECESSARY WITH DOUBLE DENSITY SYSTEMS TO
+; ALLOW THE SYSTEM TO LOG IN A DISKETTE WITH (POSSIBLY)
+; CHANGED DISK CHARACTERISTICS (DENSITY, SECTOR SIZE, ETC)
+;
+	MVI	C,RESETDK
+	CALL	BDOS	   ;(EXIT WITH DRIVE A: SELECTED)
+;
+;
+; SELECT THE DISK TO BE CATALOGED AS EITHER THE ORIGINALLY
+; LOGGED DRIVE OR THE DRIVE SPECIFIED AT RUNTIME
+;
+	LDA	CDRIVE
+	ORA	A 	   ;SET FLAGS
+	MOV	E,A
+	MVI	C,SELDK
+	CNZ	BDOS	   ;DONT BOTHER RESELECTING DRIVE A:
+;
+; NOW THAT THE DRIVE TO BE CATALOGED HAS BEEN SELECTED, GET THE    ;v2.9
+; ADDRESS OF THE DISK PARAMETER BLOCK FOR THAT DRIVE (FOR USE BY
+; ALLUSER AND DSKFRE), AND THE EXTENT MASK (FOR USE BY ALLUSR)
+;
+	IF	ALLUSR OR DSKFRE
+	MVI	C,DPB	   ;ALLUSR and DSKFRE NEED THE ADDRESS OF THE
+	CALL	BDOS	   ;  DISK PARAMETER BLOCK
+	SHLD	DPBADDR
+	IF	ALLUSR
+	LXI	D,4	   ;ALLUSER NEEDS THE EXTENT MASK	
+	DAD	D
+	MOV	A,M
+	STA	EXMASK
+;
+	ENDIF
+;
+	ENDIF							   ;v2.9
+;
+;
+; MAKE FCB ALL '?'
+;
+	LXI	D,AMB
+	LXI	H,FCB
+	MVI	B,13
+	CALL	MOVER
+;
+; CREATE 'PHANTOM FILE' WITH FREE DISK SPACE
+;
+	IF	DSKFRE
+;
+	LXI	H,NABUF
+	CALL	AAAA
+	if	cat2						;v3.2x
+	DB	'        .LFT;0'
+	else
+	DB	'        .FRE'
+	endif
+;
+AAAA:	MVI	B,namsize-2					;v3.2x
+	POP	D
+	CALL	MOVER
+
+	CALL	FRESPC		;GET FREE SPACE ON DISK TO
+	LXI	H,NABUF+namsize-2	;   NEW PHANTOM FILE		;v3.2x
+	MVI	M,CR		;DELIMITERS
+	INX	H
+	MVI	M,LF
+	INX	H
+;
+	ENDIF
+;
+; READ THE DIRECTORY ENTRIES
+;
+	IF	NOT DSKFRE   ;IF NOT USING FREE SPACE FEATURE,
+	LXI	H,NABUF	   ;   POINT TO START OF BUFFER; ELSE,
+	ENDIF		   ;   ARRIVE HERE WITH 'HL' POINTING
+;	
+	MVI	C,SRCHF
+	JMP	CALLB
+;
+LOOP:	MVI	C,SRCHN
+;
+CALLB:	CALL	BUFLEN	   ;SEE IF NAMES BUFFER IS LONG ENOUGH	    v3.1
+	PUSH	H 	   ;SAVE CURRENT BUFFER ADDRESS
+	LXI	D,FCB
+	CALL	BDOS
+	POP	H 	   ;GET CURRENT BUFFER ADDRESS BACK
+	INR	A
+	JZ	NOMORE
+;
+; MOVE THE NAME INTO THE BUFFER
+;
+	DCR	A 	   ;GET BACK ORIG VALUE
+	ANI	3
+	PUSH	H
+	MOV	L,A
+	MVI	H,0
+	DAD	H 	   ;X32
+	DAD	H
+	DAD	H
+	DAD	H
+	DAD	H
+	LXI	D,80H
+	DAD	D
+;
+; HL NOW POINTS TO ENTRY (TABLE ENTRIES WILL BE 14/16 BYTES EACH)
+;
+	XCHG
+;
+	IF	ALLUSR						     ;v2.9
+;
+	LXI	H,12	   ;IF EXTENT BYTE IN DIRECTORY ENTRY IS
+	DAD	D 	   ;  LARGER THAN THE EXTENT MASK, THE ENTRY
+	LDA	EXMASK	   ;  WE ARE LOOKING AT IS NOT THE 'PRIMARY'
+	CMP	M 	   ;  DIRECTORY ENTRY FOR THIS FILE, IGNORE IT.
+	POP	H
+	JC	LOOP
+	LDAX	D 	   ;IF THE FILE HAS BEEN ERASED, DON'T MOVE IT
+	CPI	0E5H	   ;  TO THE BUFFER (DON'T INCLUDE IT IN THE
+	JZ	LOOP	   ;  CATALOG).
+;
+	if	cat2						;v3.2x
+	mov	c,a	;save user number
+	endif
+
+	ENDIF							   ;v2.9
+;
+	INX	D 	   ;SKIP FIRST BYTE
+;
+	IF	DSKFRE and (not cat2) ;IF FREE DISK SPACE FEATURE IS IMPLEMENTED,
+	LDAX	D 	   ;  REPLACE THE '-' TOKEN USED TO MARK THE
+	CPI	'-'	   ;  DISK NAME FILE WITH A NULL.  THIS IS FOR
+	JNZ	TOK	   ;  INTERNAL USE ONLY, AND PRESERVES THE
+	XRA	A 	   ;  CORRECT SORT ORDER.
+	STAX	D
+	ENDIF
+;
+TOK:	IF	NOT ALLUSR
+	POP	H
+	ENDIF
+;
+	MVI	B,8	   ;NUMBER OF CHARS IN FILENAME 	    v2.8
+	CALL	MOVNC	   ;MOVE, FILTERING OUT COMMAS & HI-ORDER BITS
+	MVI	M,'.'
+	INX	H
+	MVI	B,3	   ;DO FILETYPE, TOO
+	CALL	MOVNC
+
+	if	cat2						;v3.2x
+	mvi	m,';'
+	inx	h
+	mov	a,c	;get user area number
+	adi	90h
+	daa
+	aci	40h
+	daa
+	mov	m,a	;set user number
+	inx	h
+	endif		;cat2					;v3.2x
+
+	MVI	M,CR
+	INX	H
+	MVI	M,LF
+	INX	H
+;
+; INCREMENT FILE COUNT (16 BIT)
+;
+	PUSH	H
+	LHLD	FCT
+	INX	H
+	SHLD	FCT
+	POP	H
+	JMP	LOOP
+;.....
+;
+;
+; SEE IF BUFFER IS LONG ENOUGH FOR DIRECTORY ENTRIES
+;
+BUFLEN: PUSH	H 	   ;SAVE CURRENT ADDRESS		   ;v3.1
+	XCHG		   ;PUT PRESENT ADDRESS INTO 'DE'
+	LHLD	NAMEND	   ;GET END ADDRESS OF BUFFER
+	DCX	H 	   ;PROTECT NEXT BUFFER
+	MOV	A,L
+	SUB	E
+	MOV	A,H
+	SBB	D
+	POP	H 	   ;GET CURRENT ADDRESS BACK
+	JC	BUFERR	   ;IF PAST BUFFER END, ERROR
+	RET		   ;GET NEXT DIRECTORY NAME
+;.....
+;
+; IF NOT LONG ENOUGH, DISPLAY AN ERROR MESSAGE AND EXIT
+;
+;
+BUFERR: POP	H 	   ;RESET STACK "CALL BUFLEN"		      ;v3.1
+	MVI	C,9
+	LXI	D,BUFMSG	   ;SEND ERROR MESSAGE
+	CALL	BDOS
+	JMP	EXIT
+;.....
+;
+;
+; NAMES BUFFER ERROR MESSAGE
+;
+BUFMSG: DB	CR,LF,'*** File names buffer not big '		   ;v3.1
+	DB	'enough.	MAKE LARGER ***',CR,LF
+	DB	'    (See NCAT.SET file for instructions.)',CR,LF,'$'
+;.....
+;
+;
+; NO MORE ENTRIES
+;
+NOMORE: MVI	M,'Z'-40H    ;ENDFLAG NAMES BUFFER
+;
+NEXTS:	LHLD	FCT	   ;GET FILE COUNT
+	DCX	H
+	SHLD	FCT
+	SHLD	TFCT	   ;SAVE COUNT FOR THIS PASS
+	MOV	H,A
+	ORA	L 	   ;DONE ALL YET?
+	JZ	DONE	   ;JUMP IF THRU SORTING
+;
+; ELSE PASS THRU THE BUFF, SORTING IT.
+;
+	LXI	D,NABUF
+;
+COMPAR: LXI	H,namsize						;v3.2x
+	DAD	D
+	PUSH	D
+	PUSH	H
+	MVI	B,namsize		;COMPARE LENGTH			;v3.2x
+;
+CLCLP:	LDAX	D
+	CMP	M
+	JC	NEXTC
+	JNZ	DIFF
+;
+SAME:	INX	D
+	INX	H
+	DCR	B
+	JNZ	CLCLP
+;
+NEXTC:	POP	H
+	POP	D
+	XCHG
+;
+NEXTC2: LHLD	TFCT	   ;DONE ALL FOR THIS PASS YET
+	DCX	H
+	SHLD	TFCT
+	MOV	A,H
+	ORA	L
+	JNZ	COMPAR	   ;CHECK NEXT 2 IF NOT
+;
+; COMPLETED PASS THRU BUFF, DO NEXT PASS IF NEEDED
+;
+	JMP	NEXTS
+;.....
+;
+;
+; UNEQUAL COMPARE
+;
+DIFF:	POP	H
+	POP	D 	   ;GET POINTERS
+;
+; SWAP
+;
+	MVI	B,namsize						;v3.2x
+	PUSH	B
+;
+SWAP:	MOV	C,M
+	LDAX	D
+	MOV	M,A
+	MOV	A,C
+	STAX	D
+	INX	D
+	INX	H
+	DCR	B
+	JNZ	SWAP
+	POP	B
+	JMP	NEXTC2
+;.....
+;
+;
+;
+; SORT ALL DONE - VERIFY "FLAG" FILE PRESENT
+;
+DONE:	LDA	NABUF
+;
+	IF	DSKFRE and (not cat2) ;IF WE ARE USING THE FREE SPACE ;v3.2x
+	ORA	A 	   ;  FEATURE, WE PREVIOSLY REPLACED
+	ELSE		   ;  REPLACED THE '-' TOKEN WITH A NULL
+;
+	CPI	'-'
+	ENDIF
+;
+	JZ	NAMEOK
+	CALL	ILPRT
+	DB	'++MISSING "-.nnn" FILE ON DISK.',CR,LF
+	DB	'  (Put the volume number file on',CR,LF
+	DB	'  the disk, then run it again.)',CR,LF,0
+;
+	LDA	DRIVE	   ;SINGLE DRIVE?
+	ORA	A
+	JNZ	AGAIN	   ;NO, ASK FOR NEXT DISK
+	CALL	ILPRT	   ;ELSE ASK FOR CATALOG DISK
+	DB	CR,LF,'Mount CATALOG SYSTEM DISK	in Drive '
+;
+MDR1:	DB	'A:  Ready? (Y/N) ',0  ;HOT-PATCHED AT RUNTIME
+	MVI	C,KEY	   ;GET A KEYBOARD CHARACTER
+	CALL	BDOS
+	JMP	AGAIN
+;
+;
+; GET DISK ID NUMBER, DISPLAY
+;
+NAMEOK: LXI	D,NABUF						   ;v3.2
+
+	if	cat2						;v3.2x
+	lxi	h,idname
+	inx	d
+	mvi	b,11
+	call	mover
+	lxi	d,nabuf+1
+	lxi	h,count2
+	mvi	b,11
+	call	mover
+	lxi	d,nabuf
+
+	else	;not cat2
+
+	LXI	H,9	   ;INDEX TO DISK ID NUMBER
+	DAD	D
+;
+	MOV	A,M	   ;MOVE ID NUMBER INTO 'IDNBR' AREA	
+	STA	IDNMBR
+	STA	COUNT1
+	INX	H
+	MOV	A,M
+	STA	IDNMBR+1
+	STA	COUNT1+1
+	INX	H
+	MOV	A,M
+	STA	IDNMBR+2
+	STA	COUNT1+2
+	endif		;not cat2				;v3.2x
+
+	CALL	ILPRT	   ;DISPLAY DISK ID NUMBER
+;
+	DB	CR,LF,'                     Processing disk '
+
+	if	cat2						;v3.2x
+idname:	db	'       .'
+	endif
+
+IDNMBR: DB	'   ',CR,LF,0
+;
+	LDA	DRIVE	   ;TWO DRIVES??
+	ORA	A
+	JNZ	OK1	   ;YES, PROCEED
+;
+NAME1:	CALL	ILPRT	   ;ELSE ASK FOR SYSTEM DISK
+	DB	CR,LF,'Mount CATALOG SYSTEM DISK	in Drive '
+;
+MDR2:	DB	'A:  Ready? (Y/N) ',0  ;HOT PATCHED AT RUNTIME
+	MVI	C,KEY	   ;GET A KEYBOARD CHARACTER
+	CALL	BDOS
+	CPI	3 	   ;ABORT WITH CTRL-C
+	JZ	EXIT
+	CPI	CR	   ;ACCEPT 'CR' AS YES
+	JZ	MDR22
+	CPI	' '	   ;ACCEPT 'SPACE' CHAR. AS YES
+	JZ	MDR22
+	ANI	5FH	   ;CONVERT LOWER CASE TO UPPER
+	CPI	'N'	   ;ABORT IF AN 'N'
+	JZ	EXIT
+	CPI	'Y'	   ;IF YES, UPDATE MAST.CAT
+	JNZ	NAME1	   ;OTHERWISE, ASK AGAIN
+
+MDR22:	CALL	CRLF
+;
+OK1:	MVI	C,RESETDK    ;RESET DISK, KILLING R/O STATUS
+	CALL	BDOS	   ;  (AND RESELECTING DRIVE A:)
+	LDA	MDRIVE	   ;THEN SELECT DRIVE FOR MAST.CAT
+	ORA	A
+	MOV	E,A
+	MVI	C,SELDK
+	CNZ	BDOS	   ;DONT BOTHER RESELECTING IF DRIVE A:
+;
+;
+; NOW UPDATE MAST.CAT
+; SEQIO DOES CHARACTER I/O FUNCTIONS
+; SET UP THE FILES
+;
+	IF	ERAFRST and (not test)
+;
+	MVI	C,19
+	LXI	D,FCBBAK	   ;ERASE MAST.BAK TO SAVE DISK SPACE
+	CALL	BDOS
+;
+	ENDIF
+;
+;
+	JMP	AAA
+;.....
+;
+;
+FCBMASTIN: DB 0,'MAST    CAT'
+;
+	DB	0
+	DS	20
+;
+MASTINADR: DS 2 	   ;INPUT BUFFER START ADDRESS
+;
+MASTINLEN: DS 2 	   ;INPUT BUFFER LENGTH
+;
+MASTINPTR: DS 2 	   ;INPUT BUFFER POINTER ADDRESS
+;
+AAA:	JMP	AAE
+;.....
+;
+;
+GETMASTIN:
+	LHLD	MASTINLEN
+	XCHG
+	LHLD	MASTINPTR
+	MOV	A,L
+	SUB	E
+	MOV	A,H
+	SBB	D
+	JC	AADD
+	LXI	H,0
+	SHLD	MASTINPTR
+;
+AAB:	XCHG
+	LHLD	MASTINLEN
+	MOV	A,E
+	SUB	L
+	MOV	A,D
+	SBB	H
+	JNC	AAD
+	LHLD	MASTINADR
+	DAD	D
+	XCHG
+	MVI	C,26
+	CALL	BDOS
+	LXI	D,FCBMASTIN
+	MVI	C,20
+	CALL	BDOS
+	ORA	A
+	JNZ	AAC
+	LXI	D,0080H	   ;128-BYTE RECORD
+	LHLD	MASTINPTR
+	DAD	D
+	SHLD	MASTINPTR
+	JMP	AAB
+;.....
+;
+;
+AAC:	LHLD	MASTINPTR
+	SHLD	MASTINLEN
+;
+AAD:	LXI	D,0080H	   ;128-BYTE RECORD
+	MVI	C,26
+	CALL	BDOS
+	LXI	H,0000H
+	SHLD	MASTINPTR
+;
+AADD:	XCHG
+	LHLD	MASTINADR
+	DAD	D
+	XCHG
+	LHLD	MASTINLEN
+	MOV	A,L
+	ORA	H
+	MVI	A,26
+	RZ
+;
+	LDAX	D
+	LHLD	MASTINPTR
+	INX	H
+	SHLD	MASTINPTR
+	RET
+;.....
+;
+;
+AAE:	XRA	A
+	STA	FCBMASTIN+12
+	STA	FCBMASTIN+32
+	LHLD	BUFFERSIZE
+	SHLD	MASTINLEN
+	SHLD	MASTINPTR
+	MVI	C,15
+	LXI	D,FCBMASTIN
+	CALL	BDOS
+	INR	A
+	JNZ 	AAG
+	MVI	C,9
+	LXI	D,AAF
+	CALL	BDOS
+	JMP	FILERR
+;
+AAF:	DB	CR,LF,'NO MAST.CAT FILE$'
+;
+;
+AAG:	JMP	AAH
+
+	IF	NOT TEST
+;
+FCBMASTOUT: DB 0,'NEW     CAT'
+;
+	DB	0
+	DS	20
+	endif	;not test
+;.....
+;
+;
+BUFFERSIZE: DS 2	   ;BUFFER INPUT/OUTPUT SIZE
+;
+MASTOUTADR: DS 2	   ;OUTPUT BUFFER START ADDRESS
+;
+MASTOUTLEN: DS 2	   ;OUTPUT BUFFER LENGTH
+;
+MASTOUTPTR: DS 2	   ;OUTPUT BUFFER POINTER ADDRESS
+;
+AAH:	 JMP	AAMM
+;.....
+;
+;
+PUTMASTOUT:
+	PUSH PSW
+
+	if	test
+	mov	e,a
+	mvi	c,2	;console output
+	call	bdos
+	pop	psw
+
+	else
+
+	LHLD	MASTOUTLEN
+	XCHG
+	LHLD	MASTOUTPTR
+	MOV	A,L
+	SUB	E
+	MOV	A,H
+	SBB	D
+	JC	AAM
+;
+	LXI	H,0000H
+	SHLD	MASTOUTPTR
+;
+AAI:	XCHG
+	LHLD	MASTOUTLEN
+	MOV	A,E
+	SUB	L
+	MOV	A,D
+	SBB	H
+	JNC	AAL
+;
+	LHLD	MASTOUTADR
+	DAD	D
+	XCHG
+	MVI	C,26
+	CALl	BDOS
+	LXI	D,FCBMASTOUT
+	MVI	C,21
+	CALL	BDOS
+	ORA	A
+	JNZ	AAJ
+;
+	LXI	D,0080H
+	LHLD	MASTOUTPTR
+	DAD	D
+	SHLD	MASTOUTPTR
+	JMP	AAI
+;.....
+;
+;
+AAJ:	MVI	C,9
+	LXI	D,AAK
+	CALL	BDOS
+	POP	PSW
+	JMP	FILERR
+;.....
+;
+;
+AAK:	DB	CR,LF,'DISK FULL: MASTOUT$'
+;
+AAL:	LXI	D,0080H
+	MVI	C,26
+	CALL	BDOS
+	LXI	H,0000H
+	SHLD	MASTOUTPTR
+;
+AAM:	XCHG
+	LHLD	MASTOUTADR
+	DAD	D
+	XCHG
+	POP	PSW
+	STAX	D
+	LHLD	MASTOUTPTR
+	INX	H
+	SHLD	MASTOUTPTR
+	
+	endif	;test
+	RET
+;.....
+;
+;
+
+AAMM:	
+	if	not test
+	XRA	A
+	STA	FCBMASTOUT+12
+	STA	FCBMASTOUT+32
+	LHLD	BUFFERSIZE
+	SHLD	MASTOUTLEN
+	LXI	H,0000H
+	SHLD	MASTOUTPTR
+	MVI	C,19
+	LXI	D,FCBMASTOUT
+	CALL	BDOS
+	MVI	C,22
+	LXI	D,FCBMASTOUT
+	CALL	BDOS
+	INR	A
+	JNZ	AAP
+;
+	MVI	C,9
+	LXI	D,AAN
+	CALL	BDOS
+	JMP	FILERR
+;.....
+;
+;
+AAN:	DB	CR,LF,'NO DIR SPACE: MASTOUT$'
+;
+	ENDIF
+;
+;
+AAP:	JMP	INITRD
+;.....
+;
+;
+FCBBAK: DB	0,'MAST    BAK'
+;
+	DB	0
+	DS	20
+;
+INITRD: CALL	READNA	   ;READ DISK NAME FROM BUFFER
+	LXI	D,NADAT+1
+	LXI	H,DKNAME
+	MVI	B,7
+	CALL	MOVER
+	LXI	D,NADAT+9
+	LXI	H,DKNAME+9
+	MVI	B,3
+	CALL	MOVER
+;
+; READ IN THE NAMES TO BE IGNORED (I.E. NOT
+; CATALOGED).  THEY ARE AT THE FRONT OF MAST CAT.
+; THEY ARE SIMPLY A LIST OF FILENAME.FILETYPE (CR/LF)
+; WITH THE FIRST HAVING A ( BEFORE IT, AND THE
+; LAST HAVING A ) AFTER IT.
+;
+	CALL	GETMASTIN    ;GET THE LEADING '('
+	JZ	NOMAST	   ;IF EOF
+	CPI	'('
+	JNZ	NOIGN
+	CALL	PUTMASTOUT
+	LXI	H,IGNORE	   ;POINT TO BUFFER
+	LXI	B,IGNSIZE    ;FOR BUFFER OVERFLOW TEST
+;
+IGNRD:	PUSH	B
+	PUSH	H
+	CALL	GETMASTIN
+	JZ	IGNEOF	   ;UNEXPECTED EOF
+	PUSH	PSW	   ;SAVE CHAR
+	CALL	PUTMASTOUT
+	POP	PSW
+	POP	H
+	POP	B
+;
+	MOV	M,A
+	INX	H
+	CPI	')'
+	JZ	IGNEND	   ;TABLE IS LOADED
+	DCX	B 	   ;MORE ROOM IN TABLE?
+	MOV	A,B
+	ORA	C
+	JNZ	IGNRD
+;
+; TABLE OVERFLOW
+;
+	CALL	EREXIT
+	DB	'++TOO MANY IGNORE NAMES FOR TABLE',0
+;
+NOMAST: CALL	EREXIT
+	DB	'++MISSING OR EMPTY MAST.CAT',0
+;
+NOIGN:	CALL	EREXIT
+	DB	'++NO IGNORE NAMES IN MAST.CAT',0
+;
+IGNEOF: CALL	EREXIT
+	DB	'++EOF READING FOR IGNORE NAMES.'
+	DB	CR,LF,'MAY BE MISSING ")" AFTER LAST NAME.',0
+;
+;
+; IGNORE NAMES HAVE BEEN READ INTO TABLE OK
+;
+IGNEND: CALL	GETMASTIN
+	JZ	IGNEOF
+	PUSH	PSW
+	CALL	PUTMASTOUT
+	POP	PSW
+	CPI	LF
+	JNZ	IGNEND	   ;DELETE CR/LF
+
+	if	cat2						;v3.2x
+	jmp	mastlp	;already read disk name
+	endif
+
+;
+; PRIME THE BUFFERS
+;
+NAMELP: CALL	READNA	   ;READ NAME INTO NADAT
+MASTLP: CALL	READMI	   ;READ MASTER INTO MIDAT
+;
+;
+; IF EOF ON BOTH FILES, WE ARE ALL DONE
+;
+COMPLP: LDA	NAEOFLG	   ;NAME FILE EOF?
+	ORA	A
+	JZ	NOTEOF	   ;..NO
+	LDA	MIEOFLG	   ;MASTER IN EOF?
+	ORA	A
+	JNZ	ALLDONE	   ;YES, THAT'S IT.
+;
+NOTEOF: 
+	if	cat2						;v3.2x
+	lda	nadat
+	mov	b,a
+	lda	midat
+	cmp	b
+	jnz	note2	;can not be replace
+	cpi	'['
+	jnz	note2	;not space left
+	mvi	b,18
+	lxi	d,nadat+9
+	lxi	h,midat+9
+	call	compr
+	jmp	note3
+note2:
+	endif
+
+	MVI	B,mastsize					;v3.2x
+	LXI	D,NADAT
+	LXI	H,MIDAT
+	CALL	COMPR
+note3:	JZ	EQUAL
+	JC	WRITEN
+;
+;
+; MASTER IS LOWER - WRITE IT IF FOR ANOTHER DISK
+;
+	MVI	B,dksize						;v3.2x
+	LXI	D,MIDSK
+	LXI	H,DKNAME
+	CALL	COMPR
+	JZ	DELMI	   ;DELETING MIDAT
+	LXI	D,MIDAT
+	LXI	H,MODAT
+	MVI	B,mastsize					;v3.2x
+	CALL	MOVER
+	CALL	WRITEMO
+	JMP	MASTLP
+;.....
+;
+;
+; DELETE MASTER IN
+;
+DELMI:	LXI	D,DELMSG
+	LXI	H,MIDAT
+	CALL	MESG
+	JMP	MASTLP
+;.....
+;
+;
+DELMSG: DB	'DEL: $'
+;
+; NAME IS LOWER - WRITE IT
+;
+WRITEN: LXI	D,NADAT
+	LXI	H,MODAT
+	MVI	B,mastsize					;v3.2x
+	CALL	MOVER
+	CALL	WRITEMO
+;
+; PRINT THAT NAME WAS ADDED
+;
+	LXI	D,ADDMSG
+	LXI	H,NADAT
+	CALL	MESG
+	CALL	READNA	   ;READ NEXT NAME
+	JMP	COMPLP
+;
+ADDMSG: DB	'ADD: $'
+;
+; BOTH FILES EQUAL
+;
+EQUAL:	LXI	D,MIDAT
+	LXI	H,MODAT
+	MVI	B,mastsize					;v3.2x
+	CALL	MOVER
+	CALL	WRITEMO	   ;WRITE OUT MASTER
+	JMP	NAMELP	   ;READ BOTH
+;.....
+;
+;
+; READ NAME FILE
+;
+READNA: LXI	H,NADAT
+	MVI	B,8
+	CALL	READNAC	   ;READ CHARACTERS
+	MVI	M,'.'
+	INX	H
+	MVI	B,3	   ;TYPE LENGTH
+	CALL	READNAC
+	MVI	M,','
+
+	if	cat2						;v3.2x
+	lxi	h,udat
+	mvi	m,';'
+	inx	h
+	mvi	b,1
+	call	readnac
+	endif
+
+;
+;
+; IF THIS IS A NAME NOT TO BE CATALOGED,
+; READ THE NEXT
+;
+	LXI	D,IGNORE	   ;GET IGNORE TABLE
+;
+IGNLP:	LXI	H,NADAT
+	MVI	B,dksize	   ;# OF CHARS TO MATCH			;v3.2x
+;
+IGNCLP: LDAX	D
+	CMP	M
+	JZ	IGNMAT	   ;MATCHED
+	MOV	A,M	   ;GET CHAR
+	CPI	' '	   ;SPACE?
+	JZ	IGNMAT1
+;
+; GET NEXT ENTRY
+;
+IGNEXTE:
+	LDAX	D
+	INX	D
+	CPI	')'	   ;END OF TABLE?
+	RZ		   ;..YES, RETURN
+	CPI	LF	   ;NEXT LINE?
+	JNZ	IGNEXTE
+	JMP	IGNLP
+;
+; CHAR MATCHED
+;
+IGNMAT: INX	D 	   ;SKIP MATCH CHAR
+;
+IGNMAT1:
+	INX	H
+	DCR	B
+	JNZ	IGNCLP	   ;LOOP UNTIL DONE
+;
+;
+; NAME IS TO BE DELETED
+;
+	JMP	READNA	   ;READ NEXT NAME
+;.....
+;
+;
+; ALL DONE - WRITE EOF TO OUTPUT, ASK IF MORE TO DO
+;
+ALLDONE:
+	MVI	A,'Z'-40H    ;EOF CHAR
+	IF	NOT TEST
+	CALL	PUTMASTOUT
+;
+BBBB:	LHLD	MASTOUTPTR
+	MOV	A,L
+	ANI	7FH
+	JNZ	CCCC
+	SHLD	MASTOUTLEN
+;
+CCCC:	MVI	A,EOF
+	PUSH	PSW
+	CALL	PUTMASTOUT
+	POP	PSW
+	JNZ	BBBB
+	MVI	C,16
+	LXI	D,FCBMASTOUT
+	CALL	BDOS
+	INR	A
+	JNZ	EEEE
+	MVI	C,9
+	LXI	D,DDDD
+	CALL	BDOS
+	JMP	EEEE
+DDDD:	DB	CR,LF,'CANNOT CLOSE MASTOUT$'
+;
+	ENDIF
+;
+; RUN WAS SUCCESSFUL - SET FINAL FILE DISPOSITIONS
+;
+EEEE:
+	if	not test
+	IF	NOT ERAFRST
+;
+	MVI	C,19
+	LXI	D,FCBBAK
+	CALL	BDOS
+;
+	ENDIF	;NOT ERAFRST
+;
+	JMP	HHHH
+;
+FFFF:	PUSH	H
+	LXI	B,16
+	DAD	B
+;
+GGGG:	LDAX	D
+	MOV	M,A
+	INX	D
+	INX	H
+	DCR	C
+	JNZ	GGGG
+;
+	POP	D
+	MVI	C,23
+	CALL	BDOS
+	RET
+;.....
+;
+;
+HHHH:	LXI	H,FCBMASTIN
+	LXI	D,FCBBAK
+	CALL	FFFF
+;
+	LXI	H,FCBMASTOUT
+	LXI	D,FCBMASTIN
+	CALL	FFFF
+	endif	;not test
+
+	CALL	ILPRT
+	DB	CR,LF,'MAST.CAT has '
+;
+COUNT:	DB	'     entries, with disk '			   ;v3.2
+	
+	if	cat2						;v3.2x
+count2:	db	'       .'
+	endif
+
+COUNT1: DB	'    ',CR,LF,0
+;
+	JMP	AGAIN	   ;GO DO ANOTHER (OR QUIT)
+;.....
+;
+;
+; READ CHARACTERS INTO NAME BUFFER
+;
+READNAC:
+	LDA	NAEOFLG	   ;EOF ON NAMES?
+	ORA	A
+	JNZ	NAEOF	   ;YES, PAD W/0FFH
+	PUSH	H
+	PUSH	B
+;
+GETNA:	CALL	GETNAM	   ;GET FROM BUFFER, NOT DISK
+	CPI	LF
+	JZ	GETNA	   ;IGNORE LF
+	POP	B
+	POP	H
+	CPI	'.'	   ;END?
+	JZ	NAEND
+
+	if	cat2						;v3.2x
+	cpi	';'
+	jz	naend
+	endif
+
+	CPI	CR	   ;END?
+	JZ	NAEND
+	CPI	'Z'-40H	   ;EOF?
+	JZ	NAEOF
+	MOV	M,A
+	INX	H
+	DCR	B
+	JNZ	READNAC
+	PUSH	B
+	PUSH	H
+	CALL	GETNAM	   ;KILL DELIMITER CHAR
+	POP	H
+	POP	B
+	CPI	'Z'-40H	   ;EOF?
+	RNZ
+	STA	NAEOFLG
+	RET
+;.....
+;
+;
+NAEND:	MVI	M,' '
+	INX	H
+	DCR	B
+	JNZ	NAEND
+	RET
+;.....
+;
+;
+NAEOF:	MVI	M,0FFH
+	INX	H
+	DCR	B
+	JNZ	NAEOF
+	MVI	A,1
+	STA	NAEOFLG
+	RET
+;.....
+;
+;
+; SUBROUTINE TO SIMULATE READING FROM THE OLD NAMES.SUB 
+; FILE.  ACTUALLY, THE CHARACTERS COME FROM THE NAMES
+; BUFFER PROVIDED BY THE FIRST PART OF THE PROGRAM
+;
+GETNAM: LHLD	BUFPTR		;GET POINTER TO NABUF
+	MOV	A,M		;GET NEXT CHAR
+	INX	H 		;BUMP THE POINTER
+	SHLD	BUFPTR	
+	RET
+;.....
+;
+; READ MASTER IN NAME
+;
+READMI: LXI	H,MIDAT
+	CALL	MINAME	   ;GET FILE NAME
+	MVI	M,','	   ;SEPARATOR
+	INX	H
+	CALL	MINAME	   ;GET DISK NAME
+
+	if	cat2						;v3.2x
+	mvi	a,' '
+	sta	miusr+1
+	lda	masdel	;delimiter
+	cpi	';'
+	rnz		;no user areas
+	call	getmastin
+	sta	miusr+1	;save user number
+	call	getmastin
+	endif
+
+	RET
+;.....
+;
+;
+; READ MASTER IN, 1 FIELD
+;
+MINAME	MVI	B,8
+	CALL	READMIC	   ;GET CHARS
+	MVI	M,'.'
+	INX	H
+	MVI	B,3
+	CALL	READMIC	   ;GET TYPE
+	RET
+;.....
+;
+;
+; READ CHARS INTO MASTER NAME
+;
+READMIC:
+	LDA	MIEOFLG
+	ORA	A
+	JNZ	MIEOF
+	PUSH	H
+	PUSH	B
+;
+GETMI:	CALL	GETMASTIN
+	CPI	LF	   ;IGNORE LF
+	JZ	GETMI	   ;L/F'S
+	POP	B
+	POP	H
+	CPI	','
+	JZ	MIEND
+	CPI	'.'
+	JZ	MIEND
+
+	if	cat2						;v3.2x
+	cpi	';'
+	jz	miend
+	endif
+
+	CPI	CR
+	JZ	MIEND
+	CPI	'Z'-40H	   ;EOF?
+	JZ	MIEOF
+	MOV	M,A
+	INX	H
+	DCR	B
+	JNZ	READMIC
+	PUSH	B
+	PUSH	H
+	CALL	GETMASTIN    ;GET DELIMITER
+
+	if	cat2						;v3.2x
+	sta	masdel	;save delimiter
+	endif
+
+	POP	H
+	POP	B
+	CPI	'Z'-40H	   ;EOF?
+	RNZ
+	STA	MIEOFLG
+	RET
+;.....
+;
+;
+MIEND:	MVI	M,' '
+	INX	H
+	DCR	B
+	JNZ	MIEND
+	RET
+;.....
+;
+;
+MIEOF:	MVI	M,0FFH
+	INX	H
+	DCR	B
+	JNZ	MIEOF
+	STA	MIEOFLG	   ;SHOW EOF
+	RET
+;.....
+;
+;
+; WRITE AN ENTRY TO MASTER OUT
+; ALSO BUMP COUNT OF ENTRIES WRITTEN
+;
+WRITEMO: IF	DSKFRE AND (NOT COUNTEM)
+;
+	MVI	B,3
+	LXI	D,MODAT+9
+	LXI	H,FTFRE
+	CALL	COMPR
+	JZ	BUMPD		     ;IF YES, DON'T COUNT IT
+;
+	ENDIF
+;
+	LXI	H,COUNT+3
+;
+BUMP:	MOV	A,M	   ;GET COUNT DIGIT
+	CPI	' '
+	JNZ	BUMPNB
+	MVI	A,'0'
+;
+BUMPNB: INR	A
+	MOV	M,A
+	CPI	'9'+1	   ;TIME TO CARRY?
+	JNZ	BUMPD	   ;NO, DONE
+	MVI	M,'0'
+	DCX	H
+	JMP	BUMP
+;.....
+;
+;
+BUMPD:	LXI	H,MODAT
+	MVI	B,mastsize					;v3.2x
+;
+WRMOL:	MOV	A,M
+	CPI	' '	   ;NULL CHAR?
+	JZ	WRSKIP
+	PUSH	B
+	PUSH	H
+;
+	CALL	PUTMASTOUT
+;
+	POP	H
+	POP	B
+;
+WRSKIP: INX	H 	   ;POINT TO NEXT CHAR
+	DCR	B
+	JNZ	WRMOL	   ;LOOP UNTIL DONE
+	MVI	A,CR
+	CALL	PUTMASTOUT
+	MVI	A,LF
+	CALL	PUTMASTOUT
+	RET
+;.....
+;
+;
+; PRINT MESSAGE IN DE, THEN NAME IN HL
+;
+MESG:	PUSH	H
+	MVI	C,PRINT
+	CALL	BDOS
+	POP	H
+	MVI	B,12	   ;NAME + '.' + TYPE
+;
+MESGL:	PUSH	H
+	PUSH	B
+	MOV	A,M	   ;GET CHAR
+	CPI	' '
+	JZ	MESGS	   ;SKIP IF ' '
+	PUSH	PSW	   ;SAVE THE CHAR.
+	MVI	C,CONIN	   ;SHOW ON THE CRT CONSOLE
+	MOV	E,A
+	CALL	BDOS
+	POP	PSW	   ;RESTORE THE CHAR.
+;
+MESGS:	POP	B
+	POP	H
+	INX	H
+	DCR	B
+	JNZ	MESGL
+	MVI	A,CR	   ;'CR' CHAR.
+	PUSH	PSW	   ;SAVE THE CHAR.
+	MVI	C,CONIN	   ;SHOW ON THE CRT CONSOLE
+	MOV	E,A
+	CALL	BDOS
+	POP	PSW	   ;RESTORE THE CHAR.
+	MVI	A,LF	   ;'LF' CHAR.
+	PUSH	PSW	   ;SAVE THE CHAR.
+	MVI	C,CONIN	   ;SHOW ON THE CRT CONSOLE
+	MOV	E,A
+	CALL	BDOS
+	POP	PSW	   ;RESTORE THE CHAR.
+	RET
+;.....
+;
+;
+; MOVE SUBROUTINE (DE)=>(HL), LEN IN (B)
+; MODIFIED MY L.M. TO STRIP HI-ORDER BIT.  SEE NOTE
+; ABOUT VERSION 2.3 MODS AT FRONT OF FILE
+;
+MOVER:	LDAX	D
+	ANI	7FH	   ;STRIP
+	MOV	M,A
+	INX	D
+	INX	H
+	DCR	B
+	JNZ	MOVER
+	RET
+;.....
+;
+;
+; MOVNC SUBROUTINE (DE)=>(HL), LEN IN (B).  THIS VERSION
+; STRIPS THE HI-ORDER BIT, IF SET.  SEE NOTE ABOUT VERSION
+; 2.3 MODS AT FRONT OF FILE.  IT ALSO FILTERS OUT COMMAS WHICH
+; MIGHT OTHERWISE MESS UP THE DATABASE.  SEE ALSO NOTE UNDER
+; VERSION 2.8 MODS.
+;
+MOVNC:	LDAX	D
+	ANI	7FH	   ;STRIP HI ORDER BIT
+	CPI	','	   ;IS IT A COMMA?
+	JNZ	MN1	   ;JUMP IF NOT
+	MVI	A,'/'	   ;ELSE CHANGE TO SLASH
+;
+MN1:	MOV	M,A
+	INX	D
+	INX	H
+	DCR	B
+	JNZ	MOVNC
+	RET
+;.....
+;
+;
+; COMPARE ROUTINE (DE)<=>(HL), LENGTH IN B
+;
+COMPR:	LDAX	D
+	CMP	M
+	RNZ		   ;RET W/NON ZERO SET
+	INX	D
+	INX	H
+	DCR	B
+	JNZ	COMPR
+	RET		   ;ZERO SET, SHOWS =
+;.....
+;
+;
+; GET FREE DISK SPACE; PLUG IT INTO PHANTOM FILE.
+;
+	IF	DSKFRE
+;
+; SINCE NUMBER OF BLOCKS ON DISK IS DSM+1, LET'S GET DSM.
+;
+FRESPC: LHLD	DPBADDR	   ;RETRIEVE ADDRESS OF DISK PARAMETER BLOCK
+	LXI	D,5	   ;DSM IS AT DPB+5
+	DAD	D
+	MOV	E,M	   ;LOW BYTE OF DSM
+	INX	H
+	MOV	D,M	   ;HIGH BYTE OF DSM
+	XCHG		   ;'HL'=DSM
+	INX	H 	   ;BLOCK=DSM+1
+	SHLD	TBTR	   ;SAVE TOTAL BITS TO READ
+;
+;
+; GET CODE FOR BYTES PER BLOCK, WHERE 1=1024, 2=2048, 3=4096, ETC.
+;
+	LHLD	DPBADDR	   ;RECOVER DPB ADDRESS
+	INX	H 	   ;BSH IS AT DPB+2
+	INX	H
+	MOV	A,M	   ;BSH IS 3-7,
+	SUI	2 	   ;MAKE IT 1-5
+	CPI	5+1	   ;CHECK FOR OVER 5
+	JNC	NONSTAN	   ;IF SO, IT IS NON-STANDARD
+	CPI	1 	   ;CHECK FOR UNDER 1
+	JC	NONSTAN	   ;IF SO, IT IS NON-STANDARD
+	STA	BLKSIZE	   ;SAVE THE BLOCK SIZE
+;
+;
+; FIND ALLOCATION VECTOR AND COUNT THE BITS RESET.
+;
+	LHLD	TBTR
+	XCHG		   ;'DE'=TOTAL OF ALL VECTOR BITS TO READ
+	MVI	C,ALLVEC	   ;TELL 'BDOS' TO GET ADDRESS OF
+	CALL	BDOS	   ;  THE ALLOCATION VECTOR IN 'HL'
+;
+NXTBYT: MOV	A,M	   ;GET A BYTE OF ALLOCATION VECTOR
+	MVI	C,8	   ;IT HAS EIGHT BITS, RIGHT?
+;
+ROTAT:	RLC		   ;MOVE A BIT TO CARRY
+	CNC	COUNTIT	   ;NOT SET?  IT'S A FREE BLOCK
+	DCX	D 	   ;COUNT THE BIT JUST CHECKED
+	PUSH	PSW	   ;SAVE THE BIT PATTERN
+	MOV	A,D	   ;HAVE WE DONE THE WHOLE
+	ORA	E 	   ;  ALLOCATION VECTOR?
+	JZ	KFREE	   ;FINISHED HERE, IF SO
+	POP	PSW	   ;RESTORE THE BIT PATTERN
+	DCR	C 	   ;COUNT A BIT DONE
+	JNZ	ROTAT	   ;MORE BITS THIS BYTE?  DO ANOTHER
+	INX	H 	   ;DONE WITH BYTE?  BUMP POINTER,
+	JMP	NXTBYT	   ;  AND GET THE NEXT BYTE
+;
+COUNTIT:
+	PUSH	H 	   ;SAVE THE ALLOCATION VECTOR POINTER
+	LHLD	BLKSFRE	   ;INCREMENT THE 'BLOCKS FREE' COUNT
+	INX	H
+	SHLD	BLKSFRE
+	POP	H 	   ;RESTORE THE POINTER
+	RET
+;.....
+;
+;
+; FREE SPACE ON DISK IS BLOCK SIZE TIMES NUMBER OF FREE BLOCKS.
+;
+KFREE:	POP	PSW	   ;CLEAN THE STACK
+	LDA	BLKSIZE	   ;GET BLOCK SIZE
+	LHLD	BLKSFRE	   ;GET FREE BLOCKS
+;
+MULT:	DCR	A 	   ;FREE SPACE=FREE BLOCKS
+	JZ	CONDEC	   ;  TIMES BLOCK SIZE
+	DAD	H
+	JMP	MULT
+;.....
+;
+;
+NONSTAN:
+	CALL	EREXIT
+	DB	'++CAN''T READ FREE DISK SPACE',0
+;
+;
+; ARRIVE HERE WITH 'HL' = FREE DISK SPACE.
+; CONVERT TO DECIMAL AND STORE.
+;
+CONDEC: 
+	if	cat2						;v3.2x
+	mvi	a,'['
+	call	condec4
+	mvi	a,'['
+	call	condec4
+	endif
+
+	MVI	B,0	   ;LEADING ZERO FLAG
+	LXI	D,-10000
+	CALL	CONDEC1
+	LXI	D,-1000
+	CALL	CONDEC1
+	LXI	D,-100
+	CALL	CONDEC1
+	LXI	D,-10
+	CALL	CONDEC1
+	MOV	A,L
+	ADI	'0'
+	CALL	CONDEC4
+	MVI	A,'k'
+
+	if	cat2						;v3.2x
+	call	condec4
+	mvi	a,']'
+	call	condec4
+	mvi	a,']'
+	endif
+
+	JMP	CONDEC4
+;
+;
+; SUBTRACT UNTIL NEGATIVE
+;
+CONDEC1:
+	MVI	C,'0'-1	   ;COUNT IN ASCII
+;
+CONDEC2:
+	INR	C
+	DAD	D
+	JC	CONDEC2
+;
+;
+; TOO MANY, ADD ONE BACK.
+;
+	MOV	A,D	;GET TWO'S COMPLEMENT
+	CMA		;  OF TWO'S COMPLEMENT
+	MOV	D,A	;  TO GET VALUE TO
+	MOV	A,E	;  ADD BACK
+	CMA
+	MOV	E,A
+ 	INX	D
+	DAD	D
+;
+;
+; ARRIVE HERE WITH DECIMAL DIGIT IN 'C'
+;
+	MOV	A,C	   ;GET COUNT IN 'A'
+	CPI	'1'	   ;ZERO?
+	JNC	CONDEC3	   ;NO
+	MOV	A,B	   ;YES, IS IT A LEADING ZERO?
+	ORA	A
+	MOV	A,C	   ;GET DIGIT TO 'A'
+	JNZ	CONDEC4	   ;NOT LEADING ZERO, STORE IT
+
+	if	cat2						;v3.2x
+	ret		;ignore leading zeros
+	
+	else	;not cat2
+
+	MVI	A,'+'	   ;LEADING ZERO, REPLACE IT WITH '+'
+	JMP	CONDEC4
+
+	endif	;not cat2					;v3.2x
+;
+CONDEC3:
+	DCR	B 	   ;SET NO LEADING ZERO FLAG
+;
+CONDEC4:
+	PUSH	H 	   ;SAVE VALUE
+	LHLD	FREPTR	   ;POINT TO CURRENT 'NABUF' SLOT
+	MOV	M,A	   ;STORE THE DITIG
+	INX	H 	   ;BUMP THE POINTER
+	SHLD	FREPTR	   ;SAVE IT
+	POP	H 	   ;RECOVER VALUE
+	RET
+;
+	ENDIF
+;.....
+;
+; INLINE PRINT SUBROUTINE
+;
+ILPRT:	XTHL		   ;GET STARTING ADDR OF STRING TO HL
+;
+ILPLP:	MOV	A,M
+	PUSH	H
+	PUSH	PSW	   ;SAVE THE CHAR.
+	MVI	C,CONIN	   ;SHOW ON THE CRT CONSOLE
+	MOV	E,A
+	CALL	BDOS
+	POP	PSW	   ;RESTORE THE CHAR.
+	POP	H
+	INX	H
+	MOV	A,M
+	ORA	A
+	JNZ	ILPLP
+	INX	H
+	XTHL		;RETURN ADDR TO TOP OF STACK 
+	RET
+;.....
+;
+CRLF:	CALL	ILPRT	   ;CARRIAGE RET - LINE FEED
+	DB	CR,LF,0
+	RET
+;.....
+;
+;
+; EXIT WITH ERROR MESSAGE
+;
+EREXIT: MVI	A,CR	   ;'CR' CHAR.
+	PUSH	PSW	   ;SAVE THE CHAR.
+	MVI	C,CONIN	   ;SHOW ON THE CRT CONSOLE
+	MOV	E,A
+	CALL	BDOS
+	POP	PSW	   ;RESTORE THE CHAR.
+	MVI	A,LF	   ;'LF' CHAR.
+	PUSH	PSW	   ;SAVE THE CHAR.
+	MVI	C,CONIN	   ;SHOW ON THE CRT CONSOLE
+	MOV	E,A
+	CALL	BDOS
+	POP	PSW	   ;RESTORE THE CHAR.
+	POP	D 	   ;GET MSG ADDR
+	MVI	C,PRINT
+	CALL	BDOS
+;
+EXIT:	CALL	CRLF
+	CALL	CRLF
+	JMP	0000H	   ;TO CP/M RETURN ADDR
+;.....
+;
+;
+	DS	80	   ;STACK SPACE (40 LEVELS)
+;
+STACK:	DS	0
+;.....
+
+;
+	IF	ALLUSR
+;
+AMB:	DB	'????????????',0     ;TO RETURN ALL DIRECTORY ENTREIS,
+;
+	ELSE			   ;  SET DRIVE BYTE TO '?'
+;
+AMB:	DB	0,'???????????',0    ;LOG DR, MATCH ANY FN.FT, EXT 0
+;
+	ENDIF
+;
+NADAT:	DB	'XXXXXXXX.YYY,'
+DKNAME: DB	'        .   '
+dksize	equ	$-dkname	;size of disk name		;v3.2x
+
+	if	cat2						;v3.2x
+udat:	db	'  '		;user number
+	endif
+
+namsize	equ	$-nadat-dksize+1				;v3.2x
+
+MIDAT:	DB	'XXXXXXXX.YYY,'
+MIDSK:	DB	'XXXXXXXX.YYY'
+
+	if	cat2						;v3.2x
+miusr:	db	';z'		;user number
+	endif
+
+MODAT:	DB	'XXXXXXXX.YYY,XXXXXXXX.YYY'
+
+	if	cat2						;v3.2x
+	db	';z'		;user number
+	endif
+
+mastsize equ	$-modat		;size of master file record	;v3.2x
+;
+	IF	DSKFRE
+;
+	if	cat2						;v3.2x
+FTFRE:	DB	'LFT'	   ;PHANTOM FILE TYPE
+	else
+FTFRE:	DB	'FRE'	   ;PHANTOM FILE TYPE
+	endif		;cat2					;v3.2x
+;
+	ENDIF
+;
+; HELP CODE AND TEXT IS OVERLAID BY IGNORE TABLE IN A NORMAL RUN
+;
+HELP:	CALL	ILPRT				   ;FRAME 1
+	DB	CR,LF,LF
+	DB	'CATALOGING YOUR DISK SYSTEM:',CR,LF,LF
+	DB	'     Three programs are needed.	They are usually all on'
+	DB	' the same disk:',CR,LF,LF
+	DB	'         1)  MAST.CAT',CR,LF
+	DB	'         2)  NCAT.COM',CR,LF
+	DB	'         3)  XCAT.COM',CR,LF
+	DB	'             NCAT.DOC   (not required but '
+	DB	'usually included)',CR,LF
+	DB	'             NCAT.SET   (for setting file names buffer)'
+	DB	CR,LF,LF
+	DB	'You originate MAST.CAT (Master Catalog) yourself.  Use '
+	DB	'your editor to',CR,LF,'open a file by that name.  It '
+	DB	'must have at least ONE file name which',CR,LF,'will be '
+	DB	'in parenthesis.	This is the "Ignore list".  It contains'
+	DB	' names',CR,LF,'of files which you do not particularly '
+	DB	'want to display in the catalog',CR,LF,'listing since you'
+	DB	' have numerous copies of them.  It might include such '
+	DB	CR,LF,'files as:	ASM, ED, DDT, LOAD, PIP, STAT, SUBMIT, '
+	DB	'XSUB, etc.  Example:',CR,LF,LF,'        (ASM.COM        '
+	DB	' Note opening parenthesis at left',CR,LF,'        ED.COM'
+	DB	CR,LF,'        DDT.COM',CR,LF,'        SUBMIT,COM)      '
+	DB	'Note closing parenthesis at right',CR,LF,LF,'(Hit any '
+	DB	'key to continue:)',0		    ;END OF FRAME 1
+;
+	MVI	C,KEY
+	CALL	BDOS
+	CALL	ILPRT
+	DB	CR,LF,LF
+	DB	'     If you want all files to show, use one name that is'
+	DB	' unlikely to ',CR,LF,'ever appear such as:  (DUMMY.ABC)'
+	DB	CR,LF,LF,'     All disks to be cataloged need a special '
+	DB	'"volume number" file.',CR,LF,'This uses a "-" as the '
+	DB	'first character in the file so the NCAT program',CR,LF
+	DB	'can recognize this special file name.  It can include '
+	DB	'both a name and',CR,LF,'a number for the user''s refer'
+	DB	'ence, but the name will be ignored.  A',CR,LF,'leading '
+	DB	'zero may be used.  Example:',CR,LF,LF,'	      A>SAVE 0 '
+	DB	'B:-.012',CR,LF,LF,'     NCAT.COM is used next.  It '
+	DB	'usually expects the master catalog disk',CR,LF,'to be '
+	DB	'placed in the A: drive and the disks to be cataloged '
+	DB	'into the B: ',CR,LF,'drive one at a time.  It reads the '
+	DB	'disk directory and puts each file',CR,LF,'name into '
+	DB	'memory and then alphabetizes the list.  It then updates' 
+	DB	' the',CR,LF,'MAST.CAT file with the new names or '
+	DB	'deletes those previously listed that',CR,LF,'are no '
+	DB	'longer on that disk.',CR,LF,LF,'     Double drive users '
+	DB	'type NCAT B:  Thereafter when it asks if ready, ',CR,LF
+	DB	'place the next disk to be cataloged into drive B: and '
+	DB	'type "Y" or  "RET"',CR,LF,'or "SPACE" for Yes.',CR,LF,LF
+	DB	'(Hit any key to continue:)  ',0	    ;END OF FRAME 2
+;
+	MVI	C,KEY
+	CALL	BDOS
+	CALL	ILPRT
+	DB	CR,LF,LF
+	DB	'     This does not allow the A: drive to be cataloged.  '
+	DB	'Use the same',CR,LF,'procedure as for a single drive sys'
+	DB	'tem:',CR,LF,LF,'     Single drive users type NCAT or '
+	DB	'NCAT A:	You will alternately be',CR,LF,'asked to insert'
+	DB	' the disk to be cataloged and then the system catalog',CR
+	DB	LF,'disk.  An update of MAST.CAT is made with each new '
+	DB	'disk.',CR,LF,LF,'     When finished updating, use the '
+	DB	'XCAT.COM program.  This creates a',CR,LF,'new file '
+	DB	'automatically, called MAST.LST (Master List) which is '
+	DB	'ready to',CR,LF,'print.	You can also search through '
+	DB	'this listing rapidly for any file',CR,LF,'you know (or '
+	DB	'suspect) you have, using a program called FIND.COM.  '
+	DB	'You',CR,LF,'can also use XCAT.COM to print the MAST.'
+	DB	'CAT file.',CR,LF,LF,'     At present the program allows '
+	DB	'40 ''IGNORE'' file names in MAST.CAT',CR,LF,'and '
+;
+NAMES$NUMBER:
+	DB	'256'
+;
+	DB	' file names.  Either may be easily changed by editing '
+	DB	'the user',CR,LF,'option area in the source code, then '
+	DB	'reassembling.  (Or use NCAT.SET.)',CR,LF,LF,'        '
+	DB	'NCAT C: B:     C: drive for disks to be cataloged',CR,LF
+	DB	'                       B: drive for the MAST.CAT, NCAT.'
+	DB	'COM system disk',CR,LF,LF,'(For 3 or more drives.) '
+	DB	'Read the NCAT.DOC file for more information.',CR,LF,0
+;
+EXIT1:	JMP	0000H				   ;END OF FRAME 3
+;.....
+;
+;
+; ERROR MESSAGE TEXT IF ATTEMPTING TO CATALOG ALL USER AREAS	   ;v2.9
+; WHILE RUNNING UNDER A PRE 2.0 CP/M RELEASE.
+;
+BADVERS:
+	CALL	EREXIT
+	DB	BELL,CR,LF
+	DB	'++ FATAL ERROR - "All Users" enabled, but user areas do not'
+	DB	CR,LF
+	DB	'exist under the CP/M version currently running.	Set the'
+	DB	CR,LF
+	DB	'ALLUSR equate in the .ASM file FALSE and reassemble, or use'
+	DB	CR,LF
+	DB	'CP/M version 2.0 or later.'			   ;v2.9
+	DB	CR,LF,LF,'$'
+;
+	ORG	HELP
+;
+; IGNORE FILE-NAME TABLE OVERLAYS HELP CODE, SINCE ONLY ONE
+; OR THE OTHER WOULD BE USED IN ANY RUN
+;
+IGNORE:  DS	1 	   ;DUMMY END OF TABLE MARK STORED HERE EACH PASS
+	 DS	IGNSIZE	   ;IGNORE TABLE
+;
+CDRIVE:  DS	1 	   ;DRIVE FOR DISK TO BE CATALOGED
+MDRIVE:  DS	1 	   ;DRIVE FOR MAST.CAT	**MUST** FOLLOW CDRIVE
+DRIVE:	 DS	1 	   ;FLAG FOR BOTH DRIVES THE SAME
+;
+FCT:	 DS	2 	   ;FILE COUNT
+TFCT:	 DS	2 	   ;FILE COUNT FOR THIS SORT PASS
+BUFPTR:  DS	2 	   ;NAME BUFFER POINTER
+NAEOFLG: DS	1 	   ;NAME BUFFER EOF FLAG
+NAMEND:  DS	2 	   ;NAME BUFFER END ADDRESS
+MIEOFLG: DS	1 	   ;MASTER IN EOF FLAG
+
+	if	cat2						;v3.2x
+masdel:	ds	1	;master name file delimiter character
+	endif
+;
+	 IF	DSKFRE OR ALLUSR
+;
+DPBADDR: DS	2 	   ;DISK PARAMETER BLOCK ADDRESS
+EXMASK:  DS	1 	   ;EXTENT MASK
+;
+	 ENDIF
+;
+	 IF	DSKFRE
+;
+TBTR:	 DS	2 	   ;TOTAL BITS TO READ IN ALLOCATION VECTOR
+BLKSIZE: DS	1 	   ;BLOCK SIZE CODE
+BLKSFRE: DS	2 	   ;FREE BLOCKS
+FREPTR:  DS	2 	   ;PHANTOM FILE POINTER
+;
+	 ENDIF
+;
+;
+; BDOS/CBIOS EQUATES
+;
+RDCON	EQU	1
+PRINT	EQU	9
+VERSNO	EQU	12
+RESETDK EQU	13
+SELDK	EQU	14
+SRCHF	EQU	17
+SRCHN	EQU	18
+QDFC	EQU	25	   ;QUERY CURRENT LOGGED DISK
+ALLVEC	EQU	27
+DPB	EQU	31
+BDOS	EQU	5
+FCB	EQU	5CH
+BELL	EQU	7
+;.....
+;
+;
+
+;DISK DIRECTORY ENTRIES STORED HERE (SEE USER SETTABLE OPTIONS)
+;
+NABUF:	DS	0
+;.....
+;
+;
+;
+	END	NCAT
+
+;.....
+;
+;
+
+;DISK DIRECTORY ENTRIES STORED HERE (SEE USER SETTABLE OPTIONS)
+;
+NAB

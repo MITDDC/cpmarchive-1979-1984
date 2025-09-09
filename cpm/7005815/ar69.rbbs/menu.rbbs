@@ -1,0 +1,16 @@
+Functions supported:
+
+S = Survey Messages       R = Read message(s)
+E = Enter message         K = Kill message
+B = retype Bulletins      W = retype Welcome
+C = exit to CP/M          U = list User file
+T = Toggle bell prompt    X = eXpert user mode
+G = Goodbye (disconnect)  P = Change PASSWORD
+
+Commands may be strung together, separated by semicolons.
+For example, 'R;123' retrieves message # 123.
+For forward sequential retrieval, use '+' after Msg #.
+
+Software exchange is done under CP/M using
+the XMODEM program (for intelligent transfer)
+or the TYPE fn.ft command (simple ASCII listing).

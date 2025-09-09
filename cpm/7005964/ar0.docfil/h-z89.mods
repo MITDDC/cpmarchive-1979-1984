@@ -1,0 +1,114 @@
+
+Here is the info you need to convert your machine to 4Mhz.  I have
+repeated the hardware info for those that didn't get it the first time around.
+
+Hardware Mods for H89
+=====================
+
+On the CPU board of the H89, U502, a 74LS92 is used to divide down the
+clock.  Pins 9 or 11 have 4 Mhz on them.  What is needed is to cause
+the CPU and memory to see 4Mhz while the rest of the board sees 2 Mhz.
+
+To accomplish this, on the REAR (NOT the parts side) of the CPU board,
+cut the trace leading to pin 3 of U512.  Connect 4 Mhz from pin 9 or 11
+of U502 to this pin (pin 3 of U512).  You may want to put a single-pole
+double-throw switch in so you can switch between 2 and 4 Mhz operation.
+
+This patch connects 4Mhz to the CPU, the single-step logic, and the memories.
+
+You may have to swap out the Z80 for a Z80A, although I have not had any
+problems.  If you got an early H/Z89, you may have memory parts which
+are already  fast enough to run 4Mhz. If your machine crashes often
+at 4Mhz, you probably will need to change them.  I have not had any problems
+with the original parts.
+
+A similar patch can be made on the CRT board, since the clock divider
+circuitry is almost identical, and also, a jumper is provided for 3.1Mhz
+operation.  At 4Mhz the screen will run at 19.2K baud with no trouble. At
+3.1 Mhz, it isn't fast enough to keep up.
+
+The static RAMs on the screen board (the 2114's and the 2112's) can't deal
+with 4Mhz, they should be replaced with 250nSec parts.  Everything else
+should handle it OK.
+
+Note:  Both of these patches have been running in my H89 for  about 6 months
+	with no problems at all.  If you need more details or help in the
+	hardware patches, let me know.
+
+
+Software Patches for 4Mhz  HDOS
+===============================
+
+You must change the contents of the H17 disk controller ROM as follows:
+
+Addr	Old	New		(Values in Octal)
+====	===	===
+37.145	24	50
+37.146	24	50
+37.147	120	265
+
+This patch works for HDOS 1.6 and 2.0; I don't know about other versions.
+
+Software Patches for 4Mhz CP/M
+==============================
+
+You must make the above HDOS patch and ALSO patch the following:
+
+In the file BIOS.ASM (supplied with CP/M by Heath)
+change the following equates:
+Symbol	Old	New		(Values in Decimal)
+======	===	===
+WHNA	20	40
+WHDA	20	40
+WSCA	...	181		;The old value is 64*25/20
+
+Then prepare your BIOS as described in the Heath modification manual using
+PREL.  
+
+Finally, you must patch your BIOS preloader, which resides with CP/M
+in the first 3 tracks of the diskette, as follows:
+
+With a GETPUT type program (as described in the CP/M manual) load
+the first three (3) tracks of the bootable diskette into memory,
+starting at location 4380H.  Then change the following instructions:
+
+Addr		Old		New		(Values in HEX)
+====		===		===
+5D93		MVI A,14	MVI A,28
+5D9E		MVI A,14	MVI A,28
+5DBF		MVI A,50	MVI A,0B5H
+
+Then write the three tracks back out onto the diskette.
+
+
+General:
+	The procedure in which to do this is as follows:
+
+I.	Install hardware mods and use a 2/4 Mhz switch as described.
+
+II.	Patch the H17 boot rom as described, then, if you have HDOS,
+	test it out at 4Mhz.
+
+III.	Patch CP/M for 4Mhz.  [Note! the modified boot rom works fine
+	at EITHER 2 or 4 Mhz.]
+
+IV.	Make sure CP/M is working properly at 4Mhz.
+
+V.	Remove switch from circuit.
+
+Some other comments:
+	Certain programs under both operating systems do their own
+	disk I/O. Under HDOS, TEST, TEST17 and many of the HUG utilities
+	have portions of them which don't work.  Under CP/M, DUP doesn't
+	work.   I have had no difficulties with MBASIC or ASM either under
+	CP/M or HDOS.
+
+				Be careful when you go cuttin' on the boards!
+
+	If you run into any problems, or have any questions, please feel
+free to let me know; if you get really stuck, you can call me at
+	(305) 725-1562  as a last resort.
+
+Patrick L. Harvey
+	Square Wave Information Systems, Inc.
+

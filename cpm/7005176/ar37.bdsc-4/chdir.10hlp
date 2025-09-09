@@ -1,0 +1,662 @@
+Overview of CHDIR
+Installation
+Basic Definitions
+Moving Into a Directory
+Creation of New Directories "On the Fly"
+Displaying the Directories
+Setup Mode
+Planning a Directory Structure
+:Overview of CHDIR
+
+     CHDIR  (CHange DIRectory) is a program which gives a CP/M or 
+CP/ZM system a new virtual directory structure.   Ever since CP/M 
+2.0 came out, users have been forced to refer to the environments 
+that  their  files are located in by user number and  disk  name.  
+This was an improvement over CP/M 1.4 in that projects and  files 
+associated  to  each  other for one reason or  another  could  be 
+logically  grouped together into a user area on a particular disk 
+and could easily be kept separate from other files.  
+
+     This improvement is desirable and useful, but there are some 
+capabilities  lacking in this design that limit  its  usefulness.  
+One  such capability is the need for duplication of a COM file or 
+directory entry for a COM file in order to access this file  from 
+more  than one user area.   Another such capability is the human-
+interface  requirement  for  a  logically-named  user  area  that 
+indicates  the  purpose  of the user area as  opposed  to  simply 
+providing a number for it.
+
+     Under  CP/M  2.x,  unfortunately,  if you wanted to issue  a 
+command,  you  had to have a copy of that particular COM file  in 
+your current user area in order for the operating system to  find 
+the command and load it.   User areas were of less use because of 
+this,  since  several commonly-used commands had to be duplicated 
+into  each  user  area.   This took up more disk  space  and  was 
+somewhat awkward.
+
+     In answer to this and other desired capabilities,  ZCPR  was 
+created.   Placed  on  top of the CP/M CCP,  ZCPR provides a  new 
+command  processor for the CP/M user which is  upward  compatible 
+with  the  old command processor but adds several  new  features, 
+including a command-search hierarchy.   Now, when a user issues a 
+command,  ZCPR  will  search  for it if it is not  found  in  the 
+current user area on the current or specified disk.  The user can 
+specify the path to follow; however, ZCPR is initially configured 
+to search the current user area on the current disk,  user area 0 
+on  the current disk,  and user area 0 of disk A before producing 
+an  error message.   With ZCPR it is no longer necessary to  keep 
+several copies of files on disk in order to use the user areas.
+
+     The  user areas and disks were still addressed  as  separate 
+elements of an overall file system,  however.  The user had to be 
+constantly  aware  of  where he was,  and ZCPR also  gave  him  a 
+different  prompt  which  indicated  the current  disk  and  user 
+number.   If  a user wished to employ user area 1 for  C  program 
+development and user area 2 for C source code storage,  he had to 
+note for himself that this is where these things were.
+
+     Now,  CHDIR  is  introduced which adds a new outlook to  the 
+user  environment.   The user may now give each user area/disk  a 
+logical name (such as C-DEV or C-PGMS) and not worry about  where 
+they  actually are on disk.   Combined wisely with ZCPR or ZMCPR, 
+all utilities may be placed in a commonly-scanned directory (user 
+area/disk)  so  they will always be found by  the  CPR,  and  the 
+user's  entire microcomputer disk system now resembles one  large 
+disk  with  several  named subdirectories which  contain  related 
+files.
+
+     CHDIR artificially imposes a named directory structure  onto 
+CP/M and CP/ZM.   Each named directory corresponds to a user area 
+on  a particular disk,  and the user need never be concerned with 
+what  user  area he is in if he uses ZCPR or  ZMCPR  with  CHDIR.  
+Each  disk/user  area  is called a directory and may be  given  a 
+logical name (up to 8 characters long).
+
+     The simplest form of the CHDIR command is:
+
+          CHDIR <directory name>
+
+where <directory name> is a logical name (8 chars max) recognized 
+by  CHDIR.   This command logs the user into the  user  area/disk 
+associated with the indicated directory name.
+
+     For example, given the following environment:
+
+          User Disk Directory
+           10    A  SYS1
+           11    A  SYS2
+            8    B  C-DEV
+            7    A  C-PGMS
+            7    B  PAS-DEV
+            6    A  PAS-PGMS
+
+the command:
+
+          CHDIR C-DEV
+
+logs the user into user area 8 on Drive B:; also, the command:
+
+          CHDIR PAS-PGMS
+
+logs the user into user area 6 on Drive A:.
+     CHDIR combined with ZCPR or ZMCPR,  then,  provides a useful 
+named-directory  working environment which is completely  compat-
+ible  with  CP/M,  and almost all CP/M programs can  run  without 
+modification in this new environment.
+
+     CHDIR  employed  in a hard disk  environment  is  especially 
+useful  in  that the different logical disks associated with  the 
+hard  disk may now be grouped into one named directory  structure 
+and need no longer be treated as separate disks.
+
+     In  addition  to the named directory structure,  CHDIR  also 
+creates a priveleged user environment.   This environment,  which 
+only  becomes  effective  if the USER  command  (and  other  such 
+facilities) are removed from ZCPR (and the COM files removed from 
+the disk),  defines two classes of users.  A normal user only has 
+access  to  certain  user  areas  (0 to  9  by  default),  and  a 
+priveleged user has access to all user areas.   In order to  move 
+into user areas greater than 9,  a password must be known.   Once 
+in  a priveleged user area,  no password is necessary to move  to 
+any other user area.
+
+     This  feature  gives  a  certain  amount  of  protection  to 
+systems,  such as Remote Bulletin Board Systems,  against hostile 
+users.   Certain  priveleged  commands,  such  as  debuggers  and 
+language utilities,  may be placed into the protected user  areas 
+and employed only by those who know the password.   Two different 
+command  processors  can even be made to come into play  (in  the 
+case  of ZMCPR),  where the normal user sees a menu-driven set of 
+commands while a priveleged user sees a ZCPR-like command line.
+
+     Refer  to  the documentation on ZCPR and ZMCPR  for  further 
+details.
+
+:Installation
+     Installation of CHDIR is performed in two parts:   Compiling 
+CHDIR and Initializing the Internal Buffers of CHDIR.
+
+
+     Before  compiling CHDIR,  there are several internal default 
+values  that the user may wish to set in the source code  of  the 
+program.  These values and their meanings are:
+
+          defname  -- default  name  for the COM file  of  CHDIR; 
+change  this  if you want CHDIR to be known by  some  other  name 
+after  initialization;  this name may also be later changed under 
+Setup Mode
+          dirmax -- maximum number of directory names allowed;  a 
+minimum value of 64 is recommended
+          syspass -- default System Password for CHDIR;  this  is 
+up  to 20 characters long,  and case is significant;  this may be 
+later changed under the Setup Mode
+
+          sysuser  -- lowest user number for a  priveleged  user; 
+default value is 10; values should be in the range from 0 to 15
+          tryent   -- number  of  tries  permitted  to  enter   a 
+priveleged directory before CHDIR aborts; default value is 1
+          tryset -- number of tries permitted to enter Setup Mode 
+before CHDIR aborts; default value is 3
+          exitcmd  -- command to be executed if a valid  password 
+is  not  given  in the required number of tries;  default  is  no 
+command;  this should be the name of a COM file,  like  "HOSTILE" 
+for HOSTILE.COM, and should be in upper-case
+
+     All  of  these  defined values are located  just  after  the 
+initial comments within the program source code.
+
+
+                    Part I -- Compiling CHDIR
+
+     CHDIR was compiled by the BDS C compiler.   No special flags 
+or options are necessary.   Once compiled,  however, the COM file 
+produced  must be modified so that the stack used by this program 
+does not overwrite the CCP or CPR.
+
+     To do this, the user may use the NOBOOT program from the BDS 
+C  user's group or manually modify the code at the  beginning  of 
+the  COM file.   Using the 1.45 version of BDS C,  the first  few 
+bytes  of the COM file load the HL register pair from locations 6 
+and 7 and then load the SP register from HL.  This is followed by 
+several  NOPs.   To  correct  the  stack  problem,  replace  this 
+sequence with an LXI D,-A00H,  DAD D,  and SPHL starting with the 
+SPHL instruction.  Example follows:
+
+     Original Code       New Code
+
+     LHLD 6              LHLD 6
+     SPHL                LXI D,-A00H
+     NOP
+     NOP
+     NOP                 DAD D
+     NOP                 SPHL
+
+     Once this has been installed using a debugger like DDT,  the 
+COM file may be resaved to disk using the SAVE command,  and  the 
+user is ready to proceed to Part II of the installation.   If the 
+NOBOOT  command is available and works for the user's version  of 
+BDS C, then this manual procedure may be replaced by the command:
+
+          NOBOOT CHDIR.COM
+
+
+              Part II -- Initializing CHDIR Buffers
+
+     Once  CHDIR.COM has been patched so that it's stack does not 
+overwrite  the  CCP or CPR,  then its internal  buffers  must  be 
+initialized.  This is done to perform two basic functions:
+
+          1) define the password for the priveleged user
+          2) clear the directory name table
+
+     To perform this initialization, issue the command:
+
+          CHDIR /S
+
+     This places the user into SETUP Mode.  If the user runs this 
+command from user areas 0 to 9,  he will be asked for the "System 
+Password",  which is initially "chdir" (no quotes).   If the user 
+runs this command from user areas greater than 9,  he is declared 
+priveleged and is not asked for the password.
+     Once into SETUP Mode, the user is prompted with:
+
+          Setup Command (? for Help)?
+
+     He  should  issue  the  following commands  to  perform  the 
+initialization:
+
+          I or i -- clear the directory name table; the user will 
+be  prompted  with "Verify Initialization (Y/N)?",  to  which  he 
+should respond with a Y or y.
+
+          P or p -- set the password;  the user will be  prompted 
+with  "New System Password?" and 20 dots to indicate the size  of 
+the  allotted password;  he may then type the new  password,  and 
+case is significant ("test" is NOT the same as "TEST")
+
+          X or x -- Exit and rewrite CHDIR.COM to disk;  the user 
+will be prompted with "Write New File (Y/N)?", to which he should 
+respond with Y or y, and then "Name of File (RETURN=CHDIR.COM)?", 
+to which he should strike the RETURN key.
+
+     SETUP  Mode  is described in more detail later in  this  HLP 
+file.   The  procedure just outlined is all that is required  for 
+initialization, and CHDIR is now ready for use.
+
+     The  first step is to plan and define the named directories.  
+The other sections of this HLP file tell you how to do this.
+:Basic Definitions
+     The following symbolic names are defined:
+
+          <directory name>    <du>      <password>
+
+     A  <directory  name> may contain up to  8  characters.   The 
+characters "*",  "?",  ".", and "/" should not be used as part of 
+the directory name since the CCP,  CPR, or CHDIR routines perform 
+special processing on them.  Lower-case letters are automatically 
+converted to upper-case.
+
+     <du> is the disk letter and user number combination which is 
+assigned  to the <directory name> given.   It is a single  letter 
+(lower-case  is converted to upper-case) in the range from A to P 
+followed immediately by the digits of the user number (0 to 15).
+
+     <password>  is  the System Password for CHDIR.   This  is  a 
+string  of up to 20 characters.   Case is significant ("test"  is 
+NOT the same as "TEST"),  and any printable character may be used 
+as part of the password as a general rule.
+
+:Moving Into a Directory
+     The CHDIR command of the following form is used to move into 
+a directory:
+
+          CHDIR <directory name>
+
+     A  <directory  name> may contain up to  8  characters.   The 
+characters "*",  "?",  ".", and "/" should not be used as part of 
+the directory name since the CCP,  CPR, or CHDIR routines perform 
+special processing on them.  Lower-case letters are automatically 
+converted to upper-case.
+
+     If  the user is not priveleged (residing in user area 10  or 
+greater,  by  default) and the name of a priveleged directory  is 
+given,  he will be asked for the System Password.   In this case, 
+he will be given only one try before the command aborts.
+
+     Examples:
+          CHDIR C-DEV              CHDIR work
+          chdir cpci81             chdir 1temp
+:Creation of New Directories "On the Fly"
+     The  CHDIR command of the following form is used  to  create 
+new directories at will:
+
+          CHDIR <directory name> <du>
+
+     <directory name> is of the same form as described above.
+
+     <du> is the disk letter and user number combination which is 
+assigned  to the <directory name> given.   It is a single  letter 
+(lower-case is converted to upper-case) in the range from A to  P 
+followed immediately by the digits of the user number (0 to 15).
+
+     If  the user issues this command and is not priveleged (run-
+ning from user area 10 or greater,  by default),  then he will be 
+asked for the System Password before the command is executed.  If 
+he is priveleged, CHDIR will execute the command without prompt.
+
+     Examples:
+          CHDIR C-DEV A5                chdir 1temp m0
+          chdir work b4                 chdir sys1 a10
+:Displaying the Directories
+     The  CHDIR command of the following form is used to  display 
+the names of the existing directories:
+
+          CHDIR /DISPLAY
+
+     Only  the  "/D"  is required to complete  the  command;  any 
+characters following the "/D" are ignored.
+
+     If  the  user is not  priveleged,  only  the  non-priveleged 
+directories are displayed.   If he is priveleged, all directories 
+are  displayed.   A  priveleged  user is identified by  the  user 
+number  he is currently residing in (10 and above are  priveleged 
+by default).
+
+     A count of the number of directory names defined and  amount 
+of directory space left for more names is given, and, if the user 
+is  not priveleged,  the count of defined names may not match the 
+number of displayed directory names since he is not permitted  to 
+see the names of the priveleged directories.
+
+:Setup Mode
+     The CHDIR command of the following form places the user into 
+Setup Mode:
+
+          CHDIR /SETUP
+
+     Only  the  "/S"  is required to complete  the  command;  any 
+characters following the "/S" are ignored.
+
+     Setup Mode is employed by a priveleged user to:
+          1) initialize the directory names
+          2) set/change the System Password
+          3) add/delete directory names
+          4) display the System Password and directory names
+          5) sort the directory names by disk/user area
+          6) save the current named directory structure to disk
+
+     If  the  "CHDIR  /SETUP"  command  is  issued  from  a  non-
+priveleged  user  area (user areas 0 to 9 by default),  then  the 
+user  will be prompted for the System Password.   He is  given  3 
+tries to get it right before CHDIR aborts (by default).
+
+     Once in Setup Mode, the user is prompted with
+
+          Setup Command (? for Help)?
+
+and  Setup  is  waiting for the user to type  a  single-character 
+command  letter.   If he types a ?  or any other invalid  command 
+letter,  he  is presented with a summary of the Setup  Mode  com-
+mands.   These  commands are invoked by striking a single  letter 
+and case is not significant.  A summary of these commands is:
+
+          D -- Display System Password and Directory Names
+          I -- Initialize and Clear All Directory Names
+          N -- Create a New Directory Name
+          P -- Set the System Password
+          Q -- Quit without Updating
+          S -- Sort Directory by Disk and User Number
+          X -- Exit and Update CHDIR.COM on Disk
+
+     Each command is explained on the following screens.
+        D -- Display System Password and Directory Names
+
+     This command prints three groups of information.  They are:
+
+        "System  Password  is ..."
+               -- current setting for the System Password
+        "Defined Directory Names --
+             du: name1      du: name2      du:name3     du:name4"
+               -- disk, user area, and name for directories
+                    4 entries are printed per line
+        "n Directory Names Defined, Space Left for m More Names"
+               -- number of names defined and space left
+          I -- Initialize and Clear All Directory Names
+
+     This command performs the following initializations:
+
+          1)  the  System  Password  is renamed  to  the  default 
+programmed value of the variable syspass;  this name is initially 
+"chdir"
+          2)  all  disk names,  user areas,  and  directory  name 
+strings are initialized to zero
+
+     The  user  is prompted with "Verify  Initialization  (Y/N)?" 
+immediately  after he strikes the letter I or i.   If  he  replys 
+with  any letter other than Y or y,  the message  "Initialization 
+Aborted"  is  printed and he is returned to Setup Command  level.  
+If  he  types  a  Y  or  y  in  response  to  this  prompt,   the 
+initialization is performed and the message "All Directory  Names 
+Cleared" is printed.
+                N -- Create a New Directory Name
+
+     In response to this command, the message
+
+          "System User Areas start at nn"
+
+is  printed  to remind the user where the priveleged  user  areas 
+begin, and the user is placed into a loop, prompted with
+
+          "Disk Letter and User (RETURN=Done or A-P 0-15)?"
+
+     If  the user wishes to create a new directory,  he types one 
+letter A-P (case is not significant) followed by a number in  the 
+range  from 0 to 15.   If the user does not wish to create a  new 
+directory,  he  strikes the RETURN key to abort to Setup  Command 
+level.
+
+           N -- Create a New Directory Name, Continued
+
+     If  the user selected a valid disk/user combination,  he  is 
+prompted with
+
+          "Directory Name (RETURN = Delete Old Name)?"
+
+to  which  he may strike the RETURN key to delete  the  directory 
+name previously associated with the disk/user specified or he may 
+type a directory name (case is not significant and all lower-case 
+letters  are capitalized) to create a new directory or rename  an 
+old one.
+
+     If  the  directory  name or RETURN is  accepted,  the  "Disk 
+Letter  and  User"  prompt will reappear to  allow  the  user  to 
+continue  creating  directory  names or abort  to  Setup  Command 
+level.
+           N -- Create a New Directory Name, Continued
+
+     Several  error  messages are possible while in this part  of 
+the Setup Mode.  These messages are:
+
+     "Invalid Disk Letter"
+          -- Disk was not in the range from A to P
+     "Invalid User Number"
+          -- User Number was not in the range from 0 to 15
+     "Directory Name is too long -- Reenter"
+          -- Entered directory name exceeded 8 characters
+     "Error -- Directory Name Buffer Full"
+          -- No more space is available in the internal buffer
+     "Directory Name for ud: Deleted"
+          -- (NOT an error message) Tells the user that a
+               previously-defined name was deleted
+                  P -- Set the System Password
+
+     This  command in Setup Mode is immediately followed  by  the 
+prompt
+
+          "New System Password?"
+
+to which the user is allowed to enter up to 20 characters for his 
+password.  The user MUST enter a password; simply typing a RETURN 
+sets the password to null and a simple RETURN is required for the 
+new password when asked.
+                   Q -- Quit without Updating
+
+     This command is answered with the prompt
+
+          "Verify Abort (Y/N)?"
+
+to  which  the  user replys with Y or y to abort Setup  Mode  and 
+return  to the operating system or any other character to  return 
+to Setup Mode.
+           S -- Sort Directory by Disk and User Number
+
+     This  command causes the internal directory to be sorted  by 
+disk and user area.  In response to this command, CHDIR sorts the 
+directory (no informative prompt) and prints
+
+          "Sort Complete"
+
+when done.
+
+     This command is provided for the convenience of the user.
+             X -- Exit and Update CHDIR.COM on Disk
+
+     This command causes the prompt
+
+          "Write New File (Y/N)?"
+
+to appear.  If the user responds with anything other than Y or y, 
+Setup  Mode and CHDIR are aborted and control is returned to  the 
+operating system.
+
+     If the user responds with Y or y, he is prompted with
+
+          "Name of File (RETURN = CHDIR.COM)?"
+
+to  which he may reply by striking the RETURN key to rewrite  the 
+file CHDIR.COM on disk or he may give another file name (the .COM 
+is  not necessary) to write a new file.   The  current  directory 
+structure  is  defined as a part of the written file,  and it  is 
+used  to  access  this new  directory  ala  CHDIR  commands.   In 
+entering the file name, case is not significant.
+        X -- Exit and Update CHDIR.COM on Disk, Continued
+
+     The  prompt  may  vary if CHDIR has been rewritten  under  a 
+different name.  By default, the prompt is
+
+          "Name of File (RETURN = CHDIR.COM)?"
+
+and,  if,  for  instance,  CHDIR was rewritten as  CDIR.COM,  the 
+prompt from CDIR would be
+
+          "Name of File (RETURN = CDIR.COM)?"
+
+     Once  the  file name is specified or RETURN is  struck,  the 
+following messages appear:
+
+          "Sorting Directory by Disk and User Number"
+          "Writing File CHDIR.COM to Disk ..."
+               " File CHDIR.COM Written to Disk"
+
+     An  error message "Error -- Can't Create File CHDIR.COM"  is 
+possible, indicating that the disk or directory are full.
+                    Other Setup Mode Commands
+
+     Striking  any key other than those just described  causes  a 
+built-in Help message to be displayed.   Control is then returned 
+to Setup Mode command level.
+:Planning a Directory Structure
+
+     This section outlines a few comments and recommendations  on 
+a  technique  to  combine ZCPR or ZMCPR with CHDIR  to  create  a 
+working environment.
+
+     The ZCPR and ZMCPR command-search hierarchy frequently  take 
+the  user  down to user 0 on drive A before the  invalid  command 
+error message is given.  This directory is, effectively, the ROOT 
+of  the  system,  and  this would be a good place  to  store  the 
+CHDIR.COM  file.   "ROOT"  itself is a good name for A0,  and  by 
+standardizing on this name, any user can place himself here as he 
+moves between systems and see the standard command set.
+
+     Since  a  command-search  hierarchy is used under  ZCPR  and 
+ZMCPR,  this,  in conjunction with CHDIR, can be used to create a 
+hierarchial  directory structure.   The first CHDIR.COM  that  is 
+encountered  during a search is the one that is effective,  so by 
+placing a CHDIR.COM in the command-search path before the ROOT is 
+encountered, directory subtrees can be formed.  Let me illustrate 
+this concept with the following diagram:
+              CHDIR Directories                   Tree
+
+Disk A:   User 0: CHDIR.COM                    (1)ROOT --> WORK
+Directories:   A0: ROOT       B0: WORK
+
+Disk B:   User 0: CHDIR.COM
+Directories:   A0: ROOT                                    ROOT
+               B0: C-ROOT     B1: C-DEV                    C-DEV
+               B2: C-PGMS     B3: C-DOC      (2)C-ROOT --> C-PGMS
+          User 1: No CHDIR.COM                             C-DOC
+          User 2: No CHDIR.COM
+          User 3: CHDIR.COM
+Directories:   B0: C-ROOT     B3: C-DOC
+               B4: COMPILER   B5: PROGRAM                  C-ROOT
+          User 4: No CHDIR.COM                (3)C-DOC --> COMPILER
+          User 5: No CHDIR.COM                             PROGRAM
+     Using  the normal ZCPR command-search  hierarchy,  which  is 
+current  user/current disk to user 0/current disk to user  0/disk 
+A, the following can be noted:
+
+          A) tree (1) is seen from any user number on A:
+          B) tree (2) is seen from any user number except 3 on B:
+          C) tree (3) is seen from user 3 on B:
+
+     As  the  reader can see,  this is a very  powerful  concept.  
+Let's  say  that  you  are logged into A0 and want  to  read  the 
+documentation on the C compiler.   You would have to issue "CHDIR 
+WORK" to enter the directory WORK on B:.  Issuing "CHDIR /D" from 
+here shows you in directory C-ROOT,  and you now issue "CHDIR  C-
+DOC"  to enter the documentation branch of the tree.   From here, 
+you  issue "CHDIR COMPILER" to enter the  compiler  documentation 
+directory.  Expressed as a tree, this is:
+
+     Feel  free  to move back to the previous displays via the  L 
+command if this is not clear to you.
+
+                              ROOT
+                                !
+                          C-ROOT (WORK)
+                         /      !      \
+                      C-DEV   C-PGMS  C-DOC
+                                      /  \
+                               COMPILER  PROGRAMS          
+
+     This  is  a  simple type of tree  structure  as  implemented 
+above.  CHDIR goes beyond this, tho, and allows as much as a star 
+or ring structure as well, or any combination desired.
+
+     One  more  step that CHDIR allows the user to take  is  with 
+priveleged  users.   Now,  directories can be hidden from  normal 
+users.   Priveleged  directories are set up like normal director-
+ies,  and CHDIR is the program which enforces the security.  Note 
+that  the USER command must be removed from the CPR for  this  to 
+work.
+
+     Using  ZMCPR adds a capability of logging into a new direct-
+ory  and automatically invoking a new command  interpreter.   The 
+MENU.CCP  file  can  be either a menu display  or  an  executable 
+program,  and  as  an executable program,  it is run  every  time 
+control is returned to the CPR while the user is logged into  the 
+current  directory.   In this way,  a whole new command processor 
+can be introduced with each directory, and as the user moves from 
+one directory to another,  he may move from menu-driven  displays 
+to ZCPR-like command line processors to other processors at will.  
+The capabilities and potential are amazing!
+
+
+     Yet  another change may be made to enhance the  capabilities 
+of  CHDIR.   This  change involves modifying  the  command-search 
+hierarchy to a new path.  For example:
+
+          Old Path: User Current/Disk Current
+                    User 0/Disk Current
+                    User 0/Disk A
+
+          New Path: User Current/Disk Current
+                    User Current/Disk A
+                    User 0/Disk A
+
+     This provides a new CHDIR environment in which utilities can 
+be  grouped into different directories on A and all the work done 
+on B.   When a command is issued,  command search falls to a pro-
+ject utility area on A before falling to the ROOT.  The differen-
+ces between these to paths can be illustrated as follows:
+
+          Old Path: User Current/Disk Current
+                    User 0/Disk Current
+                    User 0/Disk A
+
+          New Path: User Current/Disk Current
+                    User Current/Disk A
+                    User 0/Disk A
+
+------
+          Old Path: Work Area --> Common Root Utilities --> ROOT
+          New Path: Work Area --> Project Utilities --> ROOT
+
+     Under  the new path,  different user areas on A can  contain 
+the utilties, say, associated with a particular language, such as 
+user 1 for C,  user 2 for PASCAL,  etc.   Then, the corresponding 
+work  areas on B would be user 1 for C work,  user 2  for  PASCAL 
+work,  etc.   Now, when a command is issued, the move from C work 
+to C compiler to ROOT or PASCAL work to PASCAL compiler to ROOT.
+
+     As  the  reader can see,  the possibilities are  staggering.  
+And this is just the beginning.
+
+     I hope you enjoy using CHDIR with ZCPR and ZMCPR,  and don't 
+hesitate to experiment with the possibilities available by  these 
+combinations.   Comments  on these programs and any new ideas the 
+reader has would be appreciated.
+
+                                        Richard Conn
+

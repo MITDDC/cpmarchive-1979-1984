@@ -1,0 +1,328 @@
+              CP/M MODEM PROGRAM DOCUMENTATION
+	    by Mark M. Zeiger and James K. Mills
+			  11/04/80
+
+This  program  uses  the  file transfer routines  written  by  Ward 
+Christensen  in his CP/M file transfer program (V2.0 as of  8/6/79) 
+and  is  compatable with his program in single file transfer  mode. 
+Multi-file transfers are only possible between two systems  running 
+the program described below.
+
+This program has three functions:
+
+        1.  Communication
+        2.  Program transfer
+        3.  Modem control (for PMMI Modem)
+
+
+COMMUNICATIONS
+
+The program may emulate a terminal or echo data back to sender (act
+as a computer).
+
+Terminal Mode  -  'T' Option
+
+        The  terminal mode may be called with or without a file  name. 
+        If  a  file  is  specified (it should be  a  new  file),  then 
+        anything  received  by the modem may be saved  in  memory  and 
+        later  written on disk.  The save feature is toggled ON/OFF by 
+        Control-Y.  On  an IMSAI the front panel LEDs  will  indicated 
+        that  memory save is toggled on by showing the binary value of 
+        the ASCII character received. For those with no front panel, a 
+        colon  (:) will be printed at the beginning of each line  when 
+        memory save is active.  The colon will not be transmitted over 
+        the modem nor will it be saved in memory.
+
+        If  a  file  is not specified,  then memory save  can  not  be 
+        activated.
+
+        If  the memory buffer is full (the buffer is from the  top  of 
+        the  program  to  the  bottom  of  BDOS),   the  contents  are 
+        automatically  written  to  disk  (but the  file  is  not  yet 
+        closed).  Communications  may  then continue with  the  buffer 
+        reinitialized.  The  computer with which you are communicating 
+        must  accept  the  X-ON and X-OFF  (Control-Q  and  Control-S) 
+        conventions or data will be lost.
+
+        When  communications are over,  use Control-E to exit from the 
+        Terminal  mode and enter the Menu.  The file to which you  are 
+        writing  must then be closed by using the  'WRT'  command.  If 
+        this  is  not done,  all data will be lost.  I decided not  to 
+        close  the file automatically since there will be  times  when 
+        you leave terminal mode and then decide to re-enter.  This may 
+        be done while in the Menu by using the 'RET' command.  You may 
+        re-enter Terminal mode and save in the same file as many times 
+        as  you wish as long as you have not closed the file with  the 
+        'WRT' command.
+
+        While  in  Terminal  mode,  Control-T will  put  you  in  File 
+        Transfer mode.  This will allow you to send the contents of an 
+        ASCII file over the modem. This routine does no error checking 
+        and  there are no protocols specified between this program and 
+        the  receiving computer other than that it should be ready  to 
+        receive  data  via  the  modem.   Control-X  will  cancel  the 
+        transfer.
+
+
+Computer mode - 'E' Option
+
+        This  mode  echos data received by other  computer.  Only  one 
+        computer  may be in this mode at one time.  There is  no  save 
+        feature  in this mode.  Useful if you wish to communicate with 
+        somebody running the terminal portion of the program.
+
+File transfer - 'S' and 'R' Options
+
+        These  features  are  the same as in the  CP/M  Modem  program 
+        written by Ward Christensen except that upon completion of the 
+        transfer, control returns to the Menu unless the secondary 'T' 
+        option has been selected.  In the latter case, control returns 
+        to Terminal mode.  Remember that if you are operating a remote 
+        computer   using   a  timesharing  program   (such   as   Ward 
+        Christensen's "BYE"),  the remote should be instructed to send 
+        or  receive  in  the  quiet (Q) mode as  a  secondary  option. 
+        Examples  of  commands for sending and  receiving  are  listed 
+        below.
+
+Multi-file transfers
+
+        Using  the B (batch) secondary option,  more than one file and 
+        ambiguous filenames may be transferred. To send files, use the 
+        primary  option  "S" and the secondary option "B" (along  with 
+        any  other  secondary options and baudrate).  To  receive  the 
+        files  being  sent,  use the "R" primary option  and  the  "B" 
+        secondary  option.  Files may not be named since filenames are 
+        sent by the sending program, but a disk drive may be specified 
+        (or else the files are written to the default drive).
+
+Backup option
+
+        There  is  a byte at the beginning of the program (106H)  that 
+        will  create a backup file if a file on the disk has the  same 
+        name  as the file being received in multi-file  transfer  (see 
+        MODEM.SET). If this byte is set to 0FFH, a backup file will be 
+        created.  If  it is zero the file on the disk will be  deleted 
+        before the new file is received. If you are running CP/M 2 and 
+        a file on the disk is designated R/O or SYS,  a backup will be 
+        created whether the byte at 106H is set or not.
+
+        Be  careful - if you are running CP/M 1 and the drive on which 
+        you  are receiving has an R/O file with the same name  created 
+        by CP/M 2,  the R/O file can not be accessed (found,  changed, 
+        erased,  etc.)  by CP/M 1.  You will therefore have two  files 
+        with  the same name when you are running CP/M 2.  To fix  this 
+        problem, use CP/M 1 to change the name of the file that is not 
+        R/O. Then use CP/M 2 to do what you want with the R/O file.
+
+        Examples:
+
+        The  sender enters    SBOT.600 B:*.COM    to send all the  COM 
+        files on disk B.  Also specified were originate mode 600  baud 
+        (PMMI modem) and return to terminal mode when done.
+
+        The  receiver enters     RBA.600    to receive all  the  files 
+        being  sent on the default drive (also answer mode at 600 baud 
+        for PMMI).
+
+
+        The sender enters the command   SB.600  ASM.COM  *.HEX  B:M*.*
+        which  will send ASM.COM from the default drive,  all the  HEX 
+        files from the default drive,  and all the files starting with 
+        "M" from the B drive.  [note that neither 'A' or 'O' were
+	specified: default is to whatever mode the PMMI is in
+	currently]
+
+        Multifile transfers may only be done from the menu. It may not 
+        be specified when the MODEM program is called.  In other words    
+        A>MODEM  SAB  *.COM   will result in an INVALID  OPTION  error 
+        message.
+
+
+Return to Menu - 'M' option
+
+        When asked to select an option, 'M' returns to Menu.
+
+The MENU
+
+        If  the Modem program is entered with no option,  the Menu  is 
+        called.  The  Menu gives the choice of selecting the  standard 
+        options as defined by Ward Christensen (T,  E,  R, and S). The 
+        Terminal  mode has been greatly expanded as  described  above. 
+        The "R" and "S" commands must be called with a filename or you 
+        will be required to enter the primary command (S or R) and the 
+        filename  again (but NOT the secondary options).  If you  want 
+        multi-file  transfers,  then  the "R" option does not  need  a 
+        filename.
+
+  RET - You may also enter terminal mode using the 'RET' command,  but 
+        no  data  will  be saved since a file may not  be  named  with 
+        'RET'.  Use  the 'RET' command to RE-ENTER Terminal mode after 
+        it  has  first been entered with the 'T' option.  If  this  is 
+        done, you will still be able to save the communications if you 
+        were doing so before you exitted the terminal mode.
+
+  WRT - The  'WRT' command must be used after leaving  Terminal  mode. 
+        This  writes  the  last buffer to disk and  closes  the  file. 
+        Failure  to use the 'WRT' command results in loss of all  data 
+        and a file of length zero.
+
+  DEL - The  'DEL'  command  erases the most recent file  accessed  in 
+        Terminal mode.  Useful if you decide after communications that 
+        you don't want to save information just gathered.
+
+  CPM - The 'CPM' command reboots and returns to CP/M.
+
+  XPR - The  'XPR'  command is a toggle which causes the  menu  to  be 
+        printed  or not printed.  Initially the menu is on unless  the 
+        program is called with the "X" option (ie.  A>MODEM X ).
+
+  DIR - The 'DIR' command lists the directory of a CP/M disk.  A drive 
+        may  be specified (ie.  DIR B:) or the default drive  will  be 
+        listed.  After  the directory is listed,  the menu will not be 
+        printed whether XPR mode is on or off.  If XPR mode is on  and 
+        you wish to see the menu, hit return.
+
+FOR THE PMMI MODEM
+
+  DSC - To disconnect you must use the 'DSC' command in the Menu.
+
+        The original secondary options for the PMMI Modem (as  defined 
+        by  Ward  Christensen) are "A" (answer mode),  "O"  (originate 
+        mode), and baudrate selection. See examples below.
+
+        Once  answer  or originate and a baudrate have  been  selected 
+        (ie.  SO.450  NAME.TYP),  any subsequent options will use  the 
+        same mode and buadrate. If you want to change the baudrate, it 
+        may be done without changing the mode.  For instance,  if  you 
+        are  in  originate mode at 450 baud,  then the command  'R.600 
+        NAME.TYP'  will  allow you to receive a file at  600  baud  in 
+        ORIGINATE mode.  If you want to change the ans/orig mode, then 
+        you MUST select the baudrate again or it will default to 300.
+
+
+  CAL - Allows  dialing  of number.  If a connection to a computer  is 
+        established,  you  will  be able to  select  options  (usually 
+        TO.xxx).   If no connection is made after 15 seconds, [changed
+	to  25  seconds  in  distributed  version]     then  you  will 
+        be  informed and be given the option of redialing or returning 
+        to the menu.  The dial routine may also be specified when  the 
+        Modem  program is called by entering  A>MODEM C.  No secondary 
+        options will be accepted when the "C" option is used.   [Note:
+	you cannot type:  CAL 312-545-8086  --  well, you can, but the
+	number will be ignored and you will have to retype it when the
+	program asks for it   --   in  the  latest  version  (11/4/80)
+	there is a 'library' feature such as in DIAL.ASM.   To use the
+	CAL function, type CAL and a return at the menu.  You will see
+	a message   'WAITING FOR DIAL TONE'  then a lot of stuff about
+	entering the number.   At this point you may type in a number,
+	or  you  may  type  a  letter  which will designate one of the
+	library numbers (which you must insert at assembly time).
+
+  ^B -  Control-B  while  in Terminal (or Echo) mode allows change  of 
+        baudrate "on-the-fly." A carriage return gives 300  baud;  all 
+        other rates (110-600) must be explicitely stated.
+
+
+LISTING OF COMMANDS AND OPTIONS
+
+    Primary options
+
+        S - send a CP/M file (must specify file/s)
+        R - receive  a CP/M file (must name file unless B sec opt used)
+        T - terminal mode (specify file if memory save wanted)
+        E - terminal mode with echo
+        M - return to menu
+        X - used only when program is called to initially
+            toggle menu off
+
+    Secondary options
+
+        B - multi-file mode for sending and receiving files
+        T - return to terminal mode after transfer (memory save off)
+        R - view what is received in file transfer
+        S - view what is being sent in file transfer
+        V - view what is being sent or received in file transfer
+        T - Terminal mode (used with remotely controlled computer)
+        O - originate mode (PMMI modem)
+        A - answer mode (PMMI modem)
+        .xxx - baud rate xxx (xxx = 110-600  PMMI modem)
+
+EXAMPLES        (fn = filename,  ft = filetype)
+
+        Send file, originate mode, 300 baud
+
+                                   SO fn.ft
+
+        Send another file, same mode and baudrate
+
+                                   S fn.ft
+
+        Receive  file on B drive,  600 baud,  ans mode,  view what  is 
+        being received, return to terminal mode 
+
+                               RART.600 B:fn.ft
+
+        Send all COM files, no messages on console, same baud and mode 
+        as last transfer
+
+                                  SBQ *.COM
+
+        Send two files from two different drives
+
+                           SB A:fn1.ft1  B:fn2.ft2
+
+        Receive files being sent by above on drive A (baudrate must be 
+        same and modes opposite)
+
+                                    RB A:
+
+        Terminal mode,  save communication in file,  300 baud (default 
+        rate),  originate mode (in terminal must type CTRL-Y to  start 
+        save, in menu must type "WRT" to close file)
+
+                                   TO fn.ft
+
+
+ASSEMBLING THE PROGRAM
+
+        You  must use Digital Researches' MAC to assemble the program. 
+        The  files required are MODEM.ASM and  MODEM.LIB.   MACROS.LIB 
+        does not actually contain any macros in the true sense, but it 
+        does  contain  routines  that are necessary for the program to
+	run (MFACCESS however does use nested macros as real macros).
+
+        If you have a PMMI and an IMSAI,  you may assemble the file as 
+        is.  If  you do not have an IMSAI with a front  panel,  change 
+        IMSAIBYTE  to 'FALSE' (near the beginning of the program).  If 
+        you  wish another character instead of the colon  to  indicate 
+        when  memory  save  is active,  change "MVI A,':'  "  to  "MVI 
+        A,'char'  " in the "TERM" routine where 'char' is the printing 
+        character  you would like at the beginning of each  line  when 
+        memory save is active.
+
+        If you do not have a PMMI,  change the byte to 'FALSE' and put 
+        your  modem status and data ports in the appropriate  equates. 
+        The  labels  'MODRCVR'  and 'MODSNDR' should be  the  same  as 
+        MODRCVB  and  MODSNDB  (the  bits tested) if  your  UART  uses 
+        positive  logic  (JZ)  and should be zero if  your  UART  uses 
+        negative  logic.  If you have a Z-80 (or maybe a  fast  8085), 
+        change  the  'FASTCLK' byte to 'TRUE'.  If any port  or  modem 
+        initialization must be done, put the initialization routine in 
+        the  area  labeled INITMOD (replacing the PMMI  initialization 
+        routine). See MODEM.SET for more details.
+
+        If  you  have  a D.C.  Hayes Modem,  you may  incorporate  the 
+        routines from MODEM.ASM V2.0 (as of 8/6/79).
+
+        You  should also note the comment in the INBUFF  routine  near 
+        the end of the program.
+
+        Any problems or bugs, please call me:
+
+				Or latest revisor:
+        Mark M. Zeiger		James K. Mills
+        198-01B 67th Ave.	824 Jordan Place
+        Flushing, N.Y. 11365	Rockford, IL  61108
+        (212) 454-6985		(815) 398-0579
+
+

@@ -1,0 +1,647 @@
+#define VERSION "dif.c 2.00 (dif 2.0) 11-17-81"
+/*
+ * Differential file comparision program
+ *
+ *	Chuck Forsberg
+ *		Computer Development Inc
+ *		6700 S. W. 105th
+ *		Beaverton OR 97005
+ *		503/646-1599    RCP/M 503/621-3193 300,450,1200 baud
+ *	cc1 dif.c -e 4000 -o
+ * 	clink dif yam8 -f dio -s	(ndio may be used instead or dio)
+ *
+ * 1.10 added crc information for use by ssed 1.10 in verifying antecedent
+ * file is correct  11-4-81 CAF
+ */
+
+/* system dependent stuff */
+
+#include "a:bdscio.h"
+#include "a:dio.h"
+struct _buf fin[2];
+struct _buf *in0, *in1;
+#define stdin 0
+#define stdout 1
+#define stderr 4
+char *patho;			/* null or name of output file */
+
+/* E-O-F indicator */
+#define LAST_TOKE 32765		/* at least 1 less than max positive int */
+#define MAXLEN 255
+#define HUNKSIZE 8192		/* Size of each circular buffer */
+int linno[2];
+char *patha, *pathb;		/* names of each file */
+
+/* data in the circular buffers is stored in linked form */
+
+struct line {
+	unsigned hash;		/* hashed value of text special case EOF=0 */
+	char f;			/* 0 or 1 which file it came from */
+	int num;		/* number of line or LAST_TOKE if EOF */
+	struct line *next;	/* pointer to next line, or null if last in
+				   buffer, or to itself if EOF */
+	char text[0];		/* asciz line of text */
+} *bottom[2],			/* bottom of each file's buffer */
+ *top[2],			/* top of each buffer */
+ *thislna, *thislnb,		/* line just fetched from buf */
+ cdq[2];			/* reader from each file */
+
+struct line *getnext();		/* forward declarations */
+int getchar();
+int getc1();
+int getc2();
+int getcr();
+
+char Different, Verbose, Edit, Display, Unsqueeze;
+unsigned crc;		/* accumulated crc of common lines */
+int fudge;
+char ineof[2];		/* EOF (cpmeof) seen on file input */
+
+/* following really should be automatics, but then that would slow things */
+int (*getit[2])();	/* getchar function for each file */
+int (*getthis)();	/* getchar function for current file */
+char *p, *q, *qq, *qqq, count;
+
+/* Definitions and externals for unsqueezer function */
+#define RECOGNIZE 0xFF76	/* unlikely pattern */
+/* External declarations for USQ feature */
+#define NUMVALS 257	/* 256 data values plus SPEOF*/
+/* Decoding tree */
+struct {
+	int children[2];	/* left, right */
+} dnode[NUMVALS - 1];
+int bpos;	/* last bit position read */
+int curin;	/* last byte value read */
+/* Variables associated with repetition decoding */
+int repct;	/*Number of times to return value*/
+int value;	/*current byte value or EOF */
+int inch;
+
+/*
+ * htbl stores pointers to a buncha lines which are sorted when looking
+ * for a match
+ */
+
+#define HASHCHUNK 16	/* # lines of each file to search for initial match */
+#define HSIZE 2048	/* total # of lines that the hash table can hold */
+struct line *missm[2];		/* last line fetched for htbl */
+struct line *htbl[HSIZE];
+
+char bfx[2][HUNKSIZE];		/* circular buffers */
+
+getc1()
+{
+	return getc(in0);
+}
+getc2()
+{
+	return getc(in1);
+}
+
+main(argc, argv)
+char **argv;
+{
+	char i, *cp, **av;
+	int ac;
+
+	/* get output pathname if one was given */
+	patho=NULL;
+#ifndef UNIX
+	for(ac=argc, av=argv; --ac;)
+		if(**++av == '>'  ||  **av == '+')
+			patho= *av +1;
+
+	dioinit(&argc, argv);
+#endif
+
+	Different=Edit=Unsqueeze=Display=Verbose=FALSE;
+	getit[0]=getc1; getit[1]=getc2;
+	while (--argc && *(cp = *++argv)=='-') {
+
+		while( *++cp) {
+			switch(tolower(*cp)) {
+			case 'd':
+				Display++; break;
+			case 'e':
+				Edit++; break;
+			case 'u':
+				getit[0]=getcr;
+				Unsqueeze++; break;
+			case 'v':
+				Verbose++; break;
+			default:	
+				goto usage;
+			}
+		}
+	}
+
+	if(argc < 1 || argc > 2) {
+usage:
+		fprintf(stderr,VERSION);
+		fprintf(stderr,
+		  "Usage: dif [-dev] filea {fileb,<fileb} [>outfile]\n");
+		fprintf(stderr,"\t-d display lines that match\n");
+		fprintf(stderr,"\t-e generate Editor script\n");
+		fprintf(stderr,"\t-u Unsqueeze filea\n");
+		fprintf(stderr,"\t-v Verbose\n");
+		exit(1);
+	}
+
+	if(fopen( patha=argv[0], fin[0]) == ERROR)
+	{
+		fprintf(stderr, "Can't open %s", argv[0]);
+		exit(128);
+	}
+	else
+		in0=fin[0];
+
+	if(argc==2) {
+		if(fopen( pathb=argv[1], fin[1]) == ERROR)
+		{
+			fprintf(stderr, "Can't open %s", argv[1]);
+			exit(128);
+		}
+		else
+			in1=fin[1];
+	}
+	else {
+		getit[1]=getchar;
+		pathb= "Standard Input";
+	}
+
+	if(Unsqueeze) {
+		getit[0]=getcr;		/* switch getchar function */
+		init_usq();		/* initialize unpacking */
+	}
+
+	crc=linno[0]=linno[1]=0;
+	ineof[0]=ineof[1]=FALSE;
+
+	cdq[0].next=p=bottom[0] = bfx[0];
+	cdq[1].next=bottom[1]=top[0]= bfx[1];
+	top[1]= bfx[2];		/* not in pascal! */
+
+	if(Verbose)
+		for(i=0; i<2; ++i )
+			fprintf(stderr,"bottom[%d]=%x top=%x\n",
+			  i, bottom[i], top[i]);
+
+	fudge=0;	/* initialize magic editing offset */
+
+	/* initialize thisln so it won't get in the way of filling buffer */
+	thislna=thislnb=0;
+	/* get the first line from each and start chain */
+
+	getline(0, cdq[0]); thislna=bottom[0];
+	getline(1, cdq[1]); thislnb=bottom[1];
+
+	while( thislna->num != LAST_TOKE | thislnb->num != LAST_TOKE) {
+		if(strcmp(thislna->text, thislnb->text))
+			dodiff();
+		else {
+			crc += thislna->hash;
+			if(Display)
+				printf("   %s", thislna->text);
+		thislna=getnext(thislna);
+		thislnb=getnext(thislnb);
+		}
+	}
+	if(Edit)
+		printf("$a %u\n.\n", crc);
+	if(Different)
+		fprintf(stderr,"Files are different\n");
+	else {
+		fprintf(stderr,"No differences encountered\n");
+		if(patho) {
+			unlink(patho);
+			fprintf(stderr,"'%s' Unlinked\n", patho);
+		}
+	}
+	dioflush();
+}
+
+
+/*
+getnext returns next line unless:
+	eof: return current (its chained to itself);
+	no room in buffer: return NULL;
+*/
+
+struct line *getnext(fp)
+	register struct line *fp;
+{
+
+	if(fp->next)
+		return fp->next;	/* link to next line */
+
+	getline(fp->f, fp);			/* end of buffer -get more */
+	return fp->next;
+}
+
+getline(n, fp)
+struct line *fp;
+char n;
+{
+	struct line *gp;
+	int *number, len;
+	unsigned crck();
+
+	number= &linno[n];
+	getthis=getit[n];
+
+	q=top[n];
+	q -= (MAXLEN + 4 + sizeof(*fp));
+	qq=n?thislnb:thislna;
+	qqq = qq - (MAXLEN + 4 + sizeof(*fp));
+	p=fp->next;
+	if(p==NULL) {
+		p=fp;
+		p += sizeof(*fp)+1+strlen(fp->text);
+#ifdef UNIX
+		p += p % sizeof(int);
+#endif
+	}
+	if(Verbose)
+		fprintf(stderr,"File %d line %d q=%x qq=%x qqq=%x p=%x\n",
+		  n, *number, q, qq, qqq, p );
+	if(ineof[n]) {
+		fprintf(stderr, "Getline called after E-O-F\n");
+		fprintf(stderr,
+		  "%d %3d fp=%x hash=%04x next=%x p=%x ",
+		  n, *number, fp, fp->hash, fp->next, p);
+		fputs(fp->text, stderr);
+		return;
+	}
+	for(;;) {
+		/* check if we need to wrap at end of buffer */
+		if(p > q) {
+			p=bottom[n];
+			if(Verbose)
+				fprintf(stderr,"Wrapped: p=%x\n", p);
+			if(qq==0)
+				goto yumyum;	/* special case first time */
+		}
+
+		/* is the buffer filled up ? */
+		if(p <= qq && p >= qqq) {		/* before thislin ? */
+yumyum:
+			if(Verbose)
+				fprintf(stderr,"Buffer Filled\n");
+			return;
+		}
+#ifdef UNIX
+		p += p % sizeof(int);
+#endif
+		gp=p;
+		gp->f=n;
+		for(p=gp->text, count=MAXLEN; --count; )
+			switch(*p++ = (*getthis)() ) {
+			  case CPMEOF:
+			  case 0377:
+				  if(Verbose)
+					fprintf(stderr,
+					  "EOF on file %d at line %d\n",
+					  n, *number);
+				ineof[n]=TRUE;
+				gp->hash = ~0;
+				gp->next = gp;		/* link to self */
+				gp->num = LAST_TOKE;
+				strcpy(gp->text, "**EOF**\n");
+				fp->next=gp;
+				return;
+			case 012:
+				++*number;
+				goto gotline;
+			case 015:
+				--p;
+			}
+		fprintf(stderr,"Line %d is too long\n", *number);
+gotline:
+		*p=0;
+		if(len=p - gp->text)
+			gp->hash=crck(gp->text, len, 0);
+		else
+			gp->hash = 0;
+		gp->num = *number;
+		fp->next=gp;
+		if(Verbose>3) {
+			fprintf(stderr,
+			  "%d %3d gp=%x hash=%04x len=%3d p=%x ",
+			  n, *number, gp, gp->hash, len, p);
+			fputs(gp->text, stderr);
+		}
+		fp=gp;		/* advance along new chain */
+		fp->next=NULL;
+		++p;		/* bump pointer past trailing null */
+	}
+}
+
+/*
+ * Sort htbl first by hashvalue, then by file number
+ */
+
+comp(a,b)
+struct line **a, **b;
+{
+	if( (*a)->hash > (*b)->hash)
+		return 1;
+	if( (*a)->hash < (*b)->hash)
+		return -1;
+	return (*a)->f - (*b)->f;
+}
+
+
+dodiff()
+{
+	register struct line **lp;
+	int quantity, m, l;
+	char keepatit, n, wanta, wantb;
+
+	Different=TRUE;
+	if(Verbose)
+		fprintf(stderr,"Difference at %d:%d\n",
+		  thislna->num, thislnb->num);
+	wanta=wantb=TRUE;
+	lp=htbl;
+	*lp++ =missm[0]=thislna;
+	*lp++ =missm[1]=thislnb;
+
+	/*
+	 * To minimize time in locating the matching lines after small
+	 * sections of text, start out by looking at just a few lines.
+	 * If that doesn't work, enlarge the search.
+	 */
+	for(quantity=2,l=HASHCHUNK, keepatit=TRUE;
+	  keepatit && (wanta||wantb); l+=l) {
+
+		if(wanta)
+			for(m=l; --m>=0; ) {
+				if((*lp = getnext(missm[0]))==NULL) {
+					wanta=FALSE; break;
+				}
+				missm[0]= *lp++;
+				/* quit n-o-w if table filled */
+				if(++quantity==HSIZE) {
+					keepatit=FALSE; goto nowlook;
+				}
+				/* Don't fill up the table with eof's */
+				if(missm[0]->num==LAST_TOKE) {
+					wanta=FALSE; break;
+				}
+			}
+		if(wantb)
+			for(m=l; --m>=0; ) {
+				if((*lp = getnext(missm[1]))==NULL) {
+					wantb=FALSE; break;
+				}
+				missm[1]= *lp++;
+				if(++quantity==HSIZE) {
+					keepatit=FALSE; goto nowlook;
+				}
+				if(missm[1]->num==LAST_TOKE) {
+					wantb=FALSE; break;
+				}
+			}
+nowlook:
+		if(Verbose)
+			fprintf(stderr,
+			  "Dodiff Quantity=%d k't=%d w'a=%d w'b=%d\n",
+			  quantity, keepatit, wanta, wantb);
+		if(Verbose>2)
+			for(m=0; m<quantity; ++m)
+				fprintf(stderr,
+				  "HTBL %3d:addr=%x f=%d  h=%4x l=%3d nxt=%x\n",
+				  m, htbl[m], htbl[m]->f, htbl[m]->hash,
+				  htbl[m]->num, htbl[m]->next);
+		qsort(htbl, quantity, sizeof(p), comp);
+		if(lookferit(quantity)) {
+			return;
+		}
+	}
+	fprintf(stderr,"Can't find match at a:line %d b:line %d\n",
+	  thislna->num, thislnb->num);
+	if(Verbose)
+		for(m=0; m<quantity; ++m)
+			fprintf(stderr,
+			  "HTBL %d:addr=%x f=%d  h=%4x l=%3d %.30s\n",
+			  m, htbl[m], htbl[m]->f, htbl[m]->hash,
+			  htbl[m]->num, htbl[m]->text);
+	exit(1);
+}
+
+/* search for lowest matching lines using the hash index for quick look */
+lookferit(quantity)
+{
+	struct line *loa, *lob, **pa, **pb, **pe, *fp;
+	int m, lowa, lowb, skipa, skipb;
+
+	lowa=lowb=LAST_TOKE+1;
+	pe= &htbl[quantity];
+
+	for(pa=htbl; pa < pe; ++pa) {
+		if((*pa)->f)
+			continue;
+		for(pb=pa+1; pb < pe; ++pb) {
+			if((*pb)->f == 0)
+				continue;
+			if((*pa)->hash != (*pb)->hash)
+				continue;
+			if((*pa)->num > lowa || (*pb)->num > lowb)
+				continue;
+			if((*pa)->next==NULL || (*pb)->next==NULL)
+				continue;
+			if((*pa)->next->hash != (*pb)->next->hash)
+				continue;
+			if(strcmp((*pa)->text, (*pb)->text))
+				continue;
+			if(strcmp((*pa)->next->text, (*pb)->next->text))
+				continue;
+			lowa=(*pa)->num; lowb=(*pb)->num;
+			loa= *pa; lob= *pb;
+		}
+	}
+	if(lowa > LAST_TOKE) {
+		return FALSE;
+	}
+
+	if(Verbose){
+		fprintf(stderr, "Found match at %d:%d\n", lowa, lowb);
+		fputs(loa->text, stderr); fputs(lob->text, stderr);
+	}
+	if(Edit) {
+		skipa= lowa - thislna->num;
+		skipb= lowb - (fp=thislnb)->num;
+		if(Verbose)
+			fprintf(stderr,"Fudge=%d skipa=%d skipb=%d\n",
+			  fudge, skipa, skipb);
+		if(skipa) {
+			printf("%d", fudge+thislna->num);
+			if(skipa != 1) {
+				putchar(',');
+				if(lowa==LAST_TOKE)
+					putchar('$');
+				else
+					printf("%d",
+					  fudge + thislna->num + skipa - 1);
+			}
+			fudge -= skipa;
+		}
+		if(skipb) {
+			if(skipa==0 || thislna->num==LAST_TOKE)
+				/* append if no lines to remove */
+				printf("%da %u\n",
+				  thislnb->num -1, crc);
+			else
+				/* change if old lines gotta go */
+				printf("c %u\n", crc);
+			for(; fp->num < lowb; fp=getnext(fp))
+				puts(fp->text);
+			printf(".\n");
+			fudge += skipb;
+		} else
+			printf("d %u\n", crc);
+	} else {
+		printf("-------- Line %4d of '%s' ----\n",thislna->num, patha);
+		for(fp=thislna; fp->num < lowa; fp=getnext(fp))
+			printf("---%s", fp->text);
+		printf("++++++++ Line %4d of '%s' ++++\n",thislnb->num, pathb);
+		for(fp=thislnb; fp->num < lowb; fp=getnext(fp))
+			printf("+%s", fp->text);
+	}
+	/* advance pointers to matched lines */
+	thislna= loa; thislnb= lob;
+	return TRUE;
+}
+
+
+/* *** Stuff for first translation module *** */
+#define DLE 0x90
+/* *** Stuff for second translation module *** */
+#define SPEOF 256	/* special endfile token */
+#define LARGE 30000
+
+init_usq()
+{
+	int i, c;
+	char cc;
+
+	char *p;
+	int numnodes;		/* size of decoding tree */
+	char origname[14];	/* Original file name without drive */
+
+	/* Initialization */
+	init_cr();
+	init_huff();
+
+	if(getw(in0)!=RECOGNIZE) {
+		fprintf(stderr,"%s Not Squeezed\n", patha);
+		exit(1);
+	}
+	/* Process rest of header */
+	getw(in0);	/* ignore checksum ... */
+
+	/* Get original file name */
+	p = origname;	/* send it to array */
+	do {
+		*p = getc(in0);
+	} while(*p++ != '\0');
+
+	fprintf(stderr, "(%s -> %s)\n", patha, origname);
+
+	numnodes = getw(in0);
+	if(numnodes < 0 || numnodes >= NUMVALS) {
+		fprintf(stderr, "%s has invalid decode tree size\n", patha);
+		exit(1);
+	}
+
+	/* Initialize for possible empty tree (SPEOF only) */
+	dnode[0].children[0] = -(SPEOF + 1);
+	dnode[0].children[1] = -(SPEOF + 1);
+
+	/* Get decoding tree from file */
+	for(i = 0; i < numnodes; ++i) {
+		dnode[i].children[0] = getw(in0);
+		dnode[i].children[1] = getw(in0);
+	}
+}
+
+
+/* initialize decoding functions */
+
+init_cr()
+{
+	repct = 0;
+}
+
+init_huff()
+{
+	bpos = 99;	/* force initial read */
+}
+
+/* Get bytes with decoding - this decodes repetition,
+ * calls getuhuff to decode file stream into byte
+ * level code with only repetition encoding.
+ *
+ * The code is simple passing through of bytes except
+ * that DLE is encoded as DLE-zero and other values
+ * repeated more than twice are encoded as value-DLE-count.
+ */
+
+int
+getcr()
+{
+	int c;
+
+	if(repct > 0) {
+		/* Expanding a repeated char */
+		--repct;
+		return value;
+	} else {
+		/* Nothing unusual */
+		if((c = getuhuff()) != DLE) {
+			/* It's not the special delimiter */
+			value = c;
+			if(value == EOF)
+				repct = LARGE;
+			return value;
+		} else {
+			/* Special token */
+			if((repct = getuhuff()) == 0)
+				/* DLE, zero represents DLE */
+				return DLE;
+			else {
+				/* Begin expanding repetition */
+				repct -= 2;	/* 2nd time */
+				return value;
+			}
+		}
+	}
+}
+
+/* Decode file stream into a byte level code with only
+ * repetition encoding remaining.
+ */
+
+int
+getuhuff()
+{
+
+	/* Follow bit stream in tree to a leaf*/
+	inch = 0;	/* Start at root of tree */
+	do {
+		if(++bpos > 7) {
+			if((curin = getc(in0)) == ERROR)
+				return ERROR;
+			bpos = 0;
+			/* move a level deeper in tree */
+			inch = dnode[inch].children[1 & curin];
+		} else
+			inch = dnode[inch].children[1 & (curin >>= 1)];
+	} while(inch >= 0);
+
+	/* Decode fake node index to original data value */
+	inch = -(inch + 1);
+	/* Decode special endfile token to normal EOF */
+	return (inch == SPEOF) ? EOF : inch;
+}
+

@@ -1,0 +1,347 @@
+; VERSION OF MAY 15, 1979   ***   BY J. WARMER
+;
+;  MODIFIED MAY 19, 1980 BY S. BOGOLUB TO ADD FNC'S 130, 137,
+;   138, 141, 144, 146, AND 150 FOR ASMB 03.04 AND NEW EDIT.
+;   SOME PRETTY FIERCE CODE OPTIMIZATION (BYTE GRUBBING)
+;   WAS REQUIRED.
+;
+;  More modifications necessary June 06, 1980 by S. Bogolub
+;   to zero current rec number for OPEN and FORMAT NAME TO FCB,
+;   and to save regs around all BDOS file calls under 128.
+;
+;  05/16/81  Don't save regs for BDOS call 24 and all BDOS
+;   calls 27 and up (CP/M 2.2 calls) to allow correct operation
+;   of programs being debugged under filtered DEBUG. The program
+;   under test is getting filtered too, you see. Note that
+;   BDOS call 12 to return the version number will lie under
+;   filtered DEBUG because we don't have room to trap that
+;   out too.
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;   STUFF TO IMPLEMENT CDOS     ;
+;       FUNCTION CALL IN        ;
+;           A CP/M              ;
+;           SYSTEM              ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;  THIS PROGRAM REQUIRES THE USE OF A PAGE OF CODE AT THE
+; TOP OF THE TPA WHEN RUNNING, AND IS LOADED IN TWO PAGES
+; AT THE BASE OF THE TPA AS PART OF THE *.COM (MEMORY IMAGE)
+; OF THE PROGRAM IT IS TO FILTER. WHEN 'FILTER' GETS CONTROL,
+; IT BOOSTS THE FUNCTION CODE FILTER INTO PLACE AT THE TOP
+; OF THE TPA, THEN MOVES THE ORIGINAL PROGRAM DOWN TO 100H
+; AND JUMPS TO IT. TO CREATE A CP/M EXECUTIBLE CROMEMCO
+; PROGRAM, FIRST INVOKE DDT. THEN SET THE FILE NAME WITH
+; THE 'I' COMMAND AND READ THE PROGRAM WITH A BIAS OF 200H.
+; THEN LOAD FILTER.HEX THE SAME WAY, EXCEPT WITH NO BIAS.
+; TYPE CONTROL-C, AND SAVE THE RESULTING MEMORY IMAGE:
+;
+;	A>DDT
+;	-IPROGRAM.COM
+;	-R200
+;	-IFILTER.HEX
+;	-R
+;	-^C
+;
+DUMMY	EQU	0	; ADDRESS FILLED IN AT RUN TIME
+;
+CR	EQU	13	; ASCII CARRIAGE RETURN CODE
+LF	EQU	10	; ASCII LINE FEED CODE
+;
+; PART I -- MEASURE CP/M T.P.A. SIZE.  ADJUST ADDRESSES
+;	IN THE FUNCTION CODE FILTER FOR INSTALLATION AT
+;	THE TOP OF THE T.P.A.  CHANGE THE JUMP AT 5,6,7
+;	TO ROUTE CP/M FUNCTION CALLS THROUGH THE FILTER.
+;	THEN BLOCK MOVE THE FILTER TO TOP OF THE T.P.A.
+;
+	ORG	100H
+;
+	LD	HL,(6)		;Get address of top of TPA
+	DEC	H		;Put stack top at bottom of FILTER
+	LD	L,0
+	LD	SP,HL
+	LD	HL,0
+	PUSH	HL		;If caller thinks this is CCP, warm boot
+	LD	DE,CFMSG	;Tell operator this is FILTER
+	LD	C,9
+	CALL	5
+	LD	HL,(6)		; GET BDOS ENTRY ADDRESS
+	LD	(CPM2+1),HL	;Install 2 places
+	LD	(CPM22+1),HL
+	DEC	H		; MAKE ROOM FOR FILTER
+	LD	L,0
+	LD	(6),HL		; INSTALL FILTER ADDR
+	EX	DE,HL
+	LD	HL,(1)		; GET WARMSTART ADDR
+	INC	HL		;   IN BIOS
+	INC	HL		;     JMP TABLE
+	INC	HL		; CSTAT ADDRESS
+	LD	(CSTAT+1),HL	; INSTALL.
+	INC	HL		; INCREMENT 3X      *
+	INC	HL		;   TO FIND         *
+	INC	HL		;     CONIN.        *
+	LD	(GBYTE+1),HL	; INSTALL.          *
+	LD	A,D		; FIX UP HI ADDR PORTION
+	LD	(NAM1+2),A	;   OF SUBROUTINE ADDRS
+	LD	(NAM2+2),A
+	LD	(WBYTE+2),A
+	LD	(BADFNC+2),A	; FIX BADFNC MSG HI ADDR
+	LD	(BADC1+2),A	;Fix BADFNC sub calls too
+	LD	(BADC2+2),A
+	LD	(CZCR+2),A	;Fix ZCR call
+	LD	HL,FILTER
+	LD	BC,FILEND-FILTER
+	LDIR			; INSTALL FILTER
+;
+;
+; PART II - THE FILTER, JUST INSTALLED, CONTAINS A
+;	ONE USE ROUTINE TO MOVE THE *.COM FILE  ON
+;	TOP OF THIS STUFF AND INTO POSITION.
+;
+	LD	H,D		; GET MOVDWN RELOCATED
+	LD	L,MOVDWN-FILTER	;   ADDR INTO HL
+	LD	B,H		; GET TOP OF T.P.A. IN BC
+	LD	C,0
+	DEC	B		; AMOUNT TO MOVE DOWN
+	DEC	B
+	LD	DE,100H		; MOVING IT HERE
+	PUSH	DE		;Save for MOVDWN return
+	JP	(HL)		; GO MOVDWN TO DO REST
+;
+CFMSG:	DEFB	'CDOS Filter version 02.04 -- $'
+;
+; PART III - ****  THE FUNCTION CODE FILTER  ****
+;	THE FOLLOWING CPM/CDOS FUNCTION CODES ARE
+;	AFFECTED:
+;	  2	WRITE CHARACTER TO CONSOLE: THE A-REG
+;		MUST BE SAVED AND RESTORED.
+;	 11	CHECK CONSOLE STATUS: THIS REQUEST IS
+;		PASSED DIRECTLY TO BIOS (I.E. ROUTED
+;		AROUND CP/M).
+;	 15	OPEN FILE. MUST ZERO (DE)+32 (CURRENT REC).
+;	128	READ CONSOLE (NO ECHO): THIS REQUEST
+;		PASSED DIRECTLY TO BIOS (I.E. ROUTED
+;		AROUND CP/M).
+;	134	FORMAT STRING TO FILE CONTROL BLOCK.
+;		DONE HERE, IT DOES NOT ACCEPT '*'
+;		WILD CARDS.
+;	130	SET CONTROL-C ABORT. DONE HERE, DOESN'T.
+;	137	MULTIPLY HL WITH DE, RETURN PRODUCT
+;		IN DE.
+;	138	DIVIDE HL BY DE, RETURN QUOTIENT IN
+;		HL AND REMAINDER IN DE.
+;	141	GET CDOS VERSION NUMBER. DONE HERE,
+;		IT ALWAYS RETURNS '1.07'.
+;	144	GET DATE. DONE HERE, IT ALWAYS RETURNS
+;		00/00/00.
+;	146	GET TIME. DONE HERE, IT ALWAYS RETURNS
+;		00:00:00.
+;	150	TURN DRIVE MOTORS OFF. DONE HERE, DOESN'T.
+;
+;  In addition, the index regs (BC,DE,HL) must be saved
+; and restored over any BDOS function call under 128,
+; because ASMB expects this.
+;
+FILTER:	PUSH	AF
+	LD	A,C
+	CP	A,02		; WRITE FCN CODE ??
+	JR	NZ,NOTWRT
+WBYTE:	CALL	CPM1-FILTER	;Call BDOS and save other regs
+	POP	AF
+	RET
+NOTWRT:	POP	AF
+	LD	A,C
+	CP	11		; CONSTAT FCN CODE ??
+CSTAT:	JP	Z,DUMMY
+	CP	15		; OPEN FILE?
+CZCR:	CALL	Z,ZCR-FILTER	;Zero current record byte if so
+	ADD	A
+	JR	C,GBYTE		;Go on if special FCN code
+	CP	24+24		;Get logged-on drives?
+	JR	Z,CPM22		;Answer comes in HL
+	CP	27+27		;CP/M 2.2 function?
+CPM22:	JP	NC,DUMMY	;Save no regs for those,
+				; answers come back in them
+CPM1:	PUSH	BC		;Must save caller HL,DE,BC
+	PUSH	DE		; for ASMB
+	PUSH	HL
+CPM2:	CALL	DUMMY
+	POP	HL		;Restore caller's regs
+	POP	DE
+	POP	BC
+	RET			;Return only AF altered to caller
+GBYTE:	JP	Z,DUMMY		; CY=1 & Z=1 --> FCN CODE = 80H
+	LD	A,C
+	CP	130		; SET CNTRL-C ABORT?
+	RET	Z		; DON'T DO IT, BUT ALLOW FUNCTION
+	CP	150		; TURN MOTORS OFF?
+	RET	Z		; DON'T DO IT, BUT ALLOW FUNCTION
+	CP	144		; GET DATE?
+	JR	Z,ZERABC	; GO RET ZEROES IF SO
+	CP	146		; GET TIME?
+	JR	NZ,NOTTIM	; BRIF NOT
+;
+ZERABC:	XOR	A		; ZERO A,B,C FOR GET DATE OR TIME
+	LD	B,A
+	LD	C,A
+	RET
+;
+NOTTIM:	CP	141		; GET CDOS VERSION NUMBER?
+	JR	NZ,NOTVER
+	LD	BC,107H		; IF SO, ALWAYS RETURN 1.07
+	RET
+;
+NOTVER:	CP	137		;Multiply integers?
+	JR	NZ,NOTMUL	;Pass if not
+;
+;  Multiply the 16-bit unsigned integer in HL with the 16-bit
+; unsigned integer in DE, and return the product in DE.
+;
+	LD	B,16		;Set step counter
+	LD	C,L		;Put multiplier in C and A
+	LD	A,H
+	LD	HL,0		;Clear product
+;
+MUL1:	ADD	HL,HL		;Shift product left
+	SLA	C		;Shift multiplier bit into carry
+	RLA
+	JR	NC,MUL2		;Skip add if bit zero
+	ADD	HL,DE		; else add multiplicand
+;
+MUL2:	DJNZ	MUL1		;Do all 16 bits
+	EX	DE,HL		;When done, return product in DE
+	RET
+;
+NOTMUL:	CP	138		; DIVIDE INTEGERS?
+	JR	NZ,NOTDIV
+;
+;  Divide the 16-bit unsigned number in HL by the 16-bit unsigned number
+; in DE. On return, HL contains the quotient and DE contains the remainder.
+;
+	LD	B,16		;Divide step count to B-reg
+	LD	C,L		;Make 32-bit dividend
+	LD	A,H		; in H,L,A,C from high to low in that order
+	LD	HL,0		;Zero the high 16 bits
+;
+DIV1:	SLA	C		;Shift quotient and dividend
+	RLA			; left one bit
+	ADC	HL,HL		;This gets bit out from acc into L-reg
+	SBC	HL,DE		;Try the subtraction
+	JR	NC,DIV2		;Successful subtraction if no carry
+	ADD	HL,DE		; otherwise add it back
+	JR	DIV3		; and skip setting the quotient bit
+;
+DIV2:	INC	C		;Set quotient bit to one
+;
+DIV3:	DJNZ	DIV1		;Dec count and go again if not zero
+;
+	EX	DE,HL		;Done, put remainder in DE
+	LD	H,A		; and quotient in HL
+	LD	L,C
+	RET			; and done
+;
+NOTDIV:	CP	134		; FORMAT STRING TO FCB FCN CODE ??
+	JR	Z,FSTR		; BRIF SO
+;
+;  BAD FNC. SCREAM AND DIE.
+;
+BADFNC:	LD	HL,LOWNIB-FILTER ; HI ORDER FILLED IN BY PART I
+BADC1:	CALL	BADSUB-FILTER	;Convert low nibble to ASCII hex and stuff
+	DEC	HL		; NOW PT TO WHERE HI NIBBLE GOES
+	LD	A,C		;Move high nibble to low
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+BADC2:	CALL	BADSUB-FILTER	;Convert other nibble to ASCII hex and stuff
+	LD	D,H		; PT TO MSG
+	LD	E,MSG-FILTER
+	LD	C,9
+	CALL	5		; TATTLE
+	RST	00H		;  then reboot
+;
+;  Here to convert low nibble of acc to ASCII hex and stuff it at (HL).
+;
+BADSUB:	AND	0FH		;Convert low nibble to ASCII hex
+	ADD	90H
+	DAA
+	ADC	40H
+	DAA
+	LD	(HL),A		;Put hex digit at (HL)
+	RET			;Return to BADFNC
+;
+MSG:	DEFB	CR,LF,'?=0'
+LOWNIB:	DEFB	'0$'
+;
+; -- FORMAT STRING TO FILE CNTRL BLOCK - 86H (134)
+;
+FSTR:	PUSH	DE		;Save FCB address for caller
+	LD	B,(HL)		; MIGHT BE DISK DESIGNATOR
+	INC	HL
+	LD	A,(HL)		; IF THIS IS ":" THEN B-REG
+	CP	':'		;    CONTAINS DRIVE #
+	JR	NZ,NOCOLN
+	INC	HL		; POINTER PAST COLON
+	LD	A,7		; MASK
+	AND	A,B
+	JR	FIRSTB
+NOCOLN:	DEC	HL
+	XOR	A		; SET FOR DEFAULT DISK DRIVE
+FIRSTB:	LD	(DE),A		; FIRST BYTE OF
+	INC	DE		;   FILE CONTROL BLOCK
+	LD	B,8		; MAX # CHAR'S IN A NAME
+NAM1:	CALL	NAME-FILTER	; HI ORDER SUB ADDR SET BY
+				;  PART I -- LOW ASM'ED IN
+	LD	A,'.'
+	CP	A,(HL)
+	JR	NZ,EXT
+	INC	HL
+EXT:	LD	B,3		; MAX # CHAR'S IN AN EXTENSION
+NAM2:	CALL	NAME-FILTER	; HI ORDER SUB ADDR SET BY
+				;  PART I -- LOW ASM'ED IN
+	XOR	A		; ZERO
+	LD	(DE),A		; FILE EXTENT
+	POP	DE
+;
+;  Call here on OPEN to zero current record byte.
+;
+ZCR:	PUSH	DE
+	LD	A,E
+	ADD	32		; GET TO CURR REC BYTE
+	LD	E,A
+	JR	NC,FSTR0
+	INC	D
+FSTR0:	XOR	A
+	LD	(DE),A		; ZERO IT
+	POP	DE
+	RET
+;
+NAME:	LD	A,(HL)		; GET NEXT CHAR FROM STRING
+	CP	21H		; TERMINATION CHARACTER ??
+	JR	C,FILL
+	INC	HL
+	CP	'.'		; NONE OF THESE IN FCB'S
+	JR	Z,FILL
+	CP	60H		; LOWER CASE 'A'-1
+	JR	C,NAME1		; JMP IF NOT LOWER CASE
+	SUB	20H		; CONVERT LOWER TO UPPER CASE
+NAME1:	LD	(DE),A		; PUT CHAR IN FCB
+	INC	DE
+	DJNZ	NAME
+	RET
+;
+FILL:	LD	A,20H		; ASCII SPACE
+FILL2:	LD	(DE),A
+	INC	DE
+	DJNZ	FILL2
+	RET
+;
+;  BC AND DE ALREADY SET WHEN WE GET HERE
+;
+MOVDWN:	LD	HL,300H		; BOTTOM OF PROGRAM
+	LDIR			; MOVE PROG
+	RET			;Go to 100H
+;
+FILEND	EQU	$
+;
+	END

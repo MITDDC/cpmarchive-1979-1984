@@ -1,0 +1,45 @@
+Here are the spelling checker dictionaries that I know of:
+
+My own, used on ISPELL on MIT-XX and SPELL on MIT-AI, ML, MC, and DM.
+This is rather small (about 15000 entries with flags for 39000 words).
+It has "suffix flags" that enable ISPELL to check suffixes with
+no guesswork whatever.  Other spell checkers have "heuristics" that
+frequently go wrong (e.g. they might consider WENTED or BOOKNESS to
+be words).  See the file INFO;SPELL > on any ITS machine for documentation
+of these flags.  The dictionary itself is on [MIT-ML]WBA;DICT > or
+[MIT-XX]SRC:<WBA>SPELL.DCT.
+
+The standard DEC TOPS-20 spelling checker, when asked to dump its master
+dictionary, kindly provided the file [MIT-XX]SS:<WBA>DICT.OUT.  It contains
+42000 words.
+
+The file [MIT-MC]MOON2;DICT NOHYPH had 29000 words.  It has been
+backed up on tape and deleted but could be recovered if you are
+interested.
+
+The file [MIT-ML]DPR;NEW DICT is probably a copy of the very extensive
+dictionary from MULTICS.  It, too, has been backed up and deleted.
+
+The official MULTICS spelling checker's dictionary is available as
+[MIT-MULTICS]>aml>english.dict, with about 80000 words.
+
+The spelling check program runnable on DM by typing :DICT;SPELL is
+(was?) maintained by BKD@DM.  If asked to dump its dictionary, it provides
+about 77000 words.
+
+An unabridged dictionary (probably much larger than one wants for a
+spelling check program) can be found on [MIT-XX]SS:<DOCUMENTATION>UNABRD.DIC.
+It is said to have come from the Stanford AI lab.  I estimate that it
+has about 750000 words.
+
+An unabridged dictionary can also be found on [MIT-VAX]/src/dict/Webster2.dict.
+It seems to be similar, if not identical, to the one in the preceding
+paragraph.
+
+There is said to be a large dictionary owned by Kazar@CMU-10a.
+
+Other dictionaries (and lots of information about the whole subject) can
+be obtained from University of Texas by contacting AMSLER@UTEXAS
+(Robert Amsler) or CLIVE@UTEXAS (Clive Dawson).  There is a sizable
+English lexicography research project at UTexas.
+

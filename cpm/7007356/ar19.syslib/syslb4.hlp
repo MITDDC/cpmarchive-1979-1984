@@ -1,0 +1,147 @@
+Introduction
+Open a File - F$OPEN and F$MOPEN
+Close a File - F$CLOSE
+Create a File - F$MAKE
+Delete a File - F$DELETE
+Rename a File - F$RENAME
+Test of the Existance of a File - F$EXIST
+Read a Block from a File - F$READ
+Write a Block to a File - F$WRITE
+:CP/M File Input/Output Routines
+     The following routines are general-purpose file I/O routines 
+which  interface  to CP/M through the Entry Point at location  5.  
+They preserve BC,  DE,  and HL, and they return with the standard 
+CP/M error codes for the corresponding routines.
+     Specifically, these routines are --
+
+          F$OPEN    Open a file
+          F$MOPEN   Open/Create a file
+          F$CLOSE   Close a file
+          F$MAKE    Create a file
+          F$DELETE  Delete a file
+          F$RENAME  Rename a file
+          F$EXIST   Test of existance of a file
+          F$READ    Read a block (128 bytes) from a file
+          F$WRITE   Write a block (128 bytes) to a file
+:Open a File
+     Routine Name:  F$OPEN
+     Function:
+          Open  the  file specified by the FCB pointed to by  DE.  
+If file not found,  F$OPEN returns with an error code in A (0FFH) 
+and Zero Flag Clear (NZ).
+     Inputs:  DE = pointer to FCB
+     Outputs:  A = Error Code and PSW Flags Set (Zero Flag)
+                   0    --> No Error
+                   0FFH --> File not opened
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS, CAPS, CIN, COUT, CRLF, PRINT
+     Special Error Conditions:  -None-
+
+
+     Routine Name:  F$MOPEN
+     Function:
+          Open  the file specified by the FCB pointed to  by  DE.  
+If  file is not found,  F$MOPEN tries to create one.   It returns 
+the  error code of 0FFH in A if there was not enough room in  the 
+disk directory to create the directory entry.
+     Inputs:  DE = pointer to FCB
+     Outputs:  A = Error Code and PSW Flags (Zero Flag) Set
+                   0    --> No Error
+                   0FFH --> File not opened
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS, CAPS, CIN, COUT, CRLF, PRINT
+     Special Error Conditions:  -None-
+:Close a File
+     Routine Name:  F$CLOSE
+     Function:
+          Close the file whose FCB is pointed to by DE.
+     Inputs:  DE = pointer to FCB
+     Outputs:  A = Error Code
+                   0    --> No Error
+                   0FFH --> Error in closing file
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS
+     Special Error Conditions:  -None-
+:Create a File
+     Routine Name:  F$MAKE
+     Function:
+          Create (Make) the file whose FCB is pointed to by DE.
+     Inputs:  DE = pointer to FCB
+     Outputs:  A = Error Code
+                   0FFH --> No directory space available
+                   Not 0FFH --> No Error; Value is byte address in
+                                TBUFF (80H-0FFH) of directory entry
+                                allocated to the FCB
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS, F$DELETE
+     Special Error Conditions:  -None-
+:Delete a File
+     Routine Name:  F$DELETE
+     Function:
+          Delete the file whose FCB is pointed to by DE.  If file 
+does  not  exist,  nothing happens (no error message or  code  is 
+given).
+     Inputs:  DE = pointer to FCB
+     Outputs:  -None-
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS
+     Special Error Conditions:  -None-
+:Rename a File
+     Routine Name:  F$RENAME
+     Function:
+          F$RENAME  may be used to rename a file.   On entry,  DE 
+pts to the first twelve bytes of the file's FCB and HL pts to the 
+first twelve bytes of the FCB for the new file (that is, only the 
+FN and FT fields are significant,  so the rest of an FCB need not 
+be  present  for this function to work).   F$RENAME  contains  an 
+internal FCB which is structured from the two entries to properly 
+rename the file.
+     Inputs:  HL pts to 1st 12 bytes of new FCB
+              DE pts to 1st 12 bytes of old FCB
+     Outputs:  Zero Flag Set (Z) means error (file not found)
+     Registers Affected:  PSW
+     SYSLIB Routines Called: BDOS, FILLB, MOVEB
+     Special Error Conditions:   File Not Found error,  indicated 
+by Z flag
+:Test of Existance of a File
+     Routine Name:  F$EXIST
+     Function:
+          F$EXIST tests for the presence of the file whose FCB is 
+pted  to by DE in the current disk/user area.   If this file does 
+not  exist in this area,  F$EXIST returns with the Zero Flag  Set 
+(Z); if this file does exist, F$EXIST returns with NZ.
+     Inputs:  DE pts to FCB of file to test for
+     Outputs:  Zero Flag Set (Z) means file not found; NZ means
+                    file found
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS
+     Special  Error Conditions:  None
+
+:Read a Block from a File
+     Routine Name:  F$READ
+     Function:
+          Read  next block (128 bytes) from the opened file whose 
+FCB is pointed to by DE into TBUFF (buffer at 80H - 0FFH).
+     Inputs:  DE = pointer to FCB
+     Outputs:  A = Error Code
+                   0 --> No Error
+                   1 --> Read past end of file
+                   2 --> Reading unwritten data in random access
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS
+     Special Error Conditions:  -None-
+:Write a Block to a File
+     Routine Name:  F$WRITE
+     Function:
+          Write  next block (128 bytes) from TBUFF (buffer at 80H 
+to 0FFH) to the opened file whose FCB is pointed to by DE.
+     Inputs:  DE = pointer to FCB
+     Outputs:  A = Error Code
+                   0    --> No Error
+                   1    --> Error in extending file
+                   2    --> End of disk data
+                   0FFH --> No more directory space
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  BDOS
+     Special Error Conditions:  -None-
+

@@ -1,0 +1,12 @@
+   FAST2.COM is a version of FAST.COM which has been
+fixed to work on CP/M 2.x.
+
+   CAUTION: The sector skew tables MUST BE PATCHED for
+the particular hardware being used.  See the various
+sector skew patch files released with FAST for details.
+The location of the tables has not changed.
+
+   For those who would like to assemble it themselves,
+FAST2.ASM and PACKUP2.ASM will be needed - plus the
+SID utilities released with the original FAST program.
+

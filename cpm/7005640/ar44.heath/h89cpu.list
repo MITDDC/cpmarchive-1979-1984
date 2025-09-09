@@ -1,0 +1,58 @@
+                         H89 CPU parts list ICs
+  ___________________________________________________________________________
+      U Number	     Heath Number    Generic Number	Special function
+  ---------------------------------------------------------------------------
+	U501		443-18		7404
+	U502		443-34		7492
+	U503		443-760		CD4040
+	U504		443-881		Z80
+*4	U506		443-730		74LS74
+	U507		443-727		96L02
+*3	U508		443-824		74LS241
+	U509		443-824		74LS241
+*2	U510		443-837		74LS373
+	U511		443-837		74LS373
+	U512		443-730		74LS74
+	U513		443-824		74LS241
+	U514		443-824		74LS241
+	U515		443-779		74LS02
+	U516	PROM	444-41		74S188		Memory map
+			444-9001
+	U517	PROM	444-42
+		0 ORG.	444-66		SN74S470	Memory map
+	U518	PROM	444-40
+		NEWEST	444-62	!	TMS 2716	Boot system
+	U519		Not used
+	U520	PROM	444-19		2716		Floppy controller
+*2	U521		443-754		74LS240
+	U522		Not used
+*2	U523		443-764		2114		RAM (floppy)
+	U524		Not used
+	U525		443-764		2114		RAM (floppy)
+*36	U526-U549
+	+U1-U9	16K EXP	443-904		4116		RAM (main memory)
+	U550	PROM	444-43
+		NEWEST	444-61	!	SN74S470	I/O Map
+	U551		443-791		74LS244
+	U552		443-805		74LS273
+	U553		443-875		74LS32
+	U554		443-732		74LS30
+	U555		443-730		74LS74
+	U556		443-730		74LS74
+	U557		443-912		74LS148
+	U558		443-754		74LS240
+	U559		443-794		1488
+	U560		443-795		1489
+	U561		443-874		8250		UART
+	U562		443-901		74S132
+
+	U565		442-664		79M12KC or 7912	Regulator
+*3	U566		442-665		7905		Regulator
+*2	U567		442-663		78M12 or 7812	Regulator
+	U568		442-663		78M12 OR 7812	Regulator
+	U569		442-665		7905		Regulator
+	U11		442-665		7905		Regulator 16K board
+
+* = First time number is listed shows total of that number used in CPU.
+
+! = Newest PROM set must be used together, for correct I/O control.

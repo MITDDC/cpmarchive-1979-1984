@@ -1,0 +1,34 @@
+		**** SYSLIB Files on MIT-MC in AR19:CPM ****
+
+The SYSLIB?.HLP files are in ASCII text, source form.
+The SYSLIB.REL file is in relocatable object form (binary).
+The SYSLIB??.WQ files (manual) are WordStar-formatted files which have
+  been SQueezed by the SQ program to reduce their storage space.  You
+  will have to run USQ on them after downloading in order to get the
+  original text back.  Be sure to LMODEM these files as COM files.
+
+ DEBUG  MAC    Outdated SYSLIB Debug Package -- Will be Upgraded Later
+ INDEX  SYSLIB This index to the files
+ SYSLB  HLP    Root Node of SYSLIB Help Tree
+ SYSLB  WQ     Main Body of SYSLIB Manual
+ SYSLB1 HLP    \
+ SYSLB2 HLP     \
+ SYSLB3 HLP      \
+ SYSLB4 HLP       \
+ SYSLB5 HLP        \
+ SYSLB6 HLP         \ SYSLIB Help Files
+ SYSLB7 HLP         / Lower Nodes of the SYSLIB Help Tree
+ SYSLB8 HLP        /
+ SYSLB9 HLP       /
+ SYSLBA HLP      /
+ SYSLBB HLP     /
+ SYSLBC HLP    /
+ SYSLBH WQ     Table of Contents, Indexes of SYSLIB Manual
+ SYSLBS WQ     Section 21: Sample Programs Section of SYSLIB Manual
+ SYSLIB REL    SYSLIB Relocatable Library File
+ SYSLIB RELHEX SYSLIB Relocatable Library File in Hex Form (ASCII
+			text) so people who can't download binary files
+			can get to SYSLIB
+
+
+

@@ -1,0 +1,255 @@
+1.0 INTRODUCTION
+
+A special interface between North Star BASIC (Rel 4) and CPM (V1.4 and V2.0)
+has been implemented.  This interface allows almost all of the North Star
+BASIC functions and capabilities to be used on any CPM system.  With suitable
+patching, the interface will run on Cromemco CDOS (V1.07).  The following
+two sections describe the interface and its use.
+
+1.1 INTRODUCTION TO VERSION 5.9
+
+Version 5.9 has been upgraded to work in conjunction with NORTH STAR
+BASIC Rel. 5.2. The "5" stands for Release 5.2, and the "9" stands
+for version 9 of this interface.
+
+1.2 CHANGES IN VERSION 5.9
+
+1.2.1 All addresses pointing into BASIC have been changed to reflect
+      the correct addresses.
+1.2.2 Label "DESDWR" was not used in 4.8 and has been removed.
+1.2.3 Line length has been changed back to default to 80 char/line.
+1.2.4 The jump table at the start of the interface has been changed
+      to look exactly like DOS. That way, no modifications have to
+      be made to BASIC.
+1.2.5 BASIC is expected to ORG at 0E00H, therefore, it needs not
+      be relocated.
+1.2.6 In DCOM: between MOV A,C and STA DISKNO, an ANI 7FH has been
+      added to strip off the double density flag.
+
+Please report all improvements, bugs etc. to:
+S. Kluger, 11025 Vista Del Sol #250-II, El Paso, TX 79935
+Tel. (915) 598-6274 --> RCPM Ringback, 6PM to 6AM, all day SAT.
+
+
+2.0 NORTH STAR DOS TO CPM COMMAND MAPPING
+
+Assuming you are familiar with North Star DOS and CPM, the following commands
+are used in conjunction with the North Star BASIC (Rel 4) which runs on CPM:
+
+		       North Star DOS		 CPM
+
+A. List directory	 LI<Unit #>	   DIR (use Ctl-P
+					   toggle print)
+
+B. Create file		 CR
+
+   (1) Type 2				   None; creates &
+					   allocates disk
+					   space automatic-
+					   ally when you
+					   NSAVE in BASIC.
+					   Name will appear
+					   in directory as
+					   AAAAAAAA.2
+
+   (2) Type <>2				   In CPM, save a
+					   dummy file to
+					   create file lengths
+					   of NNN blocks by
+					   using SAVE NNN 
+					   AAAAAAAA.T where
+					   T=type.  It's better
+					   to use CREATE in BASIC.
+
+C. Delete		 DE		   Use CPM's ERA
+					   command
+
+D. Compact		 CO		   Not required.
+					   CPM takes care of
+					   this.  Automatical-
+					   ly allocates & de-
+					   allocates type 2
+					   file space.
+
+E. Type			 TY		   Not required.  See
+					   B. above.
+
+F. Load & execute	 GO		   None.  All .COM
+      program				   programs load &
+					   execute at 100H in
+					   CPM.
+
+G. Jump to address	 JP		   Not available in
+					   CPM
+
+H. Copy file		 CF		   Use PIP program.
+					   Use SYSGEN program
+					   for CPM
+
+I. Copy disk		 CD		   Use PIP & SYSGEN
+					   programs
+
+J. Read & write		 RD, WR		   Not available
+      disk sectors
+
+K. Load & save file	 LF, SF		   Not completely
+					   available.  Can do
+					   using DDT and SAVE
+					   in CPM.  All SAVEs
+					   assume RAM address
+					   is at 100H; e.g., use .2
+					   & .3 extensions for
+					   type 2 & 3 files,
+					   respectively.
+
+L. Initialize disk	 IN		   Use a format program.
+					   Be careful; will
+					   destroy programs.
+
+M. Diagnostic		 DT		   Use disk test
+					   program.  Be care-
+					   ful; will destroy
+					   all programs.
+
+
+3.0 NORTH STAR BASIC COMMANDS (REL 4)
+
+The following is a list of capabilities of the interface with BASIC:
+
+A. CREATE - Will create files by reserving disk space by saving dummy
+files of the size and type specified.  This function will be slower than
+with North Star since in order to reserve disk space in CPM, you must actually
+save a file of the size specified.  See item L. in the next section for the
+situation where the disk becomes full during a CREATE.  BASIC has been patched
+to remove the file size limit of 350 blocks.  The current limit is 4095 blocks
+which should suffice for 8" quad density.  This allows up to a 1 Megabyte
+file to be created.  -4096 (F000H) has been patched into location DF7H.
+
+B. DESTROY - No change
+
+C. OPEN - No change
+
+D. CLOSE - No change
+
+E. READ - No change
+
+F. WRITE - No change
+
+G. FILE - No change
+
+H. SAVE - No change; file must already exist in the directory
+
+I. NSAVE - No change; use if file does not exist in directory
+
+J. LOAD - No change
+
+K. APPEND - No change
+
+L. RND(-1) - Will not generate a random number
+
+M. MEMSET and End of BASIC's Memory - MEMSET will give an ARGUMENT ERROR when
+you try to set the address at BDOS or above.  The end address of memory is set
+to the beginning of BDOS-1 when BASIC is first loaded and executed.
+
+N. BSPC - BASIC has been patched at 817H to echo the Backspace character
+(Ctl-H = 8H).
+
+O. LINECT - BASIC has been patched at 80EH to a line length of 132.
+
+
+4.0 SPECIAL FEATURES AND NOTES
+
+A. Drives 1 and 2 in North Star DOS/BASIC are synonomous with drives A and B
+in CPM.
+
+B. CPM does not allow you to SAVE a file larger that available memory.  Thus
+if you have large data files to create, you must create several small files
+using the save technique above and concatentate them using the PIP concatena-
+tion feature.  The size of the large file should equal the sum of the sizes of
+the small files.  It is recommended that you create a file in BASIC using
+CREATE; it is easier to do.  
+
+C. The interface has an added feature which allow you to freeze and unfreeze
+the screen using the Control-S toggle as in CPM while listing on the console
+device.
+
+D. Your CPM or CPM derivative must have a standard BIOS jump table up to the
+PUNCH device jump address and standard CPM BDOS calls.
+
+E. The CPM CONSOLE IN and OUT device is device number 0 in BASIC.
+
+F. The CPM LIST device is device number 1 in BASIC.
+
+G. The CPM PUNCH device is device number 2 in BASIC.  One suggested use is
+as a list device with paging.
+
+H. Make sure you do not have files in the directory with the same name and one
+character type.  Except for LOAD, APPEND, SAVE and NSAVE, BASIC disk commands
+will work with the first directory entry with a matching name and ambiguous
+one character type.  Types with more than one character will be ignored.
+
+I. The base or start address of BASIC is 800H (2048D).  The interface starts
+at 100H.  A jump table equivalent to that in North Star DOS starting at 200DH
+is at 103H.
+
+J. Data file directories are kept in a buffer which holds 10 open files.  These
+files are purged on a FIFO basis.  If new files are opened and the buffer is
+full, the oldest one is purged.  Be careful that your program does not keep a
+file open any longer than is necessary.
+
+K. A disk full, directory full, or file extension error gives an ARGUMENT
+ERROR.
+
+L. When using CREATE and disk becomes full, the normal BASIC error message
+or error number will not be generated.  This is because of the way the
+interface had to be implemented.  When this occurs, the message 'DISK/DIR FULL'
+will be printed on the console, and the program will abort and return to CPM.
+
+M. The program RETURNP.COM can be used (e.g., in L. above) to return to BASIC
+without scratching the program.  Just type RETURNP(cr).
+
+N. The program RETURNV.COM can be used (e.g., in L. above) to return to BASIC
+without scratching the program or the variables.  Just type RETURNV(cr).
+
+O. The programs in M. and N. above put the appropriate jump (i.e., 804H and
+814H) into location 139H in the interface.
+
+P. To incorporate the turnkey start up of BASIC,
+
+	1. Load and execute BASIC by typing NSBASIC(cr)
+	2. Type  1000 CHAIN "program name"(cr)
+	3. Type  BYE(cr)
+	4. Type  SAVE 60 NSBAS4.COM(cr) [or any program name.COM]
+	5. Type  DDT NSBAS4.COM(cr)
+	6. Type  S80F(cr)
+	7. Type  0(cr)
+	8. Type  .(cr)
+	9. Type  Ctl-C(cr)
+	10.Type  SAVE 60 NSBAS4.COM(cr)
+
+The program will now load and execute after loading and executing BASIC.
+
+Q. For those using CDOS V1.07, the following patches are required for
+compatibility; use DDT or DEBUG to patch; then SAVE 60 NSBAS4.COM:
+
+	ADDRESS		CURRENT CODE		PATCH
+
+	 23DH		21H,89H,0,CDH,D4H,4	11H,9,0,19H,0,0
+	 3A4H		CDH,D1H,4		0,0,0
+	 3ADH		CDH,D1H,4		0,0,0
+	 4B5H		21H,8FH,0,CDH,D4H,4	11H,0FH,0,19H,0,0
+
+These patches only apply to Revision 8 of the interface.
+
+RETURNP.COM and RETURNV.COM need to be changed also.  The easiest way is to
+use DDT or DEBUG after the above patches are applied and BASIC resaved.  Load
+in BASIC using DDT; patch location 139H with JMP 804H or JMP 814H for
+RETURNP.COM or RETURNV.COM, respectively; exit DDT with a Control-C; then
+SAVE 1 RETURNP.COM or RETURV.COM.
+
+R. Revision 8 is identified by a period (.) preceeding the file type when
+doing a CAT.  All previous versions used a blank.
+
+
+11/20/79
+

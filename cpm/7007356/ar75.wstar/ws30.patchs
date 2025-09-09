@@ -1,0 +1,553 @@
+.PN 1
+.po 5								
+		    CUSTOMIZATION OF WORDSTAR 3.0 
+
+----------------------------------------------------------------------
+  This	file contains a listing of all the known (to date) labels  and
+patch  addresses that I have been able to verify.   If you know of any
+not listed here, please contact the following person so that this list
+can be updated for the benefit of all.
+			 MILTON HICKS
+			 222 Pacific Avenue
+			 Long Beach, CA 90802
+			 Evenings: (213) 924-6429
+				   or
+			 Heath RBBS  (714) 774-7860
+				   or
+			 MicroNet [70250,467]
+----------------------------------------------------------------------
+
+LABEL	LOCATION	   OPERATION			   SETTINGS	
+
+  USER1 						
+
+TBASE	  0100	  WHERE TO LOAD WORDSTAR		      100
+OUTCHR	  0106	  CHARACTER OUTPUT ROUTINE
+	  0117	  COPYRIGHT NOTICE
+	  017F	  SERIAL NUMBER
+IDTEX	  018F	  TERMINAL ID TEXT			
+	  01B3	  PRINTER ID TEXT
+	  01D7	  PRINTER PROTOCOL TEXT
+	  01FD	  PORT DRIVER TEXT
+SITE	  0248	  SCREEN HEIGHT IN LINES (24)		      18
+WID	  0249	  SCREEN WIDTH IN COLUMNS (80)		      50
+CLEAD1	  024A	  CURSOR POS LEAD-IN			      00 00 00
+							      00 00 00
+							      00 00 00	
+CLEAD2	  0253	  CURSOR POS BETWEEN COL/LINE		      00 00 00
+							      00 00
+CTRAIL	  0258	  CURSOR POS TRAIL			      00 00 00
+							      00 00
+CB4LFG	  025D	  CURSOR POS #0 FOR COL FIRST		      00
+LINOFF	  025E	  CURSOR POS LINE OFFSET		      00
+COLOFF	  025F	  CURSOR POS COLUMN OFFSET		      00
+ASCUR	  0260	  CURSOR POS #0 FOR BINARY		      00
+		    <reserved>				      00 00 00
+UCRPOS	  0264	  CURSOR POS JUMP TO OWN CURSOR POS	      00 00 xx
+OUTCHR	  0267	  CURSOR POS ADDRESS OF BYTE OUTPUT	      00 00
+		    <reserved>				      00 00 00
+		    <reserved>				      00
+ERAEOL	  026D	  ERASE TO END OF LINE		       ^QY    ## 00 00
+							      00 00 00
+							      00
+LINDEL	  0274	  DELETE LINE			       ^Y     ## 00 00
+							      00 00 00
+							      00
+LININS	  027B	  INSERT LINE (CR)		       ^N     ## 00 00
+							      00 00 00
+							      00 00 00
+IVON	  0284	  TURN ON HIGHLIGHTING			      ## 00 00
+							      00 00 00
+							      00
+IVOFF	  028B	  TURN OFF HIGHLIGHTING 		      ## 00 00
+							      00 00 00
+							      00
+TRMINI	  0292	  TERMINAL INITIALIZATION STRING	      ## 00 00
+							      00 00 00
+							      00 00 00
+TRMUNI	  029B	  TERMINAL TERMINATION STRING		      ## 00 00
+							      00 00 00
+							      00 00 00
+INISUB	  02A4	  SPECIAL INIT STRING FOR CUSTOM	      00 00 xx
+UNISUB	  02A7	  SPECIAL TERM STRING FOR CUSTOM CUR POS      00 00 xx
+USELST	  02AA	  USE LAST COLUMN/ROW DISPLAY FLAG	      00
+		    <reserved>				      00 00 00
+DELCUS	  02AE	  DELAY AFTER CURSOR SET		      00
+DELMIS	  02AF	  DELAY AFTER OTHER FUNCTIONS		      00
+MEMAPV	  02B0	  MEMORY-MAPPED DISPLAY TERMINAL	      00
+MEMADR	  02B1	  ADDRESS OF FIRST CHAR, MEMORY-MAPPED	      00 00
+HIBIV	  02B3	  INVERSE VIDEO BY HI ORDER BIT 	      00
+HIBCUR	  02B4	  DISPLAY CURSOR, MEMORY-MAPPED 	      00
+CRBLIV	  02B5	  FF TO BLINK CURSOR, MEMORY-MAPPED	      00
+ZAFCIN	  02B6	  FIX FOR BACKSPACE ON DELETE		      00 00
+RUBFXF	  02B8	  FIX FOR BACKSPACE ON DELETE		      00
+RFIXER	  02B9	  FIX FOR BACKSPACE ON DELETE		      00
+UCNSTA	  02BA	  OPTIONAL USER CONSOLE CHAR READY	      00 00 00
+UCONI	  02BD	  OPTIONAL USER CONSOLE INPUT		      00 00 00
+UCONO	  02C0	  OPTIONAL USER CONSOLE OUTPUT		      00 00 00
+SWIN	  02C3	  OPTIONAL ROUTINE BEFORE DMA TO VIDEO BOARD  00 00 00
+							      00 00 00
+SWOUT	  02C9	  OPTIONAL ROUTINE AFTER DMA TO VIDEO BOARD   00 00 00
+							      00 00 00
+DEL1	  02CF	  SHORT DELAY - CURSOR BLINK		      03
+DEL2	  02D0	  MEDIUM-SHORT DELAY - CURSOR BLINK	      09
+DEL3	  02D1	  MEDIUM-LONG DELAY - TIME TO PREFIX MENUS    19
+DEL4	  02D2	  LONG DELAY - TIME FOR NOTE DISPLAYS	      40
+DEL5	  02D3	  DELAY UNTIL SCREEN REDISPLAY		      09
+TRSCRS	  02D4	  FOR TRS-80 ONLY			      00
+TRSCIF	  02D5	  FOR TRS-80 ONLY			      00
+HETHBS	  02D6	  FOR LIFEBOAT CP/M FOR HEATH-89	      00
+APLFLG	  02D7	  FOR APPLE ONLY			      00
+NMOFUS	  02D8	  NUMBER OF USERS ON SYSTEM		      01
+TCKFLG	  02DA	  FOR MP/M ONLY 			      00
+RSTFLG	  02DB	  #0 FOR NO DISK RESETS 		      00
+DEFDSK	  02DC	  WHERE TO LOOK FOR WSOVLY1.OVR AFTER DEFAULT 01	
+SCRLSZ	  02DD	  NUMBER OF COLUMNS FOR HORIZONTAL SCROLL     14
+MORPAT	  02E0	  USER PATCHED CURSOR POS ROUTINE	      00
+	  |
+  USER2   |
+PBGMEM	  035C						      00 00
+							      00
+							      00
+ITHELP	  0360	  INITIAL HELP LEVEL			      02
+NITHLF	  0361	  =0 FOR MAXIMUM HELP MESSAGE		      FF
+ITITOG	  0362	  INSERT: =0, OFF; =FF, ON		      FF
+ITDSDR	  0363	  NO-FILE DIRECTORY =0, OFF; =FF, ON	      FF
+							      00
+							      00
+INITPF|   0366	  LINE HEIGHT, 1/48'S			      08
+      |   0367	  PAPER LENGTH IN LINES (66)		      42
+      |   0368	  PAPER LENGTH IN 1/48'S		      02,10
+      |   036A	  LINE HEIGHT AGAIN			      08
+      |   036B	  MARGIN AT TOP IN LINES		      03
+      |   036C	  MARGIN AT TOP IN 1/48'S		      00,18
+      |   036E	  LINE HEIGHT AGAIN			      08
+      |   036F	  HEADING MARGIN IN LINES		      02
+      |   0370	  HEADING MARGIN IN 1/48'S		      00,10
+      |   0372	  LINE HEIGHT AGAIN			      08
+      |   0373	  BOTTOM MARGIN IN LINES		      08
+      |   0374	  BOTTOM MARGIN IN 1/48'S		      00,40
+      |   0376	  LINE HEIGHT AGAIN			      08	
+      |   0377	  FOOTING MARGIN IN LINES		      02	
+      |   0378	  FOOTING MARGIN IN 1/48'S		      00,10
+      |   037A	  LINE HEIGHT AGAIN			      08
+      |   037B	  =0 FOR STANDARD CHAR WIDTH		      00	
+      |   037C	  STD CHAR WIDTH IN 1/120'S		      0C
+      |   037D	  ALT CHAR WIDTH IN 1/120'S		      0A
+      |   037E	  PAGE OFFSET IN CHARS			      08
+INITLM	  037F	  INITIAL LEFT MARGIN LESS 1		      00	
+INITRM	  0380	  INITIAL RIGHT MARGIN LESS 1 UP TO WID-4     40	
+INITSR	  0381	  INITIAL SUB/SUPER-SCRIPT ROLL IN 1/48'S     03
+							      00
+							      00
+							      00
+INITWF|   0385	  WORD WRAP FLAG, OFF=0; ON=FF		      FF
+      |   0386	  JUSTIFY FLAG, OFF=0; ON=FF		      FF
+      |   0387	  VARIABLE TABS FLAG, OFF=0; ON=FF	      FF
+      |   0388	  SOFT HYPHEN FLAG, OFF=0; ON=FF	      00
+      |   0389	  HYPEN-HELP FLAG, OFF=0; ON=FF 	      FF
+      |   038A	  PRINT CONTROL CHARS FLAG, OFF=0; ON=FF      FF	
+      |   038B	  RULER LINE DISPLAY, OFF=0; ON=FF	      FF
+      |   038C	  PAGE BREAK DETERMINATION, OFF=0; ON=FF      FF
+      |   038D	  PAGE BREAK DISPLAY, OFF=0; ON=FF	      FF
+      |   038E	  LINE SPACING				      01
+      |   038F	  0=BLOCK, FF=COLUMN MODE		      00
+							      00
+							      00
+NONDOC	  0392	  DIRECT ENTRY 0=DOC, FF=NON-DOC EDIT	      00
+DECCHR	  0393	  DECIMAL POINT CHARACTER		      2E
+							      00
+DOTCHR	  0395	  CHAR TO BEGIN 'DOT' COMMANDS		      2E
+BLNCHR	  0396	  NON-BREAK SPACE CHAR (^O)		      0F
+DOTSON	  0397	  FF=ENABLE, 0=DISABLE DOT COMMANDS	      00
+							      00 00
+HZONE	  039A	  HYPHENATION CRITERION 		      04
+PVWTB	  039B	  ADDRESS OF VOWEL TABLE		      03,9F
+							      00
+PNCON	  039D	  ADDRESS OF NOT-CONSONANT TABLE	      03,A4
+							      00
+VOWTAB	  039F	  TABLE OF VOWELS			      00 00 00
+							      00 00
+NONCON	  03A4	  TABLE OF NON-CONSONANT LETTERS	      00 00 00
+							      00 00 00
+							      00 00 00
+EOFCHR	  03AD	  END OF FILE FLAG			      2E
+BOFCHR	  03AE	  BEGINNING OF FILE FLAG		      3A
+CONCHR	  03AF	  FILE LINE CONTINUATION FLAG		      2B
+OVPCHR	  03B0	  OVERPRINT LINE FLAG			      2D
+LFCHR	  03B1	  LINE ENDS IN LF W/O CR FLAG		      4A
+PAGCHR	  03B2	  END OF PAGE FLAG			      50
+SOFTCR	  03B3	  SOFT CR FLAG				      20
+HARDCR	  03B4	  HARD CR FLAG				      3C
+FDTCHR	  03B5	  MERGE-PRINT COMMAND FLAG		      4D
+							      00
+							      00
+SOFHYC	  03B8	  CHARACTER USED FOR SOFT HYPHENS	      AD
+PAGFIL	  03B9	  CHARACTER USED FOR PAGE BREAKS	      2D
+MARKS |   03BA	  CHARACTER USED FOR START OF BLOCKS	      42
+      |   03BB	  CHARACTER USED FOR END OF BLOCKS	      4B
+      | 						      00
+      | 						      00
+      | 						      00
+      |   03BF	  CHARACTER USED FOR USER MARKS 	      00 00 00
+      | 						      00 00 00
+      | 						      00 00 00
+      | 						      00
+PODBLK|   03CA	  DISK FILE OUTPUT DEFAULT, 0=NO, FF=YES      00	
+      |   03CB	  USE FORM FEEDS, 0=NO, FF=YES		      00	
+      |   03CC	  SUPPRESS PAGE FORMATTING, 0=NO, FF=YES      00
+      |   03CD	  PAUSE BETWEEN PAGES, 0=NO, FF=YES	      00
+      | 						      00
+      | 						      00
+      | 						      00
+NOUFF	  03D1	  #0 FOR SUPPRESS FORM FEED QUESTION	      00
+							      00
+ITPOPN	  03D3	  PRINT PAGE NUMBERS, 0=ON, FF=OFF	      00
+ITMIJ	  03D4	  MICROJUSTIFY SWITCH, FF=ON, 0=OFF	      FF
+ITBIP	  03D5	  BI-DIRECTIONAL PRINT, FF=ON, 0=OFF	      FF
+							      00
+							      00
+							      00
+RVELIM	  03D8	  DELIMITER FOR DATA VALUES		      2C
+RVQUOT	  03D9	  DELIMITER FOR ENCLOSED VALUES 	      22
+							      00
+VARCH1	  03DB	  DELIMITER THAT INTRODUCES VARIABLES	      26
+VARCH2	  03DC	  DELIMITER THAT TERIMATES VARIABLE	      26
+							      00
+VAROPC	  03DE	  CHARACTER AFTER NAME B4 OPTION LETTERS      2F
+	  03DF	  OPTION LETTER FOR OMIT LINE IF VBL NULL     4F
+							      00 00 00
+							      00 00 00
+FNWSCM	  03E6	  NAME OF WORDSTAR PROGRAM		      WS.COM
+DSKTNA	  03F2	  NAME OF MESSAGE FILE			      WSMSGS.OVR
+FNOVLY	  03FE	  NAME OF OVERLAY FILE			      WSOVLY1.OVR
+FNMRGP	  040A	  NAME OF MERGE-PRINT OVERLAY		      MAILMRGE.OVR
+AUTOBS	  0422	  AUTO BACK-SPACE TABLE 		      <NONE>
+BSCHR	  042D	  AUTO BACK-SPACE CHARACTER		      08 00 xx
+							      00
+	  0491	  SET HELP LEVELS			 ^JH  00 00 xx
+							      xx
+	  0495	  MOVE CURSOR LEFT			 ^S   00 00 xx
+							      xx
+	  0499	  BACKSPACE				      00 00 xx
+							      xx
+	  049D	  MOVE CURSOR RIGHT			 ^D   00 00 xx
+							      xx
+	  04A1	  MOVE CURSOR LEFT WORD			 ^A   00 00 xx
+							      xx
+	  04A5	  MOVE CURSOR RIGHT WORD		 ^F   00 00 xx
+							      xx
+	  04A9	  MOVE CURSOR DOWN			 ^X   00 00 xx
+							      xx
+	  04AD	  MOVE CURSOR UP			 ^E   00 00 xx
+							      xx
+	  04B1	  MOVE CURSOR TO LEFT MARGIN		 ^QS  00 00 xx
+							      xx
+	  04B5	  MOVE CURSOR TO END OF LINE		 ^QD  00 00 xx
+							      xx
+	  04B9	  CURSOR TO BOTTOM OF SCREEN		 ^QX  00 00 xx
+							      xx
+	  04BD	  CURSOR HOME				      00 00 xx
+							      xx
+	  04C1	  CURSOR BLOCK-BEGINNING		 ^QB  00 00 xx
+							      xx
+	  04C5	  CURSOR BLOCK-END			 ^QK  00 00 xx
+							      xx
+	  04C9	  CURSOR POSITION-BEFORE PREVIOUS COMMAND ^QP 00 00 xx
+							      xx
+	  04CD	  CURSOR TO SOURCE, etc.		      00 00 xx
+							      xx
+	  04D1	  CURSOR TO MARKER 0			 ^Q0  00 00 xx
+							      xx
+	  04D5	"    "    "    1                          00 00 xx
+							      xx
+	  04D9	"    "    "    2                          00 00 xx
+							      xx
+	  04DD	"    "    "    3                          00 00 xx
+							      xx
+	  04E1	"    "    "    4                          00 00 xx
+							      xx
+	  04E5	"    "    "    5                          00 00 xx
+							      xx
+	  04E9	"    "    "    6                          00 00 xx
+							      xx
+	  04ED	"    "    "    7                          00 00 xx
+							      xx
+	  04F1	"    "    "    8                          00 00 xx
+							      xx
+	  04F5	"    "    "    9                          00 00 xx
+							      xx
+	  04F9	  MOVE TO TOP OF FILE		       ^QR    00 00 xx
+							      xx
+	  04FD	  MOVE TO BOTTOM OF FILE	       ^QR    00 00 xx
+							      xx
+	  0501	  FIND				       ^QF    00 00 xx
+							      xx
+	  0505	  FIND &  REPLACE		       ^QA    00 00 xx
+							      xx
+	  0509	  SET LEFT MARGIN		       ^QL    00 00 xx
+							      xx
+	  050D	  REPEAT FIND & REPLACE 	       ^L     00 00 xx
+							      xx
+	  0511	  SCROLL DOWN CONTINUOUSLY	       ^QW    00 00 xx
+							      xx
+	  0515	  SCROLL UP   CONTINUOUSLY	       ^QZ    00 00 xx
+							      xx
+	  0519	  MOVE SCREEN UP ONE LINE	       ^Z     00 00 xx
+							      xx
+	  051D	  MOVE SCREEN DOWN ONE LINE	       ^W     00 00 xx
+							      xx
+	  0521	  SCROLL DOWN SCREENFUL 	       ^R     00 00 xx
+							      xx
+	  0525	  SCROLL UP   SCREENFUL 	       ^C     00 00 xx
+							      xx
+	  0529	  DELETE CHARACTER LEFT 		      00 00 xx
+							      xx
+	  052D						      00 00 xx
+							      xx
+	  0531	  DELETE CHARACTER RIGHT	       ^G     00 00 xx
+							      xx
+	  0535	  DELETE LINE			       ^Y     00 00 xx
+							      xx
+	  0539	  DELETE TO BEGINNING OF LINE	       ^Qdel  00 00 xx
+							      xx
+	  053D						      00 00 xx
+							      xx
+	  0541	  ERASE TO END OF LINE		       ^QY    00 00 xx
+							      xx
+	  0545	  ERASE WORD TO RIGHT		       ^T     00 00 xx
+							      xx
+	  0549	  INSERT MODE ON/OFF		       ^V     00 00 xx
+							      xx
+	  054D	  REFORMAT TO END OF PARAGRAPH	       ^B     00 00 xx
+							      xx
+	  0551	  REPEAT NEXT COMMAND		       ^QQ    00 00 xx
+							      xx
+	  0555	  INSERT LINE			       ^N     00 00 xx
+							      xx
+	  0559	  TAB					      00 00 xx
+							      xx
+	  055D	  CARRIAGE RETURN			      00 00 xx
+							      xx
+	  0561	  ^P					      00 00 xx
+							      xx
+	  0565	  HIDE/DISPLAY MARKED BLOCK	       ^KH    00 00 xx
+							      xx
+	  0569	  MARK/HIDE BLOCK BEGINNING	       ^KB    00 00 xx
+							      xx
+	  056D	  MARK BLOCK END		       ^KK    00 00 xx
+							      xx
+	  0571	  SET/HIDE MARKER 0		       ^K0    00 00 xx
+							      xx
+	  0575	"         "    1                   ^K1    00 00 xx
+							      xx
+	  0579	"         "    2                   ^K2    00 00 xx
+							      xx
+	  057D	"         "    3                   ^K3    00 00 xx
+							      xx
+	  0581	"         "    4                   ^K4    00 00 xx
+							      xx
+	  0585	"         "    5                   ^K5    00 00 xx
+							      xx
+	  0589	"         "    6                   ^K6    00 00 xx
+							      xx
+	  058D	"         "    7                   ^K7    00 00 xx
+							      xx
+	  0591	"         "    8                   ^K8    00 00 xx
+							      xx
+	  0595	"         "    9                   ^K9    00 00 xx
+							      xx
+	  059D						      00 00 xx
+							      xx
+	  05AD	  INTERRUPT COMMAND IN PROGRESS        ^U     00 00 xx
+							      xx
+	  05B1	  DONE-SAVE-EXIT		       ^KX    00 00 xx
+							      xx
+	  05B5	  DONE-SAVE-RETURN TO MENU	       ^KD    00 00 xx
+							      xx
+	  05B9	  SAVE-CONTINUE EDIT		       ^KS    00 00 xx
+							      xx
+	  05BD	  ABANDON EDIT-RETURN TO MENU	       ^KQ    00 00 xx
+							      xx
+  USER3
+
+	  05C1	  INSERT/READ FILE INTO TEXT	       ^KR    00 00 xx
+							      xx
+	  05C5	  WRITE BLOCK TO ANOTHER FILE	       ^KW    00 00 xx
+							      xx
+	  05C9	  DELETE A FILE				 Y    00 00 xx
+							      xx
+	  05CD	  FILE DIRECTORY ON/OFF			 F    00 00 xx
+							      xx
+	  05D1	  PRINT A FILE				 P    00 00 xx
+							      xx
+	  05D5	  LOG DISK DRIVE			 L    00 00 xx
+							      xx
+	  05D9	  COPY FILE				 O    00 00 xx
+							      xx
+	  05DD	  RENAME A FILE				 E    00 00 xx
+							      xx
+	  05E1	  LEFT MARGIN SET		       ^OL    00 00 xx
+							      xx
+	  05E5	  RIGHT MARGIN SET		       ^OR    00 00 xx
+							      xx
+	  05E9	  TAB SET			       ^OI    00 00 xx
+							      xx
+	  05ED	  TAB CLEAR			       ^ON    00 00 xx
+							      xx
+	  05F1	  SET MARGIN/TABS FROM FILE LINE       ^OF    00 00 xx
+							      xx
+	  05F5	  WORD WRAP ON/OFF		       ^OW    00 00 xx
+							      xx
+	  05F9	  JUSTIFICATION ON/OFF		       ^OJ    00 00 xx
+							      xx
+	  05FD	  VARIABLE TABBING ON/OFF	       ^OV    00 00 xx
+							      xx
+	  0601	  DOT COMMAND DISPLAY ON/OFF	       ^OD    00 00 xx
+							      xx
+	  0605	  RULER DISPLAY ON/OFF		       ^OT    00 00 xx
+							      xx
+	  0609	  PAGE BREAK DISPLAY ON/OFF	       ^OP    00 00 xx
+							      xx
+	  060D	  SOFT HYPHEN ENTRY ON/OFF	       ^OE    00 00 xx
+							      xx
+	  0611	  HYPHEN HELP ON/OFF		       ^OH    00 00 xx
+							      xx
+	  0615	  PARAGRAPH TAB 		       ^OG    00 00 xx
+							      xx
+	  0619	  MARGIN RELEASE		       ^OX    00 00 xx
+							      xx
+	  061D	  CENTER LINE			       ^OC    00 00 xx
+							      xx
+	  0621	  LINE SPACE SETTING		       ^OS    00 00 xx
+							      xx
+	  0625	  PRINT DIRECTIVES		       ^JD    00 00 xx
+							      xx
+	  0629	  EXPLAIN STATUS LINE		       ^JS    00 00 xx
+							      xx
+	  062D	  EXPLAIN FLAGS 		       ^JF    00 00 xx
+							      xx
+	  0631	  EXPLAIN PLACE MARKERS 	       ^JP    00 00 xx
+							      xx
+	  0635					       ^JC    00 00 xx
+							      xx
+	  0639	  EXPLAIN TABS AND MARGINS	       ^JM   00 00 xx
+							      xx
+	  063D	  COMMAND INDEX 		       ^JI    00 00 xx
+							      xx
+	  0641	  EXPLAIN MOVING TEXT		       ^JV    00 00 xx
+							      xx
+	  0645	  EXPLAIN RULER LINE		       ^JR    00 00 xx
+							      xx
+
+
+
+
+  USER4
+
+POSMTH	  0690	  CHARACTERISTIC OF PRINTER		      00
+BLDSTR	  0691	  NUMBER OF STRIKES FOR BOLDFACE	      00
+DBLSTR	  0692	  NUMBER OF STRIKES FOR DOUBLE-STRIKE	      00
+		    <reserved>				      00 00 00
+PSCRLF	  0696	  STRING TO ADVANCE TO NEXT LINE	      00 00 00
+							      00 00 00
+							      00 00 00
+							      00 00
+PSCR	  06A1	  STRING TO RETURN CARRIAGE TO SOL	      00 00 00
+							      00 00 00
+							      00
+PSHALF	  06A8	  <CR> AND HALF LINE-FEED		      00 00 00
+							      00 00 00
+							      00
+PBACKS	  06AF	  PRINT BACKSPACE			      00 00 00
+							      00 00 00
+PALT	  06B5	  SET ALTERNATE CHARACTER WIDTH 	      00 00 00
+							      00 00
+PSTD	  06BA	  RESET STANDARD CHARACTER WIDTH	      00 00 00
+							      00 00
+ROLUP	  06BF	  ROLL CARRIAGE UP PARTIAL LINE 	      00 00 00
+							      00 00
+ROLDOW	  06C4	  ROLL CARRIAGE DOWN PARTIAL LINE	      00 00 00
+							      00 00
+USR1	  06C9	  USER FUNCTION #1			      00 00 00
+							      00 00
+USR2	  06CE	  USER FUNCTION #2			      00 00 00
+							      00 00
+USR3	  06D3	  USER FUNCTION #3			      00 00 00
+							      00 00
+USR4	  06D8	  USER FUNCTION #4			      00 00 00
+							      00 00
+RIBBON	  06DD	  CHANGE TO ALTERNATE COLOR RIBBON	      00 00 00
+							      00 00
+RIBOFF	  06E2	  CHANGE TO BLACK RIBBON		      00 00 00
+							      00 00
+PSINIT	  06E7	  STRING TO INITIALIZE PRINTER		      00 00 00
+							      00 00 00
+							      00 00 00
+							      00 00 00
+							      00 00 00
+							      00 00
+PSFINI	  06F8	  STRING TO TERMINATE PRINTING		      00 00 00
+							      00 00 00
+							      00 00 00
+							      00 00 00
+							      00 00 00
+							      00 00
+
+
+SOCHR	  070B	  CHARACTER FOR STRIKEOUT		      2D
+ULCHR	  070C	  CHARACTER FOR UNDERLINING		      5F
+PRINIT	  070D	  CUSTOM PRINTER INIT STRING		      00 00 00
+PRFINI	  0710	  CUSTOM PRINTER TERM STRING		      00 00 00
+							      00 00 00
+CSWTCH	  0717	  WHERE TO SEND OUTPUT			      01 00 00
+LIBSY	  071A	  BUSY TEST ENTRY  \  CSWTCH = 0, OUTPUT      --
+LISEND	  071D	  OUTPUT CHARACTER  > TO CP/M LIST DEVICE     --
+LISINP	  0725	  INPUT CHARACTER  /			      --
+POBSY	  0728	  PORT DRIVER STATUS ENTRY		      DB
+POSTAT	  0729	  OUTPUT STATUS PORT #			      05
+POMASK	  072C	  WHICH BIT IS OF INTEREST		      01
+POOM	  072E	  FOR PRINTER READY			      01
+POSEND	  0733	  PORT DRIVER SEND CHAR ENTRY		      D3
+POOP	  0734	  OUTPUT DATA PORT			      04
+POINP	  0737	  PORT DRIVER INPUT CHAR ENTRY		      DB
+PISTAT	  0738	  INPUT STATUS PORT			      05
+POINSK	  073B	  WHICH BIT IS OF INTEREST		      02
+POIM	  073D	  FOR INPUT CHAR READY			      02
+POIP	  0741	  INPUT DATA PORT			      04
+PUBSY	  074C	  ENTRY POINT	  \  CSWTCH = 2
+PUSEND	  074F	  PRINT CHARACTER  > USER-SUPPIED OUTPUT ROUTINE
+PUINP	  0752	  INPUT CHARACTER /
+ACBSY	  0758	  BUSY TEST ENTRY \
+ACSEND	  075B	  SEND A CHARACTER \
+ACINP	  0764	  INPUT A CHARACTER \  CSWTCH = 4, ALTERNATE
+ACFIN	  076E	  EXIT ROUTINE	     > CONSOLE PRINTER DRIVER
+ACSTA1	  076F	  RESET IOBYTE	    /			
+ACSTAR	  0777	  ENTRY ROUTINE    /
+CONFIE	  077F	  SET IOBYTE	  /
+PROTCL	  0786	  SET PRINTER PROTOCAL TYPE		      00
+EAKBSZ	  0787	  ETX/ACK MESSAGE LINGTH		      7F
+
+  USER5
+
+DVMILE	  0790	  VERTICAL MOTION INDEX LEADIN STRING	      02,1B,5D
+DVMMIN	  0795	  MAXIMUM DVMILE (FOR 0)		      4F
+DVMRNG	  0797	  MINIMUM DVMILE			      11
+DHMILE	  0779	  HORIZONTAL MOTION INDEX LEADIN STRING       02,1B,5D
+DHMIN	  079F	  MAXIMUM DHMILE			      40
+DHRNG	  07A1	  MINIMUM DHMILE			      10
+DFWD	  07A3	  SET FORWARD PRINT			      02,1B,3E
+DBAK	  07A8	  SET BACKWARD PRINT			      02,1B,3C
+DSP	  07AD	  FORWARD SPACE 			      01,20
+DBS	  07B2	  BACKWARD SPACE			      01,08
+DLF	  07B7	  LINE FEED VMI 			      01,0A
+DRLF	  07BC	  REVERSE LINE FEED			      02,1B,39
+DPHSPC	  07C1	  PRINT PHANTOM SPACE			      00
+DPHRUB	  07C5	  PRINT PHANTOM RUBOUT			      00
+DNPROS	  07D3	  SUPPRESS ALL PROPOR SPACING 0=ON, FF=OFF    00
+DMJWB	  07D5	  ALTER MICROJUSTIFY ALGORITHM 0=NO, FF=ALT   00
+
+POEM
+		  < < <   OEM PARALLEL DAISY WHEEL DRIVER   > > >
+				  (CSWTCH = 3)
+

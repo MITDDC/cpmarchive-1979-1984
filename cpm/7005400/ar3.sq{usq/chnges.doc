@@ -1,0 +1,38 @@
+Major changes to the file compression package:
+
+7/18/81
+A  comprehensive documentation file,  SQUEEZER.DOC has  been 
+added. It replaces some previously scattered information.
+
+7/03/81
+USQ version 1.4 has a new feature to allow previewing squeezed
+files without bothering to create unsqueezed files. It can also
+limit the output from each file to a specified number of lines.
+Since the output can be redirected you can capture in a single
+file the preliminary comments from each of a group of files.
+
+6/16/81
+The first version of USQ forgot to close input files and
+sometimes exceeded the limit of open files in the BDS C
+run time package.
+
+Both USQ and SQ were changed so that both normal and error
+exits would close their files properly. This error arose
+because the original versions only handled one file and
+relied on the automatic closing at program exit.
+
+I also noted some weird situations when using a pipe to connect
+FLS to USQ or SQ. Sometimes the latter reported a different
+list of files than was requested! The problem occurs when a
+program is aborted leaving a pipe input file (TEMPIN.$$$) on
+the current diskette. The next run creates its TEMPIN.$$$ by
+renaming another file. You can end up with both TEMPIN.$$$
+files on the same diskette!!! The old one appears earlier in
+the directory, so it is used instead of the new one.
+
+The DIO package which forms DIO2.C, SQDIO.C and USQDIO.C has
+been changed to always erase TEMPIN.$$$ as a program exits,
+even though that program didn't create it.
+
+		Dick Greenlaw
+

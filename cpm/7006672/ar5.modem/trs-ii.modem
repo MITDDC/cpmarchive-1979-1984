@@ -1,0 +1,31 @@
+BABYL OPTIONS:
+Version:5
+Append
+
+1, recent,, answered,
+*** EOOH ***
+Date: 21 July 1981 2201-EDT (Tuesday)
+From: Bill Sholar <William.Sholar at CMU-10A>
+Sender: William.Sholar at CMU-10A
+To:   INFO-CPM
+Re:   TRS-80 Model II MODEM Equates & Ports
+
+	Since the documentation on the Mod 2 TRS-80 does not bother
+to discuss hardware, the following port addresses and equates for
+MODEM.ASM programs might prove useful to anyone using this machine:
+
+	MODCTLP	EQU	0F6H	;status/control port A
+	MODSNDB	EQU	04H	;bit 2 indicates ready to send
+	MODSNDR	EQU	04H	;  with the bit set to 1
+	MODRCVB	EQU	01H	;bit 0 indicates character received
+	MODRCVR	EQU	01H	;  with the bit set to 1
+	MODDATP	EQU	0F4H	;data port A
+
+	These values, plugged into MODEM.ASM, allow the TRS-80 Mod 2 to
+function without any special system calls or other variations from the
+existing MODEM.ASM program, assuming the port has been set up using the
+SETUP (Pickles & Trout's CPM), CONFIG (Lifeboat's CPM) or SET (Cybernetics'
+CPM) utility for the appropriate baud rate, etc.
+
+	Bill Sholar
+

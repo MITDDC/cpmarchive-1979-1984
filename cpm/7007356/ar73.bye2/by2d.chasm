@@ -1,0 +1,188 @@
+******************************************************************
+;	  D. C. Hayes MicroModem 100 Interface routines
+;		Version 1.0    by Paul Traina
+;
+;	These routines will allow the easy patching of ByeII for any 
+;type of modem/serial port combination.  Certain routines must return
+;status flags, so please be careful to set the flags as directed.
+;
+;This version is for the D.C. Hayes MM100 and 80-103a modem cards.
+;It is an adaptation of the routines present in BYE version 8.0
+;
+;Current revision history: (in reverse order to minimize reading time)
+;
+;11/04/82: Routines added, no fuss, mess, or frills...
+;
+;The following define the port address and USART number to use.
+;
+BASEP	EQU	80h		;Base port for modem card
+;
+;*****************************************************************************
+;
+;Port equates
+;
+DPORT	EQU	BASEP	;Modem data port
+SPORT	EQU	BASEP+1	;Status port and control port #1
+CPORT2	EQU	BASEP+2	;Control port #2
+;
+;	Bit functions
+;
+DAV	EQU	1	;Receive register full/data available
+TBMT	EQU	2	;Transmitt buffer empty
+PE	EQU	4	;Parity error
+FE	EQU	8	;Framing error
+OE	EQU	10h	;Overrun error
+CD	EQU	40h	;Carrier detect
+RI	EQU	80h	;NOT ring indicator (low=true)
+;
+NORM8	EQU	17h	;8 bits, no parity, 1 stop bit
+NORM110	EQU	1Fh	;8 bits, no parity, 2 stop bits (for 110 baud)
+;
+BD300	EQU	83h	;answer mode, 300 baud, pick up phone, turn on carrier
+BD110	EQU	82h	;same as above, but 110 baud
+;
+;****************************************************************************
+;If any of your routines zaps anything other than the Accumulator, then you *
+;must preserve all other registers.  If you don't,  ByeII may barf.         *
+;****************************************************************************
+;
+;This routine should turn off everything on the modem,  but set baudrate to
+;300 baud, and get it ready to wait for a ring.  (Also hang it up)
+;
+;NB: In the DCH, a call to SET300 now would answer phone, so, don't do it!
+;
+MDINIT:	EQU	$+OFFSET
+	XRA	A		;hangup phone
+	OUT	CPORT2		;clear off-hook flag, turn off carrier
+	RET
+;
+;The following is a routine to determine if there is a character waiting
+;to be received,  if none are there,  the Zero flag will be set, otherwise,
+;255 will be returned in register A.  Remember that the system will like you
+;a little more if you also mask out framing, parity, and overrun errors.
+;
+MDINST:	EQU	$+OFFSET
+	IN	SPORT		;get status
+	ANI	DAV		;mask garbage out
+	RZ			;no character found
+
+MDINST1	EQU	$+OFFSET
+	ORI	0FFH		;we got something...
+	RET
+;
+;
+;The following is a routine to determine if the transmit buffer is empty.
+;If it is empty, it will return with the Zero flag clear.  If the transmitter
+;is busy, then it will return with the Zero flag set.
+;
+MDOUTST	EQU	$+OFFSET
+	IN	SPORT		;get status
+	ANI	TBMT		;transmitter ready?
+	RET			;return with proper status
+;
+;The following is a routine that will check to make sure we still have carrier
+;If there is no carrier, it will return with the Zero flag set.
+;
+MDCARCK EQU	$+OFFSET
+	IN	SPORT		;read port
+	ANI	CD		;carrier there?
+	RET
+;
+;The following routine will check to see if the phone is ringing, if it isn't,
+;it will return with Zero set, otherwise Zero will be cleared.
+;
+MDRING:	EQU	$+OFFSET
+	IN	SPORT		;read status
+	CMA			;invert flags so that NOT-RING becomes ring
+	ANI	RI		;not ringing?
+	RET
+;
+;The following is a routine that will input one character from the modem
+;port.  If there is nothing there, it will return garbage... so use the
+;MDINST routine first.
+;
+MDINP:	EQU	$+OFFSET
+	IN	DPORT		;get character
+	ANI	7FH		;strip parity and other garbage
+	RET
+;
+;The following is a routine that will output one character in register A
+;to the modem.  REMEMBER, that is register A, not register C.
+; ** Use MDOUTST first to see if buffer is empty **
+;
+MDOUTP:	EQU	$+OFFSET
+	OUT	DPORT		;send it
+	RET
+;
+;The following routine will make the modem answer the phone.
+;
+MDANSW:	EQU	$+OFFSET
+	CALL	SET300		;set modem for 300 baud & answer phone
+	RET
+;
+;These next routines set the proper baud rates for the modem.  If you do
+;not support the particular rate, then simply put in a JMP to SETINV.
+;If the baud rate change was successful, make SURE the Zero flag is set.
+;
+;The following routine returns a 255 because we were not able to set to
+;the proper baud rate because either the serial port or the modem can't handle
+;it.
+;
+SETINV:	EQU	$+OFFSET
+	MVI	A,0FFH
+	ORA	A		;make sure the Zero flag isn't set
+	RET
+;
+;The follwing sets us for 110 baud. You may wish to remove this and replace
+;it with a JMP to SETINV because you hate creeps that call in at 110 baud and
+;want to download a 200k long files (arrrrgh)
+;
+SET110:	EQU	$+OFFSET
+	MVI	A,NORM110	;set 8 bits, no parity, 2 stop bits
+	OUT	SPORT
+	MVI	A,BD110		;set 110 baud and answer phone
+	OUT	CPORT2
+	XRA	A		;make sure Z flag is set
+	RET
+;
+;Set up for 300 baud
+;
+SET300:	EQU	$+OFFSET
+	MVI	A,NORM8		;8 bits, no parity, 1 stop bit
+	OUT	SPORT
+	MVI	A,BD300		;300 baud and answer phone
+	OUT	CPORT2
+	XRA	A		;make sure Z is set
+	RET
+;
+;Set up for 450 baud
+;
+SET450:	EQU	$+OFFSET
+	JMP	SETINV		;Not available with DC Hayes (execpt with that
+				;neat hardware hack, but you can easily hack
+				;the code for it)
+;
+;Set up for 600 baud
+;
+SET600:	EQU	$+OFFSET
+	JMP	SETINV		;Not available
+;
+;Set up for 710 baud (for all of those folks with PMMI's)
+;
+SET710:	EQU	$+OFFSET
+	JMP	SETINV		;Not available
+;
+;Set up for 1200 baud
+;
+SET1200	EQU	$+OFFSET
+	JMP	SETINV		;Only in your wet dreams, sucker...
+;
+;Ok, that's all of the modem dependant routines that ByeII uses, so if
+;you patch this file into your copy of ByeII, then it should work out well.
+;
+;If you have any problems, give me a call and I can specify further details.
+;				Paul Traina -- 10/4/82
+;
+;	END (of ByeDCH but not program)
+;******************************************************************************
+

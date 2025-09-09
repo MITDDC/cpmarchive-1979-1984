@@ -1,0 +1,78 @@
+If your terminal is not among those listed in the customization
+sequence for MTN13, choose the one for the PA3025 and patch the
+following locations:
+
+2172	CLRSCN:	02	; Count (length of this home/clear screen sequence)
+		1F	; First char of sequence
+		1F	; Second char
+		00	; with room up to next label - leave one 0.
+
+217D	INVON:	03	; Length of Inverse Video (or dim) ON
+		1B	; First char
+		4F	; Second
+		31	; Next, etc, as above
+		00
+
+2184	INVOFF:	03	; Length of Inverse Video (or dim) OFF (normal)
+		1B	; First char
+		4F	; Next
+		30	; Last
+		00
+
+--------------------
+
+The modem ports indicated below are based on the DC Hayes being
+addressed at 80H.  There should be enough information here on how to
+change the external port locations.
+
+011C	DB 81	IN  A,81	; Modem status port read
+
+015A	DB 81	IN  A,81	; Modem status port read
+
+155F	DB 05	IN  A,05	; External status port read
+1561	E6 02	AND 02  	; Mask so RET Z if not ready
+
+156F	DB 81	IN  A,81	; Modem status port read
+
+157A	DB 04	IN  A,04	; External INPUT data port read
+
+1586	DB 80	IN  A,80	; Modem INPUT data port read
+
+189C	DB 05	IN  A,05	; External status port read
+189E	E6 01	AND 01  	; Mask so JR  Z,*189C* if not ready
+
+18A5	D3 04	OUT 04,A	; External port OUTPUT data
+
+18BE	DB 81	IN  A,81	; Modem status port read
+
+18C7	D3 80	OUT 80,A	; Modem OUTPUT data port write
+
+1AAB	D3 81	OUT 81,A	; Modem status port write
+
+1BA2	DB 81	IN  A,81	; Modem status port read
+
+1BC7	DB 81	IN  A,81	; Modem status port read
+
+1BF8	D3 82	OUT 82,A	; Modem mode port write
+
+--------------------
+These patch locations are for changing the PMMI port numbers for MTN
+1.3 only:
+
+0115	DB62	IN  A,62
+0153	DB62	IN  A,62
+156A	DB60	IN  A,60
+1583	DB61	IN  A,61
+18B0	DB60	IN  A,60
+18B9	D361	OUT 61,A
+1AA5	D363	OUT 63,A
+1B92	DB62	IN  A,62
+1BBF	DB62	IN  A,62
+1BDA	D360	OUT 60,A
+1BED	D360	OUT 60,A
+
+FLUSH:	124F	Change AF (XOR A) to C9 (RET).
+
+Also change:
+
+232B   Change 3A491C ( LD A,(1C49) ) to 32491C ( LD (1C49),A )

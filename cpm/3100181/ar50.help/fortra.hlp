@@ -1,0 +1,160 @@
+Invoking FORTRAN-80 and MACRO-80
+FORTRAN-80 Compilation Switches
+FORTRAN-80 Library Subroutines
+FORTRAN-80 Logical Device Assignments
+Invoking LINK-80
+LINK-80 Switches
+Creating a FORTRAN-80 .COM File
+:Invoking FORTRAN-80 and MACRO-80
+     The FORTRAN-80 compiler and the MACRO-80 assembler,  named F80 and M80 
+respectively, are invoked in a similar fashion.  In both cases, the name of 
+the  program is given followed by an argument list.   This argument list is 
+of the general form --
+          obj-dev:filename.ext,list-dev:filename.ext=
+               source-dev:filename.ext
+     These symbols are defined as follows --
+        obj-dev:  The device on which the object program is to be written.
+        list-dev:  The device on which the program listing is written.
+        source-dev:   The  device from which the source  program  input  to 
+FORTRAN-80 or MACRO-80 is obtained.
+        filename.ext:   The  filename and filename extension of the  object 
+program file,  the listing file,  and the source program file.
+
+     The default extensions are --
+
+               FOR  FORTRAN-80 Source File
+               MAC  MACRO-80 Source File
+               PRN  Print (Listing) File
+               REL  Relocatable Object File
+               COM  Absolute Object File ORGed to 100H
+
+     The specifications for either the object file,  the listing  file,  or 
+both  may  be  omitted.   If neither a listing file nor an object  file  is 
+desired, place only a comma to the left of the equal sign.  If the names of 
+the object file and the listing file are omitted,  the default is the  name 
+of the source file.  Logical CP/M devices may be specified as follows --
+
+               A:, B:    Disk Drives (Only A: or B:)
+               HSR:      High Speed Reader
+               LST:      Line Printer
+               TTY:      Teletype or CRT
+
+Examples --
+     A>F80
+     *=TEST
+          Compile the program TEST.FOR and place the object in TEST.REL
+     *,TTY:=TEST
+          Compile  the  program  TEST.FOR  and  list  the  program  on  the 
+terminal.  No object is generated.
+     *TESTOBJ=TEST.FOR
+          Compile the program TEST.FOR and put object in TESTOBJ.REL
+     *TEST,TEST=TEST
+          Compile  TEST.FOR,  and  put  object in TEST.REL and  listing  in 
+TEST.PRN
+     *,=TEST.FOR
+          Compile TEST.FOR but produce no object or listing  file.   Useful 
+for checking for errors.
+
+   In  all  cases,  the  * is the prompt from  FORTRAN-80.   The  indicated 
+operations  may also be performed by typing 'F80' followed by  the  option, 
+like 'F80 =TEST'.
+   Refer to the 'FORTRAN-80 User's Manual', Copyright 1977, by Microsoft.
+:FORTRAN-80:  FORTRAN-80 Compilation Switches
+     A number of different switches may be given in the command string that 
+will affect the format of the listing file.  Each switch should be preceded 
+by a slash (/):
+
+Switch    Function
+------    --------
+   O      Print all listing addresses in octal
+   H      Print all listing addresses in hexadecimal (default)
+   N      Do not list generated code
+   R      Force generation of an object file
+   L      Force generation of a listing file
+   P      Each /P allocates an extra 100 bytes of runtime stack space
+   M      Specifies to the compiler that the generated code should be in  a
+          form which can be loaded into ROM.
+
+:FORTRAN-80:  FORTRAN-80 Library Subroutines
+     The  standard library (FORLIB.REL) includes the following  subroutines 
+and functions --
+
+     ABS       IABS      DABS      AINT      INT       IDINT
+     AMOD      MOD       AMAX0     AMAX1     MAX0      MAX1
+     DMAX1     AMIN0     AMIN1     MIN0      MIN1      DMIN1
+     FLOAT     IFIX      SIGN      ISIGN     DSIGN     DIM
+     IDIM      SNGL      DBLE      EXP       DEXP      ALOG
+     DLOG      ALOG10    DLOG10    SIN       DSIN      COS
+     DCOS      TANH      SQRT      DSQRT     ATAN      DATAN
+     ATAN2     DATAN2    DMOD      PEEK      POKE      INP
+     OUT
+
+:FORTRAN-80:  FORTRAN-80 Logical Device Assignments
+
+     LUN*      Device
+     ----      ------
+     1,3,4,5   Preassigned to CON:
+     2         Preassigned to LST:
+     6-10      Preassigned to Disk Files (Reassignable)
+     11-255    User-Assignable
+
+* LUN = Logical Unit Number
+:LINK-80:  Invoking LINK-80
+     Each command to LINK-80 consists of a number of filenames and switches 
+separated by commas --
+          obj-dev1:filename.ext/sw1,obj-dev2:filename.ext, ...
+     If  the  input  device  for a file is  omitted,  the  default  is  the 
+currently logged disk.   If the extension of a file is omitted, the default 
+is  .REL.   After  each  line is typed,  LINK-80 will load  or  search  the 
+specified files,  and,  when finished, it will list all symbols that remain 
+undefined followed by an asterisk.   LINK-80 is invoked by the program name 
+'L80'.
+     LINK-80  can be used to generate a .COM file of a FORTRAN-80  program.  
+This can be done by typing --
+          L80 program/E
+LINK-80 will respond with a string of the form --
+          [aaaa bbbb nn]
+The user may then create the .COM file by typing --
+          SAVE nn program.COM
+:LINK-80:  LINK-80 Switches
+     The following are the switches for LINK-80.   As for FORTRAN-80, these 
+switches are preceeded by a slash (/).
+
+Switch    Function
+------    --------
+   R      Reset.  Initialize loader.
+E,E:name  Exit LINK-80.   FORLIB.REL will be searched to  satisfy  existing 
+          undefined references.   If 'name' is specified, the value of this 
+          symbol is used as the start address of the program.
+G,G:name  Go.   Start execution of program.  FORLIB.REL will be searched to 
+          satisfy any existing undefined references.
+   U      List all undefined references.
+   M      Map.  List all defined references and their values; all undefined 
+          references are followed by an asterisk.
+   S      Search.   Search the file specified before this switch to satisfy 
+          references.
+   N      If a filename/N is specified,  the program will be saved on  disk 
+          under the selected name with a default extension of .COM.
+P and D   See Addenda to Section 2 of documentation.
+
+     Three numbers are specified after the /E and /G switches are executed.  
+They are given in the form --
+          [aaaa bbbb nn]
+  aaaa - start address of program
+  bbbb - address of next available byte
+  nn   - number of 256-byte pages used
+:Creating a FORTRAN-80 .COM File
+     There  are  two  basic  ways to create a .COM  file  of  a  FORTRAN-80 
+program.   For example,  to generate PROG.COM from PROG.FOR, proceed in one 
+of the following ways --
+
+ I.  Using SAVE
+     F80 =PROG
+     L80 PROG/E
+       [aaaa bbbb nn] -- response from LINK-80 (necessary data)
+     SAVE nn PROG.COM
+
+II.  Using /N LINK-80 Switch
+     F80 =PROG
+     L80 PROG/E,PROG/N
+

@@ -1,0 +1,104 @@
+Sort Routines -- Introduction
+SSB Initializer
+SORT
+:Sort Routines -- Introduction
+
+     Two  routines are provided which give the SYSLIB  programmer 
+access  to a very flexible sorting system.   The main routine  is 
+called  SORT,  and it provides a utility which does an  in-memory 
+sort  of  a set of fixed-length records.   The sorting  technique 
+used is a Shell Sort,  adapted from the book "Software Tools"  by 
+Kernigan  and Plaugher,  published by Addison-Wesly,  1976,  page 
+106.  This sort is very fast, much more so than the simple bubble 
+sort.
+
+     This  Shell Sort can be done in two ways:   with or  without 
+using  pointers.   Sorting  without using pointers  is  typically 
+slower than sorting with pointers,  and the only advantage to not 
+using  pointers is the savings of space which is taken up by  the 
+pointers (2*number of entries bytes).   If pointers are used  for 
+the  sort,  then whenever an exchange is done,  the pointers  are 
+simply exchanged,  rather than the full records, and this greatly 
+decreases the sort time in most casts.
+
+     The SORT routine is controlled by passing to it a pointer to 
+a Sort Specification Block (SSB) in DE.   This Sort Specification 
+Block  is  a series of 2-byte words which contain  the  following 
+information:
+          Bytes 0&1: Starting Address of 1st Record
+          Bytes 2&3: Number of Records to Sort
+          Bytes 4&5: Size of Each Record (in Bytes)
+          Bytes 6&7: Address of Compare Routine Provided by User
+                         This  routine compares two records,  one 
+                     pointed to by HL and the other pointed to by 
+                     DE.   If the record pointed to by DE is less 
+                     in sorting order than that pointed to by HL, 
+                     this Compare Routine is to return with Carry 
+                     Set  (C).   If  the  records  are  equal  in 
+                     sorting  order,  this Compare Routine is  to 
+                     return with Zero Set (Z).   Only the PSW  is 
+                     to be affected by the Compare Routine.
+          Bytes 8&9: Address of Pointer Table
+          Byte 10:  Flag; 0 means to use pointers, 0FFH means not
+          Byte 11:  Unused
+
+     As mentioned previously,  two routines are available in this 
+sort module.   The first routine, SSBINIT, looks at the beginning 
+of  a  scratch  area  and  the initial contents  of  an  SSB  and 
+allocates space for the pointer table.   It also checks to see if 
+the  buffer  required will overflow the  TPA  (Transient  Program 
+Area).
+
+     The second routine,  SORT, performs the sort, and controlled 
+by the SSB pointer passed to it in DE.
+
+:SSB Initializer
+
+     Routine Name:  SSBINIT
+     Function:
+          This  routine loads bytes 0&1 (address of first record) 
+and  8&9 (address of pointer table) of an SSB,  checking for  TPA 
+overflow.   It is passed the start address of a scratch area, and 
+sets  the pointer table to start here,  looks at the record  size 
+and record count entries of an SSB,  and adds this product to the 
+address of the pointer table.   The resultant address is returned 
+as the address of the first record.
+     This  routine  may  be used as described  above  before  any 
+records  are loaded into memory for the sort,  or it may be  used 
+after the records have already been loaded.   In the latter case, 
+the  user should save the start address of the first  record  and 
+call  SSBINIT  with the address of the first byte after the  last 
+record.   Once  SSBINIT  has loaded the buffers in  the  SSB  and 
+checked  for  a  TPA  overflow (note that this is  done  for  the 
+pointers only),  it will return to the caller,  at which time the 
+caller  should  restore the first two bytes of the SSB  to  their 
+proper values, the actual start address of the first record.
+
+SSBINIT, Con't
+     Inputs:  HL pts to start of scratch area, DE pts to SSB
+     Outputs:  Z Flag is Set (Z) if TPA overflow; NZ if OK
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  MOVEB
+     Special  Error Conditions:  None
+
+
+:SORT
+
+     Routine Name:  SORT
+     Function:
+          SORT sorts the set of fixed length records according to 
+the  control  information in the Sort Specification  Block  (SSB) 
+pointed to by DE.
+     Inputs:  DE pts to SSB
+     Outputs:  None (Records are Sorted)
+     Registers Affected:  None
+     SYSLIB Routines Called:  MOVEB, PRINT
+     Special  Error Conditions:
+          The Error Message "SORT Pointer Error" may be  printed, 
+but is highly unlikely.  This indicates a flaw has developed with 
+the SORT routine for this particular case,  and it could not SORT 
+the  set  of records as desired.   This error is fatal  and  will 
+abort to CP/M.
+
+
+

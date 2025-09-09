@@ -1,0 +1,535 @@
+>>>>>>>>>>>>>>>>>>>>> CP/M-Net News <<<<<<<<<<<<<<<<<<<<<<<<
+
+============================================================
+Number 1              January, 1980        Volume 1, Issue 1
+============================================================
+
+ Printed  monthly  (at worst quarterly) to inform user's  of 
+RCPM Systems to the latest software news,  information,  and 
+updates   of   public   domain   software   accessible   via 
+telephone/modem transfer.  Yearly subscription for copies of 
+the  CP/M-Net News may be obtained by mailing $18.00  (check 
+or money orders only) to Kelly Smith,  CP/M-Net,  3055  Waco 
+Avenue,  Simi Valley,  California 93063.  CP/M-Net is a non-
+profit  orginization and all money received on subscriptions 
+are utilized for the sustaining and enhancments of the CP/M-
+Net System.
+
+ If  you  would  like to contribute an  article,  include  a 
+column containing your area of interest and   expertise,  or 
+participate  in an open forum for conversation and  transfer 
+of  ideas,  feel free to send it to the CP/M-Net System  and 
+indicate  that you would like it to be included in the CP/M-
+Net News...if possible,   use WordStar (trademark,  MicroPro 
+International)  or  Electric  Pencil   (trademark,   Micheal 
+Shrayer) in 60 column format.
+ 
+Note: CP/M is a registered trademark of Digital Research
+
+
+               MODEM/XMODEM Protocol Explained
+               by Kelly Smith, CP/M-Net "SYSOP"
+                      January 8,1980
+
+ I  thought that it may be of some interest to those of  you 
+that  use  the MODEM/XMODEM file transfer capability of  the 
+CP/M-Net,  to get a little insight as to the  communications 
+protocol  (i.e.  "handshaking  method") used by the  system. 
+
+ Herein  lies the details of a very good (not perfect)  data 
+communications  protocol  that  has become  the  "de  facto" 
+standard  for various remote CP/M systems (RCPM's) that  are 
+accessible across the country (refer to RCPMLST5.DOC on  all 
+RCPM's  for access numbers and note that the "digit  number" 
+in that list changes as new system are listed).  I also wish 
+to give credit to Ward Christensen (the "original" CBBS) for 
+writing  MODEM.ASM (CPMUG Volume 25.11) and Keith  Petersen, 
+Bruce Ratoff, Dave Hardy, Rod Hart, Tom "C" (we know who you 
+are Tom!),  and others,  for enhancements to Ward's original 
+program that we now call XMODEM (external modem).
+
+ Data is sent in 128 byte blocks with sequentially  numbered 
+blocks, and appended by a single checksum at the end of each 
+block. As the receiving computer acquires the incoming data, 
+it  performs it's own checksum and upon each completion of a 
+block,  it  compares it's checksum result with that  of  the 
+sending  computers.  If  the receiving computer matches  the 
+checksum of the sending computer, it transmits an ACK (ASCII 
+code protocol character for ACKNOWLEDGE (04 Hex, Control-F)) 
+back to the sending computer.  The ACK therefore means "alls 
+well  on  this  end,  send  some  more...".  Notice  in  the 
+following example,  that the sending computer will  transmit 
+an  "initial  NAK"  (ASCII protocol character  for  NEGATIVE 
+ACKNOWLEDGE (15 Hex,  Control-U))...or,  "that wasn't  quite 
+right, please send again". Due to the asynchronous nature of 
+the  initial  "hook-up"  between  the  two  computers,   the 
+receiving  computer  will "time-out" looking for  data,  and 
+send the NAK as the "cue" for the sending computer to  begin 
+transmission. The  sending computer knows that the receiving 
+computer  will  "time-out",  and uses this fact to  "get  in 
+sync"...The  sending computer responds to the "initial  NAK" 
+with  a  SOH  (ASCII code protocol character  for  START  OF 
+HEADING (01 Hex,  Control-A)), sends the first block number, 
+sends the 2' complement of the block number (VERY important, 
+I will discuss this later...), sends 128 bytes of 8 bit data 
+(thats  why  we can transfer ".COM" files),  and  finally  a 
+checksum,  where  the checksum is calculated by summing  the 
+SOH,  the block number, the block number 2's complement, and 
+the 128 bytes of data.
+
+Receiving Computer:
+
+----/NAK/------------------------/ACK/----------------------
+     15H                          06H 
+
+Sending Computer:
+
+--------/SOH/BLK#/BLK#/DATA/CSUM/---/SOH/BLK#/BLK#/DATA/etc.
+         01H 001H 0FEH 8bit 8bit     01H 002H 0FDH 8bit ....  
+
+ This  process continues,  with the next 128 bytes,  IF  the 
+block  was ACK'ed by the receiving computer,  and  then  the 
+next sequential block number and it's 2's complement, etc.
+
+ But  what  happens  if the  block  is  NAK'ed?...easy,  the 
+sending computer just re-sends the previous block.  Now  the 
+hard  part...what if the sending computer transmits a block, 
+the  receiving computer gets it and sends an  ACK,  but  the 
+sender  does not see it?...The sending computer thinks  that 
+it   has  failed  and  after  10  seconds  re-transmits  the 
+block...ARGH!...the  receiving  computer has  "stashed"  the 
+data  in  memory or on disk (data is written to  disk  after 
+receiving 16 blocks),  the receiving computer is now 1 block 
+AHEAD of the transmiting computer!  Here comes the operation 
+of the block numbers...The receiver detects that this is the 
+last  block  (all over again),  and transmits back  an  ACK, 
+throws   away   the  block,   and   (effectively)   "catches 
+up"...clever!  Whats more, the integrity of the block number 
+is verified by the receiving computer, because it "sums" the 
+SOH  (01 Hex) with the block number plus the 2's  complement 
+of  the  block number),  and the result MUST BE zero  for  a 
+proper  transfer  (e.g.  01+01+FE hex =  00,  on  the  first 
+block). The sequence of events then, looks like this: 
+
+Receiving Computer:
+
+----/ACK/-----------------------/NAK/-----------------------
+     06H                         15H  
+
+Sending Computer:
+
+CSUM/---/SOH/BLK#/BLK#/DATA/CSUM/---/SOH/BLK#/BLK#/DATA/etc.
+8bit     01H 003H 0FCH 8bit 8bit     01H 003H 0FCH 8bit ....
+
+ Normal completion of data transfers will then conclude with 
+an  EOT (ASCII code protocol END OF  TRANSMISSION,  04  Hex, 
+Control-D)  from the sending computer,  and a final ACK from 
+the  receiving computer.  Unfortunately,  if  the  receiving 
+computer  misses the EOT,  it will continue to wait for  the 
+next block (sending NAK's every 10 seconds,  up to 10 times) 
+and eventually "time-out".  This is rarely the case however, 
+and  although  not  "bullet-proof",  it is a  very  workable 
+protocol.
+
+Receiving Computer:
+
+----/ACK/---/ACK/"Transfer Complete"/A>(or B>)
+     06H     06H ................................
+
+Sending Computer:
+
+CSUM/---/EOT/---/A>(or B>)
+8bit     04H .............
+
+ In   some  case,   where  the  telephone  transmission   is 
+repeatedly  "trashed" (weak signals,  multiple noise "hits", 
+etc.),   the  receiving  computer  (and  operator)  will  be 
+provided the option to quit.  Here,  the operator enters "R" 
+or  "Q" in response to "Retry or Quit?" (after 10  retries), 
+and  if quit is envoked by the operator,  a CAN (ASCII  code 
+protocol CANCEL, 18 Hex, Control-X) is sent by the receiving 
+computer to cancel the entire transfer session (Note:  is is 
+possible   to  "garble"  an  ACK  to  a   CAN,   and   abort 
+prematurley):
+
+Receiving Computer:
+
+----/NAK/...NAK's ten times.../"Retry or Quit?"(Q)/CAN/A>...
+     15H                                           18H
+
+Sending Computer:
+
+CSUM/---/...Garbled Data....../-----------------------/A>...
+8bit
+
+ A final considerations when using the MODEM program,  is  a 
+timing related problems when transfer status messages and/or 
+textual  data is directed to the screen of a slow (4800 Baud 
+or less) terminal or to a hard copy printer. This problem is 
+readily  apparent (multiple NAK's) when using MODEM for  the 
+first time, and can usually be "cured" by NOT SPECIFYING the 
+"V"  (video)  sub-option when sending  or  receiving  files. 
+Users  of  Lifeboat  Associates  BSTAM  encounter  the  same 
+problem, but this is easily fixed with the files TQPATCH.ASM 
+and  RQPATCH.ASM  (transfer quiet/receive quiet) that  Keith 
+Petersen (Royal Oak CP/M,  "call-back" remote system, (313)-
+588-7054)  wrote to solve the problem of low speed  terminal 
+I/O.
+
+ For users of CBBS's that do not have MODEM.ASM (but DO HAVE 
+a  CP/M disk system...ESSENTIAL!),  let me suggest that  you 
+"data  capture" the file MBOOT3.ASM from one of  the  RCPM's 
+(it's  a small 8 kilo-byte file that "fits" in most system's 
+memory) to get the larger MODEM.ASM (40  kilo-bytes).  Check 
+it  very carefully for errors using the "data capture" (read 
+ERROR  PRONE method here).  Then edit and assemble for  your 
+modem  configuration.
+
+ If  you are tired of buying software where the advertisment 
+is written better than the program, then the RCPM's are just 
+what you have been looking for...and FREE!
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+             Software Tricks for the 8080/Z80
+
+                           by
+
+               Kelly Smith, CP/M-Net "SYSOP"
+
+                     January 8, 1980
+
+ In  my  travels  through the  software  written  by  others 
+(articles,  disassemblies,  etc.),  I  occasionaly find some 
+"tricks"   incorporated  to  either  optimize  the   storage 
+requirements of the code (typically ROM based) or to attempt 
+to  confuse  disassembly...although they are not recommended 
+routines, I think you may find them of interest...
+
+                      The LXI Trick
+
+ Many  large mainframe computers (mini's and maxi's) have  a 
+SKIP   instruction...but   most   micro's   are   multi-byte 
+instruction  oriented,  and  therefore it  is  difficult  to 
+provide    a   SKIP   when   the   instruction   length   is 
+indeterminate. First, an example of "straight" coding:
+
+error1:   mvi  a,1  ; set-up error code 1
+          jmp  error$handler
+error2:   mvi  a,2  ; set-up error code 2
+          jmp  error$handler
+error3:   mvi  a,3  ; set-up error code 3, and fall into it
+;
+error$handler:      ; all error codes come here
+;
+          lxi  d,error$message     ; point to error message,
+                                   ; error code in A reg.
+          .
+          .
+          .
+
+
+ This  is easy enough to understand (right?),  but  consider 
+this:
+
+lxib      equ  1    ; equate first byte of LXI b,nnnn
+;
+error1:   mvi  A,1  ; set-up error code 1
+          db   lxib ; first byte of LXI B,nnnn
+error2:   mvi  A,2  ; set-up error code 2
+          db   lxib ; first byte of LXI B,nnnn
+error3:   mvi  A,3  ; set-up error code 3
+          lxi  d,error$message     ; point to error message,
+                                   ; error code in A reg.  
+          .
+          .
+          .
+
+ If a jump is made to ERROR1, the E Reg. is set-up, then the 
+LXIB will be executed, the B&C Regs. will be given "garbage" 
+code that follows it,  and finally the program counter  will 
+be  incremented  past the next instruction...it  SKIP's  and 
+falls   into  the  eventual  output  routine...insidious  to 
+disassemblers!  This  was  one of the "favorite's"  at  MITS 
+(remember the Altair?).
+
+                     The ORI Trick
+
+You might code:
+
+and$function:       ; indicate boolean AND
+;
+          mvi  a,1       ; set flags to non-zero, this is AND
+          jmp  do$boolean; do boolean function
+;
+or$function:        ; indicate boolean OR
+;
+          xra  a         ; set flags to zero, this is OR
+;
+do$boolean:         ; boolean functions come here
+;
+          your code...   ; do something...anything!
+          .
+          .
+          .
+
+
+But consider the following:
+
+ori  equ  0f6h      ; equate first byte of ORI n
+;
+and$function:       ; indicate boolean AND
+;
+          db   ori       ; set flags with A reg. not zero,
+                    ; first byte of ORI
+or$function:        ; indicate boolean OR
+;
+          xra  a         ; set flags to zero, this is OR
+;
+do$boolean:         ; boolean functions come here
+;
+          your code...   ; is everyone confused?
+          .
+          .
+          .
+
+ This   one  is  particulary  clever;   when   entering   at 
+AND$FUCTION,  the  ORI picks-up the "XRA A" as F6  Hex,  and 
+automatically  set's the flags non-zero. Let me suggest that  
+if  you actually use the LXI or ORI trick...comment  it WELL  
+in   your   source  code...you may  have   to   patch   your 
+program YEARS LATER, and will this look strange !?!
+
+
+                      Using XTHL
+
+ A  "cute"  (not fast) example for register "swapping"  when 
+all  registers  are  used and must be  saved,  is  shown  as 
+follows:
+
+exchange$bc$with$hl:     ; exchange B&C Regs. with H&L Regs.
+;
+          push b    ; put B&C Regs. on the stack
+          xthl      ; H&L Regs. = top stack entry = B&C Regs.
+          pop  b    ; B&C Regs. = original H&L Regs.
+
+ Very  often you will code a routine to pass a constant to a 
+subroutine, such as:
+
+          mvi  c,1
+          call dumb$subroutine
+          .
+          .
+          .
+          mvi  c,2
+          call dumb$subroutine
+          .
+          .
+          .
+          mvi  c,3
+          call dumb$subroutine
+          .
+          .
+          .
+;
+dumb$subroutine:    ; use argument passed in C reg.
+          .
+          .
+          .
+
+
+ By manipulating the return address,  you can save one  byte 
+per CALL as follows:
+
+          call trick$subroutine
+          db   1       ; put constant in "return" location
+          .
+          .
+          .
+          call trick$subroutine
+          db   2       ; put constant in "return" location
+          .
+          .
+          .
+          call trick$subroutine
+          db   3       ; put constant in "return" location
+          .
+          .    
+          .
+;
+trick$subroutine:   ; trick subroutine to get constant
+;
+          xthl      ; H&L Regs. = return address
+          mov  c,m  ; get constant pointed to by H&L Regs.
+          inx  h    ; bump for return address
+          xthl      ; restore the return address and H&L Regs.
+;
+dumb$subroutine:    ; use argument passed in the C Reg.
+;
+          .
+          .
+          .
+
+
+               The "Indirect Jump" via the Stack
+
+ Try  this trick to save a few bytes,  by faking a "indirect 
+jump" via the stack...you might code this routine:
+
+          call get$data$word
+          jmp  use$data$word
+;
+get$data$word: ; get word into H&L regs.
+;
+          lhld my$data$word   ; fetch my data word
+          ret
+;
+use$data$word: ; use data word in H&L Regs.
+
+
+ But a more "elegant" (though obtuse) method could be  coded 
+as this:
+
+          lxi  h,use$data$word     ; make "indirect address"
+          push h    ; save it on the stack
+;
+get$data$word: ; get word into H&L Regs.
+;
+          lhld my$data$word   ; fetch my data word
+          ret        ; pop stack for address and "jump"
+
+ This  can lead to even trickier manipulations on the  stack 
+for return address's...everyone (at one time or another) has 
+coded  a  routine to "filter" keyboard  characters,  and  it 
+usual looks like this:
+
+          cpi  '.'  ; period character?
+          jz   filter
+          cpi  ','  ; comma character?
+          jz   filter
+          cpi  ';'  ; semicolon character?
+          jz   filter
+          cpi  ':'  ; colon character?
+          jz   filter
+          .
+          .
+          .
+
+
+ But  we  need  to save some bytes,  so we get  tricky  with 
+coding like this:
+
+          lxi  b,filter  ; make "FILTER" address
+          push b    ; put "FILTER" address on the stack
+          cpi  '.'  ; period character?
+          rz        ; pop stack and go, if match
+          cpi  ','  ; comma character?
+          rz        ; pop stack and go, if match
+          cpi  ';'  ; semicolon character?
+          rz        ; pop stack and go, if match
+          cpi  ':'  ; colon character?
+          rz        ; pop stack and go, if match
+          pop  b    ; no match...adjust the stack
+          .
+          .
+          .
+
+ A popular method for "In line" printing of messages in CP/M 
+applications program, is as follows:
+
+          call start     ; go to START, after message
+          db   'My Junk Program, Version 1$'
+;
+start:    pop  d    ; get address of message string
+          mvi  c,2  ; CP/M print string function
+          call 5    ; let CP/M do the work
+          .
+          .
+          .
+
+
+                    Register "Moving"
+
+ The tricky way to move the D&E Regs.  to B&C Regs might  be 
+as follows:
+
+          push d
+          pop  b
+
+But the obvious way (and faster) is just:
+
+          mov  d,b
+          mov  e,c
+
+
+ A really tricky programmer could use the PUSH/POP method to 
+affect   the   condition   code...this   "blows-away"   even 
+experienced  programmers when they encounter it in  someones 
+code!...watch this:
+
+          mvi  c,081h    ; the "flags"
+          .
+          .
+          .
+          push b         ; use "cunning set-up" to confuse
+          .
+          .
+          .
+          pop  psw       ; do it to it!
+          .
+          .
+          .
+
+ This  has the effect of moving the B reg.  into the A Reg., 
+and moving the C Reg.  into the PSW (flags),  with the carry 
+and sign bits SET (sign is minus), and all other flags reset
+to zero's...this trick causes most programmers to mumble for 
+hours...
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+              Helpful CP/M Tip-of-the-Month
+
+ Have  you  ever  fired-up Digital  Research's  DDT  or  SID 
+program  debugger's,  specifying the program to debug...It's 
+loads,  then goes '?' ,  because it can't find the file, and 
+it's  really  on the other diskette (let's say B:)  in  your 
+system !?!  So you Control-C out (back to CP/M) and PIP  the 
+program to the proper diskette...ARGH!
+
+ So use DDT or SID,  to CHANGE the logged in drive number to 
+get  to the file you want...Let's assume that we are  logged 
+on  to  the A:  drive,  and our target file to debug  is  on 
+B:...follow along:
+
+A>DDT BUMBFILE.COM<cr>
+DDT VERS 2.0
+?
+-
+
+ So  here we sit (not the least bit  amused),  contemplating 
+our navels...DO THIS!
+
+-IBUMBFILE.COM<cr>  {set-up temporary FCB with filename.typ}
+-S5C<cr>            {Substitute starting at address 5C Hex}
+005C 00 02<cr>      {set drive number 2 (B: disk)}
+005D 42 .<cr>       {quit substituting}
+-R<cr>              {Read BUMBFILE.COM}
+
+ As  if by magic,  the debugger will log on to the B:  disk, 
+grab the file,  and read it in for your debug  session!  All 
+you have to remember, is that at address 5C Hex is the start 
+of the temporary file control block, and that:
+
+     01 equals A: disk
+     02 equals B: disk
+     03 equals C: disk
+     .
+     .
+     .
+     So on, and so on for up to 16 disk drives...
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+

@@ -1,0 +1,28 @@
+#This INCLUDE RATFOR file must not be used in its entirety,
+#since Microsoft FORTRAN loads all statement functions
+#whether they are used or not.
+#This file should be INCLUDEd ahead of the COMMON section of
+#a RATFOR program
+#This definition will work in the contexts:
+# CHARACTER*1 and CHARACTER*2
+	define(CHARACTER,INTEGER)
+	CHARACTER*1 CHAR
+	REAL LOG,LOG10
+#These DATA are in the file CONSTS.RAT which may be INCLUDEd
+#after the DATA section of a RATFOR program.
+#DATA KB/3/,KONS/3/
+#DATA DPR/.01745329/,RPD/57.29578/
+#DATA PI/3.141593/
+#These statement functions are on F77LIB which may be searched
+#at LINK time.
+#ICHAR(I)=I
+#CHAR(I)=I
+#ANINT(X)=AINT(SIGN(.5,X)+X)
+#NINT(X)=INT(SIGN(.5,X)+X)
+#LOG(X)=ALOG(X)
+#LOG10(X)=ALOG10(X)
+#TAN(X)=SIN(X)/SQRT(1.-SIN(X)**2)
+#ASIN(X)=ATAN2(X,SQRT(1.-X*X))
+#ACOS(X)=ATAN2(SQRT(1.-X*X),X)
+#SINH(X)=(EXP(X)-1./EXP(X))/2.
+#COSH(X)=(EXP(X)+1./EXP(X))/2.

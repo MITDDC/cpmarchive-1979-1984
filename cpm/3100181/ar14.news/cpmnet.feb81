@@ -1,0 +1,567 @@
+
+>>>>>>>>>>>>>>>>>>>>> CP/M-Net News <<<<<<<<<<<<<<<<<<<<<<<<
+
+============================================================
+Number 2	      February,1981	   Volume 1, Issue 2
+============================================================
+
+ Printed  monthly  (at worst quarterly) to inform user's  of
+RCPM Systems to the latest software news,  information,  and
+updates   of   public	domain	 software   accessible	 via
+telephone/modem transfer.  Yearly subscription for copies of
+the  CP/M-Net News may be obtained by mailing $18.00  (check
+or money orders only) to Kelly Smith,  CP/M-Net,  3055	Waco
+Street,  Simi Valley,  California 93063.  CP/M-Net is a non-
+profit	orginization and all money received on subscriptions
+are utilized for the sustaining and enhancments of the CP/M-
+Net System.
+
+ If  you  would  like to contribute an	article,  include  a
+column	containing your area of interest and  expertise,  or
+participate  in an open forum for conversation and  transfer
+of  ideas,  feel free to send it to the CP/M-Net System  and
+indicate that you would like it to be included in the  CP/M-
+Net  News...if possible,  use WordStar (trademark,  MicroPro
+International)	or  Electric  Pencil   (trademark,   Micheal
+Shrayer) in 60 column format.
+
+NOTE: CP/M is a registered trademark of Digital Research
+
+============================================================
+
+		       On the Stack
+		       ============
+
+ Many  thanks to the following supporting subscribers to the
+CP/M-Net News:
+
+Brent Crable, Crable Enterprises
+Eddie Currie
+John T. Powers, Jr.
+Pete Mack, Mack Associates
+
+ Note:	 Back  issues  for  the  CP/M-Net  News  Letter  are
+available  for	two  dollars  each.  Back  issues  currently
+available are:
+
+	January 1981, Number 1, Volume 1, Issue 1
+
+MODEM/XMODEM Protocol Explained
+Software Tricks for the 8080/Z80
+CP/M Tip-of-the-Month, 'Changing logged disks in DDT or SID'
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+		    Software "Bug" Report
+
+    Microsoft MBASIC.COM version 5.03 [CP/M Compatible]
+
+Reported By: Kelly Smith, January 11, 1981
+Application: Any
+
+ When  utilizing the SAVE function under MBASIC.COM  version
+5.03,  DO  NOT use lower case for the filename...it will  be
+placed	in  the  CP/M  directory  in  lower  case,  and  any
+subsequent  attempt  to "read-it-in" again with MBASIC	will
+result in a "File not found" error!  The only way to get rid
+of  it (kill it in the directory) is to ERA  *.BAS<cr>,  and
+this  will (of course) clobber all other ".BAS"  files.  Sam
+Singer's  DUMP.COM (CPMUG Volume 14.7) program can  also  be
+used to "erradicate" the file...
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+       What to do about CP/M's "SYNCRONIZATION ERROR"
+       (SYSGENing CP/M Version 2.2, from Version 1.4)
+	      by Kelly Smith, CP/M-Net "SYSOP"
+
+
+Question:
+
+ "How in the #*@%!  do I SYSGEN CP/M Version 2.2 on my	CP/M
+1.4 system, when using it's MOVCPM (to generate a new system
+image),   and  the  &%#"*@  thing  keeps  coming  back	with
+SYNCRONIZATION ERROR, and then promptly HALTS!"
+
+The Problem:
+
+ Those	clever people at Digital Research have embedded  the
+serial	number	(issued to YOU I hope!)  in  MOVCPM.COM,  to
+discourage  the "rip-off" of CP/M by someone other than  the
+rightful  owner...when	MOVCPM is executed,  it looks for  a
+match of it's serial number to that of the host system (your
+CP/M  Version  1.4)  as it appears in  your  system  memory,
+detects that a "mismatch" has occurred,  and promptly locks-
+up  your  computer...ARGH!   "You mean I have to write	that
+crummy "GETSY" and "PUTSYS" stuff to SYSGEN from 1.4 to  2.2
+???" we ask ourselves...
+
+The Solution:
+
+ Fake-out  #1...your CP/M Version 2.2 as supplied by Digital
+Research,  is  SYSGEN'd  for a 20 Kilo-byte  Intel  MDS  800
+system...so write a 20 Kilobyte BIOS (and BOOT loader), then
+do as follows to get a 20 Kilo-byte CP/M 2.2 system image...
+
+A>B:<cr>    <--- Switch from A (CP/M 1.4) to B (CP/M 2.2)
+B>SYSGEN    <--- Use CP/M 2.2's SYSGEN to get a system image	
+SYSGEN VER 2.0
+SOURCE DRIVE NAME (OR RETURN TO SKIP)B <--- Get it...
+FUNCTION COMPLETE
+DESTINATION DRIVE NAME (OR RETURN TO REBOOT)<cr> <--- Return
+A>SAVE 34 B:CPM20.COM <--- Save the CP/M 2.2 system image
+
+ O.K.,	now  SYSGEN normally on the B drive,  with  your  20
+Kilo-byte BIOS (and BOOT loader)...
+
+ Fake-out  #2...Ah  hah,  so this is NOT your copy (I  know,
+your  doing this for a friend...) of CP/M Version  2.2,  and
+it's  been SYSGEN'd for something OTHER THAN a 20  Kilo-byte
+system...double ARGH!  All is not lost however,  just follow
+the  (less  than  simple) sequence that  follows  using  the
+MOVPATCH.ASM   file   that  is	listed	after	the   SYSGEN
+sequence...  A word of CAUTION however! Some implementations
+of MOVCPM.COM NOT DIRECTLY SUPPLIED by Digital Research have
+been "fiddled"...the address referenced in MOVPATCH.ASM that
+follows  WILL  NOT  be the  same...Lifeboat  Associates  has
+modified   MOST  versions  of MOVCPM.COM that I  have  seen,
+for particular applications (i.e., double density, etc.).
+
+A>DDT B:MOVCPM.COM<cr> <--- Get the CP/M 2.2 MOVCPM in...
+DDT VERS 1.4
+NEXT  PC
+2800 0100
+-IMOVPATCH.HEX <--- Set-up the MOVCPM patch
+-R<cr> <--- Read it in
+NEXT  PC
+2800 0000
+-XP<cr> <--- We need to reset the program counter
+P=0000 100<cr> <--- Set it back to address 0100 Hexadecimal
+-G<cr> <--- Go execute MOVCPM...
+
+CONSTRUCTING 56k CP/M VERS 2.2 <--- Making my system size...
+READY FOR "SYSGEN" OR
+"SAVE 34 CPM56.COM"
+A>B: <--- It was faked-out, switch to drive B
+B>SAVE 34 CPM56.COM<cr> <--- Save the CP/M 2.2 system image
+B>DDT CPM56.COM<cr> <--- Bring in the new system image
+DDT VERS 2.2 <--- The "new" DDT announcing itself...
+NEXT  PC
+2300 0100
+-ISBOOT56.HEX<cr> <--- My BOOT loader
+-R900<cr> <--- Offset required for BOOT loader position
+NEXT  PC
+2300 0000
+-ICBIOS56.HEX<cr> <--- My 56 Kilo-byte BIOS
+-R4580<cr> <--- Offset for 56 Kilo-byte BIOS position
+NEXT  PC
+2300 0000
+-G0<cr> <--- "Warm boot" your CP/M 1.4 system...
+B>SYSGEN<cr> <--- Use CP/M 2.2 SYSGEN to generate the system
+SYSGEN VER 2.0 <--- The "new" SYSGEN announcing itself...
+SOURCE DRIVE NAME (OR RETURN TO SKIP)<cr> <--- Return
+DESTINATION DRIVE NAME (OR RETURN TO REBOOT)B <--- Put on B
+DESTINATION ON B, THEN TYPE RETURN<cr> <--- Return
+FUNCTION COMPLETE
+DESTINATION DRIVE NAME (OR RETURN TO REBOOT)<cr> <--- Return
+A> <--- Return to your "old" CP/M version 1.4...
+
+ O.K.,	now remove the CP/M 1.4 disk from the A  drive,  and
+remove	the  CP/M 2.2 from the B drive,  insert it in the  A
+drive and do a "cold boot"...hereafter,  MOVCPM will operate
+normally, so no need to go thru the MOVPATCH routine...
+
+
+	MOVPATCH.ASM for MOVCPM.COM CP/M Version 2.2
+
+Note:  you MUST SET "msize" for your intended system  memory
+size  to  make this work...assemble normally with  the	CP/M
+Version  1.4  "ASM.COM"  file.	MOVPATCH.ASM  may  not	work
+with  copies of MOVCPM.COM that are NOT SUPPLIED by  Digital
+Research.
+
+
+msize	equ	56	;put your memory size HERE...
+
+	org	05ch	;absolute file control block address
+
+	db	20h,'0'+msize/10,'0'+msize mod 10,20h
+
+	org	232h	;serial number string length check
+
+	xra	a	;set flags
+
+	org	2c4h	;serial number match check
+
+	lxi	h,1200h ;force MOVCPM to look at it's
+			;own serial number...
+
+	end
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	   Loading DDT Without 'Clobbering' the CCP
+	       by Kelly Smith, CP/M-Net "SYSOP"
+		      January 25, 1981
+
+
+ From  time  to time,  I need to do  some  'special  tricks'
+within	CP/M itself to modify it's operation to do something
+other  than  what  Digital Research  had  intended.  If  you
+attempt  to load DDT 'normally',  it 'clobbers' the  Console
+Command   Processor  by  overlaying  it  with	DDT...making
+modification (using DDT) impossible.  This program will load
+Digital  Research's  Dynamic Debugging	Tool  (DDT)  without
+overlaying the CP/M Console Command Processor, and works for
+CP/M  version 1.4 AND 2.0 through 2.2...Be sure and set  the
+equate	MSIZE  for  your particular CP/M  system  size,  for
+proper operation...name it to something like  'DDTLOAD.ASM',
+assemble and load...then execute it as follows:
+
+		      A>DDTLOAD<cr>
+
+ DDT  will  now  load into memory  'nomally',  but  will  be
+relocated BELOW the CCP. Here's the software to do it...
+
+true	equ	-1	;define true
+false	equ	not true;define false
+cpm14	equ	false	;true if CP/M vers 1.4
+cpm22	equ	true	;true if CP/M vers 2.2
+;
+msize	equ	56	;must be set for YOUR CP/M system size
+;
+base	equ	0	;CP/M system base address
+;
+	if	cpm14
+cbase	equ	base+2900h	;base of 16k CP/M 1.4 CCP
+bias	equ	(msize-16)*1024 ;offset for system
+nbase	equ	cbase+bias-10h	;new base address
+	endif
+;
+	if	cpm22
+cbase	equ	base+3400h	;base of 20k CP/M 2.X CCP
+bias	equ	(msize-20)*1024 ;offset for system
+nbase	equ	cbase+bias-10h	;new base address
+	endif
+;
+	org	base+100h
+;
+	lhld	base+6	;move old BDOS address to new BDOS entry
+	shld	nbase+1 ;swap new base address into original base
+	shld	base+6
+	mvi	m,jmp	;make 'jump' opcode to new base address
+	lxi	h,'3D'-'0'	;create DDT command in
+				;console input buffer
+	shld	cbase+bias+7
+	lxi	h,'DT'
+	shld	cbase+bias+9
+	xra	a	;make 'EOL' as null for message end
+	sta	cbase+bias+11
+	mvi	a,8	;reset command pointer
+	sta	cbase+bias+136
+	lda	base+4	;select current drive
+	mov	c,a
+	jmp	cbase+bias	;all parameters set, load DDT
+
+	end
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Using CP/M's Undocumented "Autoload" Feature
+	       by Kelly Smith, CP/M-Net "SYSOP"
+
+ Ever wished you could just slam a diskette into your drive,
+boot it,  and have it immediately start executing a  program
+for you...or the kids want to play some nifty game, but your
+tired  of having your diskettes trashed 'cause your 14	year
+old   boy  does not understand the full implications of  ERA
+*.*...?!?  Well here's a little known feature of CP/M that's
+worth knowing...it has a BUILT IN AUTOLOAD!
+
+ I  don't know why Digital Research fails to document  this,
+for public consumption (?),  they include the information in
+their  OEM  distribution  documentation,  but  not  anywhere
+else...and how many of us are OEM distributers?  Well,	here
+are  the details of "autoload",  and how to implement it  on
+your CP/M system.
+
+ First, take a "scratch" diskette and do a full disk copy of
+your CP/M system diskette (this includes the system tracks).
+If you don't have a disk copy program,	SYSGEN the "scratch"
+diskette  and PIP all the stuff to it.	Now,  stick the  new
+diskette  (to be set-up for "autoload") in drive  A:,  "warm
+boot"  it  (Control-C)	and let's assume  that	we  want  to
+"autoload"   Microsoft's   MBASIC   and  have	it   execute
+STARTREK...Here's what you do:
+
+
+A>ddt movcpm.com<cr> <--- We need to "patch" MOVCPM.COM
+DDT VERS 2.2
+NEXT  PC
+2800 0100	     <--- Write down '2800' someplace
+-d0a00<cr>	     <--- Dump starting at address 0A00 Hex
+
+ Here  is the start of CP/M (this is CP/M Version  2.2,  but
+this "method" will work for CP/M Version 1.4 just as well):
+
+     .___ CCP jump entry (normal entry)
+     :
+     :	      .___ CCP jump entry to bypass "autoload"
+     :	      :
+     :	      :        .___ 128 characters allowed for command
+     :	      :        :
+     :	      :        :  .___ Number of characters in filename
+     :	      :        :  :
+     :	      :        :  :  .___ Start of filename to "autoload"
+     :	      :        :  :  :
+     :	      :        :  :  :
+0A00 C3 5C 03 C3 58 03 7F 00 20 20 20 20 20 20 20 20 .\..X...	
+0A10 20 20 20 20 20 20 20 20 43 4F 50 59 52 49 47 48	     COPYRIGH
+0A20 54 20 28 43 29 20 31 39 37 39 2C 20 44 49 47 49 T (C) 1979, DIGI
+0A30 54 41 4C 20 52 45 53 45 41 52 43 48 20 20 00 00 TAL RESEARCH  ..
+0A40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+0A50 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+0A60 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+0A70 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+.
+.
+.
+
+ O.k.,	now that we see that much, let's patch MOVCPM.COM to
+do the "autoload" of MBASIC.COM and STARTREK.BAS...
+
+-s0a07<cr>	<--- Substitute, starting at address 0A07 Hex
+0A07 00 0f<cr>	<--- 15 characters in filenames to "autoload"
+0A08 20 4d<cr>	<--- ASCII 'M'
+0A09 20 42<cr>	<--- ASCII 'B'
+0A0A 20 41<cr>	<--- ASCII 'A'
+0A0B 20 53<cr>	<--- ASCII 'S'
+0A0C 20 49<cr>	<--- ASCII 'I'
+0A0D 20 43<cr>	<--- ASCII 'C'
+0A0E 20 <cr>	<--- We needed a 'SPACE', so leave as is...
+0A0F 20 53<cr>	<--- ASCII 'S'
+0A10 20 54<cr>	<--- ASCII 'T'
+0A11 20 41<cr>	<--- ASCII 'A'
+0A12 20 52<cr>	<--- ASCII 'R'
+0A13 20 53<cr>	<--- ASCII 'T'
+0A14 20 54<cr>	<--- ASCII 'R'
+0A15 20 45<cr>	<--- ASCII 'E'
+0A16 20 4B<cr>	<--- ASCII 'K'
+0A17 20 .<cr>	<--- Quit substituting
+-d0a00<cr>	<--- Let's "Dump" what we just entered...
+
+
+			  .___ 15 characters in MBASIC STARTREK
+			  :
+			  :  .___ Start of MBASIC STARTREK
+			  :  :
+			  :  :
+0A00 C3 5C 03 C3 58 03 7F 0F 4D 42 41 53 49 43 20 53 .\..X...MBASIC.S
+0A10 54 41 52 54 52 45 4A 20 43 4F 50 59 52 49 47 48 TARTREK.COPYRIGH
+0A20 54 20 28 43 29 20 31 39 37 39 2C 20 44 49 47 49 T (C) 1979, DIGI
+0A30 54 41 4C 20 52 45 53 45 41 52 43 48 20 20 00 00 TAL RESEARCH  ..
+0A40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+0A50 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+0A60 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+0A70 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+.
+.
+.
+
+ Keep	in  mind,   that  you  are  not  limited   to	just
+filenames...you  could	just as well "autoload"  and  envoke
+submit files (including command strings),  whatever, and can
+completely "overlay" Digital Research's copyright notice and
+use  as many ASCII character entries as are required...don't
+substitute passed address 0A7F Hex however!
+
+ Now  exit DDT (Control-C<cr> or G0<cr>),  and let's look at
+the  number that you wrote down...it's there on that   piece
+of paper, next to the beer can...
+
+ Hmmm...says  2800...o.k.,  multiply the 2  by 16 (for those
+that are on beer number 7,  that's 32...the number 7 is  (as
+everyone  knows) "Kelly's Konstant").  Now since the  8 ends
+in two zeros,  subtract 1 from 8 (that leaves  7,  for those
+of  you  that smoke the "funny stuff")...now add 32   and  7
+together...errr...ahhhh...FAR  OUT!...39!   Now follow along
+closely:
+
+A>save 39 trekload.com<cr>
+
+ We  just  saved 39 pages (256 bytes/page)  of	the  patched
+MOVCPM.COM...and    for    reference,	 renamed    it	  to
+TREKLOAD.COM...now  SYSGEN  your  diskette (however  you  do
+that) with TREKLOAD instead of MOVCPM,	and "cold boot"  the
+diskette.
+
+ It  should "boot" with MBASIC being executed,	then  MBASIC
+takes over and loads in STARTREK,  and then you are ready to
+"zap" some Klingons!
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+      A Simple Subroutine to Check for "Stack Overflow"
+	       by Kelly Smith, CP/M-Net "SYSOP"
+
+ Here	is  a  simple  subroutine  to  be  CALLed  in	your
+applications   program	to  check  for	a  possible   "stack
+overflow"  condition.  This  subroutine might be  especially
+helpful during the "debug stage" of your software where  you
+may not be sure of your total stack requirements...you could
+make  CALLs  to "check$stack" from numerous places  in	your
+software  as  a monitor of stack allocation,  and  by  using
+conditional assemblies, REMOVE all the CALLs when your debug
+is  completed.	Other applications,  include stack  oriented
+languages such as STOIC,  FORTH or PASCAL where some heavily
+"compute   bound"  applications  programs  could  eventually
+"gobble up" memory and clobber the operating system.
+
+ I  wrote  a simple test program with which you can  use  to
+verify	the operation of "check$stack"...the exit  on  "blow
+up",  resets  the stack pointer to the "old stack"  pointer,
+then displays 'Stack Over-Flow, Depth = nn' (where nn equals
+the  "stack  depth"  in  hexadecimal for  up  to  256  stack
+"levels").  Remember  that  the  stack	works  DOWN  towards
+(typically)  your  applications  program...leave  sufficient
+code  between the "stack$end" and "oldstk" so (at worst) you
+can  exit  on  stack  overflow	"gracefully"...you   clobber
+"oldstk", and all bets are off.
+
+;
+;This  is the test for "check$stack"...with 'debug' false,
+;the  program  will exit to CP/M with the  stack  overflow
+;message.
+;
+true	equ	-1	;define true
+false	equ	not true;define false
+debug	equ	false	;define debug (if true, makes sufficient stack)
+
+	org	100h
+
+	lxi	h,0	;save "old" CP/M stack pointer
+	dad	sp
+	shld	oldstk
+	lxi	sp,stack;set "local" stack
+	call	test
+	lhld	oldstk
+	sphl
+	ret
+;
+test:	call	test1
+	call	check$stack
+test1:	call	test2
+	call	check$stack
+test2:	call	test3
+	call	check$stack
+	ret
+test3:	ret
+;
+;end  of test on "check$stack",  incorporate the following code 
+;for your particular application...with a little more  thought, 
+;you  could also display the address of the last CALL prior  to 
+;the  "stack overflow",   and thereby let your program tell you 
+;WHERE it BLEW UP...I will leave that exercise for you.
+;
+check$stack:		;check to see if stack pointer is below STACK$END
+;
+	push	h	;save H$L Regs.
+	lxi	h,-stack$end	;won't work for STACK$END = 0000
+	dad	sp
+	pop	h	;restore H$L Regs.
+	rc		;return if still o.k.
+;
+;come here on stack over-flow
+;
+	lxi	h,0	;clear H&L Regs.
+	dad	sp	;stack pointer to H&L Regs.
+	lxi	d,stack ;get original stack top address
+	mov	a,e	;do 16 bit subtract, to calculate "stack depth"
+	sub	l
+	mov	e,a
+	mov	a,d
+	sbb	h
+	mov	d,a	;16 bit result in D&E Regs.
+	lhld	oldstk	;restore "old" CP/M stack pointer
+	sphl
+	push	d	;save "stack depth"
+	lxi	d,stack$overflow$message
+	mvi	c,9	;display string function
+	call	5	;let CP/M do the work...
+	pop	d	;recover "stack depth"
+;
+display$stack$depth:	;display up to 256 deep stack digits
+;
+	mvi	c,2	;display 2 digits
+	push b ! push d ;save 2 digit count and "stack depth"
+	mov	a,e	;get hexadecimal digit
+	rar ! rar ! rar ! rar	;display high nibble first...
+;
+hexascii:		;convert 1 digit hexadecimal to 1 digit ASCII
+;
+	ani	0fh	;mask for low nibble position
+	adi	90h	;convert hex digit to ASCII digit
+	daa
+	aci	40h
+	daa
+	mov	e,a	;pass to CP/M in E reg.
+	mvi	c,2	;display character function
+	call	5	;let CP/M do the work...
+	pop d ! pop b	;get "stack depth" and digit count
+	dcr	c	;debump digit count
+	rz		;return to CP/M, if both digits displayed
+	push b ! push d ;not yet, so display second digit
+	mov	a,e	;get hexadecimal digit
+	jmp	hexascii;display and exit to CP/M, next time thru...
+;
+stack$overflow$message: ;indicate stack overflow
+;
+	db	0dh,0ah,'Stack Over-Flow, Depth = $'
+;
+oldstk: ds	2	;storage for "old" CP/M stack pointer
+;
+	ds	32	;"dummy" program storage
+;
+stack$end	equ	$	;stack end
+
+	if	debug	;if debug,
+	ds	32	;16 level stack
+	else		;else,
+	ds	2	;1 level stack
+	endif
+
+stack	equ	$	;stack starts here
+;
+	end
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+		 CP/M-Net "Tip-of-the-Month"
+
+ Ever  wished  you  could REPEAT  a  program  over-and-over,
+without  having  to go through typing in  the  filename  and
+waiting for it to load? This "program" uses no memory space,
+and "loads" very fast...it WILL NOT WORK however on programs
+that require secondary commands (e.g.,	where the program is
+instructed  to operate on some file or parameter,  after the
+invocation  of the initial program name at the	CP/M  system
+prompt).  Let's  assume that you are logged on to drive  A:,
+then:
+
+A>SAVE 0 @.COM	 <--- save the arbitrary filename "@.COM"
+A>FORMAT<cr>	 <--- we want to FORMAT a stack of diskettes
+A>@<cr> 	 <--- we want to do it again...
+A>@<cr> 	 <--- ...and again...
+A>@<cr> 	 <--- ......and again!
+
+ What  happens,  is that the Console Command Processor (CCP)
+picks-up  the  filename "@"...passes it to  the  Basic	Disk
+Operating  SYSTEM (BDOS),  the BDOS "matches" it as being  a
+valid  file  in  the directory of your	diskette,  loads  it
+(nothing to load,  because it has "0" file size), then jumps
+to  address  100 Hex (where the previous file  is  still  in
+memory), and executes the "old" file...Simple!
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+

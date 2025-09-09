@@ -1,0 +1,7 @@
+wm rel.asm ;remember to change version number!
+mac rel
+era rel0.hex
+ren rel0.hex=rel.hex
+mac rel $$pzsz+r
+sid rel.utl ;remember to fill memory with zeros!
+

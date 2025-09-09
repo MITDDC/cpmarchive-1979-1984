@@ -1,0 +1,17 @@
+;5:55am  Wednesday, 3 December 1980, GZ@MC
+(COMMENT)
+(PROGN
+ (CLOSE (PROG1 INFILE (INPUSH -1)))
+ (NOINTERRUPT T)
+ (SETQ JCL (IMPLODE (DELETE (ASCII 13.) (CDR (MEMQ '/ (STATUS JCL))))))
+ (open tyi '(in image single tty))
+(cursorpos 'A) (princ '|Ready|)(terpri)
+ (SETQ OUTSTREAM (OPEN JCL '(OUT image))); ascii mode causes CR==>CRLF
+ (DO ((C (TYI) (TYI)) (cnt 0))
+     ((and (= cnt 9.) (= c 3)))
+     (cond ((= c 3) (setq cnt (1+ cnt)))(t (setq cnt 0)))
+     (TYO C OUTSTREAM))
+ (cursorpos 'A)
+ (princ '|Done|)
+ (close OUTSTREAM)
+ (QUIT))

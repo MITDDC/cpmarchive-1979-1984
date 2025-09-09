@@ -1,0 +1,476 @@
+;
+;	FILEFIND.ASM
+; Originally written by R. Rodman 
+; Version 11.0 by Dave Hardy
+;
+;
+; This program will search all preset user areas of all drives for
+; any files matching the command tail, then display those files in
+; a DIR-like format.  NOTE THAT A DRIVE NEED NOT BE ACTIVE (logged-in)
+; TO BE SEARCHED.  By setting the MINUSR and MAXUSR equates to 0 and
+; 32, respectively, this program can be made to list ALL files in
+; ALL user areas of ALL drives.
+;
+; Example:  FILEFIND *.COM  lists all .COM files on all drives
+;
+;
+; This program makes a direct call to the SELDSK routine of the CBIOS
+;  to determine a drive's existence without causing a BDOS error.
+;
+; NOTE:	  THIS PROGRAM ASSUMES THAT ANY CBIOS 'ILLEGAL DRIVE SELECT'
+;	  TRAPS WILL CAUSE THE SYSTEM TO EXECUTE A WARM-BOOT BY JUMPING
+;	  TO ADDRESS 0.  If a select error bypasses the warm-boot jump
+;	  at address 0, then the trap in this program will not work.
+;
+; PLEASE RETURN ANY UPDATES, REPAIRS, ETC. TO TECHNICAL CBBS, Dearborn, MI
+;  at (313) 846-6127 (110, 300, 450, 600 Baud, 24 hours) so that we can
+;  keep the file properly updated and available to all.
+;
+; Modification history (in reverse order to minimize reading time):
+;
+;08/02/81 Cleaned up file and removed unnecessary code.  Thanks to
+;	  Tom and Shawn for adding some more goodies.
+;	  By Dave Hardy
+;
+;07/31/81 Modified AVAIL routine to abort only on control-C
+;         from the console.  Cleaned up the file, restored
+;         original author's name to the heading.
+;         By Thomas V. Churbuck
+;
+;07/31/81 Added tutorial to be printed if filename (FCB)
+;         field (fn.ft tail of the command line) is blank
+;         (omitted by the inexperienced user). 
+;         By Thomas V. Churbuck
+;
+;07/31/81 Substituted IN-LINE PRINT ROUTINE where appro-
+;	  priate for all printed messages.  Prints message
+;	  on exit if no files were found (matched).
+;	  By Thomas V. Churbuck
+;
+;07/30/81 Modified AVAIL routine to abort program if any
+;	  character is typed from the console.
+;	  By Shawn Everson
+;
+;07/29/81 Modifed user number routine to include leading
+;	  0 when printing user #'s 0-9 to line up printout.
+;	  By Shawn Everson
+;
+;07/17/81 Removed DRVFIRST routines and replaced with DRV1ST
+;	  routines to make code shorter and more efficient. 
+;	  Note that although these changes will make FILEFIND
+;	  look MP/M compatible, it actually is NOT.
+;	  By Dave Hardy
+;
+;07/17/81 Modified SHOFIL routines to permit user #-drive OR
+;         drive-user # printout to match either MPM or USERLST
+;         by providing DRVFIRST conditional
+;         By Earl Bockenfeld
+;
+;07/12/81 Modified SHOFIL routines to always print leading zero
+;	  when MULTUSR is TRUE so that multiple user number displays
+;	  will align properly.
+;	  By Dave Hardy
+;
+;07/08/81 Added MULTUSR routines to allow program to be conditionally
+;	  assembled to check a preset range of user areas.  With MINUSR
+;	  and MAXUSR (below) set to 0 and 32, respectively, this program
+;	  will produce a master directory of EVERY file on EVERY drive
+;	  on its host system.  If MULTUSR is set TRUE, then when program
+;	  is executed, if current user number is within MINUSR and MAXUSR,
+;	  program will check the set range of user areas from MINUSR to MAXUSR.
+;	  But if current user number is not within set range, program will
+;	  check only current user area.  I did this so that remote callers
+;	  could use program to check all remote user areas, but a local
+;	  SYSOP could use program for any user area, assuming that
+;	  program was located in a public (common) user area.
+;	  By Dave Hardy
+;
+;07/02/81 Fixed user number print routine to properly display
+;	  user numbers 10-15.  By Keith Petersen, W8SDZ
+;
+;07/01/81 Changed file name print routine so spaces are not printed
+;	  after last filename on a line.  By Keith Petersen, W8SDZ
+;
+;05/30/81 Removed stack save routines, so that now the program will
+;	  warm-boot back, instead of 'RET'.  This was necessary because
+;	  the stack may be garbaged by the CBIOS when the warm-boot trap
+;	  is encountered.  Also added check in SHOFIL routine to check for
+;	  proper user number before displaying a filename, in case of
+;	  public user area (e.g. if BDOS-PAT.ASM is installed).
+;	  By Dave Hardy
+;
+;05/12/81 Added automatic log-in feature, so that all drives will
+;	  be selected, regardless of which were previously logged in.
+;	  In systems with illegal drive select traps in their CBIOS,
+;	  this would cause a warm-boot as soon as the first illegal drive
+;	  is selected, so a trap is used that replaces the warm-boot
+;	  pointer at address 1 during execution of this program.  After
+;	  execution, the pointer is restored, and the program does a 
+;	  'ret' to CP/M.  In systems with no traps in the CBIOS (most 
+;	  systems), this program will finish and return to CP/M without
+;	  encountering the warm-boot trap.  In either case, the program
+;	  should work properly.  Thanks to Ron Fowler for his suggestions.
+;	  NOTE: This program will probably no longer work with CP/M
+;	  1.4, since most 1.4's don't check for illegal drive selects.
+;	  By Dave Hardy
+;
+;05/06/81 Fixed BASE equates, added comments, added conditionals
+;	  for SYS file and USER number display, added MAXCOL equate
+;	  to set number of display columns, eliminated display of
+;	  USER number when in USER 0 to make display easier to read,
+;	  made miscellaneous changes to make file more readable.
+;	  By Dave Hardy
+;
+;04/20/81 Renamed from FILE.ASM to FILEFIND.ASM to avoid
+;	  confusion with CPMUG FIND.ASM
+;	  By Dick Mead
+;
+;  Define some miscellaneous values:
+BASE	EQU	0	;Set to base address of your CP/M (normally 0)
+BDOS	EQU	BASE+5	;CP/M BDOS entry point
+FCB	EQU	BASE+5CH;CP/M file control block address
+DMABUF	EQU	BASE+80H;DMA buffer address
+CR	EQU	0DH	;ASCII return
+LF	EQU	0AH	;ASCII linefeed
+;
+;  Define some BDOS functions:
+SETDMA	EQU	26	;Set DMA Address function
+SRCHFST	EQU	17	;Search For First function
+SRCHNXT	EQU	18	;Search For Next function
+CONOUT	EQU	2	;Console Output function
+RTNVER	EQU	12	;Return Version Number function
+SETUSR	EQU	32	;Set/Get User Code function
+CONSTAT	EQU	11	;Get Console Status function
+CONIN	EQU	1	;Console Input function
+PRINT	EQU	9	;Print String At Console function
+;
+;  Define true and false
+FALSE	EQU	0
+TRUE	EQU	NOT FALSE
+;
+;  Set the following as desired:
+SHOWSYS	EQU	FALSE	;TRUE if want to show SYS files
+SHOWUSR	EQU	TRUE	;TRUE if want to show user number
+DRV1ST	EQU	TRUE	;TRUE if want to print drive before user number
+			;FALSE if want to print user number before drive
+MAXCOL	EQU	4	;Set to number of columns desired in display
+MULTUSR	EQU	TRUE	;TRUE if want to search multiple user numbers
+			;FALSE if want to search only current user number
+;  The following need to be set only if MULTUSR above is set TRUE:
+MINUSR	EQU	1	;Set to minimum user number to be checked
+MAXUSR	EQU	4	;Set to maximum user number to be checked
+;
+;
+	ORG	BASE+100H
+;
+	LXI	SP,STACK	;Set up local stack
+;
+	CALL	ILPRT		;Print sign-on message
+;
+	DB	CR,LF,'FILEFIND ver 11.0',CR,LF
+	DB	'Type CTRL-C to abort',CR,LF,CR,LF,0
+;
+	LDA	FCB+1		;Check for filename on command line
+	CPI	' '
+	JNZ	SETUP		;If it's there, then continue
+	CALL	ILPRT		;Else, print help message and exit
+	DB	CR,LF,'Usage: FILEFIND <filename.type>'
+	DB	CR,LF,CR,LF
+	DB	'       You must specify the file(s) you',CR,LF
+	DB	'       want to find.  Ambiguous file names',CR,LF
+	DB	'       may be used.',CR,LF,CR,LF
+	DB	'       Example:  FILEFIND MODEM.DOC',CR,LF
+	DB	'                 FILEFIND *.ASM',CR,LF,0
+	JMP	0		;Warm-boot back to CP/M
+;
+SETUP	LDA	4		;Save USER/DRIVE number
+	STA	UDNUM
+	RRC
+	RRC
+	RRC
+	RRC
+	ANI	0FH
+	STA	CUN		;Save current user number
+	STA	CTU		;Save as current try number, too
+;
+	IF	MULTUSR		;then set up some boundaries
+	MVI	B,MINUSR
+	CMP	B		;Current user number within range?
+	JC	OUTSIDE		;No? then search only current user number
+	MOV	B,A
+	MVI	A,MAXUSR
+	CMP	B
+	JC	OUTSIDE
+	MVI	A,MINUSR
+	STA	CTU		;Set Current Try User to MINUSR
+	STA	ORIGCTU		;Set original CTU to same
+	MVI	A,MAXUSR
+	STA	MAXTEMP		;Set maximum user number to MAXUSR
+	ENDIF
+;
+SBOOT	LHLD	1
+	SHLD	WBOOT		;Save warm-boot address
+	LXI	D,18H
+	DAD	D
+	SHLD	DSKSEL+1	;Get jump to CBIOS DSKSEL routine
+;
+;  The following code sets a trap at the warm-boot jump, so that
+;  any 'illegal drive select' traps in the CBIOS will be defeated.
+	LXI	H,DONE		;Replace warm-boot pointer with trap
+	SHLD	1
+;
+	LXI	D,DMABUF
+	MVI	C,SETDMA
+	CALL	BDOS		;set DMA address
+;
+	XRA	A
+	STA	TRYDRV		;Set up to try drive '0' first
+TRY	MOV	C,A		;Try to select drive
+	CALL	DSKSEL
+	MOV	A,L
+	ORA	H
+	JZ	DONE		;If HL=0 then no more drives
+	LDA	TRYDRV
+	INR	A
+	STA	TRYDRV		;Get ready for next drive, too
+	STA	FCB		;Store 1+drive# in FCB (1=A, 2=B, etc.)
+;
+	IF	MULTUSR		;Then set user before each pass
+NXTUSR	LDA	CTU		;Set user to CTU via a BDOS call
+	MOV	E,A
+	MVI	C,SETUSR
+	CALL	BDOS
+	ENDIF
+;
+AVAIL	MVI	C,CONSTAT	;Check to see if key pressed
+	CALL	BDOS
+	ORA	A
+	JZ	NOPRESS		;If no key pressed, then continue
+	MVI	C,CONIN		;If key pressed, then check for abort
+	CALL	BDOS
+	CPI	'C'-40H		;Is it control-C?
+	JNZ	NOPRESS		;If no, then continue
+	CALL	ILPRT		;If yes, then print abort message
+	DB	CR,LF,LF,'+++ ABORTED',CR,LF,0
+	JMP	DONE1		;Then restore warm-boot jmp and UDNUM then exit
+;
+NOPRESS LXI	D,FCB
+	MVI	C,SRCHFST
+	CALL	BDOS		;Check for directory match with FCB
+	CPI	0FFH		;"A" register has 0-3 if file found else 0FFH
+	JZ	NXT		;Do next drive if no more matches found
+	CALL	SHOFIL		;If match found, then display the filename
+;
+SNEXT	MVI	C,SRCHNXT
+	CALL	BDOS		;Check for next match with FCB
+	CPI	0FFH	
+	JZ	NXT		;No more matches? Then do next drive
+	CALL	SHOFIL		;If match found, then display the filename
+	JMP	SNEXT		;Continue until no more matches found
+;
+NXT	EQU	$
+;
+	IF	MULTUSR		;then see if any more user numbers to check
+	LDA	CTU		;Increment current try user number
+	INR	A
+	STA	CTU
+	MOV	B,A
+	LDA	MAXTEMP
+	CMP	B
+	JNC	NXTUSR		;Do next user number if all not done
+	LDA	ORIGCTU		;Else reset user number and do next drive
+	STA	CTU
+	ENDIF
+;
+	MVI	C,RTNVER
+	CALL	BDOS		;See if CP/M version 1.4 or 2.x
+	MVI	C,5		; (if CP/M 1.4, then CBIOS must return an
+	ORA	A		; error if bad drive number, else won't work)
+	JZ	FOUR		;If 1.4 then four drives maximum
+	MVI	C,17		;Otherwise 16 drives maximum
+;
+FOUR	LDA	TRYDRV
+	CMP	C
+	JC	TRY		;Continue until all drives checked...
+;
+;  all done now, return to CP/M
+;
+DONE	LDA	MFLAG		;See if any files found
+	CPI	0
+	JNZ	DONE1		;If yes, then done, so exit
+	CALL	ILPRT		;If no, then say none found first
+	DB	CR,LF,'+++ FILE NOT FOUND',CR,LF,0
+DONE1	LHLD	WBOOT		;Restore warm-boot jump
+	SHLD	1
+	LDA	UDNUM		;Restore USER/DRIVE number
+	STA	4
+	ANI	0FH
+	MOV	C,A		;Select original drive before return so that
+	CALL	DSKSEL		;  CP/M won't get confused...
+	JMP	0		;Then return to CP/M via a warm-boot...
+;
+	IF	MULTUSR		;and current user number is outside MIN/MAX
+OUTSIDE	LDA	CUN
+	STA	CTU		;Set current try user to current user number
+	STA	ORIGCTU		;Set original CTU to same
+	STA	MAXTEMP		;Set maximum user number to current
+	JMP	SBOOT		;and continue...
+	ENDIF
+;
+SHOFIL	MOV	L,A		;Get filename to display from directory record
+	MVI	H,0		;  which CP/M puts at DMA address
+	DAD	H		;("A" register has relative position of name
+	DAD	H		; within directory record)
+	DAD	H
+	DAD	H
+	DAD	H	;Multiply "A" by 32 to point to start of filename
+	LXI	D,DMABUF
+	DAD	D	;Now point to filename
+	XCHG		;save filename pointer in de
+;
+	IF	NOT SHOWSYS	;then ignore SYS files
+	LXI	H,10
+	DAD	D	;Point to SYS file attribute
+	MOV	A,M
+	ANI	80H	;Check for SYS type file
+	RNZ		;Return if SYS attribute set (i.e. don't display)
+	ENDIF
+;
+;  The following code is needed only if BDOS-PAT.ASM is installed in
+;  your CP/M.  It makes sure that this program only lists those files
+;  that are in the current user area (i.e. if you are in a non-zero
+;  user area, it won't list the files in user 0, too).
+	LDA	CTU	;Get current try USER number
+	XCHG		;Point HL to user number byte of directory entry
+	CMP	M 
+	RNZ		;Return if wrong user number (i.e. don't show file)
+	XCHG		;Get directory pointer back into DE 
+;
+	IF	DRV1ST	;then print drive number before user number
+	LDA	TRYDRV
+	ADI	'A'-1
+	CALL	AOUT	;Display drive (A-P)
+	ENDIF
+;
+	IF	SHOWUSR	OR MULTUSR	;then display USER number (except 0)
+	LDAX	D	;get USER number
+	INX	D
+	ENDIF
+;
+	IF	NOT MULTUSR	;then don't print leading 0 for user 0
+	ORA	A	;USER 0 ?
+	JZ	NOUSR	;if USER 0 don't report
+	ENDIF
+;
+	IF	SHOWUSR OR MULTUSR	;continue displaying user numbers
+	CPI	10	;is USER number = 0 thru 9?
+	JNC	NEAT	;If no, then print a leading '1'
+	PUSH	PSW	;Save USER number
+	MVI	A,'0'	;If yes, then print a leading '0'
+	CALL	AOUT
+	POP	PSW	;Restore USER number
+	JMP	USRL	;Then print second digit of user number
+;
+NEAT	SUI	10	;USER number = 10 thru 15
+	PUSH	PSW
+	MVI	A,'1'
+	CALL	AOUT	;print a leading '1'
+	POP	PSW
+;
+USRL	ADI	'0'	;make into ASCII number
+	CALL	AOUT	;print digit
+	ENDIF
+;
+NOUSR	EQU	$
+;
+	IF	NOT DRV1ST	;Then print drive number after user number
+	LDA	TRYDRV
+	ADI	'A'-1
+	CALL	AOUT	;Display drive (A-P)
+	ENDIF
+;
+	MVI	A,':'	;Fence character
+	CALL	AOUT	;Display a ':' to look nice
+;
+	MVI	B,8	;(8 characters or less in filename)
+PFN	LDAX	D	;Now print the filename...
+	INX	D
+	CALL	AOUT	;  ... one character at a time
+	DCR	B
+	JNZ	PFN	;Continue until all 8 characters displayed
+	MVI	A,'.'
+	CALL	AOUT	;Display the '.' before the filetype
+;
+	MVI	B,3	;Now do the same for the filetype
+PXT	LDAX	D
+	INX	D
+	CALL	AOUT
+	DCR	B
+	JNZ	PXT
+;
+	LDA	COLUMN	;Print MAXCOL columns across the screen
+	DCR	A
+	JZ	DOCRLF
+	STA	COLUMN
+	CALL	TWOSPC	;Print two spaces to make it neat
+	MVI	A,0FFH	;Set MFLAG to remember that a file was found
+	STA	MFLAG	; (so that 'NOT FOUND' message will be suppressed)
+	RET
+;
+DOCRLF	MVI	A,MAXCOL ;After last column:
+	STA	COLUMN	;  Reset column number
+	MVI	A,CR	;   Then print CRLF
+	CALL	AOUT
+	MVI	A,LF
+	CALL	AOUT
+	RET
+;
+TWOSPC	MVI	A,' '
+	CALL	AOUT
+	MVI	A,' '	;Fall into AOUT
+;
+AOUT	PUSH	H	;Send a character to the console
+	PUSH	D
+	PUSH	B	;Save the registers in case BDOS eats them
+	ANI	7FH	;Strip parity bit
+	MOV	E,A
+	MVI	C,2
+	CALL	BDOS	;Print the character in 'A' on the console
+	POP	B
+	POP	D
+	POP	H	;Restore the registers
+	RET
+;
+;INLINE PRINT ROUTINE
+;
+ILPRT	XTHL		;Set HL to point to message
+;
+ILPLP	MOV	A,M	;Get a character from message
+	CALL	AOUT	;Output it
+	INX	H	;Point to next character
+	MOV	A,M	;Check for end of message
+	ORA	A	; (00H marks end of message)
+	JNZ	ILPLP
+	XTHL		;Get proper return address onto stack
+	RET		;Then return to program
+;
+COLUMN	DB	MAXCOL	;Column counter
+TRYDRV	DB	0	;Number of drive being tried
+UDNUM	DB	0	;USER/DRIVE number is saved here
+CUN	DB	0	;Currently logged-in user number
+MFLAG	DB	0	;Flag set to non-zero if file is found
+WBOOT	DW	0000H	;CP/M warm-boot address is saved here
+;
+	IF	MULTUSR
+CTU	DB	0	;Current try user number
+ORIGCTU	DB	0	;Original current try user number
+MAXTEMP	DB	0	;Maximum try user number
+	ENDIF
+;
+DSKSEL	DB	0C3H	;Jump to CBIOS's disk select routine
+	DW	0000H	; (CBIOS's DSKSEL address is stored here)
+;
+	DS	64	;32 level stack should be enough room
+STACK	DS	2
+;
+	END

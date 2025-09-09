@@ -1,0 +1,39 @@
+VOLUME 46	 10/24/80
+
+DESCRIPTION: CP/M utilities.
+
+NUMBER	SIZE	NAME		COMMENTS
+
+	 2K	CATALOG.46	CONTENTS OF CP/M VOL. 46
+46.1	11K	ABSTRACT.046	Volume abstracts
+46.2	11K	CPM-FDOS.ASM	CPM to ICOM FDOS II transfer
+46.3	17K	CPMLABEL.BAS	Make CPMUG disk labels
+46.4	 0K	DELETED	
+46.5	 5K	CPMLABEL.DOC	DOC on above
+46.6	 8K	CRCK3.ASM	Full 16 bit CRC a file
+46.7	 1K	CRCK3.COM	COM of above
+46.8	16K	DU-8/12.ASM	Disk dump/patch, supports
+				many controllers.
+46.9	29K	DU-V61.ASM	Later version of CPMUG 40.20,
+				single density only
+46.10	 2K	DU/MAP.DOC	Doc. on CP/M directory format
+46.11	 6K	FDOS-CPM.ASM	ICOM FDOS II to CP/M transfer
+46.12	10K	MDIR8/17.ASM	Fancy directory list program,
+46.13	 1K	MDIR8/17.COM	CP/M 1.4 (or 2.X, all users)
+46.14	 6K	MLIST3.ASM	Type multiple files with lots
+				of disk buffering
+46.15	20K	PLINK823.ASM	Send/Rcv to memory via modem
+46.16	22K	PMMIBYE5.ASM	Remote console program,
+46.17	 3K	PMMIBYE5.DOC		update of 40.34
+46.18	 2K	PTSRCNVT.COM	Convert Proc. Tech to CP/M ASM
+46.19	 2K	PTSRCNVT.DOC	DOC on above
+46.20	 7K	RETDL.COM	Disassembler to TDL mnemonics,
+				modification of 42.18
+46.21	13K	SURVEY3.ASM	Maps system memory/port usage
+				as well as disk stat.
+46.22	 1K	SURVEY3.COM	COM of above
+46.23	20K	XD-7/4.ASM	Fancy directory list program
+46.24	 2K	XD-7/4.COM	COM of above
+
+		U-G-FORM.LIB	CPMUG submission form
+

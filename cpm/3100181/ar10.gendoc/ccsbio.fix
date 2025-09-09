@@ -1,0 +1,97 @@
+; FROM: LEWIS MOSELEY, JR.      11/8/81
+;
+; TO:	CCS DISK CONTROLLER USERS
+;
+; SUBJECT: FIX FOR SPURIOUS SELECT ERROR PROBLEM
+;
+; Most users of the CCS Disk System (and the CCS Deblocking
+; BIOS known as CCBIOS.ASM) have run into the problem of
+; receiving spurious "BDOS ERROR ON A: SELECT" messages, when
+; drive A: is a legitimate drive and should not give the error.
+; After putting up with ths for a year or so, I decided to fix
+; it.  Some experimemtation defined the problem a little more
+; specifically:  the spurious SELECT error occurred when:
+;   1.  a drive had been running a double-density disk, and
+;   2.  a single-density disk was inserted, and
+;   3.  a call to the BDOS RESET function was made.  (Note: RESETs
+;       result in the error; REBOOTs do not.), and
+;   4.  the drive was re-selected
+;
+; So, the response to the RESET command failed to recognize the
+; change from double- to single-density.  The problem was traced
+; to the IDRD subroutine, and the code was added to correct the
+; problem.  The following IDRD subroutine should be inserted in
+; place of the existing one:
+;
+;
+IDRD5:	MVI	B,STEPI	;BUILD A STEP-IN COMMAND
+	CALL	EOJA
+IDRD:	LHLD	LUNIT
+	MOV	A,H	;GET THE CUNIT VALUE
+	CMP	L	;SEE IF SAME AS LUNIT
+	RZ		;RETURN IF SO
+IDRD1:
+;
+;MODIFICATION LM6 OF 11/8/81, PART 1 (ADDITION TO EXISTING CODE)
+;
+;TRY EACH DENSITY TWICE BEFORE GIVING UP
+;
+	LXI	H,IDTRY
+	MVI	M,3		;TWO DENSITIES, TWICE EACH
+				;(AND, YES, 3 IS CORRECT)
+IDRD0:				;LOOP REENTRY POINT
+;
+;END LM6 MODS, PART 1
+;
+	MVI	C,80H	;SET THE AUTO-WAIT BIT
+	CALL	SETUP
+	PUSH	H	;SAVE POINTER
+	LXI	H,HLWAIT  ;WAIT FOR HEADS TO SETTLE
+IDRD3:	DCX	H
+	MOV	A,H
+	ORA	A
+	JNZ	IDRD3
+	LXI	H,IDSV	;SET UP TO READ ADDRESS
+	MVI	B,2	;SET UP TO READ 6(8) BYTES OF DATA
+	MVI	A,RDADD	;READ ADDRESS COMMAND
+	DI
+	CALL	RDAT
+	POP	H	;RESTORE POINTER
+	JZ	IDRD2	;JUMP IF GOOD READ
+;
+;MODIFICATION LM6, PART 2, OF 11/81  (REPLACES EXISTING CODE)
+;
+	LDA	IDTRY
+	DCR	A		;TRIED 4 TIMES YET?
+	RM			;ERROR RETURN IF SO, Z-FLAG RESET
+	STA	IDTRY		;ELSE PUT BACK COUNTER
+	MVI	A,40H
+	XRA	M		;TOGGLE DENSITY BIT (TO REG A)
+	MOV	M,A		;PUT IT BACK IN MEMORY
+	JMP	IDRD0		;AND TRY AGAIN
+;
+;END OF LM6, PART 2
+;
+IDRD2:	IN	DSCTR	;GET THE TRACK NUMBER
+	OUT	DTRCK	;SET THE TRACK REGISTER
+	CPI	2	;INSURE NOT ON TRACK 0 OR 1
+	JC	IDRD5	;JUMP IF SO
+	MOV	A,M	;REGET SELBITS
+	STA	LUNIT	;UPDATE LAST USED UNIT
+	STA	CUNIT
+	INX	H	;SET THE SECTOR SIZE
+	LDA	IDSV+3
+	MOV	M,A
+	CMP	A	;SET Z-FLAG FOR GOOD RETURN
+	RET
+;
+;
+;
+;
+;
+; NOTE: IN THE DATA AREA AT THE END OF THE BIOS, ADD:
+;
+IDTRY:	DS	1		;TRIES TO LOG IN DISK
+;
+	END OF MODS
+

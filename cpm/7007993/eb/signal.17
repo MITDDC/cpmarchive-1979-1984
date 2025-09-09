@@ -1,0 +1,55 @@
+; -*- lisp -*-
+
+(eval-when (eval compile)
+   (or (get 'loop 'version)
+       (load "lisp;loop"))
+   (or (get 'errmac 'version)
+       (load "eb;errmac")))
+
+(herald signal)
+
+(and (status feature complr)
+     (special *last-signalled-condition-and-args
+	      *no-signal-return-value))
+
+(defmacro condition-handlers (cvar handlers &rest forms)
+   (or (eq (typep cvar) 'symbol)
+       (er-error "~A supplied as CVAR not a symbol" cvar))
+   (or forms (er-error "No forms given: (condition-bind ~A ~A)" cvar handlers))
+   (let ((default-segment
+	    (if (memq (caar (last handlers)) '(t otherwise :otherwise))
+		nil
+		'((t (*throw 'signal *last-signalled-condition-and-args))))))
+    `(let ((*last-signalled-condition-and-args nil) ; bind in case of weird nested
+	   (*no-signal-return-value nil))           ; screw cases
+       (setq *no-signal-return-value #% (*catch 'signal ,@ forms))
+    #% (if (null *last-signalled-condition-and-args)
+	   *no-signal-return-value
+	   (let ((,cvar (car *last-signalled-condition-and-args)))
+	     (caseq ,cvar
+		,@ (loop for (c-or-cs arglist . forms) in handlers
+		    collect (or forms (er-error "~A handler has no forms."
+						c-or-cs))
+		            `(,c-or-cs
+			        (let ((,arglist (cdr *last-signalled-condition-and-args)))
+				   ,@ forms)))
+		,@ default-segment))))))
+
+(defmacro signal (condition &rest args)
+  `(progn (setq *last-signalled-condition-and-args (list ,condition ,@ args))
+       #% (*throw 'signal nil)))
+
+(defun unclaimed-signal-handler (tag)
+   (setq tag (car tag))
+   (let ((condition (car *last-signalled-condition-and-args))
+	 (args (cdr *last-signalled-condition-and-args)))
+     (cond ((and (eq tag 'signal) *last-signalled-condition-and-args)
+	    (format msgfiles
+		    "~&; A condition has propagated to top level without being handled.~%~
+		       ; It was signalled with arguments as follows:~%~
+		       ;     ~A ~A~%" condition (or args "()"))
+	    nil)
+	   (t (+internal-ugt-break tag)))))
+
+(setq unseen-go-tag #'unclaimed-signal-handler)
+

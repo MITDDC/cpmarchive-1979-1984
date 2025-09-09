@@ -1,0 +1,32 @@
+VOLUME 52
+
+DESCRIPTION:    1. COPYFAST Version 3.5 by Chuck Weingart
+                2. BATCH/VARBATCH by Daniel Ross
+
+NUMBER  SIZE    NAME            COMMENTS
+
+                -CATALOG.052    CONTENTS OF CP/M VOL. 52.
+                ABSTRACT.052    Abstracts of files.
+                CRCK.COM        CRC program (see abstracts)
+52.1    12K     BATCH.1         SIL80 source for BATCH.
+52.2    10K     BATCH.3         SIL80 source for BATCH.
+52.3    2K      BATCH.COM       Object file of above.
+52.4    1K      BATCH.CTL       Control table for batch.
+52.5    5K      BATCH.HEX       Hex file of above code.
+52.6    35K     BATCH.RM        Batch Reference Manual.
+52.7    21K     BATCH.SYM       Batch Symbol Table.
+52.8    2K      CPYFST35.ABS    Chuck's comments.
+52.9    26K     CPYFST35.ASM    Source code for COPYFAST.
+52.10   28K     CPYFST35.DOC    Documentation for COPYFAST.
+52.11   2K      CPYFST3F.COM    Object of above, fast disks
+52.12   2K      CPYFST3M.COM    Object of above, medium.
+52.13   2K      CPYFST3S.COM    Object of above, slow disks
+52.14   1K      CRCKLIST.CRC    CRC list of programs.
+52.15   2K      EXAMPLE.BAT     Sample BATCH file.
+52.16   23K     VARBATCH.1      SIL80 source for VARBATCH.
+                                (BATCH with variables).
+52.17   10K     VARBATCH.3      SIL80 source for VARBATCH.
+52.18   3K      VARBATCH.COM    Object of above.
+52.19   1K      VARBATCH.CTL    Control table of above.
+52.20   7K      VARBATCH.HEX    Hex file of above.
+52.21   29K     VARBATCH.SYM    Symbol table of above.

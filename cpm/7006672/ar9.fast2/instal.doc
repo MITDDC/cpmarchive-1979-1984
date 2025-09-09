@@ -1,0 +1,64 @@
+How to install FAST.COM or SPEED.COM on your system.
+
+If you are using any of the following disk controllers,
+then the .COM files will work as they are distributed.
+	Tarbell single density
+	Digital Systems or Digital Microsystems (single
+		density)
+	Intel MDS 800 or iSBC-201
+
+If you are using any of the following disk controllers,
+then you will have to insall the appropriate patch file
+named below:
+	Thinkertoys Discus double density	DSCUSPAT.HEX
+	Digital Systems double density		DMSPATCH.HEX
+
+If you are using something else with a physical sector size
+other than 128, you will have to be a hacker and examine
+the various patch files, FAST.ASM, and the skew tables in
+your SYSGEN and BDOS.  Good luck.  If you manage to get a
+good speed improvement on some controller not listed above,
+please send a listing of the patch to the author:
+		Robert A. Van Valzah
+		1140 Hickory Trail
+		Downers Grove, IL    60515
+		Thank you.
+
+If you have a single density controller other than those
+listed above, then use the follwoing procedure:
+
+You will need a stopwatch or a watch with a second hand.
+
+Pick some operation that takes a fixed amount of time, like
+PIPing a file around or assembling something.  Something that
+takes about 30 to 60 seconds is good.  Execute it without
+FAST, and record the execution time from when you hit return
+to when you see the 'A>' again.  Now try the same thing
+with FAST (see FMAN.PRN for instructions), and record the
+execution time.  If it got faster (look for 20 - 30%) then
+you are all set and can use FAST.COM and SPEED.COM as
+supplied.
+
+If it got slower or stayed the same, then you'll need
+RSPEED.COM.  Load RSPEED and enter the number of sectors
+per track (most likely 26).  Start with a skew factor of
+1 and time how long it takes to read a track (the time from
+when you hit return to when you get the prompt again).
+Now increase the skew to 2 or 3 and time a track read
+again.  Sooner or later, you should note a marked decrease in
+the track read time.  The skew factor you are then using
+is the fastest your controller can read an entire track.
+Integrate the file SKEWnPAT.HEX into FAST.COM and SPEED.COM
+where n is the skew obtained above.
+
+How to integrate a patch file:
+
+It's simple, all you need is  DDT.COM.
+DDT FAST.COM       or for speed:  DDT SPEED.COM
+IfooPAT.HEX
+R
+G0
+SAVE 8 FASTX.COM   or for speed:  SAVE 17 SPEEDX.COM
+
+And test the new file, it should be as fast as your
+system can go.  Enjoy your trip!.

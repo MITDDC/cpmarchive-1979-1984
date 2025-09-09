@@ -1,0 +1,58 @@
+Date: 9/7/81
+From: Ben Bronson
+To:   All
+Re:   New SQ USQ and FLS
+
+Greenlaw's latest SQUEEZER programs are FLS-11, USQ-15
+and SQ-15.  The main change is to SQ, which turned out
+to have a bug in it--in previous versions, an occasional
+combination of characters would cause it to try to generate
+code longer than 16 bits, which made the files involved
+non-unsqueezable.  Steve Bogolub here in Chicago discovered
+the bug, sent files that proved its existence to Richard
+Greenlaw, and got a disk with a debugged SQ last week.  It
+now checks to see whether a >16 bit code is being generated
+and if so prints "rescaling" and goes around again to gene-
+rate a safer table.
+
+
+--> FILE:  CHANGES .DOC		CRC = F6 EB
+
+--> FILE:  DIO     .H  		CRC = 26 B7
+
+--> FILE:  DIO2    .C  		CRC = 7B 7D
+
+--> FILE:  FLS     .C  		CRC = D8 35
+
+--> FILE:  FLS     .COM		CRC = 0C 99
+
+--> FILE:  HISTORY .DOC		CRC = 15 12
+
+--> FILE:  IO      .C  		CRC = 92 34
+
+--> FILE:  SQ      .C  		CRC = 03 6A
+
+--> FILE:  SQ      .COM		CRC = 95 B0
+
+--> FILE:  SQ      .H  		CRC = 10 97
+
+--> FILE:  SQCOM   .H  		CRC = 4F 7F
+
+--> FILE:  SQDEBUG .C  		CRC = 28 3B
+
+--> FILE:  SQREADME.DOC		CRC = 7E 4B
+
+--> FILE:  SQUEEZER.DOC		CRC = CD EE
+
+--> FILE:  TR1     .C  		CRC = 0B EE
+
+--> FILE:  TR2     .C  		CRC = 71 C7
+
+--> FILE:  USQ     .C  		CRC = F9 BF
+
+--> FILE:  USQ     .COM		CRC = FE 42
+
+--> FILE:  USQ     .H  		CRC = 93 0A
+
+--> FILE:  UTR     .C  		CRC = A7 39
+

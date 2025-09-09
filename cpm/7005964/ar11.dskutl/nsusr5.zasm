@@ -1,0 +1,448 @@
+;
+;INDIVIDUAL I/O ROUTINES FOR CP/M-2 ON NORTHSTAR DD
+;**************************************************
+;	by Keith Petersen, W8SDZ
+; 	 (revised July 4, 1981 by Bob Clyne)
+;
+;07/04/81  Added additional I/O drivers and changed to table selection
+;	   of drivers. (Bob Clyne)
+;
+;04/22/81  Changed some of the JUMP instructions to Z80 JUMP RELATIVEs
+;	   using Z80.LIB.  (Bob Clyne)
+;
+;04/21/81  Changed the list device status routine to use the code suggested
+;	   by Robert Halsall in the February 1981 issue of LIFELINES.
+;	   (Bob Clyne)
+;
+;03/15/81  Added check for illegal drive - currently set for a two drive
+;	   system. Changed clear screen character for Intertube. Added code
+;	   to list status routine to return with carry set if the printer is
+;	   busy.  (Bob Clyne)
+;
+;This is a special user area which allows output
+;from the system to both the console and the
+;TTY port when STAT'ed with the command:
+;	STAT CON:=UC1:
+;
+;The command to output to just the TTY is:
+;	STAT CON:=TTY:
+;
+;NOTE: Contents of IOBYTE (address 0003h)
+;	0 = TTY output only
+;	1 = CRT output only
+;	3 = both TTY and CRT output
+;
+;The initialization in this version causes a cold
+;boot to set CON:=CRT:.
+;
+;COLPT and COUL1 both output to the Horizon parallel port but the code is
+;different. (RAC)
+;
+;Change MSIZE to the nominal system size desired
+;
+MSIZE	EQU	58	;<----58K SYSTEM SIZE----
+;
+BIOS	EQU	5300H+(MSIZE-24)*1024
+USER	EQU	BIOS+700H	;WHERE THE USER AREA STARTS
+OFFSET	EQU	2700H-USER	;TO OVERLAY SYSGEN IMAGE
+IOBYTE	EQU	3		;USE INTEL CONVENTION
+;
+;Define port assignments
+;
+CRTS	EQU	03H	;CRT STATUS PORT
+CRTD	EQU	02H	;CRT DATA PORT
+CRTBE	EQU	01H	;TBE MASK FOR CRT PORT
+KBDS	EQU	03H	;CONSOLE KEYBOARD STATUS PORT
+KBDD	EQU	02H	;CONSOLE KEYBOARD DATA PORT
+KBDDA	EQU	02H	;RDA MASK FOR KBD PORT
+LSTS	EQU	05H	;LIST STATUS PORT
+LSTD	EQU	04H	;LIST DATA PORT
+LSTDA	EQU	02H	;RDA MASK FOR LIST PORT
+LSTBE	EQU	01H	;TBE MASK FOR LIST PORT
+MBSTATP	EQU	06H	;MOTHERBOARD STATUS PORT - USED FOR PARALLEL PORT IO
+PARPT	EQU	00H	;PARALLEL PORT
+PARINMSK EQU	02H	;PARALLEL PORT INPUT CHAR AVAILABLE MASK
+PIFLGR	 EQU	30H	;PARALLEL PORT INPUT CHAR AVAIL. FLAG RESET
+PAROTMSK EQU	01H	;PARALLEL PORT OUTPUT BUFFER EMPTY MASK
+POFLGR	 EQU	20H	;PARALLEL PORT OUTPUT BUFFER EMPTY FLAG RESET
+POSTROB	 EQU	80H	;PARALLEL PORT OUTPUT STROBE
+;
+CLR	EQU	0CH	;Intertec Intertube CLEAR SCREEN CHARACTER
+;
+MACLIB Z80
+;
+DRVS	EQU	02H	;NUMBER OF DRIVES IN SYSTEM
+;
+	ORG	USER	;WHERE THE USER AREA STARTS
+;
+;The jump table following MUST be present in the correct sequence
+;
+CINIT:	JMP	CINITR	;COLD INIT I/O PORTS
+	JMP	CONST	;CONSOLE STATUS
+	JMP	CONIN	;CONSOLE INPUT
+	JMP	CONOUT	;CONSOLE OUTPUT
+	JMP	LIST	;LIST OUTPUT
+	JMP	PUNCH	;PUNCH=CONSOLE OUTPUT
+	JMP	READER	;READER=CONSOLE INPUT
+LSTAT:	JMP	LISTST	;LIST STATUS
+	DB	0,0,0	;RESERVED
+	DW	HORLEN	;LENGTH OF THIS PROGRAM
+
+CONST:	LXI	H,CSTBLE	;BEGINNING OF JUMP TABLE
+	JR	CONIN1		;SELECT CORRECT JUMP
+
+CSREADR:LXI	H,CSRTBLE	;BEGINNING OF READER STATUS TABLE
+	JR	READERA
+
+CONIN:	LXI	H,CITBLE	;BEGINNING OF CHARACTER INPUT TABLE
+
+;ENTRY AT CONIN1 WILL DECODE THE TWO LEAST SIGNIFICANT BITS OF IOBYTE.
+;THIS IS USED BY CONIN, CONOUT, AND CONST.
+
+CONIN1:	LDA	IOBYTE
+	RAL
+
+;Entry at SELDEV will form an offset into the table pointed to by HL and
+;then pick up the address and jump there.
+
+SELDEV:	ANI	06H		;STRIP OFF UNWANTED BITS
+	MVI	D,0		;FORM OFFSET
+	MOV	E,A
+	DAD	D		;ADD OFFSET
+	MOV	A,M		;PICK UP HIGH BYTE
+	INX	H
+	MOV	H,M		;PICK UP LOW BYTE
+	MOV	L,A		;FORM ADDRESS
+	PCHL
+
+CONOUT:	LDA	0004H		;GET DRIVE/USER NUMBER
+	ANI	0FH		;ONLY LOOK AT DRIVE NUMBER
+	CPI	DRVS		;IS IT GREATER THAN HIGHEST DRIVE ON LINE
+	JRC	CONOUT1		;NO...THEN JUMP
+	XRA	A		;SET DRIVE AND USER NUMBERS TO 0
+	STA	0004H		;SAVE DRIVE 0 / USER 0
+CONOUT1:LXI	H,COTBLE	;BEGINNING OF CHARACTER OUT TABLE
+	JR	CONIN1		;DO THE DECODE
+
+READER:	LXI	H,RTBLE		;BEGINNING OF READER INPUT TABLE
+
+;Entry at READERA will decode bits 2 & 3 of IOBYTE, used by CSREADER
+
+READERA:LDA	IOBYTE
+
+;Entry at READER1 will shift the bits into position, used by LIST and PUNCH.
+
+READER1:RAR
+	JR	SELDEV
+
+;PUNCH:	Selects the correct punch device. The selection comes from bits
+;4 & 5 of IOBYTE.
+
+PUNCH:	LXI	H,PTBLE		;BEGINNING OF PUNCH TABLE
+	LDA	IOBYTE
+
+;Entry at PNCH1 rotates bits a little more in prep for SELDEV, used by LIST.
+
+PNCH1:	RAR
+	RAR
+	JR	READER1
+
+;LIST:	Select a list device based on bits 6 & 7 of IOBYTE.
+
+LIST:	LXI	H,LTBLE		;BEGINNING OF LIST DEVICE TABLE
+LIST1:	LDA	IOBYTE
+	RAR
+	RAR
+	JR	PNCH1
+
+;LISTST: Get the status of the currently assigned list device.
+
+LISTST:	LXI	H,LSTBLE	;BEGINNING OF THE LIST DEVICE STATUS
+	JR	LIST1
+
+;Console input table.
+
+CITBLE:	DW	CITTY		;Input from TTY (Horizon device 1 - right
+				;serial port, #4).
+	DW	CICRT		;Input from CRT (Horizon device 0 - left
+				;serial port, #2).
+	DW	READER		;Input from READER (depends on READER selection
+	DW	CIUC1		;Input from User Console 1 (currently set to
+				;accept input from both CRT and TTY.
+
+;Console output table.
+
+COTBLE:	DW	COTTY		;Output to TTY, as above.
+	DW	COCRT		;Output to CRT, as above.
+	DW	LIST		;Output to list device (depends on bits 6 & 7
+				;of IOBYTE).
+	DW	COUC1		;Same as input in table above.
+
+;List device table.
+
+LTBLE:	DW	COTTY		;Output to TTY.
+	DW	COCRT		;Output to CRT.
+	DW	COLPT		;Output to line printer (currently assigned to
+				;the Horizon device 2, parallel output port,
+				; port #2).
+	DW	COUL1		;Output to user line printer (currently
+				;assigned to the alternate code for the
+				;Horizon device 2  parallel output port #0).
+
+;Punch device table.
+
+PTBLE:	DW	COTTY		;Output to TTY.
+	DW	COPTP		;Output to paper tape punch (currently assigned
+				;to TTY).
+	DW	COUP1		;Output to user punch 1 (currently assigned to
+				;user line printer 1).
+	DW	COUP2		;Output to user punch 2 (currently assigned to
+				;line printer).
+
+;Reader device input table.
+
+RTBLE:	DW	CITTY		;Input from TTY.
+	DW	CIPTR		;Input from paper tape reader (currently
+				;assigned to CRT).
+	DW	CIUR1		;Input from user reader 1 (currently assigned
+				;to Horizon device 2 - parallel input port #0).
+	DW	CIUR2		;Input from user reader 2 (currently assigned
+				;the same as CIUR1).
+
+;Console status table (input status ie. is character available?).
+
+CSTBLE:	DW	CISTTY		;Status of TTY.
+	DW	CISCRT		;Status of CRT.
+	DW	CSREADR		;Status of reader (depends on reader device
+				;assignment).
+	DW	CISUC1		;Status of user console 1 (currently just
+				;returns status of TTY).
+
+;Status of reader device (input status ie. is character available?).
+
+CSRTBLE:DW	CISTTY		;Status of TTY.
+	DW	CISPTR		;Status of paper tape reader (currently
+				;assigned to CRT).
+	DW	CISUR1		;Status of user reader 1 (curently assigned to
+				;Horizon device 2 - parallel input port #0).
+	DW	CISUR2		;Status of user reader 2 (currently assigned
+				;the same as CSUR1).
+
+;Status of the list device.
+
+LSTBLE:	DW	COSTTY		;Status of TTY.
+	DW	COSCRT		;Status of CRT (currently always returns ready)
+	DW	COSLPT		;Status of line printer (currently assigned to
+				;Horizon device 2, parallel output port,
+				;port #0).
+	DW	COSUL1		;Status of the user line printer (currently
+				;assigned to the alternate code for the
+				;Horizon parallel output port).
+
+;CITTY:	Character in from TTY device - Horison device 1, the right serial port,
+;	port #4.
+
+CITTY:	IN	LSTS
+	ANI	LSTDA
+	JRZ	CITTY
+	IN	LSTD
+	ANI	7FH
+	JRZ	CITTY
+	RET
+
+;CICRT:	Character in from the CRT device - Horizon device 0, the left serial
+;	port, port #2.
+
+CIPTR:
+CICRT:	IN	KBDS
+	ANI	KBDDA
+	JRZ	CICRT
+	IN	KBDD
+	ANI	7FH
+	JRZ	CICRT
+	RET
+
+;CIUR1:	Character in from Horizon device 2, the parallel input port, port #0.
+
+CIUR2:
+CIUR1:	IN	MBSTATP		;GET MOTHERBOARD STATUS
+	ANI	PARINMSK	;MASK FOR CHARACTER INPUT FLAG.
+	JRZ	CIUR1		;LOOP IF NOTHING THERE.
+	IN	PARPT		;GET THE CHARACTER
+	PUSH	PSW		;SAVE IT
+	MVI	A,PIFLGR	;RESET CODE FOR PARALLEL INPUT FLAG
+	OUT	MBSTATP		;RESET THE FLAG
+	POP	PSW		;RESTORE THE CHARACTER
+	RET
+
+;CIUC1:	Character in from either TTY or CRT.
+
+CIUC1:	IN	LSTS
+	ANI	LSTDA
+	JRZ	CIUC1A
+	IN	LSTD
+	ANI	7FH
+	JRZ	CIUC1		;IGNORE NULLS
+	RET
+CIUC1A:	IN	KBDS
+	ANI	KBDDA
+	JRZ	CIUC1
+	IN	KBDD
+	ANI	7FH
+	JRZ	CIUC1
+	RET
+
+;COTTY:	Character out to TTY - Horizon device 1, right serial port, port #4.
+
+COPTP:
+COTTY:	IN	LSTS
+	ANI	LSTBE
+	JRZ	COTTY
+	MOV	A,C
+	ANI	7FH
+	OUT	LSTD
+	RET
+
+;COCRT:	Character out to CRT - Horizon device 0, left serial port, port #2.
+
+COCRT:	IN	CRTS
+	ANI	CRTBE
+	JRZ	COCRT
+	MOV	A,C
+	ANI	7FH
+	RZ
+	CPI	7FH
+	RZ
+	OUT	CRTD
+	RET
+
+;COLPT:	Character out to lineprinter, Horizon device 2, parallel output port,
+;	port #0. This code is essentially the same as that furnished by
+;	Lifeboat in USER.ASM.
+
+COUP2:
+COLPT:	IN	MBSTATP
+	ANI	PAROTMSK
+	JRZ	COLPT
+	MVI	A,POFLGR
+	OUT	MBSTATP
+	MOV	A,C
+TIN1:	ORI	80H		;SET STROBE FALSE
+	OUT	PARPT		;SEND CHARACTER
+	XRI	80H		;TOGGLE STROBE
+	OUT	PARPT
+	XRI	80H		;TOGGLE STROBE AGAIN
+	OUT	PARPT
+	ANI	7FH		;MASK TO ASCII
+	RET
+
+
+;COUL1:	Character out to user lineprinter 1, user punch 1, Horizon device 2,
+;	 parallel output port, port #0. This is alternate code similar to
+;	that furnished by North Star in SOFT-DOC Revision 2.1.
+
+COUP1:
+COUL1:	IN	MBSTATP
+	ANI	PAROTMSK
+	JRZ	COUL1
+	MOV	A,C		;GET CHARACTER INTO ACCUMULATOR
+	OUT	PARPT		;SEND IT
+	MVI	A,POFLGR	;PARALLEL OUTPUT FLAG RESET
+	OUT	MBSTATP		;SEND IT TO MOTHERBOARD STAUS PORT
+	MOV	A,C		;GET CHARACTER BACK IN THE ACCUMULATOR.
+	RET
+
+;COUC1:	Character out to user console 1, currently outputs to both TTY & CRT.
+
+COUC1:	CALL	COTTY
+	JR	COCRT
+
+;CISTTY:	Input status for TTY ie is a character available?
+
+CISTTY:	IN	LSTS
+CSCOM:	RRC
+CSCOM1:	RRC
+	SBB	A
+	RET
+
+;CISCRT:	Input status for CRT ie is a character available?
+
+CISPTR:
+CISCRT:	IN	KBDS
+	JR	CSCOM
+
+;CISUC1:	Input status for user console 1, checks for a character ready
+;		on either the CRT or TTY.
+
+CISUC1:	CALL	CISTTY		;CHECK FOR CHARACTER WAITING ON TTY
+	RNZ			;CHARACTER THERE, RETURN
+	JR	CISCRT		;GO CHECK FOR CHARACTER AT CRT
+
+;CISUR1:	Input status for user reader 1, Horizon device 2, parallel
+;		output port, port #0.
+
+CISUR2:
+CISUR1:	IN	MBSTATP
+	JR	CSCOM
+
+;COSCRT:	Output status of CRT device, always returns ready.
+
+COSCRT:
+READY:	MVI	A,0FFH
+	RET
+
+;COSTTY: Status of TTY device for output. Returns 0 in ACC and Z and C flags
+;	 set if not ready and 0FFH in ACC and Z and C flags reset if ready.
+
+COSUC1:
+COSTTY:	IN	LSTS
+COSCOM:	RRC			;Rotate the status bit to the carry bit
+	SBB	A		;Subtract the ACC from itself the subtract the
+				;carry bit.
+	CMC			;WORDSTAR expects carry set if NOT ready
+	RET
+
+
+;CSUL1:	Status of user line printer, Horizon device 2, parallel output port,
+;	port #0.
+
+COSLPT:
+COSUL1:	IN	MBSTATP
+	JR	COSCOM
+
+;Cold initialization
+;
+CINITR:	MVI	A,01H	;SETS CON:=CRT:
+	STA	IOBYTE
+	XRA	A	;INIT MOTHER BOARD
+	OUT	6
+	OUT	6
+	OUT	6
+	OUT	6
+	MVI	A,0C1H	;INIT MEMORY BOARDS
+	OUT	0C0H
+;Set up serial ports
+;0CEH sets 2 stop bits, 16X clock, 8 bits, no parity
+;4EH sets 1 stop bit, 6X clock, 8 bits, no parity
+;	MVI	A,0CEH	;FOR 2 STOP BITS (COMMENTED OUT)
+	MVI	A,4EH	;FOR 1 STOP BIT
+	OUT	3	;TO FIRST SERIAL PORT
+	OUT	5	;TO SECOND SERIAL PORT
+	MVI	A,37H	;CMMD: RTS ER RXF DTR TXEN
+	OUT	3	;FIRST PORT
+	OUT	5	;SECOND PORT
+	IN	2	;CLEAR INPUT BUFFERS
+	IN	4	;ON BOTH SERIAL PORTS
+	MVI	A,CLR	;SCREEN CLEAR
+	OUT	2	;TO FIRST PORT
+;Set up parallel port
+	MVI	A,30H
+	OUT	6	;RESET PARALLEL PORT PI FLAG
+	MVI	A,60H	;CODE TO SET PO FLAG
+	OUT	6
+	RET
+;
+HORLEN:	EQU	$-USER	;LENGTH
+;
+	END
+

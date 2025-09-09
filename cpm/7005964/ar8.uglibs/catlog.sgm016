@@ -1,0 +1,28 @@
+
+SIG/M     volume 16      miscellaneous CP/M utilities  
+
+
+number    name           size      description
+
+16.1      BYE67.ASM      39K       remote console program for PMMI
+16.2      BYE67.DOC      12K       /
+
+16.3      MLIST42.ASM    12K       multiple file list utility
+
+16.4      DU-V75.OBJ      6K       disk utility system
+16.5      DU-V75.DOC      5K        /
+16.6      DU-V75.ASM     40K       /
+
+16.7      FINDBD42.ASM   33K       creates file of badspots
+     
+16.8      APLMODEM.ASM   36K       CP/M file transfer for Apple 2
+                                   using DC Hayes Micromodem 2
+
+16.9      COMAND.LIB      7K       console string processor
+
+16.10     COMBINE.ASM     7K       merges multiple files
+
+16.11     FILE-XT2.ASM    8K       system disk utility display
+
+16.12     MNEMON21.ASM   28K       multi-pass CP/M memory tester
+ 

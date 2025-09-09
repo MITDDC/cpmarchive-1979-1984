@@ -1,0 +1,3750 @@
+
+;/*
+;** Small-C Compiler Version 2.0
+;**
+;** Copyright 1982 J. E. Hendrix
+;**
+;** Part 2
+;*/
+        JMP CC1
+;#include "stdio.h"
+;/*
+;** stdiol.h -- header for local STDIO/CALL, and VM interfaces
+;*/
+;#define stdin 0
+;#define stdout 1
+;#define stderr 2
+;#define stdport 3
+;#define stdlist 4
+;#define ERR -2
+;#define EOF -1
+;#define YES 1
+;#define NO 0
+;#define NULL 0
+;#define CR 13
+;#define LF 10
+;#asm
+;STDIOL.R:LIBRY
+; STD I/O ROUTINES
+  EXTRN INDEX  
+  EXTRN RINDEX 
+  EXTRN GETC   
+  EXTRN GETCHAR
+  EXTRN FGETC  
+  EXTRN FGETS  
+  EXTRN PUTC   
+  EXTRN PUTCHAR
+  EXTRN FPUTC  
+  EXTRN FPUTS  
+  EXTRN PUTS   
+  EXTRN FOPEN  
+  EXTRN FCLOSE 
+  EXTRN GETARG 
+; STD I/O ROUTINES MATCHING VM ROUTINES
+  EXTRN FFLUSH 
+  EXTRN ABORT  
+  EXTRN EXIT   
+  EXTRN UNLINK 
+; ARITHMETIC & LOGICAL ROUTINES
+  EXTRN CCARGC 
+  EXTRN CCSXT  
+  EXTRN CCDSGI 
+  EXTRN CCDDGI 
+  EXTRN CCINCI 
+  EXTRN CCDECI 
+  EXTRN CCGINT 
+  EXTRN CCPIDDPD
+  EXTRN CCPDPI 
+  EXTRN CCDSGC 
+  EXTRN CCDDGC 
+  EXTRN CCINCC 
+  EXTRN CCDECC 
+  EXTRN CCGCHAR
+  EXTRN CCPCDDPD
+  EXTRN CCPDPC 
+  EXTRN CCPCHAR
+  EXTRN CCPINT 
+  EXTRN CCOR   
+  EXTRN CCXOR  
+  EXTRN CCAND  
+  EXTRN CCEQ   
+  EXTRN CCNE   
+  EXTRN CCGT   
+  EXTRN CCLE   
+  EXTRN CCGE   
+  EXTRN CCLT   
+  EXTRN CCCMP  
+  EXTRN CCUGE  
+  EXTRN CCULT  
+  EXTRN CCUGT  
+  EXTRN CCULE  
+  EXTRN CCUCMP 
+  EXTRN CCASR  
+  EXTRN CCASL  
+  EXTRN CCSUB  
+  EXTRN CCNEG  
+  EXTRN CCCOM  
+  EXTRN CCMULT 
+  EXTRN CCDIV  
+  EXTRN CCLNEG 
+  EXTRN CCSWITCH
+; VM ROUTINES
+;VM.R:   LIBRY
+  EXTRN CCBOJ  
+  EXTRN CCEXIT 
+  EXTRN CCPOLL 
+  EXTRN CCHALT 
+  EXTRN CCOPEN 
+  EXTRN CCCLOSE
+  EXTRN CCDELIM
+  EXTRN CCREAD 
+  EXTRN CCWRITE
+  EXTRN CCSEEK 
+  EXTRN CCMODE 
+  EXTRN CCFILE 
+  EXTRN CCPURGE
+  EXTRN CCFLUSH
+  EXTRN CCALLOC
+  EXTRN CCFREE 
+  EXTRN CCAVAIL
+;#include "cc.def"
+;/*
+;** Small-C Compiler Version 2.0
+;**
+;** Copyright 1982 J. E. Hendrix
+;**
+;** Macro Definitions
+;*/
+;
+;/*
+;** compile options
+;*/
+;#define PHASE2   /* 2nd and later compiles */
+;#define SEPARATE /* compile separately */
+;#define OPTIMIZE /* compile output optimizer */
+;#define NOCCARGC /* no calls to CCARGC */
+;/* #define HASH     /* use hash search for macros */
+;/* #define SMALL_VM /* uses Small-VM interface */
+;/* #define CMD_LINE /* command line run options */
+;/* #define DYNAMIC  /* allocate memory dynamically */
+;/* #define POLL     /* poll for operator interruptions */
+;/* #define PDS      /* uses PDS assembler and loader */
+;#define COL      /* terminate labels with a colon */
+;#define TAB  9   /* put out tabs of this value */
+;#define UPPER    /* force symbols to upper case */
+;#define LINK     /* will use with linking loader */
+;
+;/*
+;** machine dependent parameters
+;*/
+;#define BPW     2   /* bytes per word */
+;#define LBPW    1   /* log2(BPW) */
+;#define SBPC    1   /* stack bytes per character */
+;#define ERRCODE 7   /* op sys return code */
+; 
+;/*
+;** symbol table format
+;*/
+;#define IDENT    0
+;#define TYPE     1
+;#define CLASS    2
+;#define OFFSET   3
+;#define NAME     5
+;#define OFFSIZE (NAME-OFFSET)
+;#define SYMAVG  10
+;#define SYMMAX  14
+;
+;/*
+;** symbol table parameters
+;*/
+;#define NUMLOCS   25
+;#define STARTLOC  symtab
+;#define ENDLOC   (symtab+(NUMLOCS*SYMAVG))
+;#define NUMGLBS   180
+;#define STARTGLB  ENDLOC
+;#define ENDGLB   (ENDLOC+((NUMGLBS-1)*SYMMAX))
+;#define SYMTBSZ   2770  /* NUMLOCS*SYMAVG + NUMGLBS*SYMMAX */
+; 
+;/*
+;** System wide name size (for symbols)
+;*/
+;#define NAMESIZE 9
+;#define NAMEMAX  8
+; 
+;/*
+;** possible entries for "IDENT"
+;*/
+;#define LABEL    0
+;#define VARIABLE 1
+;#define ARRAY    2
+;#define POINTER  3
+;#define FUNCTION 4
+; 
+;/*
+;** possible entries for "TYPE"
+;**    low order 2 bits make type unique within length
+;**    high order bits give length of object
+;*/
+;/*      LABEL   0 */
+;#define CCHAR   (1<<2)
+;#define CINT    (BPW<<2)
+; 
+;/*
+;** possible entries for "CLASS"
+;*/
+;/*      LABEL     0 */
+;#define STATIC    1
+;#define AUTOMATIC 2
+;#define EXTERNAL  3
+;
+;/*
+;** "switch" table
+;*/
+;
+;#define SWSIZ   (2*BPW)
+;#define SWTABSZ (25*SWSIZ)
+; 
+;/*
+;** "while" statement queue
+;*/
+;#define WQTABSZ  30
+;#define WQSIZ     3
+;#define WQMAX   (wq+WQTABSZ-WQSIZ)
+; 
+;/*
+;** entry offsets in while queue
+;*/
+;#define WQSP    0
+;#define WQLOOP  1
+;#define WQEXIT  2
+; 
+;/*
+;** literal pool
+;*/
+;#define LITABSZ 700
+;#define LITMAX  (LITABSZ-1)
+; 
+;/*
+;** input line
+;*/
+;#define LINEMAX  80
+;#define LINESIZE 81
+;
+;/*
+;** output staging buffer size
+;*/
+;#define STAGESIZE   800
+;#define STAGELIMIT  (STAGESIZE-1)
+; 
+;/*
+;** macro (define) pool
+;*/
+;#define MACQSIZE 950
+;#define MACMAX  (MACQSIZE-1)
+; 
+;/*
+;** statement types
+;*/
+;#define STIF      1
+;#define STWHILE   2
+;#define STRETURN  3
+;#define STBREAK   4
+;#define STCONT    5
+;#define STASM     6
+;#define STEXPR    7
+;#define STDO      8 /* compile "do" logic */
+;#define STFOR     9 /* compile "for" logic */
+;#define STSWITCH 10 /* compile "switch/case/default" logic */
+;#define STCASE   11
+;#define STDEF    12
+;#define STGOTO   13 /* compile "goto" logic */
+;
+;/*
+;** external references in part 1
+;*/
+;extern char
+;  symtab[SYMTBSZ],
+  EXTRN SYMTAB 
+;  stage[STAGESIZE],
+  EXTRN STAGE  
+;  macq[MACQSIZE],
+  EXTRN MACQ   
+;  pline[LINESIZE],
+  EXTRN PLINE  
+;  mline[LINESIZE],
+  EXTRN MLINE  
+;  alarm, *glbptr, *line, *lptr, *cptr, *cptr2,  *cptr3,
+  EXTRN ALARM  
+  EXTRN GLBPTR 
+  EXTRN LINE   
+  EXTRN LPTR   
+  EXTRN CPTR   
+  EXTRN CPTR2  
+  EXTRN CPTR3  
+; *locptr, msname[NAMESIZE],  optimize,  pause,  quote[2],
+  EXTRN LOCPTR 
+  EXTRN MSNAME 
+  EXTRN OPTIMIZE       
+  EXTRN PAUSE  
+  EXTRN QUOTE  
+; *stagelast, *stagenext;
+  EXTRN STAGELAS       
+  EXTRN STAGENEX       
+;extern int
+;  wq[WQTABSZ],
+  EXTRN WQ     
+;  mack,
+  EXTRN MACK   
+;  ccode,  ch,  csp,  eof,  errflag,  iflevel,
+  EXTRN CCODE  
+  EXTRN CH     
+  EXTRN CSP    
+  EXTRN EOF    
+  EXTRN ERRFLAG        
+  EXTRN IFLEVEL        
+;  input,  input2,  listfp,  macptr,  nch,
+  EXTRN INPUT  
+  EXTRN INPUT2 
+  EXTRN LISTFP 
+  EXTRN MACPTR 
+  EXTRN NCH    
+;  nxtlab,  op[16],  opindex,  opsize,  output,  pptr,
+  EXTRN NXTLAB 
+  EXTRN OP     
+  EXTRN OPINDEX        
+  EXTRN OPSIZE 
+  EXTRN OUTPUT 
+  EXTRN PPTR   
+;  skiplevel,  *wqptr;
+  EXTRN SKIPLEVE       
+  EXTRN WQPTR  
+;extern int
+;  openin();
+  EXTRN OPENIN 
+;
+;/*
+;** external references in part 4
+;*/
+;extern int
+;  peephole();
+  EXTRN PEEPHOLE       
+;
+;#include "cc21.c"
+;junk() {
+CC1:
+JUNK::   
+;  if(an(inbyte())) while(an(ch)) gch();
+        CALL INBYTE
+        PUSH H
+        CALL AN
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC3
+CC4:
+        LHLD CH
+        PUSH H
+        CALL AN
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC5
+        CALL GCH
+        JMP CC4
+CC5:
+;  else while(an(ch)==0) {
+        JMP CC6
+CC3:
+CC7:
+        LHLD CH
+        PUSH H
+        CALL AN
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC8
+;    if(ch==0) break;
+        LHLD CH
+        MOV A,H
+        ORA L
+        JNZ CC9
+        JMP CC8
+;    gch();
+CC9:
+        CALL GCH
+;    }
+        JMP CC7
+CC8:
+CC6:
+;  blanks();
+        CALL BLANKS
+;  }
+        RET
+;
+;endst() {
+ENDST::  
+;  blanks();
+        CALL BLANKS
+;  return ((streq(lptr,";")|(ch==0)));
+        LHLD LPTR
+        PUSH H
+        LXI H,CC10+0
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        PUSH H
+        LHLD CH
+        XCHG;;
+        LXI H,0
+        CALL CCEQ
+        POP D
+        CALL CCOR
+        RET
+;  }
+CC10:   DB 59,0
+;
+;illname() {
+ILLNAME::        
+;  error("illegal symbol");
+        LXI H,CC11+0
+        PUSH H
+        CALL ERROR
+        POP B
+;  junk();
+        CALL JUNK
+;  }
+        RET
+CC11:   DB 105,108,108,101,103,97,108,32,115,121
+        DB 109,98,111,108,0
+;  
+;
+;multidef(sname)  char *sname; {
+MULTIDEF::       
+;  error("already defined");
+        LXI H,CC12+0
+        PUSH H
+        CALL ERROR
+        POP B
+;  }
+        RET
+CC12:   DB 97,108,114,101,97,100,121,32,100,101
+        DB 102,105,110,101,100,0
+;
+;needtoken(str)  char *str; {
+NEEDTOKE::       
+;  if (match(str)==0) error("missing token");
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC14
+        LXI H,CC13+0
+        PUSH H
+        CALL ERROR
+        POP B
+;  }
+CC14:
+        RET
+CC13:   DB 109,105,115,115,105,110,103,32,116,111
+        DB 107,101,110,0
+;
+;needlval() {
+NEEDLVAL::       
+;  error("must be lvalue");
+        LXI H,CC15+0
+        PUSH H
+        CALL ERROR
+        POP B
+;  }
+        RET
+CC15:   DB 109,117,115,116,32,98,101,32,108,118
+        DB 97,108,117,101,0
+;
+;findglb(sname)  char *sname; {
+FINDGLB::        
+;  cptr=STARTGLB;
+        LXI H,SYMTAB
+        LXI D,250
+        DAD D
+        SHLD CPTR
+;  while(cptr < glbptr) {
+CC17:
+        LHLD CPTR
+        XCHG;;
+        LHLD GLBPTR
+        CALL CCULT
+        MOV A,H
+        ORA L
+        JZ CC18
+;    if(astreq(sname, cptr+NAME, NAMEMAX)) return cptr;
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LHLD CPTR
+        LXI D,5
+        DAD D
+        PUSH H
+        LXI H,8
+        PUSH H
+        CALL ASTREQ
+        POP B
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC19
+        LHLD CPTR
+        RET
+;    cptr=nextsym(cptr);
+CC19:
+        LHLD CPTR
+        PUSH H
+        CALL NEXTSYM
+        POP B
+        SHLD CPTR
+;    }
+        JMP CC17
+CC18:
+;  return 0;
+        LXI H,0
+        RET
+;  }
+;
+;findloc(sname)  char *sname;  {
+FINDLOC::        
+;  cptr = locptr - 1;  /* search backward for block locals */
+        LHLD LOCPTR
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCSUB
+        SHLD CPTR
+;  while(cptr > STARTLOC) {
+CC21:
+        LHLD CPTR
+        XCHG;;
+        LXI H,SYMTAB
+        CALL CCUGT
+        MOV A,H
+        ORA L
+        JZ CC22
+;    cptr = cptr - *cptr;
+        LHLD CPTR
+        PUSH H
+        LHLD CPTR
+        CALL CCGCHAR
+        POP D
+        CALL CCSUB
+        SHLD CPTR
+;    if(astreq(sname, cptr, NAMEMAX)) return (cptr - NAME);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LHLD CPTR
+        PUSH H
+        LXI H,8
+        PUSH H
+        CALL ASTREQ
+        POP B
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC23
+        LHLD CPTR
+        PUSH H
+        LXI H,5
+        POP D
+        CALL CCSUB
+        RET
+;    cptr = cptr - NAME - 1;
+CC23:
+        LHLD CPTR
+        PUSH H
+        LXI H,5
+        POP D
+        CALL CCSUB
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCSUB
+        SHLD CPTR
+;    }
+        JMP CC21
+CC22:
+;  return 0;
+        LXI H,0
+        RET
+;  }
+;
+;addsym(sname, id, typ, value, lgptrptr, class)
+ADDSYM:: 
+;  char *sname, id, typ;  int value, *lgptrptr, class; {
+;  if(lgptrptr == &glbptr) {
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,GLBPTR
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC25
+;    if(cptr2=findglb(sname)) return cptr2;
+        LXI H,12
+        CALL CCDSGI
+        PUSH H
+        CALL FINDGLB
+        POP B
+        SHLD CPTR2
+        MOV A,H
+        ORA L
+        JZ CC26
+        LHLD CPTR2
+        RET
+;    if(glbptr >= ENDGLB) {
+CC26:
+        LHLD GLBPTR
+        PUSH H
+        LXI H,SYMTAB
+        LXI D,250
+        DAD D
+        LXI D,2506
+        DAD D
+        POP D
+        CALL CCUGE
+        MOV A,H
+        ORA L
+        JZ CC27
+;      error("global symbol table overflow");
+        LXI H,CC24+0
+        PUSH H
+        CALL ERROR
+        POP B
+;      return 0;
+        LXI H,0
+        RET
+;      }
+;    cptr = *lgptrptr;
+CC27:
+        LXI H,4
+        CALL CCDSGI
+        CALL CCGINT
+        SHLD CPTR
+;    }
+;  else {
+        JMP CC28
+CC25:
+;    if(locptr > (ENDLOC-SYMMAX)) {
+        LHLD LOCPTR
+        PUSH H
+        LXI H,SYMTAB
+        LXI D,250
+        DAD D
+        PUSH H
+        LXI H,14
+        POP D
+        CALL CCSUB
+        POP D
+        CALL CCUGT
+        MOV A,H
+        ORA L
+        JZ CC29
+;      error("local symbol table overflow");
+        LXI H,CC24+29
+        PUSH H
+        CALL ERROR
+        POP B
+;      abort(ERRCODE);
+        LXI H,7
+        PUSH H
+        CALL ABORT
+        POP B
+;      }
+;    cptr = *lgptrptr;
+CC29:
+        LXI H,4
+        CALL CCDSGI
+        CALL CCGINT
+        SHLD CPTR
+;    }
+CC28:
+;  cptr[IDENT]=id;
+        LHLD CPTR
+        PUSH H
+        LXI H,12
+        CALL CCDSGC
+        CALL CCPDPC
+;  cptr[TYPE]=typ;
+        LHLD CPTR
+        LXI D,1
+        DAD D
+        PUSH H
+        LXI H,10
+        CALL CCDSGC
+        CALL CCPDPC
+;  cptr[CLASS]=class;
+        LHLD CPTR
+        LXI D,2
+        DAD D
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        CALL CCPDPC
+;  putint(value, cptr+OFFSET, OFFSIZE);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LHLD CPTR
+        LXI D,3
+        DAD D
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL PUTINT
+        POP B
+        POP B
+        POP B
+;  cptr3 = cptr2 = cptr + NAME;
+        LHLD CPTR
+        LXI D,5
+        DAD D
+        SHLD CPTR2
+        SHLD CPTR3
+;  while(an(*sname)) *cptr2++ = *sname++;
+CC30:
+        LXI H,12
+        CALL CCDSGI
+        CALL CCGCHAR
+        PUSH H
+        CALL AN
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC31
+        LHLD CPTR2
+        INX H
+        SHLD CPTR2
+        DCX H
+        PUSH H
+        LXI H,14
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        CALL CCGCHAR
+        CALL CCPDPC
+        JMP CC30
+CC31:
+;  *cptr2 = cptr2 - cptr3;         /* set length */
+        LHLD CPTR2
+        PUSH H
+        LHLD CPTR2
+        XCHG;;
+        LHLD CPTR3
+        CALL CCSUB
+        CALL CCPDPC
+;  *lgptrptr = ++cptr2;
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LHLD CPTR2
+        INX H
+        SHLD CPTR2
+        CALL CCPDPI
+;  return cptr;
+        LHLD CPTR
+        RET
+;  }
+CC24:   DB 103,108,111,98,97,108,32,115,121,109
+        DB 98,111,108,32,116,97,98,108,101,32
+        DB 111,118,101,114,102,108,111,119,0,108
+        DB 111,99,97,108,32,115,121,109,98,111
+        DB 108,32,116,97,98,108,101,32,111,118
+        DB 101,114,102,108,111,119,0
+;
+;nextsym(entry) char *entry; {
+NEXTSYM::        
+;  entry = entry + NAME;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,5
+        CALL CCPIDDPD
+;  while(*entry++ >= ' '); /* find length byte */
+CC33:
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        CALL CCGCHAR
+        XCHG;;
+        LXI H,32
+        CALL CCGE
+        MOV A,H
+        ORA L
+        JZ CC34
+        JMP CC33
+CC34:
+;  return entry;
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        RET
+;  }
+;
+;/*
+;** get integer of length len from address addr
+;** (byte sequence set by "putint")
+;*/
+;getint(addr, len) char *addr; int len; {
+GETINT:: 
+;  int i;
+;  i = *(addr + --len);  /* high order byte sign extended */
+        PUSH B
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        POP D
+        CALL CCDDGC
+        CALL CCPDPI
+;  while(len--) i = (i << 8) | *(addr+len)&255;
+CC36:
+        LXI H,4
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        INX H
+        MOV A,H
+        ORA L
+        JZ CC37
+        LXI H,0
+        DAD SP
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,8
+        POP D
+        CALL CCASL
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        POP D
+        CALL CCDDGC
+        PUSH H
+        LXI H,255
+        POP D
+        CALL CCAND
+        POP D
+        CALL CCOR
+        CALL CCPDPI
+        JMP CC36
+CC37:
+;  return i;
+        POP H
+        PUSH H
+        POP B
+        RET
+;  }
+        POP B
+;
+;/*
+;** put integer i of length len into address addr
+;** (low byte first)
+;*/
+;putint(i, addr, len) char *addr; int i, len; {
+PUTINT:: 
+;  while(len--) {
+CC39:
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        INX H
+        MOV A,H
+        ORA L
+        JZ CC40
+;    *addr++ = i;
+        LXI H,4
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        CALL CCPDPC
+;    i = i>>8;
+        LXI H,6
+        DAD SP
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        XCHG;;
+        LXI H,8
+        CALL CCASR
+        CALL CCPDPI
+;    }
+        JMP CC39
+CC40:
+;  }
+        RET
+;
+;/*
+;** test if next input string is legal symbol name
+;*/
+;symname(sname, ucase) char *sname; int ucase; {
+SYMNAME::        
+;  int k;char c;
+;  blanks();
+        DCX SP
+        PUSH B
+        CALL BLANKS
+;  if(alpha(ch)==0) return 0;
+        LHLD CH
+        PUSH H
+        CALL ALPHA
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC42
+        LXI H,0
+        INX SP
+        POP B
+        RET
+;  k=0;
+CC42:
+        LXI H,1
+        DAD SP
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;  while(an(ch)) {
+CC43:
+        LHLD CH
+        PUSH H
+        CALL AN
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC44
+;    if(ucase)
+        LXI H,5
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC45
+;      sname[k]=upper(gch());
+        LXI H,7
+        CALL CCDSGI
+        PUSH H
+        LXI H,3
+        CALL CCDSGI
+        POP D
+        DAD D
+        PUSH H
+        CALL GCH
+        PUSH H
+        CALL UPPER
+        POP B
+        CALL CCPDPC
+;    else
+        JMP CC46
+CC45:
+;      sname[k]=gch();
+        LXI H,7
+        CALL CCDSGI
+        PUSH H
+        LXI H,3
+        CALL CCDSGI
+        POP D
+        DAD D
+        PUSH H
+        CALL GCH
+        CALL CCPDPC
+CC46:
+;    if(k<NAMEMAX) ++k;
+        LXI H,1
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        POP D
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC47
+        LXI H,1
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+;    }
+CC47:
+        JMP CC43
+CC44:
+;  sname[k]=0;
+        LXI H,7
+        CALL CCDSGI
+        PUSH H
+        LXI H,3
+        CALL CCDSGI
+        POP D
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPC
+;  return 1;
+        LXI H,1
+        INX SP
+        POP B
+        RET
+;  }
+        INX SP
+        POP B
+;
+;/*
+;** force upper case alphabetics
+;*/
+;upper(c)  char c; {
+UPPER::  
+;  if((c >= 'a') & (c <= 'z')) return (c - 32);
+        LXI H,2
+        CALL CCDSGC
+        XCHG;;
+        LXI H,97
+        CALL CCGE
+        PUSH H
+        LXI H,4
+        CALL CCDSGC
+        PUSH H
+        LXI H,122
+        POP D
+        CALL CCLE
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC49
+        LXI H,2
+        CALL CCDSGC
+        PUSH H
+        LXI H,32
+        POP D
+        CALL CCSUB
+        RET
+;  else return c;
+CC49:
+        LXI H,2
+        CALL CCDSGC
+        RET
+CC50:
+;  }
+        RET
+;
+;/*
+;** return next avail internal label number
+;*/
+;getlabel() {
+GETLABEL::       
+;  return(++nxtlab);
+        LHLD NXTLAB
+        INX H
+        SHLD NXTLAB
+        RET
+;  }
+;
+;/*
+;** post a label in the program
+;*/
+;postlabel(label) int label; {
+POSTLABE::       
+;  printlabel(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;  col();
+        CALL COL
+;  nl();
+        CALL NL
+;  }
+        RET
+;
+;/*
+;** print specified number as a label
+;*/
+;printlabel(label)  int label; {
+PRINTLAB::       
+;  outstr("CC");
+        LXI H,CC53+0
+        PUSH H
+        CALL OUTSTR
+        POP B
+;  outdec(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL OUTDEC
+        POP B
+;  }
+        RET
+CC53:   DB 67,67,0
+;
+;/*
+;** test if given character is alphabetic
+;*/
+;alpha(c)  char c; {
+ALPHA::  
+;  return (((c>='a')&(c<='z'))|((c>='A')&(c<='Z'))|(c=='_'));
+        LXI H,2
+        CALL CCDSGC
+        PUSH H
+        LXI H,97
+        POP D
+        CALL CCGE
+        PUSH H
+        LXI H,4
+        CALL CCDSGC
+        PUSH H
+        LXI H,122
+        POP D
+        CALL CCLE
+        POP D
+        CALL CCAND
+        PUSH H
+        LXI H,4
+        CALL CCDSGC
+        PUSH H
+        LXI H,65
+        POP D
+        CALL CCGE
+        PUSH H
+        LXI H,6
+        CALL CCDSGC
+        PUSH H
+        LXI H,90
+        POP D
+        CALL CCLE
+        POP D
+        CALL CCAND
+        POP D
+        CALL CCOR
+        PUSH H
+        LXI H,4
+        CALL CCDSGC
+        PUSH H
+        LXI H,95
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCOR
+        RET
+;  }
+;
+;/*
+;** test if given character is numeric
+;*/
+;numeric(c)  char c; {
+NUMERIC::        
+;  return((c>='0')&(c<='9'));
+        LXI H,2
+        CALL CCDSGC
+        PUSH H
+        LXI H,48
+        POP D
+        CALL CCGE
+        PUSH H
+        LXI H,4
+        CALL CCDSGC
+        PUSH H
+        LXI H,57
+        POP D
+        CALL CCLE
+        POP D
+        CALL CCAND
+        RET
+;  }
+;
+;/*
+;** test if given character is alphanumeric
+;*/
+;an(c)  char c; {
+AN::     
+;  return ((alpha(c))|(numeric(c)));
+        LXI H,2
+        CALL CCDSGC
+        PUSH H
+        CALL ALPHA
+        POP B
+        PUSH H
+        LXI H,4
+        CALL CCDSGC
+        PUSH H
+        CALL NUMERIC
+        POP B
+        POP D
+        CALL CCOR
+        RET
+;  }
+;
+;addwhile(ptr)  int ptr[]; {
+ADDWHILE::       
+;  int k;
+;  ptr[WQSP]=csp;           /* and stk ptr */
+        PUSH B
+        LXI H,4
+        CALL CCDSGI
+        XCHG;;
+        LHLD CSP
+        CALL CCPINT
+;  ptr[WQLOOP]=getlabel();  /* and looping label */
+        LXI H,4
+        CALL CCDSGI
+        LXI D,2
+        DAD D
+        PUSH H
+        CALL GETLABEL
+        CALL CCPDPI
+;  ptr[WQEXIT]=getlabel();   /* and exit label */
+        LXI H,4
+        CALL CCDSGI
+        LXI D,4
+        DAD D
+        PUSH H
+        CALL GETLABEL
+        CALL CCPDPI
+;  if (wqptr==WQMAX) {
+        LHLD WQPTR
+        PUSH H
+        LXI H,WQ
+        LXI D,60
+        DAD D
+        PUSH H
+        LXI H,6
+        POP D
+        CALL CCSUB
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC58
+;    error("too many active loops");
+        LXI H,CC57+0
+        PUSH H
+        CALL ERROR
+        POP B
+;    abort(ERRCODE);
+        LXI H,7
+        PUSH H
+        CALL ABORT
+        POP B
+;    }
+;  k=0;
+CC58:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;  while (k<WQSIZ) *wqptr++ = ptr[k++];
+CC59:
+        POP D
+        PUSH D
+        LXI H,3
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC60
+        LHLD WQPTR
+        INX H
+        INX H
+        SHLD WQPTR
+        DCX H
+        DCX H
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        POP D
+        DAD H
+        CALL CCDDGI
+        CALL CCPDPI
+        JMP CC59
+CC60:
+;  }
+        POP B
+        RET
+CC57:   DB 116,111,111,32,109,97,110,121,32,97
+        DB 99,116,105,118,101,32,108,111,111,112
+        DB 115,0
+;
+;delwhile() {
+DELWHILE::       
+;  if(readwhile()) wqptr=wqptr-WQSIZ;
+        CALL READWHIL
+        MOV A,H
+        ORA L
+        JZ CC62
+        LHLD WQPTR
+        PUSH H
+        LXI H,6
+        POP D
+        CALL CCSUB
+        SHLD WQPTR
+;  }
+CC62:
+        RET
+;
+;readwhile() {
+READWHIL::       
+;  if (wqptr==wq) {
+        LHLD WQPTR
+        PUSH H
+        LXI H,WQ
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC64
+;    error("no active loops");
+        LXI H,CC63+0
+        PUSH H
+        CALL ERROR
+        POP B
+;    return 0;
+        LXI H,0
+        RET
+;    }
+;  else return (wqptr-WQSIZ);
+CC64:
+        LHLD WQPTR
+        XCHG;;
+        LXI H,6
+        CALL CCSUB
+        RET
+CC65:
+; }
+        RET
+CC63:   DB 110,111,32,97,99,116,105,118,101,32
+        DB 108,111,111,112,115,0
+;
+;white() {
+WHITE::  
+;  /* test for stack/program overlap */
+;  /* primary -> symname -> blanks -> white */
+;  if(*lptr==' ') return 1;
+        LHLD LPTR
+        CALL CCGCHAR
+        PUSH H
+        LXI H,32
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC67
+        LXI H,1
+        RET
+;  if(*lptr==9)   return 1;
+CC67:
+        LHLD LPTR
+        CALL CCGCHAR
+        PUSH H
+        LXI H,9
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC68
+        LXI H,1
+        RET
+;  return 0;
+CC68:
+        LXI H,0
+        RET
+;  }
+;
+;gch() {
+GCH::    
+;  int c;
+;  if(c=ch) bump(1);
+        PUSH B
+        LXI H,0
+        DAD SP
+        PUSH H
+        LHLD CH
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC70
+        LXI H,1
+        PUSH H
+        CALL BUMP
+        POP B
+;  return c;
+CC70:
+        POP H
+        PUSH H
+        POP B
+        RET
+;  }
+        POP B
+;
+;bump(n) int n; {
+BUMP::   
+;  if(n) lptr=lptr+n;
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        MOV A,H
+        ORA L
+        JZ CC72
+        LHLD LPTR
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        DAD D
+        SHLD LPTR
+;  else  lptr=line;
+        JMP CC73
+CC72:
+        LHLD LINE
+        SHLD LPTR
+CC73:
+;  if(ch=nch= *lptr) nch= *(lptr+1);
+        LHLD LPTR
+        CALL CCGCHAR
+        SHLD NCH
+        SHLD CH
+        MOV A,H
+        ORA L
+        JZ CC74
+        LHLD LPTR
+        LXI D,1
+        CALL CCDDGC
+        SHLD NCH
+;  }
+CC74:
+        RET
+;
+;kill() {
+KILL::   
+;  *line=0;
+        LHLD LINE
+        PUSH H
+        LXI H,0
+        CALL CCPDPC
+;  bump(0);
+        LXI H,0
+        PUSH H
+        CALL BUMP
+        POP B
+;  }
+        RET
+;
+;inbyte()  {
+INBYTE:: 
+;  while(ch==0) {
+CC77:
+        LHLD CH
+        MOV A,H
+        ORA L
+        JNZ CC78
+;    if (eof) return 0;
+        LHLD EOF
+        MOV A,H
+        ORA L
+        JZ CC79
+        LXI H,0
+        RET
+;    preprocess();
+CC79:
+        CALL PREPROCE
+;    }
+        JMP CC77
+CC78:
+;  return gch();
+        CALL GCH
+        RET
+;  }
+;
+;inline() {
+INLINE:: 
+;  int k,unit;
+;  char *cp;
+;  while(1) {
+        PUSH B
+        PUSH B
+        PUSH B
+CC81:
+;    if (input==EOF) openin();
+        LHLD INPUT
+        PUSH H
+        LXI H,-1
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC83
+        CALL OPENIN
+;    if(eof) return;
+CC83:
+        LHLD EOF
+        MOV A,H
+        ORA L
+        JZ CC84
+        POP B
+        POP B
+        POP B
+        RET
+;    if((unit=input2)==EOF) unit=input;
+CC84:
+        LXI H,2
+        DAD SP
+        PUSH H
+        LHLD INPUT2
+        CALL CCPDPI
+        PUSH H
+        LXI H,-1
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC85
+        LXI H,2
+        DAD SP
+        PUSH H
+        LHLD INPUT
+        CALL CCPDPI
+;    if(fgets(line, LINEMAX, unit)==NULL) {
+CC85:
+        LHLD LINE
+        PUSH H
+        LXI H,80
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL FGETS
+        POP B
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC86
+;      fclose(unit);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL FCLOSE
+        POP B
+;      if(input2!=EOF) input2=EOF;
+        LHLD INPUT2
+        PUSH H
+        LXI H,-1
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC87
+        LXI H,-1
+        SHLD INPUT2
+;      else input=EOF;
+        JMP CC88
+CC87:
+        LXI H,-1
+        SHLD INPUT
+CC88:
+;      }
+;    else {
+        JMP CC89
+CC86:
+;/***/ if ((cp = index(line, '\n')) != 0)
+        LXI H,0
+        DAD SP
+        PUSH H
+        LHLD LINE
+        PUSH H
+        LXI H,13
+        PUSH H
+        CALL INDEX
+        POP B
+        POP B
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC90
+;       *cp = '\0';
+        POP D
+        PUSH D
+        LXI H,0
+        MOV A,L
+        STAX D
+;      bump(0);
+CC90:
+        LXI H,0
+        PUSH H
+        CALL BUMP
+        POP B
+;      return;
+        POP B
+        POP B
+        POP B
+        RET
+;      }
+CC89:
+;    }
+        JMP CC81
+CC82:
+;  }
+        POP B
+        POP B
+        POP B
+        RET
+;#include "cc22.c"
+;ifline() {
+IFLINE:: 
+;  while(1) {
+CC92:
+;    inline();
+        CALL INLINE
+;    if(eof) return;
+        LHLD EOF
+        MOV A,H
+        ORA L
+        JZ CC94
+        RET
+;    if(match("#ifdef")) {
+CC94:
+        LXI H,CC91+0
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC95
+;      ++iflevel;
+        LHLD IFLEVEL
+        INX H
+        SHLD IFLEVEL
+;      if(skiplevel) continue;
+        LHLD SKIPLEVE
+        MOV A,H
+        ORA L
+        JZ CC96
+        JMP CC92
+;      blanks();
+CC96:
+        CALL BLANKS
+;      if(findmac(lptr)==0)
+        LHLD LPTR
+        PUSH H
+        CALL FINDMAC
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC97
+;        skiplevel=iflevel;
+        LHLD IFLEVEL
+        SHLD SKIPLEVE
+;      continue;
+CC97:
+        JMP CC92
+;      }
+;    if(match("#ifndef")) {
+CC95:
+        LXI H,CC91+7
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC98
+;      ++iflevel;
+        LHLD IFLEVEL
+        INX H
+        SHLD IFLEVEL
+;      if(skiplevel) continue;
+        LHLD SKIPLEVE
+        MOV A,H
+        ORA L
+        JZ CC99
+        JMP CC92
+;      blanks();
+CC99:
+        CALL BLANKS
+;      if(findmac(lptr))
+        LHLD LPTR
+        PUSH H
+        CALL FINDMAC
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC100
+;        skiplevel=iflevel;
+        LHLD IFLEVEL
+        SHLD SKIPLEVE
+;      continue;
+CC100:
+        JMP CC92
+;      }
+;    if(match("#else")) {
+CC98:
+        LXI H,CC91+15
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC101
+;      if(iflevel) {
+        LHLD IFLEVEL
+        MOV A,H
+        ORA L
+        JZ CC102
+;        if(skiplevel==iflevel) skiplevel=0;
+        LHLD SKIPLEVE
+        PUSH H
+        LHLD IFLEVEL
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC103
+        LXI H,0
+        SHLD SKIPLEVE
+;        else if(skiplevel==0)  skiplevel=iflevel;
+        JMP CC104
+CC103:
+        LHLD SKIPLEVE
+        MOV A,H
+        ORA L
+        JNZ CC105
+        LHLD IFLEVEL
+        SHLD SKIPLEVE
+;        }
+CC105:
+CC104:
+;      else noiferr();
+        JMP CC106
+CC102:
+        CALL NOIFERR
+CC106:
+;      continue;
+        JMP CC92
+;      }
+;    if(match("#endif")) {
+CC101:
+        LXI H,CC91+21
+        PUSH H
+        CALL MATCH
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC107
+;      if(iflevel) {
+        LHLD IFLEVEL
+        MOV A,H
+        ORA L
+        JZ CC108
+;        if(skiplevel==iflevel) skiplevel=0;
+        LHLD SKIPLEVE
+        PUSH H
+        LHLD IFLEVEL
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC109
+        LXI H,0
+        SHLD SKIPLEVE
+;        --iflevel;
+CC109:
+        LHLD IFLEVEL
+        DCX H
+        SHLD IFLEVEL
+;        }
+;      else noiferr();
+        JMP CC110
+CC108:
+        CALL NOIFERR
+CC110:
+;      continue;
+        JMP CC92
+;      }
+;    if(skiplevel) continue;
+CC107:
+        LHLD SKIPLEVE
+        MOV A,H
+        ORA L
+        JZ CC111
+        JMP CC92
+;    if(listfp) {
+CC111:
+        LHLD LISTFP
+        MOV A,H
+        ORA L
+        JZ CC112
+;      if(listfp==output) cout(';', output);
+        LHLD LISTFP
+        PUSH H
+        LHLD OUTPUT
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC113
+        LXI H,59
+        PUSH H
+        LHLD OUTPUT
+        PUSH H
+        CALL COUT
+        POP B
+        POP B
+;      lout(line, listfp);
+CC113:
+        LHLD LINE
+        PUSH H
+        LHLD LISTFP
+        PUSH H
+        CALL LOUT
+        POP B
+        POP B
+;      }
+;    if(ch==0) continue;
+CC112:
+        LHLD CH
+        MOV A,H
+        ORA L
+        JNZ CC114
+        JMP CC92
+;    break;
+CC114:
+        JMP CC93
+;    }
+        JMP CC92
+CC93:
+;  }
+        RET
+CC91:   DB 35,105,102,100,101,102,0,35,105,102
+        DB 110,100,101,102,0,35,101,108,115,101
+        DB 0,35,101,110,100,105,102,0
+;
+;keepch(c)  char c; {
+KEEPCH:: 
+;  if(pptr<LINEMAX) pline[++pptr]=c;
+        LHLD PPTR
+        PUSH H
+        LXI H,80
+        POP D
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC116
+        LXI H,PLINE
+        PUSH H
+        LHLD PPTR
+        INX H
+        SHLD PPTR
+        POP D
+        DAD D
+        PUSH H
+        LXI H,4
+        CALL CCDSGC
+        CALL CCPDPC
+;  }
+CC116:
+        RET
+;
+;preprocess() {
+PREPROCE::       
+;  int k;
+;  char c;
+;  if(ccode) {
+        DCX SP
+        PUSH B
+        LHLD CCODE
+        MOV A,H
+        ORA L
+        JZ CC118
+;    line=mline;
+        LXI H,MLINE
+        SHLD LINE
+;    ifline();
+        CALL IFLINE
+;    if(eof) return;
+        LHLD EOF
+        MOV A,H
+        ORA L
+        JZ CC119
+        INX SP
+        POP B
+        RET
+;    }
+CC119:
+;  else {
+        JMP CC120
+CC118:
+;    line=pline;
+        LXI H,PLINE
+        SHLD LINE
+;    inline();
+        CALL INLINE
+;    return;
+        INX SP
+        POP B
+        RET
+;    }
+CC120:
+;  pptr = -1;
+        LXI H,-1
+        SHLD PPTR
+;  while(ch) {
+CC121:
+        LHLD CH
+        MOV A,H
+        ORA L
+        JZ CC122
+;    if(white()) {
+        CALL WHITE
+        MOV A,H
+        ORA L
+        JZ CC123
+;      keepch(' ');
+        LXI H,32
+        PUSH H
+        CALL KEEPCH
+        POP B
+;      while(white()) gch();
+CC124:
+        CALL WHITE
+        MOV A,H
+        ORA L
+        JZ CC125
+        CALL GCH
+        JMP CC124
+CC125:
+;      }
+;    else if(ch=='"') {
+        JMP CC126
+CC123:
+        LHLD CH
+        PUSH H
+        LXI H,34
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC127
+;      keepch(ch);
+        LHLD CH
+        PUSH H
+        CALL KEEPCH
+        POP B
+;      gch();
+        CALL GCH
+;      while((ch!='"')|((*(lptr-1)==92)&(*(lptr-2)!=92))) {
+CC128:
+        LHLD CH
+        XCHG;;
+        LXI H,34
+        CALL CCNE
+        PUSH H
+        LHLD LPTR
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCSUB
+        CALL CCGCHAR
+        PUSH H
+        LXI H,92
+        POP D
+        CALL CCEQ
+        PUSH H
+        LHLD LPTR
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCSUB
+        CALL CCGCHAR
+        PUSH H
+        LXI H,92
+        POP D
+        CALL CCNE
+        POP D
+        CALL CCAND
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC129
+;        if(ch==0) {
+        LHLD CH
+        MOV A,H
+        ORA L
+        JNZ CC130
+;          error("no quote");
+        LXI H,CC117+0
+        PUSH H
+        CALL ERROR
+        POP B
+;          break;
+        JMP CC129
+;          }
+;        keepch(gch());
+CC130:
+        CALL GCH
+        PUSH H
+        CALL KEEPCH
+        POP B
+;        }
+        JMP CC128
+CC129:
+;      gch();
+        CALL GCH
+;      keepch('"');
+        LXI H,34
+        PUSH H
+        CALL KEEPCH
+        POP B
+;      }
+;    else if(ch==39) {
+        JMP CC131
+CC127:
+        LHLD CH
+        PUSH H
+        LXI H,39
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC132
+;      keepch(39);
+        LXI H,39
+        PUSH H
+        CALL KEEPCH
+        POP B
+;      gch();
+        CALL GCH
+;      while((ch!=39)|((*(lptr-1)==92)&(*(lptr-2)!=92))) {
+CC133:
+        LHLD CH
+        XCHG;;
+        LXI H,39
+        CALL CCNE
+        PUSH H
+        LHLD LPTR
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCSUB
+        CALL CCGCHAR
+        PUSH H
+        LXI H,92
+        POP D
+        CALL CCEQ
+        PUSH H
+        LHLD LPTR
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCSUB
+        CALL CCGCHAR
+        PUSH H
+        LXI H,92
+        POP D
+        CALL CCNE
+        POP D
+        CALL CCAND
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC134
+;        if(ch==0) {
+        LHLD CH
+        MOV A,H
+        ORA L
+        JNZ CC135
+;          error("no apostrophe");
+        LXI H,CC117+9
+        PUSH H
+        CALL ERROR
+        POP B
+;          break;
+        JMP CC134
+;          }
+;        keepch(gch());
+CC135:
+        CALL GCH
+        PUSH H
+        CALL KEEPCH
+        POP B
+;        }
+        JMP CC133
+CC134:
+;      gch();
+        CALL GCH
+;      keepch(39);
+        LXI H,39
+        PUSH H
+        CALL KEEPCH
+        POP B
+;      }
+;    else if((ch=='/')&(nch=='*')) {
+        JMP CC136
+CC132:
+        LHLD CH
+        PUSH H
+        LXI H,47
+        POP D
+        CALL CCEQ
+        PUSH H
+        LHLD NCH
+        PUSH H
+        LXI H,42
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC137
+;      bump(2);
+        LXI H,2
+        PUSH H
+        CALL BUMP
+        POP B
+;      while(((ch=='*')&(nch=='/'))==0) {
+CC138:
+        LHLD CH
+        PUSH H
+        LXI H,42
+        POP D
+        CALL CCEQ
+        PUSH H
+        LHLD NCH
+        PUSH H
+        LXI H,47
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JNZ CC139
+;        if(ch) bump(1);
+        LHLD CH
+        MOV A,H
+        ORA L
+        JZ CC140
+        LXI H,1
+        PUSH H
+        CALL BUMP
+        POP B
+;        else {
+        JMP CC141
+CC140:
+;          ifline();
+        CALL IFLINE
+;          if(eof) break;
+        LHLD EOF
+        MOV A,H
+        ORA L
+        JZ CC142
+        JMP CC139
+;          }
+CC142:
+CC141:
+;        }
+        JMP CC138
+CC139:
+;      bump(2);
+        LXI H,2
+        PUSH H
+        CALL BUMP
+        POP B
+;      }
+;    else if(an(ch)) {
+        JMP CC143
+CC137:
+        LHLD CH
+        PUSH H
+        CALL AN
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC144
+;      k=0;
+        LXI H,1
+        DAD SP
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;      while(an(ch)) {
+CC145:
+        LHLD CH
+        PUSH H
+        CALL AN
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC146
+;        if(k<NAMEMAX) msname[k++]=ch;
+        LXI H,1
+        CALL CCDSGI
+        PUSH H
+        LXI H,8
+        POP D
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC147
+        LXI H,MSNAME
+        PUSH H
+        LXI H,3
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        POP D
+        DAD D
+        PUSH H
+        LHLD CH
+        CALL CCPDPC
+;        gch();
+CC147:
+        CALL GCH
+;        }
+        JMP CC145
+CC146:
+;      msname[k]=0;
+        LXI H,MSNAME
+        PUSH H
+        LXI H,3
+        CALL CCDSGI
+        POP D
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPC
+;      if(k=findmac(msname)) while(c=macq[k++]) keepch(c);
+        LXI H,1
+        DAD SP
+        PUSH H
+        LXI H,MSNAME
+        PUSH H
+        CALL FINDMAC
+        POP B
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC148
+CC149:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,MACQ
+        PUSH H
+        LXI H,5
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        POP D
+        CALL CCDDGC
+        CALL CCPDPC
+        MOV A,H
+        ORA L
+        JZ CC150
+        LXI H,0
+        CALL CCDSGC
+        PUSH H
+        CALL KEEPCH
+        POP B
+        JMP CC149
+CC150:
+;      else {
+        JMP CC151
+CC148:
+;        k=0;
+        LXI H,1
+        DAD SP
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;        while(c=msname[k++]) keepch(c);
+CC152:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,MSNAME
+        PUSH H
+        LXI H,5
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        POP D
+        CALL CCDDGC
+        CALL CCPDPC
+        MOV A,H
+        ORA L
+        JZ CC153
+        LXI H,0
+        CALL CCDSGC
+        PUSH H
+        CALL KEEPCH
+        POP B
+        JMP CC152
+CC153:
+;        }
+CC151:
+;      }
+;    else keepch(gch());
+        JMP CC154
+CC144:
+        CALL GCH
+        PUSH H
+        CALL KEEPCH
+        POP B
+CC154:
+CC143:
+CC136:
+CC131:
+CC126:
+;    }
+        JMP CC121
+CC122:
+;  if(pptr>=LINEMAX) error("line too long");
+        LHLD PPTR
+        PUSH H
+        LXI H,80
+        POP D
+        CALL CCGE
+        MOV A,H
+        ORA L
+        JZ CC155
+        LXI H,CC117+23
+        PUSH H
+        CALL ERROR
+        POP B
+;  keepch(0);
+CC155:
+        LXI H,0
+        PUSH H
+        CALL KEEPCH
+        POP B
+;  line=pline;
+        LXI H,PLINE
+        SHLD LINE
+;  bump(0);
+        LXI H,0
+        PUSH H
+        CALL BUMP
+        POP B
+;  }
+        INX SP
+        POP B
+        RET
+CC117:  DB 110,111,32,113,117,111,116,101,0,110
+        DB 111,32,97,112,111,115,116,114,111,112
+        DB 104,101,0,108,105,110,101,32,116,111
+        DB 111,32,108,111,110,103,0
+;
+;noiferr() {
+NOIFERR::        
+;  error("no matching #if...");
+        LXI H,CC156+0
+        PUSH H
+        CALL ERROR
+        POP B
+;  errflag=0;
+        LXI H,0
+        SHLD ERRFLAG
+;  }
+        RET
+CC156:  DB 110,111,32,109,97,116,99,104,105,110
+        DB 103,32,35,105,102,46,46,46,0
+;
+;addmac() {
+ADDMAC:: 
+;  int k;
+;  if(symname(msname, NO)==0) {
+        PUSH B
+        LXI H,MSNAME
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL SYMNAME
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC158
+;    illname();
+        CALL ILLNAME
+;    kill();
+        CALL KILL
+;    return;
+        POP B
+        RET
+;    }
+;  k=0;
+CC158:
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+;  while(putmac(msname[k++]));
+CC159:
+        LXI H,MSNAME
+        PUSH H
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        POP D
+        CALL CCDDGC
+        PUSH H
+        CALL PUTMAC
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC160
+        JMP CC159
+CC160:
+;  while(white()) gch();
+CC161:
+        CALL WHITE
+        MOV A,H
+        ORA L
+        JZ CC162
+        CALL GCH
+        JMP CC161
+CC162:
+;  while(putmac(gch()));
+CC163:
+        CALL GCH
+        PUSH H
+        CALL PUTMAC
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC164
+        JMP CC163
+CC164:
+;  if(macptr>=MACMAX) {
+        LHLD MACPTR
+        XCHG;;
+        LXI H,949
+        CALL CCGE
+        MOV A,H
+        ORA L
+        JZ CC165
+;    error("macro string queue full"); abort(ERRCODE);
+        LXI H,CC157+0
+        PUSH H
+        CALL ERROR
+        POP B
+        LXI H,7
+        PUSH H
+        CALL ABORT
+        POP B
+;    }
+;  }
+CC165:
+        POP B
+        RET
+CC157:  DB 109,97,99,114,111,32,115,116,114,105
+        DB 110,103,32,113,117,101,117,101,32,102
+        DB 117,108,108,0
+;
+;putmac(c)  char c; {
+PUTMAC:: 
+;  macq[macptr]=c;
+        LXI H,MACQ
+        PUSH H
+        LHLD MACPTR
+        POP D
+        DAD D
+        PUSH H
+        LXI H,4
+        CALL CCDSGC
+        CALL CCPDPC
+;  if(macptr<MACMAX) ++macptr;
+        LHLD MACPTR
+        XCHG;;
+        LXI H,949
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC167
+        LHLD MACPTR
+        INX H
+        SHLD MACPTR
+;  return c;
+CC167:
+        LXI H,2
+        CALL CCDSGC
+        RET
+;  }
+;
+;
+;findmac(sname)  char *sname; {
+FINDMAC::        
+;  mack=0;
+        LXI H,0
+        SHLD MACK
+;  while(mack<macptr) {
+CC169:
+        LHLD MACK
+        XCHG;;
+        LHLD MACPTR
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC170
+;    if(astreq(sname,macq+mack,NAMEMAX)) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,MACQ
+        PUSH H
+        LHLD MACK
+        POP D
+        DAD D
+        PUSH H
+        LXI H,8
+        PUSH H
+        CALL ASTREQ
+        POP B
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC171
+;      while(macq[mack++]);
+CC172:
+        LXI H,MACQ
+        PUSH H
+        LHLD MACK
+        INX H
+        SHLD MACK
+        DCX H
+        POP D
+        CALL CCDDGC
+        MOV A,H
+        ORA L
+        JZ CC173
+        JMP CC172
+CC173:
+;      return mack;
+        LHLD MACK
+        RET
+;      }
+;    while(macq[mack++]);
+CC171:
+CC174:
+        LXI H,MACQ
+        PUSH H
+        LHLD MACK
+        INX H
+        SHLD MACK
+        DCX H
+        POP D
+        CALL CCDDGC
+        MOV A,H
+        ORA L
+        JZ CC175
+        JMP CC174
+CC175:
+;    while(macq[mack++]);
+CC176:
+        LXI H,MACQ
+        PUSH H
+        LHLD MACK
+        INX H
+        SHLD MACK
+        DCX H
+        POP D
+        CALL CCDDGC
+        MOV A,H
+        ORA L
+        JZ CC177
+        JMP CC176
+CC177:
+;    }
+        JMP CC169
+CC170:
+;  return 0;
+        LXI H,0
+        RET
+;  }
+;
+;setstage(before, start) int *before, *start; {
+SETSTAGE::       
+;  if((*before=stagenext)==0) stagenext=stage;
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LHLD STAGENEX
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JNZ CC179
+        LXI H,STAGE
+        SHLD STAGENEX
+;  *start=stagenext;
+CC179:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LHLD STAGENEX
+        CALL CCPDPI
+;  }
+        RET
+;
+;clearstage(before, start) char *before, *start; {
+CLEARSTA::       
+;  *stagenext=0;
+        LHLD STAGENEX
+        PUSH H
+        LXI H,0
+        CALL CCPDPC
+;  if(stagenext=before) return;
+        LXI H,4
+        CALL CCDSGI
+        SHLD STAGENEX
+        MOV A,H
+        ORA L
+        JZ CC181
+        RET
+;  if(start) {
+CC181:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        MOV A,H
+        ORA L
+        JZ CC182
+;    peephole(start);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PEEPHOLE
+        POP B
+;    }
+;  }
+CC182:
+        RET
+;
+;outdec(number)  int number; {
+OUTDEC:: 
+;  int k,zs;
+;  char c;
+;  zs = 0;
+        DCX SP
+        PUSH B
+        PUSH B
+        LXI H,1
+        DAD SP
+        XCHG;;
+        LXI H,0
+        CALL CCPINT
+;  k=10000;
+        LXI H,3
+        DAD SP
+        PUSH H
+        LXI H,10000
+        CALL CCPDPI
+;  if (number<0) {
+        LXI H,7
+        CALL CCDSGI
+        XRA A
+        ORA H
+        JP CC184
+;    number=(-number);
+        LXI H,7
+        DAD SP
+        PUSH H
+        LXI H,9
+        CALL CCDSGI
+        CALL CCNEG
+        CALL CCPDPI
+;    outbyte('-');
+        LXI H,45
+        PUSH H
+        CALL OUTBYTE
+        POP B
+;    }
+;  while (k>=1) {
+CC184:
+CC185:
+        LXI H,3
+        CALL CCDSGI
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCGE
+        MOV A,H
+        ORA L
+        JZ CC186
+;    c=number/k + '0';
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,9
+        CALL CCDSGI
+        XCHG;;
+        LXI H,5
+        CALL CCDSGI
+        CALL CCDIV
+        LXI D,48
+        CALL CCPCDDPD
+;    if ((c!='0')|(k==1)|(zs)) {
+        LXI H,0
+        CALL CCDSGC
+        XCHG;;
+        LXI H,48
+        CALL CCNE
+        PUSH H
+        LXI H,5
+        CALL CCDSGI
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCEQ
+        POP D
+        CALL CCOR
+        PUSH H
+        LXI H,3
+        CALL CCDSGI
+        POP D
+        CALL CCOR
+        MOV A,H
+        ORA L
+        JZ CC187
+;      zs=1;
+        LXI H,1
+        DAD SP
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;      outbyte(c);
+        LXI H,0
+        CALL CCDSGC
+        PUSH H
+        CALL OUTBYTE
+        POP B
+;      }
+;    number=number%k;
+CC187:
+        LXI H,7
+        DAD SP
+        PUSH H
+        LXI H,9
+        CALL CCDSGI
+        XCHG;;
+        LXI H,5
+        CALL CCDSGI
+        CALL CCDIV
+        XCHG;;
+        CALL CCPDPI
+;    k=k/10;
+        LXI H,3
+        DAD SP
+        PUSH H
+        LXI H,5
+        CALL CCDSGI
+        XCHG;;
+        LXI H,10
+        CALL CCDIV
+        CALL CCPDPI
+;    }
+        JMP CC185
+CC186:
+;  }
+        INX SP
+        POP B
+        POP B
+        RET
+;
+;ol(ptr)  char ptr[];  {
+OL::     
+;  ot(ptr);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL OT
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+;
+;ot(ptr) char ptr[]; {
+OT::     
+;  tab();
+        CALL TAB
+;  outstr(ptr);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL OUTSTR
+        POP B
+;  }
+        RET
+;
+;outstr(ptr) char ptr[]; {
+OUTSTR:: 
+;  /* must work with symbol table names terminated by length */
+;  while(*ptr >= ' ') outbyte(*ptr++);
+CC191:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGCHAR
+        PUSH H
+        LXI H,32
+        POP D
+        CALL CCGE
+        MOV A,H
+        ORA L
+        JZ CC192
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        CALL CCGCHAR
+        PUSH H
+        CALL OUTBYTE
+        POP B
+        JMP CC191
+CC192:
+;  }
+        RET
+;
+;outbyte(c) char c; {
+OUTBYTE::        
+;  if(stagenext) {
+        LHLD STAGENEX
+        MOV A,H
+        ORA L
+        JZ CC194
+;    if(stagenext==stagelast) {
+        LHLD STAGENEX
+        PUSH H
+        LHLD STAGELAS
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC195
+;      error("staging buffer overflow");
+        LXI H,CC193+0
+        PUSH H
+        CALL ERROR
+        POP B
+;      return 0;
+        LXI H,0
+        RET
+;      }
+;    else *stagenext++ = c;
+CC195:
+        LHLD STAGENEX
+        INX H
+        SHLD STAGENEX
+        DCX H
+        PUSH H
+        LXI H,4
+        CALL CCDSGC
+        CALL CCPDPC
+CC196:
+;    }
+;  else cout(c,output);
+        JMP CC197
+CC194:
+        LXI H,2
+        CALL CCDSGC
+        PUSH H
+        LHLD OUTPUT
+        PUSH H
+        CALL COUT
+        POP B
+        POP B
+CC197:
+;  return c;
+        LXI H,2
+        CALL CCDSGC
+        RET
+;  }
+CC193:  DB 115,116,97,103,105,110,103,32,98,117
+        DB 102,102,101,114,32,111,118,101,114,102
+        DB 108,111,119,0
+;
+;cout(c, fd) char c; int fd; {
+COUT::   
+;  if(fputc(c, fd)==EOF) xout();
+        LXI H,4
+        CALL CCDSGC
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        CALL FPUTC
+        POP B
+        POP B
+        PUSH H
+        LXI H,-1
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC199
+        CALL XOUT
+;  }
+CC199:
+        RET
+;
+;sout(string, fd) char *string; int fd; {
+SOUT::   
+;  if(fputs(string, fd)==EOF) xout();
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        CALL FPUTS
+        POP B
+        POP B
+        PUSH H
+        LXI H,-1
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC201
+        CALL XOUT
+;  }
+CC201:
+        RET
+;
+;lout(line, fd) char *line; int fd; {
+LOUT::   
+;  sout(line, fd);
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        CALL SOUT
+        POP B
+        POP B
+;  cout('\n', fd);
+        LXI H,13
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        CALL COUT
+        POP B
+        POP B
+;  }
+        RET
+;
+;xout() {
+XOUT::   
+;  fputs("output error\n", stderr);
+        LXI H,CC203+0
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL FPUTS
+        POP B
+        POP B
+;  abort(ERRCODE);
+        LXI H,7
+        PUSH H
+        CALL ABORT
+        POP B
+;  }
+        RET
+CC203:  DB 111,117,116,112,117,116,32,101,114,114
+        DB 111,114,13,0
+;
+;nl() {
+NL::     
+;  outbyte('\n');
+        LXI H,13
+        PUSH H
+        CALL OUTBYTE
+        POP B
+;  }
+        RET
+;
+;tab() {
+TAB::    
+;  outbyte(TAB);
+        LXI H,9
+        PUSH H
+        CALL OUTBYTE
+        POP B
+;  }
+        RET
+;
+;col() {
+COL::    
+;  outbyte(':');
+        LXI H,58
+        PUSH H
+        CALL OUTBYTE
+        POP B
+;  }
+        RET
+;
+;error(msg) char msg[]; {
+ERROR::  
+;  if(errflag) return; else errflag=1;
+        LHLD ERRFLAG
+        MOV A,H
+        ORA L
+        JZ CC208
+        RET
+CC208:
+        LXI H,1
+        SHLD ERRFLAG
+CC209:
+;  lout(line, stderr);
+        LHLD LINE
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL LOUT
+        POP B
+        POP B
+;  errout(msg, stderr);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL ERROUT
+        POP B
+        POP B
+;  if(alarm) fputc(7, stderr);
+        LDA ALARM
+        CALL CCSXT
+        MOV A,H
+        ORA L
+        JZ CC210
+        LXI H,7
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL FPUTC
+        POP B
+        POP B
+;  if(pause) while(fgetc(stderr)!='\n');
+CC210:
+        LDA PAUSE
+        CALL CCSXT
+        MOV A,H
+        ORA L
+        JZ CC211
+CC212:
+        LXI H,2
+        PUSH H
+        CALL FGETC
+        POP B
+        PUSH H
+        LXI H,13
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC213
+        JMP CC212
+CC213:
+;  if(listfp>0) errout(msg, listfp);
+CC211:
+        LHLD LISTFP
+        XRA A
+        ORA H
+        JM CC214
+        ORA L
+        JZ CC214
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LHLD LISTFP
+        PUSH H
+        CALL ERROUT
+        POP B
+        POP B
+;  }
+CC214:
+        RET
+;
+;errout(msg, fp) char msg[]; int fp; {
+ERROUT:: 
+;  int k; k=line+2;
+        PUSH B
+        LXI H,0
+        DAD SP
+        PUSH H
+        LHLD LINE
+        LXI D,2
+        CALL CCPIDDPD
+;  while(k++ <= lptr) cout(' ', fp);
+CC216:
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        XCHG;;
+        LHLD LPTR
+        CALL CCULE
+        MOV A,H
+        ORA L
+        JZ CC217
+        LXI H,32
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL COUT
+        POP B
+        POP B
+        JMP CC216
+CC217:
+;  lout("/\\", fp);
+        LXI H,CC215+0
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL LOUT
+        POP B
+        POP B
+;  sout("**** ", fp); lout(msg, fp);
+        LXI H,CC215+3
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL SOUT
+        POP B
+        POP B
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        CALL LOUT
+        POP B
+        POP B
+;  }
+        POP B
+        RET
+CC215:  DB 47,92,0,42,42,42,42,32,0
+;
+;streq(str1,str2)  char str1[],str2[]; {
+STREQ::  
+;  int k;
+;  k=0;
+        PUSH B
+        LXI H,0
+        DAD SP
+        XCHG;;
+        LXI H,0
+        CALL CCPINT
+;  while (str2[k]) {
+CC219:
+        LXI H,4
+        CALL CCDSGI
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        POP D
+        CALL CCDDGC
+        MOV A,H
+        ORA L
+        JZ CC220
+;    if ((str1[k])!=(str2[k])) return 0;
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        POP D
+        CALL CCDDGC
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCDDGC
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC221
+        LXI H,0
+        POP B
+        RET
+;    ++k;
+CC221:
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+;    }
+        JMP CC219
+CC220:
+;  return k;
+        POP H
+        PUSH H
+        POP B
+        RET
+; }
+        POP B
+;
+;astreq(str1,str2,len)  char str1[],str2[];int len; {
+ASTREQ:: 
+;  int k;
+;  k=0;
+        PUSH B
+        LXI H,0
+        DAD SP
+        XCHG;;
+        LXI H,0
+        CALL CCPINT
+;  while (k<len) {
+CC223:
+        POP D
+        PUSH D
+        LXI H,4
+        CALL CCDSGI
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC224
+;    if ((str1[k])!=(str2[k]))break;
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        POP D
+        CALL CCDDGC
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        POP D
+        CALL CCDDGC
+        POP D
+        CALL CCNE
+        MOV A,H
+        ORA L
+        JZ CC225
+        JMP CC224
+;    /*
+;    ** must detect end of symbol table names terminated by
+;    ** symbol length in binary
+;    */
+;    if(str1[k] < ' ') break;
+CC225:
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        POP D
+        CALL CCDDGC
+        PUSH H
+        LXI H,32
+        POP D
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC226
+        JMP CC224
+;    if(str2[k] < ' ') break;
+CC226:
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        POP D
+        CALL CCDDGC
+        PUSH H
+        LXI H,32
+        POP D
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC227
+        JMP CC224
+;    ++k;
+CC227:
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+;    }
+        JMP CC223
+CC224:
+;  if (an(str1[k]))return 0;
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        POP D
+        CALL CCDDGC
+        PUSH H
+        CALL AN
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC228
+        LXI H,0
+        POP B
+        RET
+;  if (an(str2[k]))return 0;
+CC228:
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        POP D
+        CALL CCDDGC
+        PUSH H
+        CALL AN
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC229
+        LXI H,0
+        POP B
+        RET
+;  return k;
+CC229:
+        POP H
+        PUSH H
+        POP B
+        RET
+; }
+        POP B
+;
+;match(lit)  char *lit; {
+MATCH::  
+;  int k;
+;  blanks();
+        PUSH B
+        CALL BLANKS
+;  if (k=streq(lptr,lit)) {
+        LXI H,0
+        DAD SP
+        PUSH H
+        LHLD LPTR
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC231
+;    bump(k);
+        POP H
+        PUSH H
+        PUSH H
+        CALL BUMP
+        POP B
+;    return 1;
+        LXI H,1
+        POP B
+        RET
+;    }
+;  return 0;
+CC231:
+        LXI H,0
+        POP B
+        RET
+;  }
+        POP B
+;
+;amatch(lit,len)  char *lit;int len; {
+AMATCH:: 
+;  int k;
+;  blanks();
+        PUSH B
+        CALL BLANKS
+;  if (k=astreq(lptr,lit,len)) {
+        LXI H,0
+        DAD SP
+        PUSH H
+        LHLD LPTR
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        LXI H,10
+        CALL CCDSGI
+        PUSH H
+        CALL ASTREQ
+        POP B
+        POP B
+        POP B
+        CALL CCPDPI
+        MOV A,H
+        ORA L
+        JZ CC233
+;    bump(k);
+        POP H
+        PUSH H
+        PUSH H
+        CALL BUMP
+        POP B
+;    while(an(ch)) inbyte();
+CC234:
+        LHLD CH
+        PUSH H
+        CALL AN
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC235
+        CALL INBYTE
+        JMP CC234
+CC235:
+;    return 1;
+        LXI H,1
+        POP B
+        RET
+;    }
+;  return 0;
+CC233:
+        LXI H,0
+        POP B
+        RET
+; }
+        POP B
+;
+;nextop(list) char *list; {
+NEXTOP:: 
+;  char op[4];
+;  opindex=0;
+        PUSH B
+        PUSH B
+        LXI H,0
+        SHLD OPINDEX
+;  blanks();
+        CALL BLANKS
+;  while(1) {
+CC237:
+;    opsize=0;
+        LXI H,0
+        SHLD OPSIZE
+;    while(*list > ' ') op[opsize++]= *list++;
+CC239:
+        LXI H,6
+        CALL CCDSGI
+        CALL CCGCHAR
+        XCHG;;
+        LXI H,32
+        CALL CCGT
+        MOV A,H
+        ORA L
+        JZ CC240
+        LXI H,0
+        DAD SP
+        PUSH H
+        LHLD OPSIZE
+        INX H
+        SHLD OPSIZE
+        DCX H
+        POP D
+        DAD D
+        PUSH H
+        LXI H,8
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        CALL CCGCHAR
+        CALL CCPDPC
+        JMP CC239
+CC240:
+;    op[opsize]=0;
+        LXI H,0
+        DAD SP
+        PUSH H
+        LHLD OPSIZE
+        POP D
+        DAD D
+        PUSH H
+        LXI H,0
+        CALL CCPDPC
+;    if(opsize=streq(lptr, op))
+        LHLD LPTR
+        PUSH H
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        SHLD OPSIZE
+        MOV A,H
+        ORA L
+        JZ CC241
+;      if((*(lptr+opsize) != '=')&
+;         (*(lptr+opsize) != *(lptr+opsize-1)))
+        LHLD LPTR
+        PUSH H
+        LHLD OPSIZE
+        POP D
+        CALL CCDDGC
+        PUSH H
+        LXI H,61
+        POP D
+        CALL CCNE
+        PUSH H
+        LHLD LPTR
+        PUSH H
+        LHLD OPSIZE
+        POP D
+        CALL CCDDGC
+        PUSH H
+        LHLD LPTR
+        PUSH H
+        LHLD OPSIZE
+        POP D
+        DAD D
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCSUB
+        CALL CCGCHAR
+        POP D
+        CALL CCNE
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC242
+;         return 1;
+        LXI H,1
+        POP B
+        POP B
+        RET
+;    if(*list) {
+CC242:
+CC241:
+        LXI H,6
+        CALL CCDSGI
+        CALL CCGCHAR
+        MOV A,H
+        ORA L
+        JZ CC243
+;      ++list;
+        LXI H,6
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+;      ++opindex;
+        LHLD OPINDEX
+        INX H
+        SHLD OPINDEX
+;      }
+;    else return 0;
+        JMP CC244
+CC243:
+        LXI H,0
+        POP B
+        POP B
+        RET
+CC244:
+;    }
+        JMP CC237
+CC238:
+;  }
+        POP B
+        POP B
+        RET
+;
+;blanks() {
+BLANKS:: 
+;  while(1) {
+CC246:
+;    while(ch) {
+CC248:
+        LHLD CH
+        MOV A,H
+        ORA L
+        JZ CC249
+;      if(white()) gch();
+        CALL WHITE
+        MOV A,H
+        ORA L
+        JZ CC250
+        CALL GCH
+;      else return;
+        JMP CC251
+CC250:
+        RET
+CC251:
+;      }
+        JMP CC248
+CC249:
+;    if(line==mline) return;
+        LHLD LINE
+        PUSH H
+        LXI H,MLINE
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC252
+        RET
+;    preprocess();
+CC252:
+        CALL PREPROCE
+;    if(eof)break;
+        LHLD EOF
+        MOV A,H
+        ORA L
+        JZ CC253
+        JMP CC247
+;    }
+CC253:
+        JMP CC246
+CC247:
+;  }
+        RET
+        END

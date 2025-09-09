@@ -1,0 +1,84 @@
+Linker for Microsoft/Cromemco Products
+Command Line
+Switches
+Error Messages
+:LINK:
+        The linker is used to link assembled, Compiled programs modules
+together, load them into memory, and begin execution if desired.  The
+program modules can come from different sources  Some of the sources are
+          BASCOM
+          COBOL
+          FORTRAN
+          ASSEMBLER
+          RPG
+          
+:LINK:
+    The format for the involk of Linker is
+
+
+   LINK <filename1.ext/s,filename2.ext/s,....>
+
+    where   filename stands for   Disk drive letter followed by a colon
+                     followed by the absolute file name
+
+            ext  is used if the module extension is different than .rel
+            
+            /s   stands for switch options.
+  EXAMPLE of a link
+
+     LINK MAIN,FORLIB/S,MAIN/N/G/E
+
+      The first MAIN is the name of the module from the fortran compiler
+      The FORLIB/S  is the library of standard fortran routines that will
+           be selected
+      The MAIN/N/G/E  means to name the .COM file MAIN and to save it on
+           current disk then execute MAIN automatically.
+
+:LINK:
+                          SWITCH OPTIONS
+
+    Each switch option is preceded by a /
+
+    E ....  Exit to operating system
+    
+    G ....  Go   start execution
+          Start execution of the program as soon as the current command
+          line has been interpreted.
+
+    M ....  Map all symbols
+          List both all the defined globals and their values and all 
+          undefined globals followed by an asterisk.
+
+    R ....  Reset the linker
+          Puts the linker back to its initial state.   the /R is used
+          to restart LINK if the wrong file was loaded by mistake.
+
+    S ....  Search file
+          Search the disk file having the filename immediately preceding
+          the /S in the command string, to satisfy any undefined globals.
+          This is convenient for having the linker search a library file
+          of musch-used routines.
+
+    U ....  List all undefined globals
+          List all undefined globals as soon as the current command line
+          has been interpreted and executed.  Link defaults to this 
+          switch; therefore it is generally not needed.
+:LINK:
+                 ERRORS
+
+   No start address       a /G is issued but no main program module
+                          has been loaded.
+
+   Loading error          The file given is not a properly formatted
+                          link object file.
+
+   Fatal Table Collision  There is not enough memory
+
+   Command error          Unrecognizable link command
+
+   File not found         Specified file not on specified disk
+
+   mult def global        More than one definition of the global name
+                          (possibly wrong modules combined)
+:LINK:
+

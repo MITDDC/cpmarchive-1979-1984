@@ -1,0 +1,179 @@
+.		 Modifying the H89 for 4Mhz Operation
+. 
+.			   by John Stetson
+. 
+.     As time passes, more and more H89 computer owners are discovering
+. that it is feasible to upgrade the Heath H89 computer to run at a clock
+. speed of 4Mhz, instead of the standard 2Mhz.	The potential throughput
+. improvements in processing capability and console speed are impressive.
+. And best of all, the necessary modifications can usually be performed
+. for as little as $25, depending on the speed of the RAM chips in the H89.
+. 
+.     This article is intended to provide some general information about
+. the conversion process, without trying to include every conceivable patch
+. or trick, since that would be a Herculean undertaking!
+. 
+.     The 4Mhz conversion includes the following basic steps:
+. 
+.  1) Replace the Z-80 cpu chip which operates at a 2Mhz clock speed with
+.     a Z-80A cpu chip which operates at 4Mhz.	Z-80A chips are available
+.     for as little as $7 to $8 in quantities of one (check BYTE magazine).
+. 
+.  2) Replace the H-17 Disk Controller ROM (444-19), which assumes 2Mhz
+.     operation, with a new ROM in which the 2Mhz dependencies have been
+.     removed.	The modified ROM can be used at EITHER 2Mhz OR 4Mhz.
+.     The modified ROM can be obtained for $7.50 from Najay Systems.
+.     (See the address at the end of this article.)
+. 
+.  3) Replace none, some, or all of the 64K of RAM chips, as necessary.
+.     This is the tricky part.	Depending on the speed of the RAM chips
+.     currently in your H89, you may have to replace all 64K, in the worst
+.     case.  This is usually the last thing to check; if you can run ok
+.     at 4Mhz without touching your RAM, you're home free.  You may be
+.     able to determine the speed of some of the chips by contacting the
+.     chip manufacturer and providing the part number.	Otherwise, you
+.     may wish to test your RAM in blocks of 16K and replace each set of
+.     16K that is too slow. If money is no object, simply replace all 64K!
+.     Some 4116 dynamic RAM chips are stamped with "dash numbers" such as
+.     4116-2, or 4116-3.  Unfortunately, these do not always have the same
+.     speed definition from manufacturer to manufacturer, so beware!
+. 
+.     The common 4116 RAM chip access speeds are summarized below:
+. 
+.     Access time	Clock Speed	    Approximate Cost(*)
+.     -----------	-----------	    ----------------
+.      450 nsec 	    2Mhz		.......
+.      300 nsec 	    3Mhz		$11/16K
+.      250 nsec 	  3-4Mhz		$12/16K
+.      200 nsec 	  4-5Mhz		$13/16K
+.      150 nsec 	  5-6Mhz		$16/16K
+. 
+.     (*) Advertised in a recent issue of Microcomputing magazine.
+. 
+.     From the table above, it is apparent that 150 or 200 nanosecond
+.     access time chips are preferred, 250 nsec chips are marginal, and
+.     300 nsec or slower chips probably won't work.  Some chips rated
+.     at slower speeds MAY perform reliably at faster speeds, but why
+.     take a chance?
+. 
+.     In some cases H89 owners have also had to replace the 2 2114 RAM
+.     chips on the cpu card with faster parts, but this is the exception
+.     rather than the rule.
+. 
+.  4) Modify the H89 cpu card so that the CPU, ROM, and RAM see a 4Mhz
+.     clock signal, while the H88-1 disk controller card sees a 2Mhz
+.     clock signal.  This can be accomplished in several ways, some more
+.     reliable than others.  Najay Systems provides instructions on how
+.     to do this for $7.50 (see below).  This modification involves
+.     cutting 3 traces and adding either 2 jumpers and 3 wires to a switch
+.     or 3 jumpers without a switch.  The switch allows you to easily
+.     go back to 2Mhz operation, which is helpful when troubleshooting.
+. 
+.  5) Make any necessary patches to the HDOS or CP/M software you use.
+.     When I performed the 4Mhz mod, I was very surprised at how few
+.     patches were required to run at 4Mhz.  If you use the standard Heath
+.     H17 SY DVD, the DG Electronics H17 SY DVD, or the Ultimeth V2.0 H17
+.     SY DVD, NO patches are necessary for 4Mhz operation with either the
+.     standard 100K hard sectored 5" drives or the 400K Tandon drives.
+.     The HUG SY DVD (Ultimeth V1.0) will NOT work at 4Mhz.  The Heath
+.     CP/M BIOS V2.2.02 or V2.2.03 MUST be patched to work at 4Mhz.  The
+.     best collection of patches I have seen for CP/M is those compiled
+.     by Bill Moss. These are available on the MicroNet HUG Bulletin
+.     Board, and may be published in a future >CHUG newsletter, if there
+.     is sufficient interest.  The Livingston Logic Labs BIOS-80 for
+.     Heath CP/M with the 400K Tandon drives has also been patched for
+.     reliable 4Mhz operation, and recently shipped copies need no patches.
+. 
+.  6) This step is optional, but is highly recommended if you wish to fully
+.     realize the increased H89 console throughput capabilities available
+.     at 4Mhz.	If you have not already done so, you should now increase
+.     the H89 terminal logic board clock rate to 3Mhz and the baud rate
+.     from 9600 baud to 19200 baud.  It is usually unnecessary to replace
+.     the Z-80 chip on the terminal logic board to run at 3Mhz, but you
+.     may wish to install a Z-80A to be on the safe side.  Operation of the
+.     terminal logic board at 4Mhz appears possible, but of dubious value
+.     at the present time (a faster H-19 ROM will probably be required and
+.     the 2114 display RAMs may have to be replaced with faster parts).
+. 
+.     The switch settings for 19200 baud rate are as follows:
+. 
+.	H89/H19 terminal logic card:
+. 
+.	Switch 401:  0	1  2  3  4  5  6  7
+.	 9600 baud:  0	0  1  1  .  .  .  .
+.	19200 baud:  1	0  1  1  .  .  .  .
+. 
+.	H89 cpu card with MTR-89:
+. 
+.	Switch 501:  0	1  2  3  4  5  6  7
+.	 9600 baud:  .	.  .  .  .  .  0  .
+.	19200 baud:  .	.  .  .  .  .  1  .
+. 
+.     The modifications to change the terminal logic board clock
+.     rate are as follows:
+. 
+.	H89/H19 terminal clock speed selection:
+. 
+.	2Mhz: jumper JP10 pin 2 to pin 5
+. 
+.	3Mhz: cut JP10 pin 2 to pin 5
+.	      jumper JP10 pin 1 to pin 5
+. 
+.	4Mhz: cut JP10 pin 2 to pin 5
+.	      jumper JP10 pin 5 to U413 pin 9
+. 
+.     To see the reason for increasing the terminal logic board clock
+.     rate, consider the following unscientific benchmark tests I ran:
+. 
+.	H89 4Mhz benchmark tests:
+. 
+.	List a 128 sector ASCII file on the console:
+. 
+.	2Mhz H89 cpu, 3Mhz terminal,  9600 baud -> 36 seconds
+.	4Mhz H89 cpu, 2Mhz terminal,  9600 baud -> 36 seconds
+.	4Mhz H89 cpu, 3Mhz terminal,  9600 baud -> 36 seconds
+. 
+.	2Mhz H89 cpu, 3Mhz terminal, 19200 baud -> 29 seconds
+.	4Mhz H89 cpu, 2Mhz terminal, 19200 baud -> 22 seconds (*)
+.	4Mhz H89 cpu, 3Mhz terminal, 19200 baud -> 18 seconds
+. 
+.     (*) The H19 rom doesn't seem to handle this combination reliably.
+. 
+.     As you can see, the baud rate is the limiting factor on console
+.     throughput at 9600 baud.	Increasing the baud rate to 19200 with
+.     a 2Mhz cpu clock and a 3Mhz terminal clock provides about a 20%
+.     improvement, but the console is now cpu-bound.  Only at a 4Mhz
+.     cpu clock rate and a 3Mhz terminal clock rate is the full speed
+.     of the 19200 baud rate realized.
+. 
+.     One other note: I understand that the newer H-19A's and H-89A's
+.     have significantly different internal printed circuit cards than
+.     the older H-19's and H-89's.  I have yet to hear of anyone who
+.     has succesfully modified the newer models, but chances are that
+.     the process will be very similar.
+. 
+.     In conclusion, it is obvious that this article has omitted some of
+.     the technical details of implementing the 4Mhz conversion.  This
+.     was intentionally done to keep it down to a reasonable size. If you
+.     decide to go ahead with the conversion, I think you will be very
+.     impressed with the results.  Programs such as PIE, INVADERS, all
+.     of the commonly used assemblers, compilers and basic interpreters
+.     really come to life at 4Mhz and saving time is what computing is
+.     all about!  As mentioned above, the modified H17 ROM and detailed
+.     instructions on modifying the cpu board can be ordered for $15 from:
+. 
+.     George Najarian
+.     Najay Systems
+.     3136 Vermillion St.
+.     W Covina, Ca. 91792
+.     (714) 594-9564
+. 
+.     P.S. Najay Systems is reportedly working on a newer, easier to
+.     install 4Mhz modification kit which is a small PC board which
+.     plugs into a socket on the H89 cpu card and may allow a software
+.     selectable 2 or 4Mhz clock frequency with NO trace cuts or jumpers
+.     required (of course it will cost more!).	And for those with
+.     even more money to spend, there's the new DG Electronics SUPER-89!
+. 
+.     EOF
+

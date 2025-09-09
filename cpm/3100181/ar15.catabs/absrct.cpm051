@@ -1,0 +1,41 @@
+Abstract for National CP/M Users Group Vol. 51,
+	"STAGE2 Macro Processor"
+
+
+	Richard Curtiss implemented STAGE2, wrote many of the
+sample programs, and did an excellent job of commenting on his
+own work.  INTRO.DOC and VOLUME51.DOC, provide not only doc-
+umentation, but "insight", which is normally the service an
+"abstract" serves.  Because of such good documentation, (and
+this disk is full), this abstract will be brief.
+	STAGE2 is "cryptic", but quite interesting.  Many of
+you will enjor "experimenting with it", and many will make
+regular use of it.
+	What is a "macro processor"?  A program, which "trans-
+forms" or "expands" character strings, into something else.
+Traditional uses were in assembler programming, allowing you
+to say, for example, " OPEN MYFILE,INPUT,4096", rather than
+having to code the necessary assembler instructions.  Richard
+Curtiss uses it to expand ANY language he uses on his micro,
+to add structured programming:  IF/THEN, WHILE, REPEAT, etc.
+The macros generate the proper GOTOs, etc, no matter what the
+language
+	STAGE2 was written in "FLUB", a machine-independent
+simple language.  The FLUB source for STAGE2 is on the disk.
+IMPL.DOC goes into the details.  You could transport STAGE2 to
+some other processor, quite readily.
+	The only thing missing is some documentation on the
+"state machine" macros of ALX.  VDB.ALX, a video driver for a
+memory-mapped display, uses them.  You are normally in ST1
+(state 1) waiting for characters.  If you get an ESC, you go
+to ST2, because you are awaiting a control sequence.  Then, if
+you receive a "Y", it is cursor addressing, so you set the
+next state to ST3 via "SETNEXT ( NSTATE = ST3 )" to get the
+row, then when its received, "SETNEXT ( NSTATE = ST4 )", i.e.
+state 4 to receive the column.  Then reset to state 1.
+	The NSTATE DW is the address of the next state (rou-
+tine) you will be in, and "EXECUTE ( NSTATE )" expands to
+"branch to what is stored in NSTATE.
+
+	Abstract by Ward Christensen
+

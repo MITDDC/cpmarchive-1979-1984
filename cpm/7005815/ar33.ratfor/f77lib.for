@@ -1,0 +1,78 @@
+CThese FORTRAN 77 functions are put into a separate library,
+C rather than being loaded by INCLUDE as they would be on
+C most large systems, where they would be ignored by the
+C compiler unless needed.
+C	DEFINE(CHARACTER,INTEGER)
+C	CHARACTER*1 CHAR
+C	REAL LOG,LOG10
+C	DATA KB/3/,KONS/3/
+C	DATA DPR/.01745329/,RPD/57.29578/
+C	DATA PI/3.141593/
+	FUNCTION ICHAR(I)
+	INTEGER*1 I
+	ICHAR=I
+	RETURN
+	END
+	FUNCTION CHAR(I)
+	INTEGER*1 CHAR
+	CHAR=I
+	RETURN
+	END
+	FUNCTION ANINT(X)
+	ANINT=AINT(X+SIGN(.5,X))
+	RETURN
+	END
+	FUNCTION NINT(X)
+	NINT=SIGN(.5,X)+X
+	RETURN
+	END
+	REAL FUNCTION LOG(X)
+	LOG=ALOG(X)
+	RETURN
+	END
+	REAL FUNCTION LOG10(X)
+	LOG10=ALOG10(X)
+	RETURN
+	END
+	FUNCTION TAN(X)
+	SX=SIN(X)
+	TAN=SX/SQRT(1.-SX*SX)
+	RETURN
+	END
+	FUNCTION ASIN(X)
+	ASIN=ATAN2(X,SQRT(1.-X*X))
+	RETURN
+	END
+	FUNCTION ACOS(X)
+	ACOS=ATAN2(SQRT(1.-X*X),X)
+	RETURN
+	END
+	FUNCTION SINH(X)
+	EX=EXP(X)
+	SINH=(EX-1./EX)*.5
+	RETURN
+	END
+	FUNCTION COSH(X)
+	EX=EXP(X)
+	COSH=(EX+1./EX)*.5
+	RETURN
+	END
+	FUNCTION INDEX(KA,KB,LB,LA)
+	INTEGER*1 KA,KB
+C Must pass string lengths explicitly in F66
+	DIMENSION KA(LA),KB(LB)
+	LB=MAX0(LB,1)
+	LA=MAX0(LA,1)
+	NS=LA-LB+1
+	DO 100 INDEX=1,NS
+C Try each possible start position until KB found
+	DO 10 I=1,LB
+	IA=I+INDEX-1
+10	IF(KA(IA).NE.KB(I))GO TO 100
+C String found starting at INDEX
+	RETURN
+100	CONTINUE
+C String not present
+	INDEX=0
+	RETURN
+	END

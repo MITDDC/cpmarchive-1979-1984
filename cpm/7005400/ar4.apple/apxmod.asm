@@ -1,0 +1,1053 @@
+;
+;	APXMODEM.ASM V3.9, by Keith Petersen, W8SDZ
+;
+;         MODIFIED 01/28/81 FOR
+;MMII BY DAVID MORITZ
+;   CHANGED EQUATES,I/O PORTS 
+;AND FLAGS FOR MMII.CHANGED IN/
+;OUT COMMANDS TO LDA/STA.
+;
+;	  revised 01/17/81 by Bruce R. Ratoff
+;
+;	REMOTE CP/M - CP/M FILE TRANSFER PROGRAM
+;
+;Based on MODEM.ASM V2.0, by Ward Christensen.
+;This program is intended for use on remote CP/M
+;systems where it is important that the initialization
+;of the modem not be changed, such as when using
+;the PMMIBYE program. The baud rate and number of bits
+;remains the same as whatever was set previously.
+;There is no disconnect, terminal or echo option.
+;
+;NOTE: This file will assemble, without need for
+;editing, to work with a PMMI MM-103 modem and 2 Mhz
+;system clock.	See equates for options including
+;other modems and 4 Mhz system clock frequency.
+;
+;Program updates/fixes (these are written in reverse
+;order to minimize reading time to find latest update):
+;
+;01/17/81 Re-wrote routine to calculate file size so
+;         that it works correctly on v2.X systems with
+;         extent folding (non-zero extent mask). (BRR)
+;
+;12/06/80 Re-wrote routine to calculate file size,
+;	  added decimal print of file size. (KBP)
+;
+;12/05/80 Corrected error in use of ext byte that pre-
+;	  vented files greater than one extent from being
+;	  sent.     Ron Fowler
+;
+;12/03/80 Corrected file extent length display. Now
+;	  reports correct number of records for files
+;	  longer than one extent. Display is now
+;	  double precision (xxxxH). Also made some
+;	  cosmetic changes by re-arranging the equates.
+;	  By Tim Nicholas
+;
+;10/28/80 Cleaned up file. (KBP)
+;
+;10/23/80 Expanded conditional assembly of NOCOM routines
+;	  into NOCOMS, NOLBS, and NOCOMR equates, to allow
+;	  separate conditional assembly of tests for sending
+;	  .COM files, sending .??# files, and receiving .COM
+;	  files, respectively.	(Dave Hardy)
+;
+;10/15/80 Added traps for ambiguous file name or
+;	  none at all. (KBP)
+;
+;09/09/80 Added conditional assembly to prevent filetypes
+;	  '.COM' or '.??#' from being sent to distant end
+;	  and added conditional assembly of test for '.COM'
+;	  filetype on receive as well. See 'NOCOM' below.
+;	  Any filetype ending in '#' will not be sent by
+;	  this program if 'NOCOM' is set to TRUE.  J.SEYMOUR
+;
+;NOTE: If you add improvements or otherwise update
+;this program, please modem a copy of the new file
+;to "TECHNICAL CBBS" in Dearborn, Michigan - phone
+;313-846-6127 (110, 300, 450 or 600 baud).  Use the
+;filename XMODEM.NEW.	(KBP)
+;
+FALSE	EQU	0
+TRUE	EQU	NOT FALSE
+;
+;------------------------------------------------------
+;	 --- Conditional Assembly Options ---	      ;
+;------------------------------------------------------
+;
+STDCPM	EQU	TRUE	;TRUE, IS STANDARD CP/M
+ALTCPM	EQU	FALSE	;TRUE, IS H8 OR TRS-80 CP/M
+;
+PMMI	EQU	FALSE 	;TRUE, IS PMMI
+DCH	EQU	TRUE	;TRUE, IS DCH MMII
+;
+NOCOMS	EQU	FALSE	;TRUE, NO .COM FILES SENT
+NOLBS	EQU	TRUE	;TRUE, NO .??# FILES SENT
+NOCOMR	EQU	TRUE	;TRUE, NO .COM FILES RECEIVED
+;
+FASTCLK EQU	FALSE	;PUT TRUE HERE FOR 4 MHZ CLOCK
+;
+;------------------------------------------------------
+;	     --- Modem Port Equates --- 	      ;
+;------------------------------------------------------
+;
+	IF	PMMI
+MODCTLP EQU	0C0H	;PMMI VALUES
+MODSNDB EQU	1	;BIT TO TEST FOR SEND
+MODSNDR EQU	1	;VALUE WHEN READY
+MODRCVB EQU	2	;BIT TO TEST FOR RECEIVE
+MODRCVR EQU	2	;VALUE WHEN READY
+MODDATP EQU	0C1H	;DATA PORT
+BAUDRP	EQU	0C2H	;BAUD RATE OUTPUT
+MODCTL2 EQU	0C3H	;SECOND CTL PORT
+	ENDIF
+;
+	IF	DCH
+MODCTLP EQU	0E0A6H	;DCH MMII VALUES
+MODSNDB EQU	2	;BIT TO TEST FOR SEND
+MODSNDR EQU	2	;VALUE WHEN READY
+MODRCVB EQU	1	;BIT TO TEST FOR RECEIVE
+MODRCVR EQU	1	;VALUE WHEN READY
+MODDATP EQU	0E0A7H	;DATA PORT
+MODCTL2 EQU	0E0A5H	;SECOND CTL PORT
+	ENDIF
+;
+;If you are using an external modem (not S-100 plug-in)
+;change these equates for your modem port requirements
+;
+	IF	NOT PMMI AND NOT DCH
+MODCTLP EQU	02H	;PUT YOUR MODEM STATUS PORT HERE
+MODSNDB EQU	80H	;YOUR BIT TO TEST FOR SEND
+MODSNDR EQU	80H	;YOUR VALUE WHEN READY
+MODRCVB EQU	40H	;YOUR BIT TO TEST FOR RECEIVE
+MODRCVR EQU	40H	;YOUR VALUE WHEN READY
+MODDATP EQU	03H	;YOUR MODEM DATA PORT
+	ENDIF		;END OF EXTERNAL MODEM EQUATES
+;
+;		--- End of Options ---
+;------------------------------------------------------
+;
+;
+ERRLIM	EQU	10	;MAX ALLOWABLE ERRORS (10 STANDARD)
+;
+;Define ASCII characters used
+;
+SOH	EQU	1	;START OF HEADER
+EOT	EQU	4	;END OF TRANSMISSION
+ACK	EQU	6	;ACKNOWLEDGE
+NAK	EQU	15H	;NEG ACKNOWLEDGE
+CAN	EQU	18H	;CONTROL-X FOR CANCEL
+LF	EQU	10	;LINEFEED
+CR	EQU	13	;CARRIAGE RETURN
+; 
+	IF	STDCPM
+BASE	EQU	0	;CP/M BASE ADDRESS
+	ENDIF
+;
+	IF	ALTCPM
+BASE	EQU	4200H	;ALTERNATE CP/M BASE ADDRESS
+	ENDIF
+;
+	ORG	BASE+100H
+;
+;Init private stack
+	LXI	H,0	;HL=0
+	DAD	SP	;HL=STACK FROM CP/M
+	SHLD	STACK	;..SAVE IT
+	LXI	SP,STACK ;SP=MY STACK
+	CALL	ILPRT	;PRINT:
+	DB	CR,LF
+	DB	'APXMODEM ver 3.9',CR,LF,0
+;
+;Get option
+;
+	LDA	FCB+1	;GET OPTION (S or R)
+	PUSH	PSW	;SAVE OPTION
+;
+;Move the filename from FCB2 to FCB1
+;
+	CALL	MOVEFCB
+;
+;Gobble up garbage chars from the line
+;prior to receive or send
+;
+	LDA	MODDATP
+	LDA	MODDATP
+;
+;Jump to appropriate function
+;
+	POP	PSW	;GET OPTION
+;
+	CPI	'S'	;SEND..
+	JZ	SENDFIL ;..A FILE?
+;
+	CPI	'R'	;RECEIVE..
+	JZ	RCVFIL	;..A FILE?
+;
+;Invalid option
+;
+	CALL	ERXIT	;EXIT W/ERROR
+	DB	'++INVALID OPTION ON XMODEM '
+	DB	'COMMAND++',CR,LF
+	DB	'Must be S for SEND or R for '
+	DB	'RECEIVE',CR,LF,'$'
+;
+* * * * * * * * * * * * * * * * * * * * *
+*					*
+*	SENDFIL: SENDS A CP/M FILE	*
+*					*
+* * * * * * * * * * * * * * * * * * * * *
+;
+;The CP/M file specified in the XMODEM command
+;is transferred over the phone to another
+;computer running MODEM with the "R" (receive)
+;option.  The data is sent one sector at a
+;time with headers and checksums, and re-
+;transmission on errors.  
+;
+SENDFIL CALL	TRAP	;CHECK FOR NO NAME OR AMBIG. NAME
+	CALL	CNREC	;COMPUTE # OF RECORDS.
+	CALL	OPENFIL ;OPEN THE FILE
+	MVI	E,80	;WAIT 80 SEC..
+	CALL	WAITNAK ;..FOR INITIAL NAK
+;
+SENDLP	CALL	RDSECT	;READ A SECTOR
+	JC	SENDEOF ;SEND EOF IF DONE
+	CALL	INCRSNO ;BUMP SECTOR #
+	XRA	A	;ZERO ERROR..
+	STA	ERRCT	;..COUNT
+;
+SENDRPT CALL	SENDHDR ;SEND A HEADER
+	CALL	SENDSEC ;SEND DATA SECTOR
+	CALL	SENDCKS ;SEND CKSUM
+	CALL	GETACK	;GET THE ACK
+	JC	SENDRPT ;REPEAT IF NO ACK
+	JMP	SENDLP	;LOOP UNTIL EOF
+;
+;File sent, send EOT's
+;
+SENDEOF MVI	A,EOT	;SEND..
+	CALL	SEND	;..AN EOT
+	CALL	GETACK	;GET THE ACK
+	JC	SENDEOF ;LOOP IF NO ACK
+	JMP	EXIT	;ALL DONE
+;
+* * * * * * * * * * * * * * * * * * * * *
+*					*
+*	RCVFIL: RECEIVE A FILE		*
+*					*
+* * * * * * * * * * * * * * * * * * * * *
+;
+;Receives a file in block format as sent
+;by another person doing "MODEM S FN.FT".
+;
+RCVFIL	CALL	TRAP	;CHECK FOR NO NAME OR AMBIG. NAME
+;
+	IF	NOCOMR
+	LXI	H,FCB+9 ;POINT TO FILETYPE
+	MVI	A,'C'	;1ST LETTER
+	CMP	M	;IS IT C ?
+	JNZ	CONTINU ;IF NOT, CONTINUE NORMALLY
+	INX	H	;GET 2ND LETTER
+	MVI	A,'O'	;2ND LETTER
+	CMP	M	;IS IT O ?
+	JNZ	CONTINU ;IF NOT, CONTINUE NORMALLY
+	INX	H	;GET 3RD LETTER
+	MVI	A,'M'	;3RD LETTER
+	CMP	M	;IS IT M ?
+	JNZ	CONTINU ;IF NOT, CONTINUE NORMALLY
+	CALL	ERXIT	;EXIT, PRINT ERROR MESSAGE
+	DB	'++CAN''T RECEIVE A .COM FILE++'
+	DB	CR,LF,CR,LF
+	DB	'Rename filetype ".OBJ" and try again'
+	DB	CR,LF,'$'
+	ENDIF
+;
+CONTINU CALL	CHEKFIL ;SEE IF FILE EXISTS
+	CALL	MAKEFIL ;..THEN MAKE NEW
+	CALL	ILPRT	;PRINT:
+	DB	'FILE OPEN, READY TO RECEIVE',CR,LF,0
+;
+RCVLP	CALL	RCVSECT ;GET A SECTOR
+	JC	RCVEOT	;GOT EOT
+	CALL	WRSECT	;WRITE THE SECTOR
+	CALL	INCRSNO ;BUMP SECTOR #
+	CALL	SENDACK ;ACK THE SECTOR
+	JMP	RCVLP	;LOOP UNTIL EOF
+;
+;Got EOT on sector - flush buffers, end
+;
+RCVEOT	CALL	WRBLOCK ;WRITE THE LAST BLOCK
+	CALL	SENDACK ;ACK THE SECTOR
+	CALL	CLOSFIL ;CLOSE THE FILE
+	JMP	EXIT	;ALL DONE
+;
+* * * * * * * * * * * * * * * * * * * * *
+*					*
+*		SUBROUTINES		*
+*					*
+* * * * * * * * * * * * * * * * * * * * *
+;
+;---->	TRAP: Check for no file name or ambiguous name
+;
+TRAP	LXI	H,FCB+1 ;POINT TO FILE NAME
+	MOV	A,M	;GET FIRST CHAR OF FILE NAME
+	CPI	' '	;ANY THERE?
+	JNZ	ATRAP	;YES, CHECK FOR AMBIGOUS FILE NAME
+	CALL	ERXIT	;PRINT MSG, EXIT
+	DB	'++NO FILE NAME SPECIFIED++',CR,LF,'$'
+;
+ATRAP	MVI	B,11	;11 CHARS TO CHECK
+;
+TRLOOP	MOV	A,M	;GET CHAR FROM FCB
+	CPI	'?'	;AMBIGUOUS?
+	JZ	TRERR	;YES, EXIT WITH ERROR MSG
+	INX	H	;POINT TO NEXT CHAR
+	DCR	B	;ONE LESS TO GO
+	JNZ	TRLOOP	;NOT DONE, CHECK SOME MORE
+	RET		;NO AMBIGUOUS NAME, RETURN
+;
+TRERR	CALL	ERXIT	;PRINT MSG, EXIT
+	DB	'++CAN''T USE WILD CARD OPTIONS',CR,LF,'$'
+;
+;---->	RCVSECT: Receive a sector
+;
+;Returns with carry set if EOT received.
+;
+RCVSECT XRA	A	;GET 0
+	STA	ERRCT	;INIT ERROR COUNT
+;
+RCVRPT	MVI	B,10	;10 SEC TIMEOUT
+	CALL	RECV	;GET SOH/EOT
+	JC	RCVSTOT ;TIMEOUT
+	CPI	SOH	;GET SOH?
+	JZ	RCVSOH	;..YES
+;
+;Earlier versions of MODEM program send some nulls -
+;ignore them
+;
+	ORA	A	;00 FROM SPEED CHECK?
+	JZ	RCVRPT	;YES, IGNORE IT
+	CPI	EOT	;END OF TRANSFER?
+	STC		;RETURN WITH CARRY..
+	RZ		;..SET IF EOT
+;
+;Didn't get SOH or EOT - 
+;	-or-
+;Did'nt get valid header - purge the line,
+;then send NAK.
+;
+RCVSERR MVI	B,1	;WAIT FOR 1 SEC..
+	CALL	RECV	;..WITH NO CHARS
+	JNC	RCVSERR ;LOOP UNTIL SENDER DONE
+	MVI	A,NAK	;SEND..
+	CALL	SEND	;..THE NAK
+	LDA	ERRCT	;ABORT IF..
+	INR	A	;..WE HAVE REACHED..
+	STA	ERRCT	;..THE ERROR..
+	CPI	ERRLIM	;..LIMIT?
+	JC	RCVRPT	;..NO, TRY AGAIN
+;
+;10 errors in a row -
+;
+RCVSABT CALL	CLOSFIL ;KEEP WHATEVER WE GOT
+	CALL	ERXIT
+	DB	'++UNABLE TO RECEIVE BLOCK '
+	DB	'- ABORTING++',CR,LF,'$'
+;
+;Timed out on receive
+;
+RCVSTOT JMP	RCVSERR ;BUMP ERR CT, ETC.
+;
+;Got SOH - get block #, block # complemented
+;
+RCVSOH	MVI	B,1	;TIMEOUT = 1 SEC
+	CALL	RECV	;GET SECTOR
+	JC	RCVSTOT ;GOT TIMEOUT
+	MOV	D,A	;D=BLK #
+	MVI	B,1	;TIMEOUT = 1 SEC
+	CALL	RECV	;GET CMA'D SECT #
+	JC	RCVSTOT ;TIMEOUT
+	CMA		;CALC COMPLEMENT
+	CMP	D	;GOOD SECTOR #?
+	JZ	RCVDATA ;YES, GET DATA
+;
+;Got bad sector #
+;
+	JMP	RCVSERR ;BUMP ERROR CT.
+;
+RCVDATA MOV	A,D	;GET SECTOR #
+	STA	RCVSNO	;SAVE IT
+	MVI	C,0	;INIT CKSUM
+	LXI	H,BASE+80H ;POINT TO BUFFER
+;
+RCVCHR	MVI	B,1	;1 SEC TIMEOUT
+	CALL	RECV	;GET CHAR
+	JC	RCVSTOT ;TIMEOUT
+	MOV	M,A	;STORE CHAR
+	INR	L	;DONE?
+	JNZ	RCVCHR	;NO, LOOP
+;
+;Verify checksum
+;
+	MOV	D,C	;SAVE CHECKSUM
+	MVI	B,1	;TIMEOUT LEN.
+	CALL	RECV	;GET CHECKSUM
+	JC	RCVSTOT ;TIMEOUT
+	CMP	D	;CHECKSUM OK?
+	JNZ	RCVSERR ;NO, ERROR
+;
+;Got a sector, it's a duplicate if = previous,
+;	or OK if = 1 + previous sector
+;
+	LDA	RCVSNO	;GET RECEIVED
+	MOV	B,A	;SAVE IT
+	LDA	SECTNO	;GET PREV
+	CMP	B	;PREV REPEATED?
+	JZ	RECVACK ;ACK TO CATCH UP
+	INR	A	;CALC NEXT SECTOR #
+	CMP	B	;MATCH?
+	JNZ	ABORT	;NO MATCH - STOP SENDER, EXIT
+	RET		;CARRY OFF - NO ERRORS
+;
+;Previous sector repeated, due to the last ACK
+;being garbaged.  ACK it so sender will catch up 
+;
+RECVACK CALL	SENDACK ;SEND THE ACK,
+	JMP	RCVSECT ;GET NEXT BLOCK
+;
+;Send an ACK for the sector
+;
+SENDACK MVI	A,ACK	;GET ACK
+	CALL	SEND	;..AND SEND IT
+	RET
+;
+;---->	SENDHDR: Send the sector header
+;
+;SEND: (SOH) (block #) (complemented block #)
+;
+SENDHDR MVI	A,SOH	;SEND..
+	CALL	SEND	;..SOH,
+	LDA	SECTNO	;THEN SEND..
+	CALL	SEND	;..SECTOR #
+	LDA	SECTNO	;THEN SECTOR #
+	CMA		;..COMPLEMENTED..
+	CALL	SEND	;..SECTOR #
+	RET		;FROM SENDHDR
+;
+;---->	SENDSEC: Send the data sector
+;
+SENDSEC MVI	C,0	;INIT CKSUM
+	LXI	H,BASE+80H ;POINT TO BUFFER
+SENDC	MOV	A,M	;GET A CHAR
+	CALL	SEND	;SEND IT
+	INR	L	;POINT TO NEXT CHAR
+	JNZ	SENDC	;LOOP IF <100H
+	RET		;FROM SENDSEC
+;
+;---->	SENDCKS: Send the checksum
+;
+SENDCKS MOV	A,C	;SEND THE..
+	CALL	SEND	;..CHECKSUM
+	RET		;FROM SENDCKS
+;
+;---->	GETACK: Get the ACK on the sector
+;
+;Returns with carry clear if ACK received.
+;If an ACK is not received, the error count
+;is incremented, and if less than "ERRLIM",
+;carry is set and control returns.  If the
+;error count is at "ERRLIM", the program
+;aborts.
+;
+GETACK	MVI	B,10	;WAIT 10 SECONDS MAX
+	CALL	RECVDG	;RECV W/GARBAGE COLLECT
+	JC	GETATOT ;TIMED OUT
+	CPI	ACK	;OK? (CARRY OFF IF =)
+	RZ		;YES, RET FROM GETACK
+;
+;Timeout or error on ACK - bump error count
+;
+ACKERR	LDA	ERRCT	;GET COUNT
+	INR	A	;BUMP IT
+	STA	ERRCT	;SAVE BACK
+	CPI	ERRLIM	;AT LIMIT?
+	RC		;NOT AT LIMIT
+;
+;Reached error limit
+;
+CSABORT CALL	ERXIT
+	DB	'++CAN''T SEND SECTOR '
+	DB	'- ABORTING++',CR,LF,'$'
+;
+;Timeout getting ACK
+;
+GETATOT JMP	ACKERR	;NO MSG
+; 
+ABORT	LXI	SP,STACK
+;
+ABORTL	MVI	B,1	;1 SEC. W/O CHARS.
+	CALL	RECV
+	JNC	ABORTL	;LOOP UNTIL SENDER DONE
+	MVI	A,CAN	;CONTROL X
+	CALL	SEND	;STOP SENDING END
+;
+ABORTW	MVI	B,1	;1 SEC W/O CHARS.
+	CALL	RECV
+	JNC	ABORTW	;LOOP UNTIL SENDER DONE
+	MVI	A,' '	;GET A SPACE...
+	CALL	SEND	;TO CLEAR OUT CONTROL X
+	CALL	ERXIT	;EXIT WITH ABORT MSG
+	DB	'XMODEM PROGRAM CANCELLED',CR,LF,'$'
+;
+;---->	INCRSNO: Increment sector #
+;
+INCRSNO LDA	SECTNO	;INCR..
+	INR	A	;..SECT..
+	STA	SECTNO	;..NUMBER
+	RET
+;
+;---->	CHEKFIL: See if file exists
+;
+;If it exists, say use a different name.
+;
+CHEKFIL LXI	D,FCB	;POINT TO CTL BLOCK
+	MVI	C,SRCHF ;SEE IF IT..
+	CALL	BDOS	;..EXISTS
+	INR	A	;FOUND?
+	RZ		;..NO, RETURN
+	CALL	ERXIT	;EXIT, PRINT ERROR MESSAGE
+	DB	'++FILE EXISTS, USE A DIFFERENT NAME++'
+	DB	CR,LF,'$'
+;
+;---->	MAKEFIL: Makes the file to be received
+;
+MAKEFIL	XRA	A	;SET EXT & REC # TO 0
+	STA	FCBEXT
+	STA	FCBSNO
+	LXI	D,FCB	;POINT TO FCB
+	MVI	C,MAKE	;GET BDOS FNC
+	CALL	BDOS	;TO THE MAKE
+	INR	A	;FF=BAD?
+	RNZ		;OPEN OK
+;Directory full - can't make file
+	CALL	ERXIT
+	DB	'++ERROR - CAN''T MAKE FILE++',CR,LF
+	DB	'Directory must be full',CR,LF,'$'
+;
+;---->	CNREC: Computes record count, and saves it
+;	       until successful file OPEN.
+;
+;LOOK UP THE FCB IN THE DIRECTORY
+CNREC	MVI	A,'?'	;MATCH ALL EXTENTS
+	STA	FCBEXT
+	MVI	A,0FFH
+	STA	MAXEXT	;INIT MAX EXT NO.
+	MVI	C,SRCHF ;GET 'SEARCH FIRST' FNC
+	LXI	D,FCB
+	CALL	BDOS	;READ FIRST
+	INR	A	;WERE THERE ANY?
+	JNZ	SOME	;GOT SOME
+	CALL	ERXIT
+	DB	'++FILE NOT FOUND++$'
+;
+;READ MORE DIRECTORY ENTRIES
+MOREDIR	MVI	C,SRCHN ;SEARCH NEXT
+	LXI	D,FCB
+	CALL	BDOS	;READ DIR ENTRY
+	INR	A	;CHECK FOR END (0FFH)
+	JNZ	SOME	;NOT END OF DIR...PROCESS EXTENT
+	LDA	MAXEXT	;HIT END...GET HIGHEST EXTENT NO. SEEN
+	MOV	L,A	;WHICH GIVES EXTENT COUNT - 1
+	MVI	H,0
+	MOV	D,H
+	LDA	RCNT	;GET RECORD COUNT OF MAX EXTENT SEEN
+	MOV	E,A	;SAVE IT IN DE
+	DAD	H
+	DAD	H	;MULTIPLY # OF EXTENTS - 1
+	DAD	H	; TIMES 128
+	DAD	H
+	DAD	H
+	DAD	H
+	DAD	H
+	DAD	D	;ADD IN SIZE OF LAST EXTENT
+	SHLD	RCNT	;SAVE TOTAL RECORD COUNT
+	RET		;AND EXIT
+;
+;POINT TO DIRECTORY ENTRY 
+SOME	DCR	A	;UNDO PREV 'INR A'
+	ANI	3	;MAKE MODULUS 4
+	ADD	A	;MULTIPLY...
+	ADD	A	;..BY 32 BECAUSE
+	ADD	A	;..EACH DIRECTORY
+	ADD	A	;..ENTRY IS 32
+	ADD	A	;..BYTES LONG
+	LXI	H,BASE+80H ;POINT TO BUFFER
+	ADD	L	;POINT TO ENTRY
+	ADI	15	;OFFSET TO RECORD COUNT
+	MOV	L,A	;HL NOW POINTS TO REC COUNT
+	MOV	B,M	;GET RECORD COUNT
+	DCX	H
+	DCX	H	;BACK DOWN TO EXTENT NUMBER
+	DCX	H
+	LDA	MAXEXT	;COMPARE WITH CURRENT MAX.
+	ORA	A	;IF NO MAX YET
+	JM	BIGGER	;THEN SAVE RECORD COUNT ANYWAY
+	CMP	M
+	JNC	MOREDIR
+BIGGER:	MOV	A,B	;SAVE NEW RECORD COUNT
+	STA	RCNT
+	MOV	A,M	;SAVE NEW MAX. EXTENT NO.
+	STA	MAXEXT
+	JMP	MOREDIR	;GO FIND MORE EXTENTS
+;
+;---->	OPENFIL: Opens the file to be sent
+;
+OPENFIL	XRA	A	;SET EXT & REC # TO 0 FOR PROPER OPEN
+	STA	FCBEXT
+	STA	FCBSNO
+	LXI	D,FCB	;POINT TO FILE
+	MVI	C,OPEN	;GET FUNCTION
+	CALL	BDOS	;OPEN IT
+	INR	A	;OPEN OK?
+	JNZ	OPENOK	;..YES
+	CALL	ERXIT	;..NO, ABORT
+	DB	'++OPEN ERROR++',CR,LF,'$'
+;
+;Check for distribution-protected file
+;
+OPENOK	LDA	FCB+1	;FIRST CHAR OF FILE NAME
+	ANI	80H	;CHECK BIT 7
+	JZ	OPENOK2 ;IT WAS OFF, FILE CAN BE SENT
+;
+OPENOT	CALL	ERXIT	;EXIT W/MESSAGE
+	DB	'++THIS FILE IS NOT FOR DISTRIBUTION, SORRY++'
+	DB	CR,LF,'$'
+;
+OPENOK2 EQU	$
+;
+	IF	NOLBS OR NOCOMS ;CHECK FOR SEND RESTRICTIONS
+	LXI	H,FCB+11
+	MOV	A,M	;CHECK FOR PROTECT ATTR
+	ANI	7FH	;REMOVE CP/M 2.x ATTRS
+	ENDIF		;NOLBS OR NOCOMS
+;
+	IF	NOLBS	;DON'T ALLOW '#' TO BE SENT.
+	CPI	'#'	;CHK FOR '#' AS LAST FIRST
+	JZ	OPENOT	;IF '#', CAN'T SEND, SHOW WHY
+	ENDIF		;NOLBS
+;
+	IF	NOCOMS	;DON'T ALLOW .COM TO BE SENT
+	CPI	'M'	;IF NOT, CHK FOR '.COM'
+	JNZ	OPENOK3 ;IF NOT, OK TO SEND
+	DCX	H
+	MOV	A,M	;CHK NEXT CHAR
+	ANI	7FH	;STRIP ATTRIBUTES
+	CPI	'O'	; 'O'?
+	JNZ	OPENOK3 ;IF NOT, OK TO SEND
+	DCX	H
+	MOV	A,M	;NOW CHK FIRST CHAR
+	ANI	7FH	;STRIP ATTRIBUTES
+	CPI	'C'	; 'C' AS IN '.COM'?
+	JNZ	OPENOK3 ;IF NOT, CONTINUE
+	CALL	ERXIT	;EXIT W/MESSAGE
+	DB	'++CAN''T SEND A .COM FILE++'
+	DB	CR,LF,'$'
+	ENDIF		;NOCOMS
+;
+OPENOK3 CALL	ILPRT	;PRINT:
+	DB	'FILE OPEN, SIZE: ',0
+	LHLD	RCNT	; Get record count.
+	CALL	DECOUT	;PRINT DECIMAL NUMBER OF SECTORS
+	CALL	ILPRT	;PRINT:
+	DB	' SECTORS',CR,LF,0
+	RET
+;
+;---->	CLOSFIL: Closes the received file
+;
+CLOSFIL LXI	D,FCB	;POINT TO FILE
+	MVI	C,CLOSE ;GET FUNCTION
+	CALL	BDOS	;CLOSE IT
+	INR	A	;CLOSE OK?
+	RNZ		;..YES, RETURN
+	CALL	ERXIT	;..NO, ABORT
+	DB	'++CAN''T CLOSE FILE++',CR,LF,'$'
+;
+;
+;----> DECOUT: Decimal output routine
+;
+DECOUT:	PUSH	B
+	PUSH	D
+	PUSH	H
+	LXI	B,-10
+	LXI	D,-1
+;
+DECOU2:	DAD	B
+	INX	D
+	JC	DECOU2
+	LXI	B,10
+	DAD	B
+	XCHG
+	MOV	A,H
+	ORA	L
+	CNZ	DECOUT
+	MOV	A,E
+	ADI	'0'
+	CALL	CTYPE
+	POP	H
+	POP	D
+	POP	B
+	RET
+;
+;---->	RDSECT: Reads a sector
+;
+;For speed, this routine buffers up 16
+;sectors at a time.
+;
+RDSECT	LDA	SECINBF ;GET # SECT IN BUFF.
+	DCR	A	;DECREMENT..
+	STA	SECINBF ;..IT
+	JM	RDBLOCK ;EXHAUSTED?  NEED MORE.
+	LHLD	SECPTR	;GET POINTER
+	LXI	D,BASE+80H ;TO DATA
+	CALL	MOVE128 ;MOVE TO BUFFER
+	SHLD	SECPTR	;SAVE BUFFER POINTER
+	RET		;FROM "READSEC"
+;
+;Buffer is empty - read in another block of 16
+;
+RDBLOCK LDA	EOFLG	;GED EOF FLAG
+	CPI	1	;IS IT SET?
+	STC		;TO SHOW EOF
+	RZ		;GOT EOF
+	MVI	C,0	;SECTORS IN BLOCK
+	LXI	D,DBUF	;TO DISK BUFFER
+;
+RDSECLP PUSH	B
+	PUSH	D
+	MVI	C,STDMA ;SET DMA..
+	CALL	BDOS	;..ADDR
+	LXI	D,FCB
+	MVI	C,READ
+	CALL	BDOS
+	POP	D
+	POP	B
+	ORA	A	;READ OK?
+	JZ	RDSECOK ;YES
+	DCR	A	;EOF?
+	JZ	REOF	;GOT EOF
+;
+;Read error
+;
+	CALL	ERXIT
+	DB	'++FILE READ ERROR++',CR,LF,'$'
+;
+RDSECOK LXI	H,80H	;ADD LENGTH OF ONE SECTOR...
+	DAD	D	;...TO NEXT BUFF
+	XCHG		;BUFF TO DE
+	INR	C	;MORE SECTORS?
+	MOV	A,C	;GET COUNT
+	CPI	16	;DONE?
+	JZ	RDBFULL ;..YES, BUFF IS FULL
+	JMP	RDSECLP ;READ MORE
+;
+REOF	MVI	A,1
+	STA	EOFLG	;SET EOF FLAG
+	MOV	A,C
+;
+;Buffer is full, or got EOF
+;
+RDBFULL STA	SECINBF ;STORE SECTOR COUNT
+	LXI	H,DBUF	;INIT BUFFER..
+	SHLD	SECPTR	;..POINTER
+	LXI	D,BASE+80H ;RESET..
+	MVI	C,STDMA ;..DMA..
+	CALL	BDOS	;..ADDR
+	JMP	RDSECT	;PASS SECT TO CALLER
+;
+;---->	WRSECT: Write a sector
+;
+;Writes the sector into a buffer.  When 16
+;have been written, writes the block to disk.
+;
+;Entry point "WRBLOCK" flushes the buffer at EOF.
+;
+WRSECT	LHLD	SECPTR	;GET BUFF ADDR
+	XCHG		;TO DE FOR MOVE
+	LXI	H,BASE+80H	;FROM HERE
+	CALL	MOVE128 ;MOVE TO BUFFER
+	XCHG		;SAVE NEXT..
+	SHLD	SECPTR	;..BLOCK POINTER
+	LDA	SECINBF ;BUMP THE..
+	INR	A	;..SECTOR #..
+	STA	SECINBF ;..IN THE BUFF
+	CPI	16	;HAVE WE 16?
+	RNZ		;NO, RETURN
+;
+;---->	WRBLOCK: Writes a block to disk
+;
+WRBLOCK LDA	SECINBF ;# SECT IN BUFFER
+	ORA	A	;0 MEANS END OF FILE
+	RZ		;NONE TO WRITE
+	MOV	C,A	;SAVE COUNT
+	LXI	D,DBUF	;POINT TO DISK BUFF
+;
+DKWRLP	PUSH	H
+	PUSH	D
+	PUSH	B
+	MVI	C,STDMA ;SET DMA
+	CALL	BDOS	;TO BUFFER
+	LXI	D,FCB	;THEN WRITE
+	MVI	C,WRITE ;..THE..
+	CALL	BDOS	;..BLOCK
+	POP	B
+	POP	D
+	POP	H
+	ORA	A
+	JNZ	WRERR	;OOPS, ERROR
+	LXI	H,80H	;LENGTH OF 1 SECT
+	DAD	D	;HL= NEXT BUFF
+	XCHG		;TO DE FOR SETDMA
+	DCR	C	;MORE SECTORS?
+	JNZ	DKWRLP	;..YES, LOOP
+	XRA	A	;GET A ZERO
+	STA	SECINBF ;RESET # OF SECTORS
+	LXI	H,DBUF	;RESET BUFFER..
+	SHLD	SECPTR	;..POINTER
+;
+RSDMA	LXI	D,BASE+80H ;RESET..
+	MVI	C,STDMA ;..DMA..
+	CALL	BDOS	;..ADDR
+	RET
+;
+WRERR	CALL	RSDMA	;RESET DMA TO NORM.
+	MVI	C,CAN	;CANCEL..
+	CALL	SEND	;..SENDER
+	CALL	ERXIT	;EXIT W/MSG:
+	DB	'++ERROR WRITING FILE++',CR,LF,'$'
+;
+;---->	RECV: Receive a character
+;
+;Timeout time is in B, in seconds.  Entry via
+;"RECVDG" deletes garbage characters on the
+;line.	For example, having just sent a sector,
+;calling RECVDG will delete any line-noise-induced
+;characters "long" before the ACK/NAK would
+;be received.
+;
+RECVDG	EQU	$	;RECEIVE W/GARBAGE DELETE
+	LDA	MODDATP ;GET A CHAR
+	LDA	MODDATP ;..TOTALLY PURGE UART
+;
+RECV	PUSH	D	;SAVE
+;
+	IF	FASTCLK ;4MHZ?
+	MOV	A,B	;GET TIME REQUEST
+	ADD	A	;DOUBLE IT
+	MOV	B,A	;NEW TIME IN B
+	ENDIF
+;
+MSEC	LXI	D,50000 ;1 SEC DCR COUNT
+;
+	IF	NOT DCH
+MWTI	LDA 	MODCTLP ;CHECK STATUS
+	ENDIF
+;
+	IF	DCH
+MWTI	LDA	MODCTLP ;CHECK STATUS
+	ENDIF
+;
+	ANI	MODRCVB ;ISOLATE BIT
+	CPI	MODRCVR ;READY?
+	JZ	MCHAR	;GOT CHAR
+	DCR	E	;COUNT..
+	JNZ	MWTI	;..DOWN..
+	DCR	D	;..FOR..
+	JNZ	MWTI	;..TIMEOUT
+	DCR	B	;MORE SECONDS?
+	JNZ	MSEC	;YES, WAIT
+;
+;Modem timed out receiving
+;
+	POP	D	;RESTORE D,E
+	STC		;CARRY SHOWS TIMEOUT
+	RET
+;
+;Got character from modem
+;
+MCHAR	LDA	MODDATP ;READ THE CHAR
+	POP	D	;RESTORE DE
+;
+;Calc checksum
+;
+	PUSH	PSW	;SAVE THE CHAR
+	ADD	C	;ADD TO CHECKSUM
+	MOV	C,A	;SAVE CHECKSUM
+	POP	PSW	;RESTORE CHAR
+	ORA	A	;CARRY OFF: NO ERROR
+	RET		;FROM "RECV"
+;
+;---->	SEND: Send a character to the modem
+;
+SEND	PUSH	PSW	;SAVE THE CHAR
+	ADD	C	;CALC CKSUM
+	MOV	C,A	;SAVE CKSUM
+;
+	IF	NOT DCH
+SENDW	LDA	MODCTLP ;GET STATUS
+	ENDIF
+;
+	IF	DCH
+SENDW	LDA	MODCTLP ;GET STATUS
+	ENDIF
+;
+	ANI	MODSNDB ;ISOLATE READY BIT
+	CPI	MODSNDR ;READY?
+	JNZ	SENDW	;..NO, WAIT
+	POP	PSW	;GET CHAR
+	STA	MODDATP ;OUTPUT IT
+	RET		;FROM "SEND"
+;
+;---->	WAITNAK: Waits for initial NAK
+;
+;To ensure no data is sent until the receiving
+;program is ready, this routine waits for the
+;first timeout-NAK from the receiver.
+;(E) contains the # of seconds to wait.
+;
+WAITNAK MVI	B,1	;TIMEOUT DELAY
+	CALL	RECV	;DID WE GET..
+	CPI	NAK	;..A NAK?
+	RZ		;YES, SEND BLOCK
+	DCR	E	;80 TRIES?
+	JZ	ABORT	;YES, ABORT
+	JMP	WAITNAK ;NO, LOOP
+;
+;---->	MOVEFCB: Moves FCB(2) to FCB
+;
+;In order to make the XMODEM command 'natural',
+;i.e. XMODEM SEND FILENAME (MODEM S FN.FT) rather
+;than XMODEM FILENAME SEND (MODEM FN.FT S), this
+;routine moves the filename from the second FCB
+;to the first.
+;
+MOVEFCB LXI	H,FCB+16 ;FROM
+	LXI	D,FCB	;TO
+	MVI	B,16	;LEN
+	CALL	MOVE	;DO THE MOVE
+	XRA	A	;GET 0
+	STA	FCBSNO	;ZERO SECTOR #
+	STA	FCBEXT	;..AND EXTENT
+	RET
+;
+CTYPE	PUSH	B	;SAVE..
+	PUSH	D	;..ALL..
+	PUSH	H	;..REGS
+	MOV	E,A	;CHAR TO E
+	MVI	C,WRCON ;GET BDOS FNC
+	CALL	BDOS	;PRIN THE CHR
+	POP	H	;RESTORE..
+	POP	D	;..ALL..
+	POP	B	;..REGS
+	RET		;FROM "CTYPE"
+;
+HEXO	PUSH	PSW	;SAVE FOR RIGHT DIGIT
+	RAR		;RIGHT..
+	RAR		;..JUSTIFY..
+	RAR		;..LEFT..
+	RAR		;..DIGIT..
+	CALL	NIBBL	;PRINT LEFT DIGIT
+	POP	PSW	;RESTORE RIGHT
+;
+NIBBL	ANI	0FH	;ISOLATE DIGIT
+	CPI	10	;IS IT <10?
+	JC	ISNUM	;YES, NOT ALPHA
+	ADI	7	;ADD ALPHA BIAS
+;
+ISNUM	ADI	'0'	;MAKE PRINTABLE
+	JMP	CTYPE	;..THEN TYPE IT
+;
+;---->	ILPRT: Inline print of message
+;
+;The call to ILPRT is followed by a message,
+;binary 0 as the end.
+;
+ILPRT	XTHL		;SAVE HL, GET HL=MSG
+;
+ILPLP	MOV	A,M	;GET CHAR
+	ORA	A	;END OF MSG?
+	JZ	ILPRET	;..YES, RETURN
+	CALL	CTYPE	;TYPE THE MSG
+	INX	H	;TO NEXT CHAR
+	JMP	ILPLP	;LOOP
+;
+ILPRET	XTHL		;RESTORE HL
+	RET		;PAST MSG
+;
+;---->	ERXIT: Exit printing message following call
+;
+ERXIT	POP	D	;GET MESSAGE
+	MVI	C,PRINT ;GET BDOS FNC
+	CALL	BDOS	;PRINT MESSAGE
+;
+EXIT	LHLD	STACK	;GET ORIGINAL STACK
+	SPHL		;RESTORE IT
+	RET		;--EXIT-- TO CP/M
+;
+;Move 128 characters
+;
+MOVE128 MVI	B,128	;SET MOVE COUNT
+;
+;Move from (HL) to (DE) length in (B)
+;
+MOVE	MOV	A,M	;GET A CHAR
+	STAX	D	;STORE IT
+	INX	H	;TO NEXT "FROM"
+	INX	D	;TO NEXT "TO"
+	DCR	B	;MORE?
+	JNZ	MOVE	;..YES, LOOP
+	RET		;..NO, RETURN
+;
+;Temporary storage area
+;
+MAXEXT	DB	0	;HIGHEST EXTENT NO. SEEN IN FILE SIZE CALC.
+RCNT	DW	0	;RECORD COUNT
+RCVSNO	DB	0	;SECT # RECEIVED
+SECTNO	DB	0	;CURRENT SECTOR NUMBER 
+ERRCT	DB	0	;ERROR COUNT
+;Following 3 used by disk buffering routines
+EOFLG	DB	0	;EOF FLAG (1=TRUE)
+SECPTR	DW	DBUF
+SECINBF DB	0	;# OF SECTORS IN BUFFER
+	DS	60	;STACK AREA
+STACK	DS	2	;STACK POINTER
+;
+;16 sector disk buffer
+;
+DBUF	EQU	$	;16 SECTOR DISK BUFFER
+;
+;BDOS equates
+;
+RDCON	EQU	1
+WRCON	EQU	2
+PRINT	EQU	9
+CONST	EQU	11	;CONSOLE STAT
+OPEN	EQU	15	;0FFH = NOT FOUND
+CLOSE	EQU	16	;	"       "
+SRCHF	EQU	17	;	"       "
+SRCHN	EQU	18	;	"       "
+ERASE	EQU	19	;NO RET CODE
+READ	EQU	20	;0=OK, 1=EOF
+WRITE	EQU	21	;0=OK, 1=ERR, 2=?, 0FFH=NO DIR SPC
+MAKE	EQU	22	;0FFH=BAD
+REN	EQU	23	;0FFH=BAD
+STDMA	EQU	26	;SET DMA
+BDOS	EQU	BASE+5
+FCB	EQU	BASE+5CH ;SYSTEM FCB
+FCBEXT	EQU	FCB+12	;FILE EXTENT
+FCBSNO	EQU	FCB+32	;SECTOR #
+FCB2	EQU	BASE+6CH ;SECOND FCB
+;
+	END
+

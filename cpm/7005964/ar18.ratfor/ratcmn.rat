@@ -1,0 +1,30 @@
+#common blocks referred to by ratfor references
+#"include ratcomns"
+#no transliteration tables are required for ascii system
+#Microsoft FORTRAN requires type statements to precede
+#common blocks.  Initialization is performed according to
+#the block data module.
+integer bp #next character in buf
+character buf #pushed-back characters
+integer*1 fordep #current depth of for statements
+character forstk #stack of reinit strings
+character sdo(3),sif(3),selse(5),swhile(6),sbreak(6),snext(5),
+  sfor(4),srept(7),suntil(6),vdo(2),vif(2),velse(2),vwhile(2),
+  vbreak(2),vnext(2),vfor(2),vrept(2),vuntil(2)
+integer level #level of file inclusion; init=1
+integer linect #line count on input file(level); init=1
+integer infile #file number(level); infile(1)=stdin
+integer lastp #last used in namptr; init=0
+integer lastt #last used in table; init=0
+integer namptr #name pointers
+character table #text of names & definitions
+integer outp #last position filled in outbuf; init=0
+character outbuf #output collector
+common/cdefio/bp,buf(bufsize)
+common/cfor/fordep,forstk(maxforstk)
+common/ckeywd/sdo,sif,selse,swhile,sbreak,snext,sfor,srept,
+  suntil,vdo,vif,velse,vwhile,vbreak,vnext,vfor,vrept,vuntil
+common/cline/level,linect(nfiles),infile(nfiles)
+common/clook/lastp,lastt,namptr(maxptr),table(maxtbl)
+common/coutln/outp,outbuf(maxline)
+

@@ -1,0 +1,698 @@
+RESOURCE Disassembler
+Overall structure
+Sample of RESOURCE usage
+Disassembly steps
+Description of commands
+Watch for... (tips)
+Quick command summary
+ZESOURCE: Extension of RESOURCE
+:		   RESOURCE: disassembler for 8080 programs
+		      by Ward Christensen (312) 849-6279
+
+RESOURCE commands are inconsistent at best.   - RESOURCE is a kludge based  on
+years of disassembler experience and hacking,  and was never "planned" -  just
+coded sitting at a tube, and modified over 2 years before being contributed to
+the CP/M UG  (1/80).  For example,  to kill a  symbol: k.label but  to kill  a
+control value:	caddr,k and  to kill a comment:  ;addr, but RESOURCE does  the
+job like no other I have seen.
+
+N-O-T-E: Pardon the editorial,	but I feel hardware  without good software  is
+useless to 99%	of us.	Most  good software has  to be paid  for.  I  strongly
+support the legitimate purchase of licensed software.  I do not regularly  use
+any programs which I have not  purchased.  (Yes, I do occasionally "try"  one,
+but then  buy it  if I	plan on  using it).   I have  been asked  by  software
+businesses to NOT  distribute RESOURCE -  because of it's  ability to  produce
+good .asm source quickly.  But, there are so many disassemblers out, why not a
+good, conversational  one?   Please use  it  in the  spirit  in which  it  was
+contributed:  to  enlarge  your understanding  of  the micro-  computer  world
+around you, and to allow you to customize programs which you legitimately own,
+for your own use.
+
+			  "Semper non rippus offus"
+:Overall structure of RESOURCE
+
+    It is a .COM file which runs at  100H.  It goes thru 1700 or so, then  the
+stack.	At 1800 is a  512 entry table for control  commands.  Each is 3  bytes
+long, and controls the format of the  re-sourced list, i.e. is it DB, DS,  DW,
+instructions, etc.  At	1E00 is  the start  of the  symbol table.   It has  no
+defined length as such.  If it is not used, it occupies only 2 bytes.
+
+    If you want to re-source something which  is in memory, such as a PROM,  a
+program previously loaded in high memory, "CP/M itself", or whatever, you  can
+just do so.  However, typically you  want to disassemble a program which  runs
+at 100H, which is were RESOURCE runs.	Bob Van Valzah would have solved  that
+by making resource relocatable and moving itself up under BDOS.  I wasn't that
+industrious.  Instead, RESOURCE  uses the  concept of  an "invisible"  OFFSET.
+After all, what do you care where it is as long as it LOOKS like it's at 100h?
+
+    So, you set an offset.   O2F00 sets it to 2F00  Hex.  Reading a .COM  file
+(RFOO.COM) causes it to come into 3000 on.   If you say D100 or L100 it  dumps
+or lists what  LOOKS like your	program.  Internally, RESOURCE	is adding  the
+offset to the D and  L addresses.  What should you  set the offset to?	 Well,
+that depends upon how many symbols you will use.  O1F00 will load the  program
+at 2000, thus allowing	only 1E00-1FFF for symbols,  i.e.  512 bytes or  about
+50-60 labels.	If you	didn't leave  enough space,  then used	B to  build  a
+default symbol table,  the table could	run into and  clobber your .com  file!
+(easy recovery, however: just change the  offset to being higher, and read  in
+the .COM file again) Each entry takes 3 bytes + the symbol length, and if  you
+like 7 byte labels like  I do, that means 10  bytes/label.  An offset of  2F00
+should be adequate.
+
+    If you want to put comments  into the disassembled program, you will  have
+to designate an area  to Use for  the comments.  The  U command (e.g.	U4000)
+specifies what area is to be used.
+
+    Before issuing the O (offset) command, do:	 L5 7 which will show the  JMP
+to BDOS, which	is the highest	memory you may	use.  (Note if	you have,  for
+example, an  empty 4K  memory  board in  high memory,  you  can Use  THAT  for
+comments).  Let's take	an example:  You  have an 8K  file, FOO.COM which  you
+want to disassemble.  It  will have about  300 labels.	300 x  10 is 3000,  or
+call it 4K (what's a K unless  your tight).  The symbol table starts at  1E00.
+4K more is 2E00.  Let's load the .COM at 2E00, so since it normally starts  at
+100H, the offset is 2D00.  O2D00 is the command.  We then RFOO.COM to read  it
+in.  It says 4E00  2100 which means  it came into actual  memory to 4E00,  but
+2100 if we are talking with respect to loading at 100.	Thus, we could set our
+comments table up after the .COM program - say at 5000:  U5000
+
+    The ?  command  shows the  memory  utilization for	control,  symbol,  and
+comments entries.  (no, I never  put in anything to keep  track of the .COM  -
+you'll just have to do that yourself).
+
+    If you ever want to dump real  memory, you'll have to reset the offset  to
+0: O0 but then set  it back.  If you  are not sure what  it is, typing O  will
+tell the current offset.
+:Here is a sample of the RESOURCE usage.
+
+    Given:  a COM file (lets say test.com) which runs at 100 (as any good  COM
+file should), and goes thru 2FF.  Lines preceded with ---> are typed by you.
+
+---> RESOURCE
+---> o2200     Set the offset to 2200, which means the program will read into
+	       2200 + 100 = 2300.
+---> rtest.com Reads the com file  into memory. system says:  2500 0300  which
+	       is the actual  hi load addr,  (2500) and the  original hi  load
+	       addr (300).  REMEMBER this address (300) because you might want
+	       to put a "E" (end of assembly) control entry there.
+
+<<<<note>>>> that all 'L' (disassembly list) and 'D' (dump) commands work with
+the offset added.  Thus, you should  learn to forget that the disassembler  is
+in memory, and think of it as if your program were actually at 100.  D100 will
+dump your program.
+
+Also note:  if the program being  "RESOURCEd" will have a fairly large	symbol
+table, then you will have to set the offset higher: o2f00 or some such.   (the
+? command will show symbol  table usage: if your  symbol table is nearing  the
+.com file, then just set a new offset (higher) and re-load the .com)
+
+If you want to dump r-e-a-l memory, you  would have to reset the offset to  0:
+o0 (but don't forget to reset it to 1f00 before continuing with your program.)
+If you are disassembling something which is in memory at it's correct  address
+(such as looking at ccp) then don't set the offset.  It defaults to 0 when dis
+is first loaded.
+
+---> l100	list your program - lists "about" 10 lines.
+
+---> d100	do a dump of your program.
+
+:Disassembly steps
+
+Use the dump command to  find the ASCII DB areas.   Note that the 'a'  command
+may be used to automatically  find the db's, but you  must then check them  to
+insure that they don't	extend too far.  All  printable characters, 0dh,  0ah,
+and 00h are considered candidates for ascii db's.  At least 8 characters in  a
+row must be found to make sure	that long sequences of mov instructions  won't
+be taken as db's.
+
+Use the cnnnn,k command to kill erronious entries put in the control table  by
+the a command,	but then immediately  put in  the right address,  such as  via
+cnnnn,i
+
+If you	wanted to  scan  the program  for ascii  db's  yourself, use  the  'c'
+(control) command to set the beginning and end of ascii areas.	For example, a
+program which starts out:
+
+	0100	    jmp start
+	0103	    db	'copyright .....'
+	0117 start .....
+
+would show up in the dump as:
+
+	0100  c3170144 4f50xxxx  xxxxxxxx xxxxxxxx  *...copyr ight....*
+	0110  xxxxxxxx xxxxxxxx  xxxxxxxx xxxxxxxx  *xxxxxxxx ........*
+
+thus you would want to instruct the disassembler to switch to db mode at  103,
+and back to instruction mode at 117, thus:
+
+	c103,b
+	c117,i
+
+Continue doing	this, bracketing  every ascii  db which  is in	the middle  of
+instructions, by a b control instruction  and an i control instruction.   Note
+that multiple db's in a row  need not have separate cnnnn,b instructions,  but
+that these  do cause  a  'line break',	i.e.  if you  have  a table  of  ascii
+commands, for example:
+
+	02e5	db	'load'
+	02e9	db	'save'
+
+the disassembler would disassemble these as:
+
+	02e4	db	'loadsave'
+
+you could put in  an additional control entry:	c2e9,b, which would cause  the
+disassembler to generate:
+
+	02e4	db	'load'
+	02e8	db	'save'
+
+which is much more readable and realistic.
+
+Note that before generating each byte of  a db, a symbol table lookup is  done
+to determine if there is a  label at that location, and  if so, a new line  is
+started.  Thus if  'loadlit' and 'savelit'  were in the  symbol table, as  the
+labels on the  'load' and 'save'  above, no separate  'b' control  instruction
+would be required as the label would cause the break.
+
+<<<<NOTE>>>> that at this time the automatic label checking is n-o-t done  for
+ds instructions.  Make sure that each ds instrucion references only up to  the
+next label.  This means that  multiple ds's in a  row must each be  explicitly
+entered into the control table.  Presence of a label is not sufficient.
+
+After building the control entries with  cnnnn,b and cnnnn,i put in a  control
+entry cnnnn,e which defines  the address of  the end of  your program.	The  l
+command will then  automatically stop there,  and in addition,	if you are  in
+'save xxx.asm' mode,  the output  .asm file  will be  closed.  If  you do  mot
+define a control 'e' entry,  then you will have to  use the break facility  to
+stop the l command (don't  use control-c as that  will re-boot cp/m).  If  you
+were writing an .asm file, you would have  to user the z command to close  the
+file.
+
+Next, you  would  list your  program  to determine  how  it looks.   when  you
+recognize a routine by it's function, insert a label.
+For example, if you saw that location  7ef was a character out routine	(type)
+then enter a label into the symbol table:
+
+	E7EF,.TYPE
+
+NOTE that all symbols start with a '.',  so as to be dis- tinguished from  hex
+data.
+
+NOTE that if you want the disassembler	to make default labels for you, use  b
+(for build labels)  instead of l  (for list program).	The b commands	causes
+lnnnn default labels  to be  inserted in  the symbol  table for  every 2  byte
+operand encountered (LXI, SHLD, JMP, etc).  It will undoubtedly make some  you
+don't want, such as L0000.  You will have to:
+
+	K.L0000		kill label L0000 from the table.
+
+When you encounter data reference instructions, try to determine what type  of
+area the instruction points to.  Typically,,  LXI instructions may point to  a
+work area which should	be defined as a  DS, or to an  ASCII string, in  which
+case we will have already made it a 'b' control instruction.  Operands of LHLD
+and SHLD instructions  should be  made DW  instructions.  For  example if  you
+encounter LHLD 0534H, then issue a control instruction:
+
+	C534,W
+
+NOTE that whatever mode you are last  in will remain in effect.  Therefore  if
+534,w is the last entry in the control	table, all data from there on will  be
+taken to be DW's.
+
+Suppose that you determine that address 7cf is a 128 byte buffer for disk I/O.
+You want it to disassemble to:
+
+DKBUF		;07CF
+	DS	80H
+
+You do this as follows:
+
+	C7CF,S		to start the DS
+	C84F,B		to define it's end, and
+	E7CF,.DKBUF	to put the symbol in the table.
+
+Continue, iteratively using the 'l' command and the 'c' and 'e' commands until
+you have the listing in  a nice format.  You will  then probably want to  save
+the control symbol, and comments tables.  Or, you could have been saving  them
+at checkpoint times (so  if you make a	major mistake you could  go back to  a
+previous one).
+
+To save a control file: sfilename.CTL	(any filename, may include a: or b:)
+
+To save a symbol file:	sfilename.sym
+
+To save a comments file: sfilename.doc	(not ".com" of course)
+
+NOTE that the filetypes must be used as shown, but that any legal filename (or
+disk:filename such as b:xxxx.CTL) may be used.
+
+You could now control-c to return to CP/M, and come back later to resume  your
+disassembly:
+
+	RESOURCE
+	o2200
+	rtemp.com
+	rtemp.sym
+	rtemp.ctl
+	uxxxx		(such as u4000)
+	rtemp.doc
+
+This will take you back exactly where you left off.
+
+If you want to save a .asm file out to disk, do the following:
+
+Make sure that there is a control entry defining the end of the program  (such
+as c200,e) or else you	will have to specify  the ending address and  manually
+type a z command to close the file.
+
+	sfilename.asm
+
+A message will indicate that  the file is opened.  Any	subsequent a, b, or  l
+command will have  whatever is	listed written	to disk.   Encountering a  'e'
+control, or typing a z command will then close the .asm file.  The listing may
+be interrupted, and continued.	Since the  l command types only 10 lines,  use
+laddr,ffff to list thru the end of the assembly.
+
+If this is the 'final' save of the .asm file, you will probably want to put an
+'org'  at  the	beginning  of  the  output  file,  as  well  as  generate  equ
+instructions for  any  references outside  of  the program.   For  example,  a
+typical cp/m program will have references to:
+
+	bdos	at 5
+	fcb	at 5ch
+	tbuff	at 80h
+
+the 'p' (for prologue) command generates the org, then scans the symbol  table
+and generates equates:
+
+	BDOS	EQU	05H
+	FCB	EQU	05CH	(etc.)
+
+If you	have a	"e" control  entry  in your  file, you	can list  as  follows:
+laddr,ffff - the listing will continue until the "e" control entry is found
+:Commands
+
+RESOURCE types an "*" prompt when it is loaded.  You may then enter any of the
+following commands.  Each  command is  a single letter	followed by  operands.
+Commas are shown
+
+NOTE: any command taking a  hex address (Dnnnn, etc) may  take a value in  the
+form .label but  arithmetic may not  be performed.  (i.e.  d.start is ok,  but
+d.start+8 not) as the delimiter, but a space will also work.
+
+; Put comments into the program.   (must execute 'u' command first, to	assign
+  area for comments to be placed)
+
+	;addr,comment	enter a comment
+	;addr		lists existing comment
+	;		lists entire comments table
+	;addr,		deletes existing comment
+
+	note that '\' is treated as a new line, i.e. \test\ will be formatted:
+
+	;
+	;TEST
+	;
+
+A Attempt to  find DB's while  listing the program.   This command works  just
+  like 'L', but attempts to find DB's of 8 chars or longer.  (see 'L'  command
+  for operand formats)
+
+B Build default sym  tbl (LXXXX) labels for  each 2 byte operand  encountered.
+  Note 'B' is identical to 'L' except labels are built.  (see 'L' command  for
+  operand formats)
+
+C Control table usage:
+	c		dump ctl tbl
+	cnnnn		dump from starting
+	cnnnn,x		define format from nnnn
+			to next entry.	values of x:
+
+			B = DB (attempts ASCII
+				printable, 0DH, 0AH, 0)
+			W = DW (attempts label)
+			S = DW to next ctl entry
+			I = instructions
+			K = kill this ctl entry
+			E = end of disassembly
+
+  NOTE every control  entry causes  a "control	break" (NO,  RESOURCE was  NOT
+  written in RPG) which means a new line will be started.  Thus if you have  a
+  string in memory which disassembles as:
+
+	DB	'Invalid operand',0DH
+	DB	0AH
+
+  You might want to change it putting the 0DH,0AH together on the second  line
+  - just enter	a "B"  control entry  for the address  of the  0DH.  The  same
+  technique could be used to make
+
+	DB	'TYPESAVEDIR ERA REN '
+
+  appear as
+
+	DB	'TYPE'
+	DB	'SAVE'
+	DB	'DIR '
+	DB	'ERA '
+	DB	'REN '
+
+D Dump:
+	dxxxx		Dumps 80H from xxxx on
+	daaaa,bbbb	Dumps from aaaa thru bbbb
+	d,bbbb		Continues, thru bbbb
+	d		Continues, 80H more
+
+  NOTE 80H is the default dump length.	If you have a larger display, you  can
+  change the default via:
+
+	d=nn		nn is the HEX new default.
+
+  For example, a 24 line tube could display 100H:
+
+	d=100		or..
+	d=100,200	Defaults to 100, dumps 200-2ff
+
+
+  Other dumps:
+	ds		dumps the symbol table.  Interrupt it by typing any key.
+	ds.symbol	starts dumping at the specified symbol,
+			or the nearest	symbol.  thus  "ds.f" starts the  dump
+			at  the first  label   starting with the letter 'f'.
+
+E Enter symbol:
+	ennnn,.symbol	symbol may be of any length,
+			and contain any char A-Z or 0-9,
+			or "+" or "-".	This allows:
+			E5D,.FCB+1.  Note the "+" is not
+			checked, i.e. E5D,.FCB+2 would be
+			wrong (assuming FCB is at 5C) but
+			would be allowed to be entered.
+
+  Note if you enter two symbols for  the same address, whichever one is  first
+  alphabetically will show  up on  the disassembled  listing.  If  you have  a
+  label which has the wrong address, you need not explicitly kill the old  one
+  before entering the new.  A  label which is spelled  exactly the same as  an
+  existing one	will  replace the  existing  one  even if  the	addresses  are
+  different.
+
+F Find	occurrence  of	address  or label.   Note  this  function  runs  until
+  interrupted (press any key).
+	fnnnn,ssss	find address nnnn in memory.  Start
+			the search at ssss.  Runs forever.
+			Press any key to stop.
+	f		continue previous find command
+	fnnnn		find nnnn starting at address you last
+			stopped at in the f command
+
+K Kill symbol from table
+	k.symbol
+
+  Note to rename a symbol,  such as when you had a system assigned lnnnn label
+  but now want to make it meaningful:
+
+	k.l0334
+	e334,.type
+
+  you could even:
+
+	e.l0334,.type
+	k.l0334
+
+  but that takes more typing.
+
+L List (disassemble).  This command is used to list the file, or to list it to
+  disk after enabling the .ASM file save via 'SFILENAME.ASM' command
+
+	l		lists 10 lines from prev pc
+	lssss,eeee	lists from ssss to eeee
+	l,eeee		lists from current pc to eeee
+	lssss		lists 10 lines at ssss
+
+  Note that if you have a control 'e' entry, then the list will stop when that
+  address is found.  This allows you to 'lstart,ffff'.
+
+  The 10 line default may be changed via:
+
+	L=nn		where nn is a HEX line count, e.g.
+	L=14		set to 20 lines/screen
+
+  You can change the default and list, e.g.
+
+	L=9,100		Dflt to 9 lines, list at 100.
+
+  NOTE when using L to list the  .ASM program to disk, you should either  list
+  the entire program at once using:  Lssss,eeee or, you can list small	pieces
+  at a time.  As long as you list again without specifying a starting address,
+  (L or L,nnnn) then the output file will continue uninterrupted.
+
+  You may  do dump  commands,  and others,  without  affecting what  is  being
+  written to disk.
+
+O Offset for disassembly
+	o		print current offset
+	onnnn		establish new offset
+
+  (note the offset is always added to any address specified in an a, b, d,  or
+  l command.  to dump real memory, the	offset must be reset to 0 (O0)	before
+  the dump.)
+
+P Prolog generation - this routine  generates an ORG instruction, and  equates
+  for any label outside of  a given low-hi address  pair.  (the start and  end
+  addresses of your program).  e.g. if disassembling from 100 to 3ff, it  will
+  generate 'fcb equ 5ch' if FCB is  in the symbol table.  In typical use,  you
+  would 'sfilename.asm' then use the P command to write the prolog, then the L
+  command to write the program itself.
+
+	Pstart addr,end addr
+
+Q Quiet command: any command which is preceeded by a q will be done 'quietly'.
+  For example, to save a .asm program, you could just do:
+
+	ql100,3ff	or	ql100,ffff if you have
+			set the 'e' control in the control table.
+
+  Another use is to  build a default  symbol table by taking  a pass thru  the
+  program: QB100,xxxx
+
+R Read .com, .ctl, .sym, or .doc file
+	rfilename.com	reads in at offset+100h
+	rfilename.ctl	loads the ctl table
+	rfilename.sym	loads the sym file
+	rfilename.doc	loads comments table (note 'u' must have been issued)
+
+S Save .asm, .ctl, .sym, or .doc file
+	sfilename.asm	use 'l' command to write, z to end
+	sfilename.CTL	saves the CTL table
+	stablename.sym	saves the sym file
+	sfilename.doc	saves the comments table
+
+U Use area of memory for comments table
+	unnnn		such as ud000 if you had an open board at 0d000h
+
+X purge sym tbl and CTL tbl
+
+Z close .asm file (note that a preferred way to close the .asm file is to have
+  specified a control entry for the end address (e.g. c1ff,e))
+
+? prints statistics on symbol and control table usage, etc.
+:WATCH FOR ----
+
+Hoo, boy!  Hope  this kludge of  documentation is  enough to get  you going.
+hmmm, better give you some of the gotcha's I've discovered...
+
+* Symbols overflowing into the	.COM.  (Use ? command  to see how full	symbol
+  table is)
+
+* Control entries  overflowing into .SYM  (altho I can't  believe anyone  will
+  have a program with more than 512 control entries!!!)
+
+* Comments overflowing into BDOS (ug!!)
+
+* Using an offset which is not in free memory and overlaying BDOS or whatever.
+
+* The B(uild) command gobbling up too much when building a DB:	"B" will  take
+  a DB 'GOBBELDY GOOK' followed by LXI H,FOO  and take the LXI as a '!'  (21H)
+  so you'll have to manually stick a  new "I" control entry in at the  address
+  of the LXI.  You  might also delete the  incorrect "I" entry which  RESOURCE
+  stuck in (typically at the second byte of the LXI)
+
+* Trying to  dump real memory  without setting	the offset back  to 0.	 (then
+  forgetting to set it back to its proper value)
+
+* Forgetting how big the .COM file you are disassembling was.
+
+* Using RESOURCE to rip off software (yes, I know, you heard that before,  but
+  only 3 in 100 needed to be told, and 2 in 100 needs to be told again, and  1
+  in 100 doesn't give a rat's fuzzy behind anyway!!)
+
+* Forgetting to take checkpoints when disassembling large files.  You may even
+  want to rotate the names under which things are saved:
+
+	STEMP1.SYM
+	STEMP1.CTL
+	STEMP1.DOC
+
+* Missing a label:  Suppose you have a control entry for a DW, resulting in:
+
+	DFLT:		;172C
+		DW	100H
+
+  but somewhere in the program, the following exists:
+
+		LDA	 172DH
+
+  Even if you did a B and have a label L172D, it won't show up since it's  in
+  the	middle of a DW.  Instead, do this:
+
+	K.l172d		kill the old label
+	e172d,.dflt+1	put in the new label as a displacement
+			off the beginning.
+
+* improperly disassembling DW's (see previous item).  You might be tempted  to
+  make DFLT a DB so that
+
+	DFLT:		;172C
+		DB	0
+	L172D:		;172D
+		DB	1
+
+  Note that while  this disassembles  and reassembles  properly, it is not "as
+  correct" as the technique used in the previous item.
+
+* Having the "B" command overlay your "E" control entry.  What?  Well, "B"uild
+  is pretty dumb.  If he finds 8 DB  type characters in a row, he fires off  a
+  DB from then on until he runs out of those characters.  Suppose your program
+  was 200 long (ended at 3FF), and  you had zeroed (aha!  Nice DB  candidates)
+  memory there (there meaning at your offset address + whatever).
+
+  Then you QB100,400 and viola! RESOURCE overlaid your "E" control with a "B".
+
+	RESOURCE is relatively complete.  (well, actually,
+	the phrase "rampant featureitis" has been "mentioned").
+	...But there's always another day, and another K...
+
+		SO... Here's my "wish list"
+
+	..it might save you telling me YOU think such-and-such
+	would be nice...
+
+* Targets of  LHLD, SHLD should  automatically be  flagged as type  DW in  the
+  control table.  Ditto  LDA and STA  as DB or	as second half	of DW.	 Ditto
+  targets of LXI as DB (?).
+
+*		E5C,.FCB
+  followed by
+		E6C,.FCB+
+  should automatically calculate the appropriate displacement,	and put it in
+  the symbol table.
+
+* The comments	facility should  be enhanced  to allow	total SUBSTITUTION  of
+  entire line(s) of the code, i.e. at address such-and-such, replace the  next
+  3 bytes with the following arbitrary line.  This would help those "how do  I
+  explain what was being done" cases such as:  LXI H,BUFFER AND 0FF00H
+
+* Add the ability to, in one instruction, rename a default (LXXXX) label to  a
+  meaningful name.
+
+:			   "Quick" command summary
+
+Any address may be replaced by .symbol i.e. D.START
+
+;addr,comment		Enter a comment
+;addr			Lists existing comment
+;			Lists entire comments table
+;addr,			Deletes existing comment
+A(see "L" for operands) Attempt to find DB's
+B(see "L" for operands) Build default sym tbl (Lxxxx)
+C			Dump ctl tbl
+Cnnnn			Dump ctl starting at nnnn
+Cnnnn,x			Define format from nnnn (B,E,I,S,W)
+Dxxxx			Dumps 80H from xxxx on
+Daaaa,bbbb		Dumps from aaaa thru bbbb
+D,bbbb			Dump thru bbbb
+D			Dump 80H more
+D=nn			nn= Hex dump size default.
+Ds			Dumps the symbol table.
+Ds.symbol		Sym dump starting at .symbol
+Ennnn,.symbol		Enter symbol into table
+Fnnnn,ssss		Find address nnnn starting at ssss
+F			Continue previous find command
+Fnnnn			Find nnnn
+K.symbol		Kill symbol from symbol table
+L			Lists 10 lines from prev pc
+Lssss,eeee		Lists from ssss to eeee
+L,eeee			Lists from current pc to eeee
+Lssss			Lists 10 lines at ssss
+L=nn			nn is hex list default # of lines
+O			Print current offset
+Onnnn			Establish new offset
+Pstart addr,end addr	Generate program prolog
+Q			Before any command suppresses
+			console output: QB100,200
+Rfilename.COM		Reads in at offset+100h
+Rfilename.CTL		Loads the ctl table
+Rfilename.SYM		Loads the sym file
+Rfilename.DOC		Loads the comments table (note
+Sfilename.ASM		Save .ASM file.  Write w/L, Z to end
+Sfilename.CTL		Saves the CTL table
+Sfilename.SYM		Saves the sym file
+Sfilename.DOS		Saves the comments table
+Unnnn			Use nnnn for comments table
+X			Purge all symbols and control
+Z			Write eof to .ASM file (
+?			Prints statistics (sym, ctl, comments)
+:				 ZESOURCE
+		      disassembler for Z-80 programs
+			Version 2.0 by Dave Barker
+
+Let me open  this file with  a note  of appreciation to  Ward Christensen  who
+wrote RESOURCE	for  8080 programs.   ZESOURCE	is a  modification  to	Ward's
+original program (CPMUG vol.  42) to  give it the capability of  disassembling
+Z80 object into TDL mnemonic  source files.  Thanks to	Ward this must be  the
+most powerful  disassembler available  for 8080/Z-80  code.  (Note:   ZESOURCE
+still runs on an 8080 machine)
+
+A file	called Z80TEST.COM  was used  to test  ZSOURCE.  When  Z80TEST.COM  is
+disassembled it will result in what would  be an alphabetic listing of all  of
+the Z-80 opcodes if the mnemonics were Zilog's instead of TDL's.  This	object
+file should agree exactly with the listings that Zilog has in their 'Z-80  CPU
+Programming Reference  Card'  and  in  the back  of  'Z-80  Assembly  Language
+Programming Manual'.
+
+It should be pointed out that  ZSOURCE will generate TDL opcode mnemonics  but
+not TDL pseudo-op mnemonics.   The pseudo-op mnemonics are  the same as  those
+generated by RESOURCE (ORG, DB, DW, DS, and EQU).  If one is using a TDL  type
+of assembler it is a simple matter to  use .OPSYN to equate ORG with .LOC,  DB
+with .BYTE, etc.
+
+The primary documentation for ZESOURCE	is Ward's RESOURCE.DOC (CPMUG  42.19).
+Listed below is a description of the enhancements added to ZESOURCE.COM:
+
+1. Disassembly to TDL mnemonics
+
+2. Typing  'Rfilename.ALL' will cause the .DOC, .SYM, and .CTL files to all be
+   read in for 'filename'.  If one of  the files is missing from the disk  the
+   read operation will abort.  Note also  that the 'Uxxxx' command must  still
+   be used prior to using 'R'.
+
+3. Typing 'Sfilename.ALL' will cause all  three of the files mentioned	 above
+   to be saved.
+
+4. When the 'E' command is used to create a new symbol the existing symbol  at
+   that address (if there is one) will be automatically killed with a  message
+   sent to the console so stating.  If	there is more than one symbol at  that
+   address (impossible if the .SYM file  was created under ZESOURCE) only  the
+   first in the table will be killed.
+
+5. Use of 'L' command in the format 'L=xx,addr' causes the new default length,
+   xx, to take effect immediately (this is a bug in CPMUG 42.18).
+
+As time and ambition are available it is planned to modify ZESOURCE to
+produce Zilog mnemonics.
+
+Any questions, suggestions, or (ugh!) bugs?  If so:
+
+     Dave Barker/2293 Ralston Ave./Simi Valley, CA 93063/(805)526-2438
+
+Or leave a message on CP/M-Net (tm) at (805)-527-9321.
+

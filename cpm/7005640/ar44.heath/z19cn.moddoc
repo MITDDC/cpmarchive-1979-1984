@@ -1,0 +1,29 @@
+                  ZENITH Z-19CN VIDEO TERMINAL
+                       3 MHz Modification
+                            (9/25/82)
+
+     The  Z-19  terminal is capable of running at baud  rates  to 
+19.2K  standard (38.4K with Super-19 rom) but the standard  clock 
+frequency  of 2MHz may be too slow to operate  satisfactorily  at 
+these transmission rates. In particular, I experienced occasional 
+buffer  overrun at 19.2K baud when the cursor was near the bottom 
+of the CRT and the computer sent a screen-full of characters.
+
+     Inspection of the Z-19CN scematic reveals that the ACE  runs 
+at 3.072 MHz,  while the CPU,  CRT controller,  etc. run at 2.048 
+MHz.  It is a simple matter to change the clocks to 3.072 MHz for 
+all  of these chips;  it is my understanding that as a  rule,  no 
+chip   replacement  is  necessary  (this  was  the  case  for  my 
+terminal.)
+
+     To make this modification,  remove the Z19 PC board and  cut 
+the  trace between U429 pins 8 and 14 and U426 pins 1 and 3.  Now 
+run a jumper from U427 pin 13 to U426 pins 1 and 3.  This is  all 
+that is required to convert to 3 MHz operation.
+
+     I  have run my terminal for about a week under this configu-
+ration  and have experienced no ill effects.  The buffer  overrun 
+problems have vanished.
+
+                                             Charlie Strom
+(eof)

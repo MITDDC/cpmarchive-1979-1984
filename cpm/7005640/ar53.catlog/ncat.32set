@@ -1,0 +1,92 @@
+NAME  :  NCAT.SET
+
+DATE  :  07 SEP 82
+        
+TOPIC :  CHANGING 'NCAT' FILE NAMES BUFFER LENGTH EXTERNALLY
+         (Does not work on versions prior to 3.1)
+
+
+     NCAT is a catalog program for use with your MAST.CAT file.  It
+is an updated version of the NEWCAT program written by Lewis Moseley,
+Jr.  Basically it combines the three files originally used to catalog
+disks that were called FMAP, QCAT and UCAT.  In addition it automatic-
+ally sets the buffer length to optimum for your amount of available
+memory.  It first checks the length of the 'file names' buffer, which
+is very easily adjusted for various types of disk drives.
+
+     Since some drives are mini-floppy size and some are large Win-
+chester, some method needed to be added to the program to allow the
+user to easily adapt it to his particular system.  There are two ways
+you can do this with NCAT.
+
+     a)  Edit the user-optional area of NCAT and reassemble with
+            MAC.COM, or:
+
+     b)  Consult the table below and change two convenient Bytes
+            using DDT or Sid, etc.
+
+
+           location    location     file       Bytes
+             0103        0104      names     allocated
+
+              C0          01         32          448
+              80          03         64          896
+              00          07        128         1792
+              80          0A        192         2688
+              00          0E        256         3584
+              00          1C        512         7168
+              00          38       1024        14336
+              00          70       2048        28672
+
+
+     Use DDT or SID to call up the NCAT.COM.  Then use the "S" command
+to make the appropriate changes.  When finished, use Control-C to get
+back to CP/M, then save with an appropriate name:
+
+
+A>SAVE 26 NCAT.COM
+
+
+     If the file names buffer is too small, a warning notice is shown,
+advising the buffer should be made larger.  If you pass the program to
+others, include this NCAT.SET file so they can easily adapt it to their
+size disk system.
+
+     When finished using NCAT to update your catalog file (MAST.CAT),
+you can use XCAT.COM to make a crossferenced file -- either to disk
+or to your printer.  The disk file is called MAST.LST.  It can be ex-
+amined for a particular program or programs with the FIND.COM utility.
+
+
+A>FIND MAST.LST MODEM
+
+
+           will find any program in the file containing
+           the characters MODEM.  You will soon find this
+           makes a quite convenient way to locate programs
+           very rapidly.
+
+
+           (For more detailed information, read NCAT.DOC)
+
+
+
+=  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
+
+                     A  D  D  E  N  D  U  M
+
+=  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
+
+
+        For my own disks, I use the following scheme for getting
+     the "volume number" and the "current date":
+
+A>SAVE 0 -.012       (each disk an unique number from 000-999)
+A>SAVE 0 -07SEP82    (the date does not print but is nice to have)
+
+        This nicely identifies my disks and works well with NCAT.
+
+
+
+                                       Irvin M. Hoff
+                                       Los Altos Hills, CA

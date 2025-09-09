@@ -1,0 +1,1158 @@
+;                    PLINK.ASM  ver 6.5
+;		      (revised 6/26/81)
+;
+;PLINK is a CP/M transient command which allows the user to
+;establish a communications link with a remote computer.
+;
+;This program currently supports the following modems or computers
+;via conditional assembly:
+;
+; 1. PMMI modem
+; 2. Any serial I/O board (TUART included)
+; 3. TRS-80 model 1
+; 4. TRS-80 model 2
+; 5. Heath H8/H89 with 8250 uart at port 330Q
+; 6. D.C.Hayes 80-103A or Micromodem 100
+; 7. MITS 2SI/O board, ports 10h &11h = console, 12h & 13h = modem
+; 8. Intel SBC or National BLC multi-bus boards using 8251 USART
+;
+;Originally written by L.E. Hughes (EDCAM) in July, 1977.  Many
+;modifications have been made since this time, as shown in the
+;following summary.
+;
+;Fixes/updates (in reverse order to minimize reading time):
+;
+; June 26, 1981. Added message when exiting if last buffer was
+; not saved.  Ted Shapin.
+;
+;June 14, 1981, by Keith Petersen, W8SDZ.  Changed port
+;equate to 'equ' instead of 'set'.  ASM doesn't like 'set'
+;when later conditionals are based on a label defined that
+;way.
+;
+;June 7, 1981, by Tom Jorgenson (CP-MIG).  Changed CP/M 
+;origin from being via SETs to referenced to BASE, added
+;TRUE/FALSE rather than numeric values (for readability),
+;changed ^Q function to ^W (write) because some systems
+;(notably Micronet) use ^S/^Q to suspend/resume output,
+;changed page 0 references in TRS routines to use
+;BASE equate properly, changed PORT equates to default
+;to TRUE, reinserted Heath equates, and cleaned up code
+;in several places.
+;
+;June 7, 1981, by Keith Petersen, W8SDZ.  Fixed problem with
+;equates which prevented assembly by 'ASM' when TUART option
+;was selected.
+;
+;June 6, 1981, by Keith Petersen, W8SDZ.  Added version number,
+;cleaned up file.
+;
+;May 12, 1981, by T. Shapin.  Added code for 8251 USART on Intel 
+;SBC or National BLC multibus board with modified CP/M origin.  
+;Added prompt to signon. Added toggle to ^Y to save or ignore 
+;incoming text. Added ^C abort on file name response.
+;
+;November 10, 1980, by Kelly Smith.  Added conditional assembly 
+;switch for MITS 2SI/O board, using "standard" MITS ports 10 and
+;11 hex for the console, and 12 and 13 hex for the modem.
+;
+;October 18, 1980, by Keith Petersen, W8SDZ.
+;
+;Heath equates added by Tom Jorgenson.
+;
+;TRS-80 model 1 mods by Steve Vinokuroff, Vancouver CBBS.
+;
+;Optional trigger characters by Steve Vinokuroff.
+;
+;TRS-80 mods by Dennis Breckenridge, Burnaby CBBS.
+;
+;D.C.Hayes mods by Bruce Ratoff, Iselin New Jersey Remote CP/M.
+;
+;NOTE: If you add improvements or otherwise update
+;this program, please modem a copy of the new file
+;to "TECHNICAL CBBS" in Dearborn, Michigan - phone
+;313-846-6127 (110, 300, 450 or 600 baud).  Use the
+;filename PLINKXX.NEW.
+;
+;PLINK currently supports two way transfer of text files between
+;the CP/M disk and the remote computer. The following control
+;codes may be initiated from the console keyboard:
+;
+;Control-E      Exit PLINK to CP/M "warm-boot".
+;
+;Control-T      Transmit ASCII file to remote system, asks for
+;               drive (A, B, etc.) and filename.typ.
+;
+;Control-C      Aborts transmission of file to remote system.
+;
+;Control-Y      Switches between saving and ignoring
+;		incoming ASCII data in RAM buffer,
+;		for later transfer to disk.
+;
+;Control-W      Writes RAM buffer to disk, and asks for drive
+;               and filename.typ.
+;
+;Del (delete)   Backspace when in command mode (e.g. ^T or ^W).
+;
+;Control-U      Aborts current line when in command mode.
+;
+;(Note: all other control codes are passed to modem output, and
+;may be interpreted by the remote system as various control
+;functions.)
+;
+;TRUE/FALSE definitions
+;
+FALSE	equ	0
+TRUE	equ	NOT FALSE
+;
+;Conditional assembly switches <<-- set for your system
+;(select only one as true) - (NOTE: use TUART for other
+;serial ports not defined).
+;
+MITSIO	equ	FALSE	;true, if MITS 2SI/O board
+H84	equ	FALSE	;true, if you have H8/H8-4 or H89
+TUART	equ	FALSE 	;true, if Cromenco TUART or OTHER SERIAL
+PMMI	equ	TRUE	;true, if PMMI (set INITREQ true only
+			;if orig mode and parity is required)
+DCH	equ	FALSE	;true, if D.C.Hayes
+TRS1	equ	FALSE	;true, if TRS-80 model 1
+TRSPT	equ	FALSE	;true, if TRS-80 model 2
+			;using pickles & trout CP/M 2.x
+MULTI   equ     FALSE	;true, if SBC or BLC 8251 USART
+;
+INITREQ equ	FALSE	;true, if port initialization required
+;
+	IF	NOT TRSPT
+PORT	equ	TRUE 	;true, on most systems
+	ENDIF
+;
+	IF	TRSPT
+PORT	equ	FALSE	;this is the oddball
+	ENDIF
+;
+;bdos entry point and function codes
+;
+base	equ	0	;<<-- set to offset of CP/M for your
+			;system, standard systems are 0, some
+			;'alternate' systems are 4200H
+;
+bdos	equ	base+5
+resdsk	equ	13	;reset disk system
+offc	equ	15	;open file
+cffc	equ	16	;close file
+dffc	equ	19	;delete file
+rrfc	equ	20	;read record
+wrfc	equ	21	;write record
+mffc	equ	22	;make file
+;
+;TRS80 pickles and trout sio calls
+;offset by -3 that is add 3 to all calls
+;
+setsio	equ	30h	;set up z80 sio
+siotst	equ	33h	;read sio status
+sioinp	equ	36h	;input a char
+sioout	equ	39h	;output a char
+;
+ 	IF	MULTI
+mods  	equ	0DDH	;modem control
+mtbe  	equ	1	;bit to test for send
+mrda  	equ	2	;bit to test for receive
+mxor  	equ	3	;mask to make MTBE and MRDA 'low true'
+modd  	equ	0DCH	;modem data port
+	ENDIF
+;
+;default fcb and field definitions
+;
+fcb	equ	base+5ch
+fn	equ	1	;file name field (rel)
+ft	equ	9	;file type field (rel)
+ex	equ	12	;file extent field (rel)
+nr	equ	32	;next record field (rel)
+dbuf	equ	base+80h ;default disk buffer address
+;
+;ascii control characters
+;
+cr	equ	0dh	;carriage return
+lf	equ	0ah	;line feed
+del	equ	7fh	;delete (rubout)
+bell	equ	07h	;bell signal
+tab	equ	09h	;horizontal tab
+xon	equ	11h	;x-on character
+null	equ	00h	;null char
+;
+;the following "trigger" equate is set to "lf" (linefeed)
+;by default. an optional trigger char may be passed via fcb1
+;
+; ie:  PLINK B		will set trigger to "bell"
+;
+;the following options are allowed
+;
+;	1. B = bell  07h
+;	2. X = xon   11h
+;	3. U = upload no trigger check at all
+;
+;any other ascii character may be passed through fcb1
+;
+;
+trigger	equ	LF	;default value
+;
+;
+;warning character for low memory
+;
+wrnsig	equ	BELL	;if you have one, put 'BELL' here
+			;...else put '*' here.
+;
+;modem i/o port addresses
+;
+	IF	MITSIO
+modd	equ	13h	;modem data port
+mods	equ	12h	;modem status port
+modrset	equ	03h	;6850 ACIA reset
+modinit	equ	11h	;8 data, no parity, 2 stop
+	ENDIF
+;
+	IF	H84
+modd	equ	330Q	;modem data port
+mods	equ	335Q	;modem status port
+	ENDIF
+;
+	IF	PMMI
+modd	equ	0c1h	;modem data port
+mods	equ	0c0h	;modem status port
+modinit	equ	29h	;initialize byte originate,
+			;7 data, even parity, 1 stop
+	ENDIF
+;
+	IF	DCH
+modd	equ	90h	;modem data port
+mods	equ	91h	;modem status port
+modinit	equ	05h	;7 data, even parity, 1 stop
+	ENDIF
+;
+	IF	TRS1
+modd	equ	0ebh	;TRS80 mod 1 rs232 data port
+mods	equ	0eah	; and the rs232 status port
+	ENDIF
+;
+	IF	TUART
+modd	equ	0d6h	;<<--modify for yours
+mods	equ	0d7h	;<<--modify for yours
+	ENDIF
+;
+;modem status port bit definitions
+;
+	IF	H84
+mtbe	equ	40Q	;modem THRE transmit ready bit
+mrda	equ	01Q	;modem RDA rec'd data bit
+mxor	equ	41Q	;mask to make mtbe and mrda 'negative logic'
+	ENDIF
+;
+	IF	PMMI
+mtbe	equ	01h	;modem trans. buffer ready flag
+mrda	equ	02h	;modem receive data avail. flag
+mxor	equ	03h	;mask to make mtbe and mrda "low true"
+	ENDIF
+;
+	IF	DCH or MITSIO
+mtbe	equ	02h	;modem trans. buffer ready flag
+mrda	equ	01h	;modem receive data avail. flag
+mxor	equ	03h
+	ENDIF
+;
+	IF	TRS1
+mtbe	equ	40h	;TRS80 mod1 rs232 buffer ready
+mrda	equ	80h	;modem receive data avail.
+mxor	equ	0c0h
+	ENDIF
+;
+	IF	TUART	;<<--or any other serial i/o
+mtbe	equ	1	;<<--modify for yours
+mrda	equ	2	;<<--modify for yours
+mxor	equ	3	;<<--modify for yours
+	ENDIF
+;
+;	**main program**
+;
+	org	base+100h
+;
+link:	lxi	sp,stack+64 ;create local stack
+	lhld	base+1	;point to CP/M jmp table
+	lxi	d,3	;get ready to add 3
+	dad	d	;point to con status jmp
+	shld	citcal+1 ;modify call adrs
+	dad	d	;point to con in jmp
+	shld	rccal+1	;modify call adrs
+	dad	d	;point to con out jmp
+	shld	wccal+1	;modify call adrs
+	lda	fcb+1	;see if optional trigger char
+	cpi	20h	;blank.. ?
+	jz	skp	;..blank so use default "lf"
+	cpi	'B'	;bell wanted
+	jz	trgbel
+	cpi	'X'	;xon wanted
+	jz	trgxon
+	cpi	'U'	;uploading no checking for trigger
+	jz	trgupl
+;
+settrg	sta	overly+1 ;store the character as is then
+	jmp	skp
+;
+trgbel	mvi	a,bell
+	jmp	settrg
+;
+trgxon	mvi	a,xon
+	jmp	settrg
+;
+trgupl	xra	a	 ;zero out jump
+	sta	overl1+1 ;change check for c/r to null
+	sta	overl2+1 ;and send linefeeds as well
+	jmp	skp
+;
+skp:	equ	$
+;
+	IF	MITSIO
+	mvi	a,modrset
+	out	mods
+	mvi	a,modinit
+	out	mods
+	ENDIF
+;
+	IF	H84
+	mvi	a,80h	;set dlab bit in 8250 uart
+	out	0dbh	;8250 at port d8h (330q)
+	nop ! nop ! nop
+	nop ! nop
+	mvi	a,01h	;msb of baud rate divisor
+	out	0d9h	;...to uart
+	nop ! nop ! nop
+	nop ! nop
+	mvi	a,80h	;lsb of baud rate divisor
+	out	0d8h	;...to uart
+	nop ! nop ! nop
+	nop ! nop
+	mvi	a,03h	;8 bits, 1 stop bit, no parity, dlab reset
+	out	0dbh	;...to uart
+	nop ! nop ! nop
+	nop ! nop
+	mvi	a,0	;reset control register
+	out	0dch	;...to uart
+	jmp	cont
+	ENDIF
+;
+	IF	INITREQ and (NOT H84) and (NOT MITSIO)
+	mvi	a,modinit
+	out	mods	;initialize modem port
+	ENDIF
+;
+	IF	INITREQ and TUART
+	mvi	a,80h	;dsr on bit 7 parl port b
+	out	54h
+	ENDIF
+;
+	IF	TRSPT	;must set up serial channel
+reset:	lxi	h,initr	;store return address
+	push	h
+	lhld	1
+	lxi	d,setsio ;sio setup routine
+	dad	d
+	push	h	;store on stack
+	mvi	c,00h	;no parity chan-a
+	mvi	d,0e6h	;8 bits ,1 stop
+	mvi	e,3	;300 baud
+	mvi	l,00h	;disable ext/ack sio functions
+	mvi	h,'S'-40h ;control s (x-on)
+	ret		;trough setup prog
+;
+initr	nop		;do it to it
+	ENDIF
+;
+	IF	TRS1	;init for TRS80 mod1 rs232
+	out	0e8h	;reset rs232
+	in	0e9h	;read the switches
+	ani	0f8h
+	ori	5
+	out	0eah	;set dsr and cts
+	mvi	a,55h	;300 baud
+	out	0e9h
+	ENDIF
+;
+	IF	PORT
+	in	modd    ;clear modem uart read buffers
+	in	modd
+	ENDIF
+;
+	IF	MULTI	;initialize 8251
+	xra	a
+	out	mods
+	out	mods
+	out	mods
+	mvi	a,40h
+	out	mods
+	mvi	a,0cfh	;300 baud (this depends on strapping)
+	out	mods
+	mvi	a,37h
+	out	mods
+	ENDIF
+;
+cont:	xra	a	;clear char buffers
+	sta	inch
+	sta	outch
+	sta	flag	;clear text save flag
+	lxi	h,tbuf	;set ptr to tbuf
+	shld	ptr
+	lxi	h,0	;size = 0
+	shld	size
+	lxi	h,linkms  ;print sign-on message
+	call	wcs
+;
+;main loop
+;
+link3:	call	citest	;jump if no data from console
+	jz	link4
+	call	rcc	;else read console data
+	cpi	20h
+	cc	pcc	;call pcc if control char
+	jc	link4	;jump if pcc handled char
+	ori	80h	;else set valid data bit
+	sta	inch	;and store in input char buffer
+;
+link4:	lda	outch	;jump if no data for console
+	ora	a
+	jp	link5
+	ani	7fh	;else discard valid data bit
+	call	wcc	;send char to console
+	xra	a	;then clear output char buffer
+	sta	outch
+;
+link5:	call	mitest	;jump if no data from modem
+	jz	link6
+	call	rmc2	;else read modem data
+	call	save	;save char in text buffer if flag on
+	ori	80h	;set data valid bit
+	sta	outch	;store in output char buffer
+;
+link6:	call	motest	;jump if modem xmit buffer busy
+	jz	link7
+	lda	inch	;jump if no data for modem
+	ora	a
+	jp	link7
+	ani	7fh	;discard valid data bit
+;
+	IF	PORT
+	out	modd	;output char to modem
+	ENDIF
+;
+	IF	TRSPT
+	push	b	;store registers
+	push	h
+	push	d
+	call	wmc	;send char
+	pop	d
+	pop	h
+	pop	b
+	ENDIF
+;
+	xra	a	;...then clear input char buffer
+	sta	inch
+;
+link7:	jmp	link3	;end of main loop
+;
+linkms:	db	cr,lf,'PLINK ver 6.5'
+	db	cr,lf,cr,lf
+	db	'[^T]ransmit, [^Y]ank, [^W]rite, [^E]xit, [^C]ancel'
+	db	cr,lf,'Ready',cr,lf,lf,0
+;
+;pcc - process control character
+;
+pcc:	cpi	'E'-40h	;jump out if ctrl e
+	jnz	pcc1
+	push	h
+	lhld	size	; check for something in text buffer
+	mov	a,l	; and give warning
+	ora	h
+	jz	pccex	; before exit
+	lxi	h,ays	;print 'do you want to save...
+	call	wcs
+	pop	h
+	call	rcc	;get answer
+	call	wcc	;echo it
+	ani	5fh	;make upper case
+	cpi	'Y'	;yes?
+	cz	wtb	; write out buffer
+	jmp	pccex	;exit
+;	call	wccr	;crlf
+;	stc		;tell plink to ignore this character
+;
+	IF	TRSPT
+	pop	psw	;gobble up call address
+	jmp	reset	;re-initialize sio
+	ENDIF
+;
+	IF	PORT
+	ret
+	ENDIF
+;
+pcc1:	cpi	'T'-40h	;jump if not control-t
+	jnz	pcc2
+	call	stf	;transmit text file to modem
+	stc		;tell plink to ignore this character
+	ret
+;
+pcc2:	cpi	'Y'-40h	;jump if not control-y
+	jnz	pcc3
+	lda	flag
+	dcr	a	;was it zero?
+	jnz	pcc2a	;yes
+	sta	flag	;no, was 1, now 0
+	lxi	h,pcmnix ;print ignore incoming stuff
+	jmp	pcc2b
+;
+pcc2a:	mvi	a,1	;turn on text save flag
+	sta	flag
+	lxi	h,pccmr	;print 'saving incoming text in memory'
+;
+pcc2b:	call	wcs
+	stc		;tell plink to ignore this character
+	ret
+;
+pcc3:	cpi	'W'-40h	;jump if not control-W
+	jnz	pcc4
+	xra	a	;turn off text save flag
+	sta	flag
+	call	wtb	;write text buffer to disk
+	stc
+	ret
+;
+pcc4:	stc		;let plink handle all other cont. codes
+	cmc
+	ret
+;
+pccex:	lxi	h,disms	;print 'modem not disconnected'
+	call	wcs
+	jmp	base	;exit to warm boot
+;
+ays:	db	cr,lf,'Do you want to save the stuff in'
+	db	cr,lf,'the buffer before exit to CP/M (Y or N)? ',0
+;
+	IF	PMMI or DCH
+disms:	db	cr,lf,'Don''t forget - the modem '
+	db	'is not disconnected',cr,lf
+	db	'use "MODEM D" to disconnect',0
+	ENDIF
+;
+	IF	(NOT PMMI) and (NOT DCH)
+disms:	db	cr,lf,'+++ Exit to CP/M +++',cr,lf,0
+	ENDIF
+;
+pccmr:	db	cr,lf,'Saving incoming text in memory',cr,lf,0
+pcmnix:	db	cr,lf,'Ignoring incoming text',cr,lf,0
+;
+;stf - send text file (to modem)
+;
+stf:	call	gfn	;get name of disk file to send
+	jc	stf6	;jump if file name error
+	call	open	;try to open specified file
+	cpi	255	;jump if file not found
+	jz	stf7
+;
+stf1:	call	read	;read next record into dbuf
+	cpi	1	;jump if end-of-file
+	jz	stf5
+	lxi	h,dbuf 	;point to disk buffer
+	mvi	c,128
+;
+stf2:	mov	a,m	;fetch next char from dbuf
+	inx	h
+	cpi	'Z'-40h	;jump if end-of-file character
+	jz	stf5
+;
+overl2	cpi	lf	;ignore line feeds
+	jz	stf4
+	call	wmc	;write character to modem
+	call	wcc	;write character to console
+;
+overl1	cpi	cr	;jump if not carriage return
+	jnz	stf4
+;
+stf3:	call	citest	;check console data ready
+	jz	stf3a	;no data there
+	call	rcc	;get console character
+	cpi	'C'-40h	;control c aborts it
+	jz	stf8
+;
+stf3a:	call	mitest	;wait for next modem character
+	jz	stf3
+	call	rmc2	;check modem for trigger char.
+;
+overly	cpi	trigger
+	jnz	stf3
+	call	wccr	;send crlf to console
+;
+stf4:	dcr	c	;loop thru rest of dbuf
+	jnz	stf2
+	jmp	stf1	;go get next record from disk
+;
+stf5:	lxi	h,stfsm	;print 'file send complete'
+	call	wcs
+	ret
+;
+stf6:	lxi	h,stfs1	;print 'file name error'
+	call	wcs
+	ret
+;
+stf7:	lxi	h,stfs2	;print 'file not found'
+	call	wcs
+	ret
+;
+stf8:	lxi	h,stfsa	;print 'file send aborted'
+	call	wcs
+	ret
+;
+stfsm:	db	'File send complete',cr,lf,0
+stfs1:	db	'File name error or abort',cr,lf,0
+stfs2:	db	'File not found',cr,lf,0
+stfsa:	db	cr,lf,'File send aborted',cr,lf,0
+;
+;save - save char in text buffer if flag on
+;
+;  entry conditions
+;     a - character to save
+;
+save:	push	psw
+	lda	flag
+	ora	a
+	jnz	save1
+	pop	psw
+	ret
+;
+save1:	pop	psw
+	cpi	del	;rubout (del) ?
+	rz		;yes, ignore it
+	cpi	20h	;test for control characters
+	jnc	save2	;jump if not control char.
+	cpi	cr	;allow cr to be saved
+	jz	save2
+	cpi	lf	;allow lf to be saved
+	jz	save2
+	cpi	tab	;allow tab to be saved
+	jz	save2
+	ret		;ignore all other control chars.
+;
+save2:	push	h
+	lhld	size	;size = size + 1
+	inx	h
+	shld	size
+	lhld	ptr
+	mov	m,a
+	inx	h
+	shld	ptr
+	push	psw
+	lda	base+7	;get system size
+	sui	1	;so we dont crash CP/M
+	cmp	h	;are we out of room?
+	jz	saveab	;yes, abort
+	sui	4	;leave some room (1k)
+	cmp	h
+	mvi	a,wrnsig  ;signal console running out of space
+	cc	wcc
+	pop	psw
+	pop	h
+	ret
+;
+;saveab - ran out of room, issue message and flow
+;	  through to disk save routine
+;
+savend:	db	bell,cr,lf,'Aborting - no room left',0
+;
+saveab:	lxi	sp,stack+64  ;reinitialize stack
+	lxi	h,savend  ;print 'aborting - no room left'
+	call	wcs
+	lxi	h,link	;set up return address
+	push	h	;leave it on the stack
+;
+;wtb - write text buffer to disk
+;
+wtb:	lhld	size	;jump if text buffer empty
+	mov	a,l
+	ora	h
+	jz	wtb5
+	mvi	c,resdsk ;reset in case read-only
+	call	bdos
+	call	gfn	;get file name
+	jc	wtb6	;jump if file name error
+	call	delt	;delete old file, if any
+	call	make	;make new file
+	lhld	size	;de = tbuf size
+	xchg
+	lxi	h,dbuf	;top of stack points to dbuf
+	push	h
+	lxi	h,tbuf	;hl points to tbuf
+;
+wtb1:	mvi	c,128	;disk buffer size
+;
+wtb2:	mov	a,m	;fetch next byte of tbuf
+	inx	h
+	xthl
+	mov	m,a	;store in dbuf
+	inx	h
+	xthl
+	dcx	d	;size = size - 1
+	mov	a,d	;exit loop if size = 0
+	ora	e
+	jz	wtb3
+	dcr	c	;loop until dbuf full
+	jnz	wtb2
+	call	write	;write full dbuf to disk
+	xthl		;top of stack points to dbuf
+	lxi	h,dbuf
+	xthl
+	jmp	wtb1	;loop until end of tbuf
+;
+wtb3:	pop	h	;hl points to current place in dbuf
+;
+wtb4:	mvi	m,'Z'-40h ;store eof code
+	inx	h
+	dcr	c	;loop thru rest of dbuf
+	jnz	wtb4
+	call	write	;write last sector to disk
+	call	close	;clean up act and go home
+	lxi	h,tbuf	;clear text buffer
+	shld	ptr
+	lxi	h,0
+	shld	size
+	lxi	h,wtbsm	;print 'buffer saved on disk'
+	call	wcs
+	ret
+;
+wtb5:	lxi	h,wtbs1	;print 'text buffer empty'
+	call	wcs
+	ret
+;
+wtb6:	lxi	h,wtbs2	;print 'file name error'
+	call	wcs
+	ret
+;
+wtbsm:	db	cr,lf,'Buffer saved on disk',cr,lf
+	db	'Memory save cancelled',cr,lf,0
+wtbs1:	db	'Text buffer empty',cr,lf,0
+wtbs2:	db	'File name error or abort',cr,lf,0
+;
+;wcs - write console string
+;
+;  entry conditions
+;     hl - points to string (term by zero byte)
+;
+wcs:	mov	a,m
+	inx	h
+	ora	a
+	rz
+	call	wcc
+	jmp	wcs
+;
+;wccr - write console carriage return (and line feed)
+;
+wccr:	mvi	a,cr
+	call	wcc
+	mvi	a,lf
+;
+;wcc - write console character
+;
+;  entry conditions:
+;     a - character to write
+;
+wcc:	push	psw
+	push	b
+	push	d
+	push	h
+	mov	c,a	;get character for cbios
+wccal:	call	$-$	;modified by init.
+	pop	h
+	pop	d
+	pop	b
+	pop	psw
+	ret
+;
+;rcs - read console string (with echo)
+;
+;  exit conditions
+;     b - number of characters read (<255)
+;    hl - points to last char stored (cr)
+;
+rcs:	lxi	h,ibuf
+	mvi	b,0
+;
+rcs1:	call	rcc	;read next char from console
+	cpi	del	;jump if not del
+	jnz	rcs2
+	inr	b	;ignore del if ibuf already empty
+	dcr	b
+	jz	rcs1
+	dcx	h	;else discard last char
+	mov	a,m	;echo discarded char to console
+	call	wcc
+	dcr	b	;decrement count
+	jmp	rcs1	;	and loop
+;
+rcs2:	cpi	'U'-40h	;jump if not control u
+	jnz	rcs3
+	call	wccr	;else abort current line
+	jmp	rcs	;	and start over
+;
+rcs3:	call	wcc	;echo char to console
+	mov	m,a	;store char in ibuf
+	inr	b	;increment count
+	cpi	cr	;jump if carriage return
+	jz	rcs4
+	inx	h	;else advance pointer
+	jmp	rcs1	;	and loop
+;
+rcs4:	mvi	a,lf	;issue line feed and return
+	call	wcc
+	ret
+;
+;rcc - read console character
+;
+;  exit conditions
+;     a - character read
+;
+rcc:	push	b
+	push	d
+	push	h
+rccal:	call	$-$	;modified by init.
+	pop	h
+	pop	d
+	pop	b
+	ret
+;
+;wmc - write modem character
+;
+;  entry conditions
+;     a - character to write
+;
+;
+	IF	PORT
+wmc:	push	psw
+;
+wmcl:	in	mods
+	xri	mxor
+	ani	mtbe
+	jnz	wmcl
+	pop	psw
+	ani	7fh	;strip parity bit
+	out	modd
+	ret
+	ENDIF
+;
+	IF	TRSPT
+wmc:	push	h
+	push	d
+	push	psw
+;
+wmcl:	call	motest	;test status
+	jz	wmcl	;loop till tx empty
+	pop	psw	;restore char
+	ani	7fh	;strip parity
+	push	b	;store b
+	mov	c,a	;put char into c
+	mvi	b,00h	;channel a
+	lxi	h,wmcre	;store return address
+	push	h
+	lhld	base+1	;get base address
+	lxi	d,sioout
+	dad	d
+	pchl		;jump to it
+;
+wmcre:	pop	b	;restore it
+	pop	d
+	pop	h
+	ret
+	ENDIF
+;
+;rmc - read modem character
+;
+;  exit conditions:
+;     a - character read
+;
+;
+	IF	PORT
+rmc:	in	mods
+	xri	mxor
+	ani	mrda
+	jnz	rmc
+;
+rmc2:	in	modd
+	ani	7fh
+	ret
+	ENDIF
+;
+	IF	TRSPT
+rmc:	call	mitest	;char available
+	jz	rmc	;loop if not ready
+;
+rmc2:	push	b	;store b
+	push	d
+	push	h
+	mvi	b,00h	;channel a
+	lxi	h,rmcre	;return address
+	push	h
+	lhld	1
+	lxi	d,sioinp
+	dad	d
+	pchl
+;
+rmcre:	pop	h
+	pop	d
+	pop	b
+	ani	7fh	;strip parity
+	ret
+	ENDIF
+;
+;gfn - get file name
+;
+gfn:	lxi	h,gfnsd	;print 'which drive?'
+	call	wcs
+	call	rcc	;get answer from console
+	call	wcc	;echo it to console
+	ani	5fh	;make upper case
+	cpi	'C'-40h	;^C means abort
+	jz	gfn6
+	sui	'A'-1
+	jc	gfn	;require alphabetic
+	jz	gfn
+	cpi	17	;allow 16 drives (as in CP/M 2.x)
+	jnc	gfn
+	sta	fcb
+;
+gfnb:	lxi	h,gfns1	;print 'filename? '
+	call	wcs
+	call	rcs	;read response into ibuf
+	lxi	h,fcb+fn  ;blank fill fn and ft fields
+	mvi	c,11
+;
+gfn1:	mvi	m,' '
+	inx	h
+	dcr	c
+	jnz	gfn1
+	lxi	h,ibuf	;point to input buffer
+	lxi	d,fcb+fn  ;scan off fn field
+	mvi	c,9
+;
+gfn2:	mov	a,m	;fetch next char from ibuf
+	inx	h
+	cpi	61h	;if lc, convert to uc
+	jc	gfn2a
+	sui	20h
+;
+gfn2a:	cpi	cr	;jump if end of line
+	jz	gfn5
+	cpi	'.'	;jump if end of name
+	jz	gfn3
+	stax	d	;else store char in fn field
+	inx	d
+	dcr	c	;loop if 8 or less chars so far
+	jnz	gfn2
+	jmp	gfn6	;else take error exit
+;
+gfn3:	lxi	d,fcb+ft  ;scan off ft field
+	mvi	c,4
+;
+gfn4:	mov	a,m	;fetch next char from ibuf
+	inx	h
+	cpi	61h	;if lc, convert to uc
+	jc	gfn4a
+	sui	20h
+;
+gfn4a:	cpi	cr	;jump if end of line
+	jz	gfn5
+	stax	d	;else store char in ft field
+	inx	d
+	dcr	c	;loop if 3 or less chars so far
+	jnz	gfn4
+	jmp	gfn6	;else take error exit
+;
+gfn5:	xra	a
+	sta	fcb+ex	;set extent number to zero
+	sta	fcb+nr	;set record number to zero
+	stc		;clear error flag and return
+	cmc
+	ret
+;
+gfn6:	stc		;set error flag and return
+	ret
+;
+gfnsd:	db	cr,lf,'Which drive? ',0
+gfns1:	db	cr,lf,'Filename? ',0
+;
+;open - open disk file
+;
+open:	push	h
+	push	d
+	push	b
+	lxi	d,fcb
+	mvi	c,offc
+	call	bdos
+	pop	b
+	pop	d
+	pop	h
+	ret
+;
+;read - read record from disk file
+;
+read:	push	h
+	push	d
+	push	b
+	lxi	d,fcb
+	mvi	c,rrfc
+	call	bdos
+	pop	b
+	pop	d
+	pop	h
+	ret
+;
+;close - close disk file
+;
+close:	push	h
+	push	d
+	push	b
+	lxi	d,fcb
+	mvi	c,cffc
+	call	bdos
+	pop	b
+	pop	d
+	pop	h
+	ret
+;
+;delt - delete disk file
+;
+delt:	push	h
+	push	d
+	push	b
+	lxi	d,fcb
+	mvi	c,dffc
+	call	bdos
+	pop	b
+	pop	d
+	pop	h
+	ret
+;
+;write - write record to disk
+;
+write:	push	h
+	push	d
+	push	b
+	lxi	d,fcb
+	mvi	c,wrfc
+	call	bdos
+	pop	b
+	pop	d
+	pop	h
+	ret
+;
+;make - make new disk file
+;
+make:	push	h
+	push	d
+	push	b
+	lxi	d,fcb
+	mvi	c,mffc
+	call	bdos
+	pop	b
+	pop	d
+	pop	h
+	ret
+;
+;citest - check console input status
+;
+citest:	push	b
+	push	d
+	push	h
+citcal:	call	$-$	;modified by init.
+	ora	a	;set zero flag
+	pop	h
+	pop	d
+	pop	b
+	ret		;zero flag carries answer
+;
+;mitest - check modem input status
+;
+	IF	PORT
+mitest:	in	mods	;get modem uart status
+	xri	mxor	;invert high-true bits
+	ani	mrda	;any data available?
+	mvi	a,0
+	jnz	mitst1
+	cma
+;
+mitst1:	ora	a
+	ret		;zero flag carries answer
+	ENDIF
+;
+	IF	TRSPT
+;
+mitest:	push	b
+	push	h
+	push	d
+	mvi	b,00	;channel a
+	lxi	h,mitstr
+	push	h
+	lhld	base+1
+	lxi	d,siotst
+	dad	d
+	pchl
+;
+mitstr:	pop	d
+	pop	h
+	ani	01	;tx empty
+	pop	b
+	ret		;zero flag holds the answer
+	ENDIF
+;
+;motest - check modem output status
+;
+	IF	PORT
+motest:	in	mods	;get modem uart status
+	xri	mxor	;invert high-true bits
+	ani	mtbe	;uart ready for character?
+	mvi	a,0
+	jnz	motst1	;zero flag carries answer
+	cma
+;
+motst1:	ora	a	;set zero flag if ready
+	ret
+	ENDIF
+;
+	IF	TRSPT
+motest:	push	b
+	push	h
+	push	d
+	mvi	b,00	;channel a
+	lxi	h,motstr
+	push	h
+	lhld	1
+	lxi	d,siotst
+	dad	d
+	pchl
+;
+motstr:	ani	02	;buffer empty
+	pop	d
+	pop	h
+	pop	b
+	ret
+	ENDIF
+;
+;data area
+;
+inch:	ds	1	;input char buffer (to cyber)
+outch:	ds	1	;output char buffer (from ciber)
+stack:	ds	80	;local stack
+ibuf:	ds	256	;input buffer
+;
+;text buffer
+;
+flag:	ds	1	;text save flag
+ptr:	ds	2	;text buffer pointer
+size:	ds	2	;text buffer size
+tbuf:	equ	$	;start of text buffer
+;
+	end
+

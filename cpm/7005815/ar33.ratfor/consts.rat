@@ -1,0 +1,6 @@
+#This file should be INCLUDEd at the end of the DATA section
+#of a RATFOR program.
+	DATA KB/3/,KONS/3/
+	DATA RPD/.01745329/,DPR/57.29578/
+	DATA PI/3.141593/
+

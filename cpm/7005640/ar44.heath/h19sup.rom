@@ -1,0 +1,539 @@
+ 7-Aug-82 17:15:24,1543;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 7-Aug-82 1714-EDT
+Date: 7 August 1982 17:09-EDT
+From: Charlie Strom <CSTROM at MIT-MC>
+Subject: New ROMS
+To: H19-PEOPLE at MIT-MC
+
+I have just received some literature describing a new ROM set for the
+H19 terminal. Features are as follows:
+
+-Definable scroll area (2-25 lines)
+
+-Complete <TAB> facility - The tab stops can be individually set and cleared
+ or set at fixed intervals. The back-tab function returns to previous stop.
+
+-Clock/Calendar - Time and date reported in ASCII and cycling automatically.
+
+-Alternate character set capability - Supports character generator ROMS
+ containing 256 characters. The extra 128 chars. can be simultaneously
+ displayed with the standard set.
+
+-Transparent mode - Each of the possible 256 codes displayed as a unique
+ character.
+
+-Hardware (CTS:RTS) handshake or standard <XON>:<XOFF> handshake
+
+-Slow transmit mode - characters spaced apart to prevent overrun at
+ high baud rates
+
+-Light pen support
+
+-VT-100 emualtion
+
+-Reliable operation at 38K baud.
+
+There are a few more features the sales blurb describes as well. This sure
+sounds like a winner to me, but bear in mind I have not seen these ROMS in
+action and this is therefore not a recommendation! I hope to get hold of a
+set in the next few weeks and will report at that time.
+
+The price for the firmware is $50 and is available from:
+		Extended Tecnology Systems
+		1121 Briarwood
+		Bensalem, Pa. 19020
+
+						Regards,
+						Charlie Strom <CSTROM @ MC>
+
+ 7-Aug-82 18:35:44,509;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 7-Aug-82 1834-EDT
+Date: 7 August 1982  18:28-EDT (Saturday)
+Sender: CARTER at RU-GREEN
+From:  Robert A. Carter <CARTER at RUTGERS>
+To:   Charlie Strom <CSTROM at MIT-MC>
+Cc:   CARTER at RUTGERS, H19-PEOPLE at MIT-MC
+Subject: New ROMS
+
+Is there a telephone number on the Extended Technology Systems
+brochure?  Another name?  Information reports no directory listing
+under that name in Bensalem, Pa.
+
+If it's a hoax, it wouldn't be the first.
+
+_R. Carter
+
+11-Aug-82 20:12:03,968;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 11-Aug-82 2011-EDT
+Date: 11 August 1982 20:07-EDT
+From: Charlie Strom <CSTROM at MIT-MC>
+Subject: New ROMS
+To: H19-PEOPLE at MIT-MC
+
+I have taken the plunge and parted with $49.95 for the new "Super-19"
+upgrade ROM for the H19. See my previous message to H19-People
+for preliminary details. My spies at the recent HUG convention in
+Chicago assure me that this is indeed a real product and looks like
+it is well worth the cost. There was considerable interest in my
+forst message, so I will be sure to report as soon as I have the beastie.
+I have also obtained a file containing all the escape codes (original
+and enhanced) and will upload the file to MC when I can report some
+concrete information. Extended Technology Systems is obviously a
+garage operation (George Deffendall is the person in the garage!)
+but nontheless I am very optimistic that the enhanced H19 will be a
+terrific package.  Charlie Strom
+
+16-Aug-82 22:47:00,400;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 16-Aug-82 2246-EDT
+Date: 16 Aug 1982 2228-EDT (Monday)
+From: reece at NADC
+Subject: h19 ROM
+To: h19-people at mit-mc
+
+The phone number for Extended Technology Systems is (215) 754-4604. They're
+the ones with the new H19 ROM. Bob Todd is the chief of the operation--and
+the product is definitely not a put-on. I think the price is about $50.
+-------
+
+28-Aug-82 10:39:12,1154;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 28-Aug-82 1030-EDT
+Date: 28 August 1982 10:11-EDT
+From: Charlie Strom <CSTROM at MIT-MC>
+Subject: Super 19 ROM
+To: H19-PEOPLE at MIT-MC
+
+I have been using the Super 19 enhanced rom for the h19-z19 terminal for
+about a week now and have yet to note any problems. For those who missed
+my first message, this is a replacement 32K rom available from Extended
+Technology Systems, 1121 Briarwood, Bensalem, Pa. 19020 for $49.95 post-
+paid. The phone is 215-754-4604.
+There were several queries re the VT-100 emulation mode. I am not a DEC
+afficianado, so I can only report that the documantation states that EDT
+operation is greatly enhanced compared to the old VT52 mode using the VT-100
+mode. All features are implemented except for slow scroll and character
+size change.
+I have also used the clock/calendar without a hitch (note - no battery
+backup, though one might add it), the slow transmit mode at high baud rates
+(characters spaced apart to prevent overrun at other end), transparent mode,
+etc. Feel free to query me re specific areas I have not covered.
+
+					Charlie Strom <CSTROM @ MC>
+
+28-Aug-82 14:37:21,433;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 28-Aug-82 1436-EDT
+Date: 28 August 1982 14:28-EDT
+From: Charlie Strom <CSTROM at MIT-MC>
+Subject:  Super 19 ROM
+To: Carter at RUTGERS
+cc: CSTROM at MIT-MC, H19-PEOPLE at MIT-MC
+
+From what I can gather, all the H19 functions are alive and well when
+in VT-100 emulation mode. This would presumably include both delete
+character and the toggle of insert character mode.
+						Charlie
+
+31-Aug-82 21:39:51,365;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 31-Aug-82 2139-EDT
+Date: 31 August 1982 21:34-EDT
+From: Charlie Strom <CSTROM at MIT-MC>
+Subject:  New ROM and H88
+To: SFH at CMU-20C
+
+I know several people running H89's at 38K baud with the new super-19
+rom, so I guess there are no problems or I'm sure I would have heard
+anguished cries!
+						Regards, Charlie
+
+ 3-Sep-82  0:33:15,430;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 3-Sep-82 0032-EDT
+Date: 3 September 1982 00:22-EDT
+From: Jacob Moskowitz <JMSK at MIT-MC>
+Subject: ETS H-19 ROM
+To: H19-PEOPLE at MIT-MC
+
+	Their correct phone number is (215)752-4604, not ...754... as earlier
+posted. This is apparently Robert Todd's Home, though I got no answer in 2 
+attempts. I am buying one ASAP for testing as a VT-100 for EDT v.2 
+(or KED, for that matter)
+
+ 5-Sep-82 12:13:27,5894;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 5-Sep-82 1213-EDT
+Date: 5 September 1982 12:04-EDT
+From: Charlie Strom at MIT-MC
+Sender: CSTROM at MIT-MC
+Subject: Super-19 ROM escape codes
+To: H19-PEOPLE at MIT-MC
+
+Following is a complete listing of the escape codes for an H19 terminal
+using the super-19 ROM. Note those functions starred are new:
+
+
+		   SUPER19 ESCAPE CODES        REV 2.0	    7/30/82
+
+    FUNCTION		  8 BIT CODE VALUES   ESCAPE SEQUENCE (follows ESC)
+   (* = NEW)		  ASCII  OCTAL	HEX   HEATH    ANSI	DEC (shift)
+
+* READ LIGHT PEN ADDRESS    !	 241	A1	!	[@
+* TRANSMIT CHARACTER	    "    242    A2      "	[w
+  TRANSMIT SCROLL REGION    #	 243	A3	#	[p
+* SHIFTED BLUE KEY	    $	 244	A4	$	O$
+* SHIFTED RED KEY	    %	 245	A5	%	O%
+* SHIFTED WHITE KEY	    &	 246	A6	&	O&
+* SHIFTED F1 KEY	    '    247    A7      '	O'
+* SHIFTED F2 KEY	    (	 250	A8	(	O(
+* SHIFTED F3 KEY	    )	 251	A9	)	O)
+* SHIFTED F4 KEY	    *	 252	AA	*	O*
+* SHIFTED F5 KEY	    +	 253	AB	+	O+
+* ALTERNATE KP SHIFT "."    ,	 254	AC
+* ALTERNATE KP SHIFT "0"    -	 255	AD
+  ALTERNATE KEYPAD "."	    .	 256	AE	?n	On	On
+  ALTERNATE KEYPAD "ENTER"  /	 257	AF	?M	OM	OM
+  ALTERNATE KEYPAD "0"	    0	 260	B0	?p	Op	Ov
+  ALTERNATE KEYPAD "1"	    1	 261	B1	?q	Oq	Oy
+  ALTERNATE KEYPAD "2"	    2	 262	B2	?r	Or	[B  (OB)
+  ALTERNATE KEYPAD "3"	    3	 263	B3	?s	Os	Or
+  ALTERNATE KEYPAD "4"	    4	 264	B4	?t	Ot	[D  (OD)
+  ALTERNATE KEYPAD "5"	    5	 265	B5	?u	Ou	OR
+  ALTERNATE KEYPAD "6"	    6	 266	B6	?v	Ov	[C  (OC)
+  ALTERNATE KEYPAD "7"	    7	 267	B7	?w	Ow	Ou
+  ALTERNATE KEYPAD "8"	    8	 270	B8	?x	Ox	[A  (OA)
+  ALTERNATE KEYPAD "9"	    9	 271	B9	?y	Oy	Ot
+* SET CLOCK		    :	 272	BA	:#:#:#	[#;#;#t
+* READ CLOCK		    ;	 273	BB	;	[t
+  SET ANSI MODE 	    <	 274	BC	<	[?2l
+  SET ALTERNATE KEYP MODE   =	 275	BD	=	=
+  RESET ALTERNATE KP MODE   >	 276	BE	>	>
+* ALTERNATE KP SHIFT ENTER  ?	 277	BF
+  INSERT CHARACTER MODE ON  @	 300	C0	@	[4h
+  CURSOR UP		    A	 301	C1	A	[A
+  CURSOR DOWN		    B	 302	C2	B	[B
+  CURSOR RIGHT		    C	 303	C3	C	[C
+  CURSOR LEFT		    D	 304	C4	D	[D
+  CLEAR ENTIRE SCREEN	    E	 305	C5	E	[2J	OQ
+  GRAPHICS MODE ON	    F	 306	C6	F	[10m
+  GRAPHICS MODE OFF	    G	 307	C7	G	[11m
+  CURSOR HOME		    H	 310	C8	H	[H
+  REVERSE INDEX 	    I	 311	C9	I	M
+  ERASE TO END OF PAGE	    J	 312	CA	J	[J	OP
+  ERASE TO END OF LINE	    K	 313	CB	K	[K
+  INSERT LINE		    L	 314	CC	L	[L
+  DELETE LINE		    M	 315	CD	M	[M
+  DELETE CHARACTER	    N	 316	CE	N	[P
+  INSERT CHAR MODE OFF	    O	 317	CF	O	[4l
+  BLUE KEY		    P	 320	D0	P	OP	Ol
+  RED KEY		    Q	 321	D1	Q	OQ	Om
+  WHITE KEY		    R	 322	D2	R	OR	OS
+  F1 KEY		    S	 323	D3	S	OS	Os
+  F2 KEY		    T	 324	D4	T	OT	Oq
+  F3 KEY		    U	 325	D5	U	OU	Op
+  F4 KEY		    V	 326	D6	V	OV	Ox
+  F5 KEY		    W	 327	D7	W	OW	Ow
+* VERTICAL INDEX	    X	 330	D8	X	D
+  SET CURSOR		    Y	 331	D9	Y##	[#;#f or [#;#H
+  IDENTIFY AS VT52	    Z	 332	DA	Z
+  SET HOLD SCREEN MODE	    [	 333	DB	[	[>3h
+  RESET HOLD SCREEN MODE    \	 334	DC	\	[>3l
+  XMIT BOTTOM FIXED REGION  ]	 335	DD	]	[v
+* XMIT TOP FIXED REGION     ^	 336	DE	^	[j
+* TRANSMIT CURRENT LINE     _	 337	DF	_	[o
+* BACK TAB		    `	 340	E0	`	[E
+* ALTERN. CHAR. SET	    a	 341	E1	a	[(1 / [)1
+  ERASE FROM BOP	    b	 342	E2	b	[1J
+* SET CURSOR TYPE	    c	 343	E3	c#	[#c
+* DUPLICATE CHARACTER	    d	 344	E4	d	[F
+* SET 8TH BIT MODE	    e	 345	E5	e#	[#e
+* INSERT SINGLE SPACE	    f	 346	E6	f	[N
+* SET/CLEAR TAB STOPS	    g	 347	E7	g#	H, [g, [3g, [#G
+* SET MODE BIT (group 2)    h	 350	E8	h	[#h
+* RESET MODE BIT (group 2)  i	 351	E9	i	[#l
+  SAVE CURSOR AND MODES*    j	 352	EA	j	[s or 7
+  RESTORE CURSOR AND MODES* k	 353	EB	k	[u or 8
+  ERASE LINE		    l	 354	EC	l	[2K
+* SET SCROLL REGION	    m	 355	ED	m##	[#;#r
+  REPORT CURSOR POSITION    n	 356	EE	n	[6n
+  ERASE FROM START OF LINE  o	 357	EF	o	[1K
+  REVERSE VIDEO ON	    p	 360	F0	p	[7m
+  REVERSE VIDEO OFF	    q	 361	F1	q	[m
+  SET BAUD RATE 	    r	 362	F2	r#	[#r
+* STANDARD CHARACTER SET    s	 363	F3	s	[(B / [)B
+  SHIFTED KEYPAD MODE	    t	 364	F4	t	[>6h
+  UNSHIFTED KEYPAD MODE     u	 365	F5	u	[>6l
+  WRAP AT END OF LINE MODE  v	 366	F6	v	[?7h
+  DISCARD AT END OF LINE    w	 367	F7	w	[?7l
+  SET MODE BIT		    x	 370	F8	x#	[>#h
+  RESET MODE BIT	    y	 371	F9	y#	[>#l
+  INITIALIZE CRT	    z	 372	FA	z	[z or c
+  ENABLE KEYBOARD	    {	 373	FB	{	[2l
+* SET DATE		    |	 374	FC	|#/#/#	[#;#;#d
+  DISABLE KEYBOARD	    }	 375	FD	}	[2h
+* READ DATE		    ~	 376	FE	~	d
+* NEWLINE (LF+CR)	  RUBOUT 377	FF    RUBOUT	E
+
+    MODE SET/RESET ESCAPE SEQUENCES	  HEATH 	ANSI
+
+  KEYBOARD DISABLE/ENABLE			      [2h / [2l
+* ENABLE/DISABLE VT100 KEYPAD MODE		      [3h / [3l
+  INSERT CHARACTER MODE ON/OFF			      [4h / [4l
+* FULL/HALF DUPLEX			  h1 / i1     [12h / [12l
+* DISABLE/ENABLE XON/XOFF PROTOCOL	  h2 / i2     [7h / [7l
+* ENABLE/DISABLE SLOW TRANSMIT MODE	  h3 / i3     [8h / [8l
+* ENABLE/DISABLE OFF-LINE OVERRIDE	  h4 / i4     [9h / [9l
+* ENABLE/DISABLE ALTERNATE CURSOR KEYS		      [?1h / [?1l
+  ENABLE VT52 MODE (either sequence)		      [?2h / [?2l
+* BLACK ON WHITE/WHITE ON BLACK 	  h5 / i5     [?5h / [?5l
+* RELATIVE/ABSOLUTE ORIGIN MODE 	  h6 / i6     [?6h / [?6l
+  WRAP/DISCARD AT END OF LINE		  h7 / i7     [?7h / [?7l
+* ENABLE/DISABLE REPEAT KEY		  h8 / i8     [?8h / [?8l
+* ENABLE/DISABLE INTERLACED SCAN	  h9 / i9     [?9h / [?9l
+  ENABLE/DISABLE 25TH LINE		  x1 / y1     [>1h / [>1l
+  DISABLE/ENABLE KEY CLICK		  x2 / y2     [>2h / [>2l
+  ENABLE/DISABLE HOLD SCREEN MODE	  x3 / y3     [>3h / [>3l
+  BLOCK/UNDERSCORE CURSOR		  x4 / y4     [>4h / [>4l
+  DISABLE/ENABLE CURSOR 		  x5 / y5     [>5h / [>5l
+  KEYPAD MODE SHIFTED/UNSHIFTED 	  x6 / y6     [>6h / [>6l
+  ENABLE/DISABLE ALTERNATE KEYPAD	  x7 / y7     [>7h / [>7l
+  ENABLE/DISABLE AUTO LF UPON CR	  x8 / y8     [>8h / [>8l
+  ENABLE/DISABLE AUTO CR UPON LF	  x9 / y9     [>9h / [>9l
+						  (or [20h / [20l)
+19-Sep-82  8:40:53,1698;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 19-Sep-82 0840-EDT
+Date: 19 September 1982 08:38-EDT
+From: Charlie Strom <CSTROM at MIT-MC>
+Subject:  Super 19 ROM
+To: bridger at RAND-UNIX
+cc: H19-PEOPLE at MIT-MC
+
+I have been using the super19 rom for about a month now; note that
+heath will be coming out with their own enhanced ersion shortly; it
+will not have as many features but on the plus side the source will be
+available.
+The shifted function keys are a nice touch and enable me to run a
+version of Wordstar using the numeric keypad (in shifted mode) and the
+function keys to perform most of the operations. I am using the 25th
+line for labels for the function keys but may use the 24th as well
+(the rom allows as many lines as you want to be inaccessible a is the
+25th under normal conditions.) I also use like the option of changing
+the cursor to a solid underline, a slow blink, etc., depending on my
+mood or the phase of the moon. The slow transmit feature (characters
+are spaced out so as to prevent UART overrun on the other side) is
+another useful touch.
+I have not noted any bugs though I have benn told by a Heath expert
+that there are some minor (unspecified ones). I do seem to lose synch
+every now and then for a few 10's of ms. it seems, but I do not know
+if this is related to the super-19 or not. I also had to give up
+running at 19.2K baud; the terminal will overrun its buffer under
+certain conditions and it got too annoying. I understand if I were to
+modify the h19 to run @ 3Mhz, it would cure things, but I haven't a
+clue as to how to do this since my machine is a late version sans
+jumper areas for this purpose.
+						Regards,
+						Charlie
+
+19-Sep-82 19:38:51,1335;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 19-Sep-82 1931-EDT
+Date: Sunday, 19 Sep 1982 16:11-PDT
+To: Charlie Strom <CSTROM at MIT-MC>
+Cc: bridger at RAND-UNIX, H19-PEOPLE at MIT-MC
+Subject: Re:  Super 19 ROM
+In-reply-to: Your message of 19 September 1982 08:38-EDT.
+From: bridger at RAND-UNIX
+
+	Thanks for your report.
+
+	What are the possibilities for adding an alternate-page memory
+buffer to the h19 that could be combined with the transmit-page feature?
+Jeffrey Stone recently pointed out the utility of using this as a local
+notepad that can then be printed or filed if desired?
+
+	I find 19.2Kbaud a real plus when using a full-screen editor or
+simply TYPEing a text file.  With the 3MHz jumper modification I get good 
+results.  Is anyone running the super19 rom in this configuration?
+
+However, I am getting snafus with an interrupt-driven real time clock that
+is set to display on line 25 once a second.  Occasionally the cursor will be
+left on line 25 after updating the time display.  The next text then gets
+scrolled on line 25, a real loser!  Or,  one of the cursor addressing
+characters will show up on the screen on the line that was interrupted.
+Possibly the time-updating routine needs to do some padding before
+returning; I haven't tried that.  Does the rom-clock develop this sort of
+glitch?
+
+ 5-Oct-82 21:56:25,1021;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 5-Oct-82 2155-EDT
+Date: 5 October 1982 21:49-EDT
+From: Jacob Moskowitz <JMSK at MIT-MC>
+Subject: 	"Super 19" ROM & DEC EDT v.2 editor
+To: H19-PEOPLE at MIT-MC
+
+	It works very nicely with EDT v.2 (& therefore, I assume, with
+	KED) in VT-100 mode.
+
+	It even has some adavanced video VT-100 features, such as different
+	cursor form (eg, underline) & cut&paste buffer identification
+	(eg, local reverse video).
+
+	The sfw whitescreen seems to suffer more from tearing than the
+	hardware mod, altho Bob Todd of ETS (the distributor) tells me that
+	the hi speed mod will cure it. But then it would presumably also
+	improve	the hdw whitescreen, too.
+
+	The ability to Hold Screen Scrolling locally is very nice, since
+	Hold Screen mode does not work for VT-100's in RSX.
+
+	I am willing to check out KED specifically if requested --
+	I'm sure I can dig out an old tattered copy at work.
+
+	sideways scrolling seems to help get around the 80 char. screen
+	limitation.
+18-Dec-82  0:11:23,3224;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 18-Dec-82 0010-EST
+Date: Friday, 17 Dec 1982 19:07-PST
+To: INFO-CPM at BRL, H19-PEOPLE at MIT-MC
+Subject: Interrupting CONOUT with CONOUT => lost data?
+From: bridger at RAND-UNIX
+
+	I've been using a clock/calendar that interrupts once a second and
+calls a service routine that sends the current time to the bottom right
+corner of the terminal screen.  To do this it sends escape sequences to
+save the cursor, position it, and restore it.  The characters are sent
+by  BIOS calls to CONOUT.
+	Randomly, the terminal would print the time but then fail
+to restore the cursor, or switch into reverse video or some other mode.
+Things got worse with a new terminal rom (the Super19 ROM for the Heath
+H-19) running at 38.4K baud, because this rom has a host of new
+escape sequences for extra modes, some of which reinterprete the 
+standard ASCII characters.  Having the terminal suddenly in never-never land
+is a real pain; to recover you have to go into off-line mode, and reset
+the correct modes.
+	It turn out that the BIOS is sending characters to the terminal
+when it isn't ready to accept them.  At least one gets lost; when the last-
+arrived character is an Escape, and its successor is overtaken by another
+character, the terminal switches executes a faulty sequence.  For example:
+
+	'ESC k p' --  'ESC k' is restore cursor, 'p' is data
+	If 'k' is overtaken, the terminal executes 'ESC p' = reverse video !
+
+	My CONOUT implements hardware handshaking, using the H-89's
+8250 serial chip.  I assumed that this, coupled with handshaking by the
+H-19 terminal, would prevent dropped characters.  
+
+	NOT SO!! -- because the interrupt routine uses the console output data
+port the following sequence of events can and does occur:
+
+	main program sends character to CONOUT
+		CONOUT checks clear-to-send line:  it's clear
+		now clock interrupts
+			saves registers
+			clock routine sends a string of characters,
+			   filling the terminal buffer
+			terminal turns off clear-to-send line: not clear now
+			restores registers & returns
+		  character sent to terminal (!!)
+		  returns to main program
+	
+	In other words, the real-time status of the CTS line changes from
+the time CONOUT reads the line to when it outputs the character.
+
+	Solutions: (1) disable interrupts before reading CTS, enable after
+sending the character; have the clock routine use a private version of CONOUT
+that doesn't enable interrupts.  (2) Set a flag on entry to CONOUT, reset it
+on exit; when flag is set have the clock routine poll CTS until clear before
+returning.
+	This complexity wouldn't arise if the 8250 had on-chip handshaking
+(like the Z-80 SIO) and didn't send out a character until the CTS line
+is clear.  I guess the moral is not to trust an interruptible handshake!
+
+	My suspicions that the Super19 ROM was at fault were unfounded, and
+I appreciate the time Bob Todd at Extended Technology Systems took to check 
+out my questions.  It is indeed a high performance addition to the H-19.
+With hardware handshaking and 38.4K baud, text can be redisplayed and edited
+very effectively.  
+	Now I'm curious to see what the game writers can do with it!
+22-Dec-82 13:10:53,840;000000000001
+Mail-from: ARPANET site MIT-MC rcvd at 22-Dec-82 1310-EST
+From: MADLER@MIT-ML
+Date: 12/22/82 13:02:04
+Subject: 4MHz H89 mod
+
+MADLER@MIT-ML 12/22/82 13:02:04 Re: 4MHz H89 mod
+To: H19-PEOPLE at MIT-ML
+After finding the H19 mod great, I decided to do the 89 as well.  I have
+purchased the new ROM from Ultimeth and know it works.  I have changed
+the RAM to 150ns and the 2114's are 200ns.
+
+Problem:  it doesn't work on 4MHz.  I have cut trace on back pin 3 to U512.
+Pin 9 of U502 is connected to pin 3 U512.
+
+Any suggestions for tests?  I have noticed that U502 is a 7492 as opposed
+to a 74LS92.  I don't have diagrams of either, so I can't tell whether
+that would make a difference.
+
+All help greatfully accepted and appreciated!
+-Michael
+
+(Being a software hacker as opposed to hardware is not making this easy!!!)
+
+
+
+Message 138 -- ************************
+17-Feb-83 11:08:39-EST,723;000000000001
+Received: from MIT-MC by CMU-CS-C (with SMTP); 17 Feb 83 09:46:39 EST
+Date: 17 February 1983 09:33 EST
+From: Robert F. Goeke <GOEKE @ MIT-MC>
+To: jazzy @ AEROSPACE
+cc: H19-PEOPLE @ MIT-MC
+
+	The vendor is Extended Technology Systems, 1121 Briarwood, 
+Bensalem, PA 19020.  Telephoning is sufficiently worthless that I 
+threw away the number, so write them for some literature.  It is a 
+single chip replacement in your H19 which adds all sorts of bells and
+whistles -- realtime clock/calendar, light pen support, white backround,
+split scrolling regions, all VT100 effects except double-sized characters
+and smooth scroll (incl. a better use of the special function keys to 
+get all the desired EDT effects).
+
+-- Messages from file: PS:<SFH>MAIL.TXT.1 --
+   Sunday, March 20, 1983 08:04:17-EST
+
+     166) 19-Mar jazzy at AEROSP Super19 Rom problems... (1950 chars)
+
+
+Message 166 -- ************************
+19-Mar-83 23:36:50-EST,1950;000000000001
+Received: from MIT-MC by CMU-CS-C (with SMTP); 19 Mar 83 23:36:02 EST
+Date: 19 March 1983 2019-PST (Saturday)
+From: jazzy at AEROSPACE (Richard Fitzgerald)
+Subject: Super19 Rom problems...
+To: H19-PEOPLE at mit-mc
+
+  Ok, I just got done putting my new super19 rom in my h19a, and have
+found a problem (I think) and I thought I would drop this one on the
+net and see what you folks have to say.
+  Everything works fine, except when I use VT100 mode on our other vax
+running VMS.  It seems when I run programs which use VT100 graphics, 
+the characters are not correct.  I realize the documentation says that
+'wide characters, smooth scroll, 132 char line, and on board LEDS are
+not supported', however it says NOTHING about any problems with the heath
+versus DEC graphics characters.  Does anyone know of any problems, if
+so how are they patched, OR... is my Super19 rom perhaps munged? Although
+the latter seems a bit odd, since the rom has nothing to do with character
+generator rom, at least not in any way I can see it causing this problem.
+  THanks in advance for any help I receive.
+
+  Of other note: I too have received my H100 system, although minus the
+controller board, *sigh*. After looking it over, it looks very nice, 
+and I also have the extra floppy, extra 64K and the color chips and 
+monitor.  It is a very nice kit, and of course very well documented.
+I plan to have a BBS system up and running as soon as I can on this beast
+and if anyone is interested, I will give them the phone number to dial
+in.  I am working on my own version of a unix look-a-like which will
+run UNDER cp/m-86 as EUNICE runs under VMS.  So far it is about 80%
+complete (although not fully debugged since the code is being written
+on a cp/m-80 system) I may also market this product for a small fee,
+so anyone interested can contact me for more details on how it works.
+
+-Rich Fitzgerald (jazzy@aerospace)
+
+++++++++++++++++
+
+

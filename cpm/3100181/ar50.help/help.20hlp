@@ -1,0 +1,490 @@
+Welcome to the HELP Command
+How to Use the HELP Command
+Moving Around within the HELP Command
+HELP Command Prompts
+HELP Error Messages
+How to Write HELP Files
+An Explanation of the Tree Structure of the HELP Command
+Sample HELP Files Illustrating Use of Tree Structure
+Help on CP/M in general
+:HELP: Welcome to the HELP Command
+     Welcome  to the HELP Command!   The HELP Command is designed to assist 
+you,  the  CP/M  user,  in  the use of CP/M in general  and  specific  CP/M 
+commands  in  particular.   It  is  designed  as  an  interactive,  on-line 
+assistance system.
+     HELP pulls in files named <FILENAME>.HLP from disk and displays  these 
+to the user in a paged mode.  These files are of two basic types -- indexed 
+and non-indexed.
+
+     Indexed files are those HELP files which start with an index.  This is 
+an  example  of  an indexed file.   When HELP loads  an  indexed  file,  it 
+displays  this index to the user and allows him to select entries from  it.  
+The  user may select as many entries as he desires in any order he  desires 
+by  simply typing the letter of his selection.   Once the user has made his 
+selection, HELP will look up the body of text he selected and display it to 
+him  in a paged mode.   When the user has finished reading  his  selection, 
+HELP  then returns him to the index menu.   Typing a Control-C  will return 
+the user to CP/M.
+     Non-indexed  files  are  those HELP files which do not start  with  an 
+index.   In such cases,  HELP will immediately display the contents of  the 
+file to the user and,  when the user has finished looking at it,  HELP will 
+return to CP/M.
+     HELP is menu-driven, and all the commands available to the user at any 
+given time are displayed to him.  
+
+     HELP  can  be a very useful tool for on-line reference to  the  user.  
+It,  in  conjunction with the many HELP files now available,  has  already 
+proven to be of significant value.
+                                             Richard Conn
+:HELP: How to Use the HELP Command
+     The HELP Command is executed in one of three ways:
+          (1) by just typing 'HELP'
+          (2) by typing 'HELP FILENAME', where FILENAME
+              is the name of a disk file named FILENAME.HLP
+          (3) by typing 'HELP FILENAME.TYP', where
+              FILENAME.TYP is the name of a file created in
+              the format of a help file
+
+     If the user types just 'HELP',  he may  receive the HELP.HLP help file 
+(now being displayed to you).  For all other forms of the HELP command, the 
+user will see the specified help file information.  Generally speaking, the 
+name  of the help file should be indicative of its  subject,  like  CPM.HLP 
+should contain help information on CP/M.
+     HELP  can be configured in many different ways.   One such way causes 
+the  simple  command  'HELP'  to display to the  user  the  names  of  the 
+accessable  HLP  files  (as  opposed to the file HELP.HLP)  and  then  the 
+default HELP information built into HELP itself.
+
+                      The HELP File Search Hierarchy
+
+     Whenever  HELP looks for a specified HELP File (either from the  HELP 
+Command  or  from  an  Information Section which  specifies  a  Node  [see 
+later]),  HELP will perform a search for the indicated file.   This search 
+goes as follows:
+
+          1.   The  current user area on the current disk will be examined 
+for the file and the file will be loaded if found.
+          2.  If the user is not in the User Area 0 (default, which may be 
+changed),  User  Area 0 (or the default user area if different from 0)  on 
+the current disk will be examined for the file and the file will be loaded 
+if found.
+          3.   If the user is not on Drive A:, User Area 0 (or the default 
+user area if different from 0) on Drive A:  will be examined for the  file 
+and the file will be loaded if found.
+          4.   If the file is HELP.HLP, then the internal HELP File within 
+the HELP Command itself will be displayed.
+          5.   If  the above steps fail,  an error message will be printed 
+and control returned to CP/M.
+
+:HELP: Moving Around within the HELP Command
+     Once the user is running HELP, he is given a set of commands by which 
+he can display the particular items of information he is interested in.
+
+     After  issuing the HELP command,  the user will come up in one of two 
+modes (depending on the type of HELP file referenced).  In Indexed Mode, a 
+Menu  of  topics is displayed to the user and he can  select  the  desired 
+topic  by  typing the letter in front of the topic title;  in  Non-Indexed 
+Mode,  no  menu  is  displayed  and  the entire  file  is  viewed  as  one 
+Information Section.
+
+     An Information Section is a collection of sequential screen  displays 
+(one  screen  full  of text) called  Frames.   Typically,  an  Information 
+Section should contain a logical grouping of related data on a  particular 
+topic.  In Indexed Mode, each Menu topic refers to an Information Section.  
+By selecting a topic,  the user is placed into an Information Section.  In 
+Non-Indexed Mode, the entire HELP file is one Information Section.
+
+
+                           Moving From the Menu
+
+     At  the Menu of a HELP file,  the user has two basic options.   These 
+options  are to select a Menu topic to review or to exit to  CP/M.   If  a 
+Menu topic is selected, the user is placed into that Information Section.
+     A  third  option at the Menu of a HELP file is also  available  some-
+times.   This  option  is to move up to the  previous  HELP  Level.   Some 
+Information  Sections are entire HELP files in their own right,  which can 
+be accessed independently of the HELP file the user is currently  in.   If 
+the user enters one of these Information Sections, the name of the current 
+HELP  file is saved and the new HELP file is loaded.   When this  happens, 
+the user is placed at the next HELP Level (an ascending number,  where the 
+original HELP file is at HELP Level 0,  a HELP file called from this level 
+is at HELP Level 1, a HELP file called from this level is at HELP Level 2, 
+etc.).   When the user is at a lower HELP Level (user is NOT at HELP Level 
+0),  he  has  the option to move to the next higher HELP Level (from  HELP 
+Level 1 to HELP Level 0, for example).
+
+
+     The concept of moving between HELP Levels is derived from the concept 
+of a Tree data structure from Computer Science.  In this concept, the user 
+starts  at  the root of the tree and then climbs up and down the  tree  to 
+various levels,  or nodes.   From each node,  the user may only move up or 
+down  the tree -- he can't cross over to a node at the same level  without 
+first moving down the tree and then back up.   To illustrate, consider the 
+following:
+     Node A      Node B                                        HELP Level
+   _________   ____________                                         5
+     \  Node C   /
+     --------------                                                 4
+           \  Node D            Node E
+         ------------         ----------------                      3
+               \       Node F       /        Node G
+             ---------------------------   -----------              2
+                         \         Node H    /        Node I
+                       --------------------------    -------        1
+                                   \         Node J    /
+Root of Tree -->                 --------------------------         0
+
+     In  the above example,  the user must always start at the root of the 
+tree (Node J).  This is analogous to HELP Level 0, which is where the user 
+is place when he issues the HELP Command.   To get to Node C, for example, 
+the  user has to climb the tree from Node J to Node H to Node F to Node  D 
+to Node C.   This would be like the user entering 4 Node-Type  Information 
+Sections, in which different HELP files are successively loaded.
+     Now that the user is at Node C, let's say that he wants to go to Node 
+E.  Under the HELP System, there are two ways to do this:
+          1.   Jump  off  of  the tree and then climb back up to  Node  E.  
+Here,  the user would jump from Node C to Node J and then go to Node H  to 
+Node F to Node E.  Under HELP, the user can do this by exiting to CP/M and 
+then  reissuing the HELP Command or by issuing the Root Command (.);  once 
+at  the  root  of  the tree,  he then climbs  it  again  by  entering  the 
+appropriate Information Sections.
+          2.   Climb down the tree and then back up.   The user would move 
+from Node C to Node D to Node F and then back up to Node E.  The HELP user 
+can go to the previous level by issuing the Up Level (^) command.  In this 
+example, he would Up Level twice and then go back down.
+
+                   Moving Within An Information Section
+
+     Once the user is within a textual Information Section, he has several 
+capabilities for moving within this section and out of this section.
+
+     First,  to move out of an Information Section, the user can return to 
+the  menu (if the current HELP file is Indexed) or return to CP/M.   Addi-
+tionally,  if the user is not on the root (HELP Level 0), he can return to 
+the previous HELP Level (Up Level).  If the user is not in an Indexed HELP 
+file,  moving forward beyond the End of Information (EOI) will return  him 
+to  CP/M if he is at HELP Level 0 or return him to the previous HELP Level 
+if not.
+
+     To move within an Information Section, the data is typically arranged 
+sequentially.   Consequently, the user can move Forward to the next Frame, 
+Backward  to the previous Frame,  or to the beginning of  the  Information 
+Section.  Naturally, the user cannot move backward beyond the beginning of 
+the Information Section.   Also,  if the user tries to move forward beyond 
+the End of Information (EOI),  he is either returned to the Menu, returned 
+to CP/M, or returned to the previous HELP Level as described above.
+
+:HELP: HELP Command Prompts
+     The  following  are  the basic prompts for user  command  which  HELP 
+displays to the user and their meanings.
+
+^C=CP/M  ^=Level  .=Root  M=Menu  S=Start  L=Last  CR=Next -
+    \        \       \        \       \       \       \__Goto Next Frame
+     \        \       \        \       \       \__Goto Last (Previous) Frame
+      \        \       \        \       \__Goto Start of Info Section
+       \        \       \        \__Goto Menu of HELP File
+        \        \       \__Goto Root if NOT at Level 0
+         \        \           (this is displayed only if NOT at Level 0)
+          \        \__Goto Previous Level
+           \            (this is displayed only if NOT at Level 0)
+            \__Return to CP/M
+         
+  EOI   ^C=CP/M  ^=Level  .=Root  M=Menu  S=Start  L=Last  CR=Next -
+   \        \________\_______\________\_______\_______\_______\__Same as
+    \                                                            Above
+     \__User is at the End of Information (end of Information Section)
+
+Type  ^C=CP/M ^=Level .=Root or Enter Selection -
+          \        \       \            \__Enter letter of desired
+           \        \       \                Information Section
+            \        \       \__Goto Root
+             \        \           (this is displayed only if NOT at Level 0)
+              \        \__Goto Previous Level
+               \            (this is displayed only if NOT at Level 0)
+                \__Return to CP/M
+
+
+     Preceeding  each  of  the above prompts is an indicator of  the  HELP 
+Level and Frame Number the user is currently at.   This indicator may take 
+the following forms:
+
+<Nothing>
+     \__The user is at the Menu of Level 0
+
+fff:
+ \__Current Frame Number within Information Section
+      (the user is at Level 0)
+
+Level lll/
+       \__Current Level Number (The user is at a Menu Frame)
+            (this is displayed only if the user is NOT at Level 0)
+
+Level lll/fff:
+       \   \__Current Frame Number within Information Section
+        \__Current Level Number
+             (this is displayed only if the user is NOT at Level 0)
+
+
+                          Summary of User Commands
+
+     Cmd  Meaning
+      ^   Go to Previous Level
+      .   Go to Root Level
+      M   Go to Menu of Current HELP File
+      S   Go to Start of Information Section
+      L   Go to Previous Frame
+     CR   (Carriage Return or Space) Go to Next Frame
+     ^C   (Control-C) Return to CP/M
+
+:HELP: HELP Error Messages
+     The  following  are  the  error messages issued  by  HELP  and  their 
+meanings.
+
+HELP FATAL ERROR -- File not Found
+     The specified HELP File cannot be found.
+
+HELP ERROR -- Invalid Response
+     The user issued an invalid command.
+
+HELP ERROR -- EOF on HELP File
+     In searching for an Information Section, HELP ran into the end of the 
+HELP  File.   The  Indexed HELP File is improperly structured (more  index 
+entries than Information Sections).
+
+HELP ERROR -- HELP File NOT Terminated by ^Z
+     In loading a specified HELP File,  the last record was not terminated 
+by  a Ctrl-Z character,  which is the CP/M End of File Mark.   There is  a 
+suspected HELP File structure error.  If the HELP File specified is indeed 
+what  you  wanted,  edit  it and place a blank line at the  end  for  good 
+measure.
+
+HELP ERROR -- Not Possible to Backup Before Start of Info
+     An  L Command was issued when the current Frame was the beginning  of 
+the current Information Section.
+
+HELP ERROR -- Node Level Limit Reached -- Aborting
+     The limit of the nesting of the HELP Levels is exceeded.  HELP limits 
+the number of HELP Levels that can be traversed to 10 (default,  which can 
+be changed),  and an attempt was made to enter HELP Level 11 (or default + 
+1).
+
+HELP ERROR -- Invalid File Name in Load
+     An  Information  Section which is trying to load a node (go  to  next 
+HELP Level) contains an invalid file name.
+
+HELP ERROR -- No Higher Level to Return to
+     An attempt was made to go to a HELP Level previous to HELP Level 0 (^ 
+Command issued from HELP Level 0).
+
+
+HELP ERROR -- Not Enough Room for HELP File
+     The selected HELP File is too large to load into the available memory 
+in  the user's computer system.   The HELP File should be reduced in size; 
+using HELP Levels (Node references) in the Information Sections is a  good 
+way to do this.
+
+HELP FATAL ERROR -- File Name Contains Wild Card
+     The indicated HELP file name contains either an '*' or '?' wild card.  
+This is not permitted.
+
+:HELP: How to Write HELP Files
+     Files  used by the HELP program are either simple CP/M-standard  files 
+of   ASCII   text  or  ASCII  files  generated  by  the  Word   Star   text 
+editor/formatter.  These files, as mentioned above, are of two basic types: 
+indexed  and non-indexed,  and each type is related to the other and is  of 
+the same basic format.
+
+                          Grouping of Information
+
+     Information displayed to the user is grouped by the index in  indexed 
+HELP  files and may also be grouped by lines beginning with Form Feed (^L) 
+characters.   Grouping is an effective way to logically organize  informa-
+tion  so that meaning will be more clear to the user and units of informa-
+tion will not pass between screen displays.
+
+     The information displayed to the user is organized into logical units 
+called Information Sections and screen displays (one screen full of  text) 
+called Frames.  Using text editors, the user can create his own HELP files 
+and organize his information as he desires for display to the HELP user.
+
+
+                          Non-Indexed HELP Files
+
+     Non-indexed HELP files are simple ASCII files which start with a colon 
+(:) as the first character of the file and consist of ASCII text (with each 
+line terminated by a carriage return/line feed character combination).  The 
+information  in  such  a help file consists of all text after  the  leading 
+colon  up to either the terminating end-of-file mark (control-Z) or  a  new 
+line which starts with a colon.
+
+
+                            Indexed HELP Files
+
+     Indexed  HELP  files are simple ASCII files which do not start with  a 
+colon  (:)  as the first character of the file.   This type  of  HELP  file 
+consists  of one or more normal ASCII text lines as the first lines of  the 
+file  followed by information sections which begin with a line whose  first 
+character  is  a  colon  and end with either the first  line  of  the  next 
+information section or the end of the file.
+
+
+                Tree Structures within Indexed HELP Files
+
+     As mentioned above, the Indexed HELP File is divided into Information 
+Sections,  where each Information Section starts with a colon (:).   There 
+are two basic types of Information Section:
+
+          1.   Information Sections containing textual material; this type 
+of Information Section simply contains reading material which is organized 
+into Frames, where a Frame is equal to one screen display.
+          2.   Information Sections which reference other HELP files; this 
+type of Information Section begins with two colons (::) instead of one  as 
+in  (1) above;  the two colons are immediately followed by the name of the 
+HELP file (the HELP file type may be optionally specified).
+
+     To illustrate,  the following outlines the structure of the two types 
+of Information Sections:
+
+ :Title for Type 1 Information Section
+     <text>
+ : [next Information Section]
+
+               Figure:  A Text (Type 1) Information Section
+
+
+ ::HLPFILE                    <-- for HLPFILE.HLP
+ : [next Information Section]
+
+ ::HLPFILE.TYP                <-- for HLPFILE.TYP
+ : [next Information Section]
+
+         Figure:  Examples of Node (Type 2) Information Sections
+
+
+:HELP: The Tree Structure of HELP
+		-- Basic HELP File --
+  :Info Sect 1	:Info Sect 2	:Info Sect 3	:Info Sect 4 :
+  : Text	: HELP File	: Text		: HELP File  :
+ 		   /      \			   /    \
+ 	    -- SubHelp File 1 --	    -- SubHelp File 2 --
+        :Info Sect 1 :Info Sect 2 :	:Info Sect 1 :Info Sect2
+ 	: Text	     : HELP File  :	: Text	     : Text
+ 			/    \
+ 		-- SubSubHelp File 1 --
+ 	:Info Sect 1 :Info Sect 2 :Info Sect 3 :
+ 	: Text	     : HELP File  : HELP File  :
+ 			/  \	     /    \
+ 	-- Sub3Help File 1 --  -- Sub3Help File 2 --
+ 	:Info Sect :		:Info Sect 1 :Info Sect 2:
+ 	: Text     :		: Text	     : HELP File :
+ 						/    \
+ 					-- Sub4Help File --
+ 				:Info Sect 1 :Info Sect 2:
+ 				: Text	     : Text	 :
+
+                   Figure:  Sample HELP File Structure
+
+     The  above diagram is meant to illustrate how tree structures can  be 
+implemented under Versions 1.4 and beyond of HELP.  As the user can see, a 
+new  node of the tree is created whenever a HELP file is referenced by  an 
+Information  Section (as opposed to simply having text in the  Information 
+Section).   Each  node  becomes the base of a new tree,  which itself  may 
+contain references to other HELP files.
+
+     From  the previous diagram (feel free to refer back to  it),  SubHelp 
+Level  3 contains two HELP files.   These can be entered from  Information 
+Section 2 and Information Section 3 of SubHelp Level 2.   By simply enter-
+ing  one of these two Information Sections,  the appropriate HELP file  is 
+loaded and the user is placed at the next level.   From these HELP  files, 
+the  user may move within the HELP file itself or move up to the  previous 
+level (naturally, the user always has the option to exit to CP/M).
+
+:HELP: Sample HELP Files Illustrating Use of Tree Structure
+     The  following  Frames  show the source to three  HELP  Files,  named 
+DEMO.HLP, DEMO2.HLP, and DEMO3.HLP.  DEMO.HLP is provides the Root Node to 
+a tree which includes DEMO2.HLP and DEMO3.HLP as subnodes.   Additionally, 
+DEMO3.HLP has a subnode which references DEMO.HLP,  so we have a recursive 
+tree structure.
+
+
+                                 DEMO.HLP
+ TEST 1 - OK                  <-- Menu
+ TEST 2 - SIMPLE NEST
+ TEST 3 - INVOLVED NEST
+ TEST 4 - OK
+ :TEST 1                      <-- First Info Section (Text)
+ THIS
+ IS 
+ TEST
+ 1
+ ::DEMO2                      <-- 2nd Info Section (Node)
+ ::DEMO3                      <-- 3rd Info Section (Node)
+ :TEST 4                      <-- 4th Info Section (Text)
+ TO BE, OR NOT TO BE, THAT IS THE QUESTION!
+ WHETHER 'TIS NOBLER TO SUFFER THE SLINGS AND ARROWS OF OUTRAGEOUS FORTUNE
+ OR TO TAKE ARMS AGAINST A SEA OF TROUBLES AND BY OPPOSING END THEM.
+ TO DIE, TO SLEEP ... TO SLEEP, PERCHANCE TO DREAM.
+ AYE, THERE'S THE RUB!  FOR IN THAT SLEEP, WHAT DREAMS MAY COME!
+
+                                DEMO2.HLP
+ :TEST 2                       <-- No Menu -- 1 Info Section
+ THIS
+ IS
+ TEST
+ 2
+
+                                DEMO3.HLP
+ TEST 3A                       <-- Menu
+ TEST 3B
+ TEST 3C
+ :TEST 3A                      <-- First Info Section (Text)
+	THIS
+	IS
+	TEST
+	3A
+	the rain in Spain falls mainly in the plain
+
+ :TEST 3B                      <-- 2nd Info Section (Text)
+	THIS
+	IS
+	TEST
+	3B
+ ::demo                        <-- 3rd Info Section (Node)
+
+
+:HELP: General Information on CP/M
+     CP/M is a monitor control program for microcomputer system development 
+which  uses IBM-compatible flexible disks (floppy disks) for mass  storage.  
+Using  a  microcomputer  mainframe  based on Intel's 8080  or  Zilog's  Z80 
+microprocessor,   CP/M   provides   a  general  environment   for   program 
+construction,  storage,  and editing, along with assembly and program debug 
+facilities.   An important feature of CP/M is that it can be easily altered 
+to  execute  with any computer configuration which uses an  Intel  8080  or 
+Zilog  Z80 Microprocessor and has at least 16K bytes of main memory with up 
+to four IBM-compatable diskette drives.
+     The  CP/M monitor provides access to programs through a  comprehensive 
+file  management  system.    The  file  subsystem  supports  a  named  file 
+structure,  allowing dynamic allocation of file space as well as sequential 
+and  random  file access.   Using this file system,  a up  to  64  distinct 
+programs can be stored in both source and machine-executable form.
+     Digital  Research,  the  designer of CP/M,  has provided a set of  six 
+manuals which describe the use and operation of CP/M in detail.
+
+     These manuals are:
+          1.  An Introduction to CP/M Features and Facilities
+          2.  ED:  A Context Editor for the CP/M Disk System
+          3.  ASM:  CP/M Assembler User's Manual
+          4.  DDT:  CP/M Dynamic Debugging Tool User's Manual
+          5.  CP/M Interface Guide
+          6.  CP/M System Alteration Guide
+
+     As the reader can see,  CP/M supports a context editor,  an  assembler 
+(Intel-compatable),  and  a  debugger system.   These are available in  the 
+basic CP/M package.   There is a large variety of other software  available 
+which  can  run under CP/M with little or no modification.   Such  software 
+includes  several  assemblers (both 8080 and  Z80),  a  symbolic  debugger, 
+several  high-level  languages (including FORTRAN  IV  {compiler},  BASIC-E 
+{translator},  CBASIC {translator}, many interpretive BASICs, ALGOL, FOCAL, 
+and  C),  and  several special-purpose applications programs (such as  text 
+formatting systems and accounting systems).
+

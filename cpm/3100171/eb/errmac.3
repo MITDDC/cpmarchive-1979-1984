@@ -1,0 +1,39 @@
+
+
+(eval-when (compile eval)
+	   (cond ((get 'for 'macro) 'for)
+	          (t (load '((liblsp) for)))))
+
+(cond (compiler-state (let ((s-sym))
+			(let ((obarray sobarray))
+			  (setq s-sym (readlist '(t o p f n))))
+			(intern s-sym))))
+
+(defun er-unique (x)
+   (for zt on x collect (car zt) unless (memq (car zt)(cdr zt))))
+
+(defun er-walk-find (form superform)
+   (cond ((eq form superform) t)
+	 ((atom superform) nil)
+	 ((for x in superform first-time (er-walk-find form x))
+	    t)
+	   (t nil)))
+
+(defun er-find-form-in-defs (form fns)
+   (for f in (er-unique fns)
+    bind temp
+    first-time (setq temp (getl f '(expr fexpr subr lsubr)))
+	       (and (memq (car temp) '(expr fexpr))
+		    (er-walk-find form (cddr (cadr temp)))
+		      f)))
+
+(defun er-find-macro-caller (form)
+  ;; Crock function to attempt to determine in what function a 
+  ;; macro call appears.  Returns NIL if it can't tell.
+  ;; Assumes that FORM is currently under evaluation or compilation.
+   (cond (compiler-state TOPFN)
+         ((null *rset) nil)
+	 ((er-find-form-in-defs form (mapcar 'car (baklist))))
+         (t nil)))
+
+

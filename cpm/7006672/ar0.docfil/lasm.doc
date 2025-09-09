@@ -1,0 +1,150 @@
+*****************************************************************
+*                                                               *
+*  10/01/81                                                     *
+*                                                               *
+*  LASM is an update of LINKASM, with the minor change that     *
+*  it prints the name of each linked file before it is opened.  *
+*  This helps track progress, and helps find misspelled names.  *
+*                                                               *
+*                                         -Ward Christensen     *
+*                                                               *
+*****************************************************************
+
+LINKASM.COM
+01/07/80	by Ward Christensen
+
+OVERVIEW:
+	LINKASM is based on CP/M assembler 1.0, and is
+compatible with 1.0, 1.3, and 1.4 assemblers.  (2.0? Dunno.)
+		----------------
+LINKASM is a rewrite of CP/M 1.0 ASM.COM, incorporating:
+
+*	A new pseudo-op code, LINK.
+*	Smaller .COM file size (6K vs 8K).
+*	Faster execution via larger ASM, HEX, and PRN buffers
+*	Corrections to properly handle lower case DB values.
+*	Prints the number of source lines read
+*	Produces a symbol table for use under SID
+
+	The LINK pseudo-op allows a file to "chain" to the 
+next .ASM file, thereby allowing very large source files to
+be processed without having to PIP them together.
+
+RESTRICTIONS:
+	All the linked .ASM files must be on the same disk.
+	Nested IFs are not handled (ASM.COM didn't either)
+Note that you can use IF to conditionally link to the next
+module:
+
+	IF	CLOCK
+	LINK	CLOCKRTN
+	ENDIF
+;
+	IF	NOT CLOCK
+	LINK	OTHERRTN
+	ENDIF
+
+	For example, if CLOCK is true, then LINK CLOCKRTN
+(i.e. CLOCKRTN.ASM) will take place, and the assembler
+will never see the ENDIF.  This is not a problem as the
+next encountered IF will be handled properly.
+		----------------
+USAGE:
+	LINKASM is totally compatible with ASM.COM, and
+you may therefore replace ASM.  Its performance will be
+slightly better than ASM.COM, and it takes less space on
+disk (6K vs 8K).
+	Execute it just like ASM.COM, i.e. 
+	
+	LINKASM name.p1p2p3
+
+where:	p1 is the .ASM file disk (A, B, ...)
+	p2 is the .HEX file disk (A, B, ... or Z for none)
+	p3 is the .PRN file disk (A, B, ... or Z for none,
+		or X for the console)
+
+	The default is the logged in disk for all 3.
+
+	If you wish to write a symbol table file, follow
+the command line with the disk to be written to (A, B, ...)
+then a colon.  For example, to assemble FOO from the A:
+disk, put the .HEX on the A: disk, send the .SYM file to
+B:, and the listing to the console:
+
+	LINKASM FOO.AAX B:
+
+	To assemble it doing everything on the A: disk
+(assuming A: is the logged in disk):
+
+	LINKASM FOO A:
+
+	The ":" must be specified after the .SYM disk.  The 
+.SYM file is "partially" sorted, i.e. all Axxxx then all Bxxxx
+etc.  SID fully scans the symbol table anyway, so sorting
+it is not necessary, so I did this quick sort hack just to
+make it eaiser for YOU to find a symbol.
+		----------------
+	The LINK pseudo ops take a single operand: the name
+of an .ASM file to be processed next.  For example:
+----------------
+A:TEST1.ASM:
+
+	ORG	100H
+	LXI	H,MSG
+	MVI	C,9
+	CALL	BDOS
+	RET
+	LINK	TEST2
+----------------
+A:TEST2.ASM:
+
+MSG	DB	'Linked'
+BDOS	EQU	5
+----------------
+	Then assemble it:
+
+A>LINKASM TEST1.AZX
+LINKASM AS OF 7/13/79
+
+
+ 0100			ORG	100H
+ 0100 210901		LXI     H,MSG
+ 0103 0E09		MVI	C,9
+ 0105 CD0500		CALL    BDOS
+ 0108 C9		RET
+                        LINK	TEST2
+ 0109 4C696E6B65MSG     DB	'Linked'
+ 0005 =		BDOS	EQU	5
+010F
+000H use factor
+8 input lines read
+End of assembly
+
+		----------------
+	I will make one apology for LINKASM - I neglected
+to put in an error message saying the name of the missing
+file, if you should accidentally LINK to a non-existant file. 
+It just says the source file is not present.
+	If necessary, you can find the name which was
+being searched for.  It's in memory at 186H.  If you have
+a PROM monitor, you can examine it.  If not, do the following
+BEFORE executing any more COM programs following the LINKASM:
+
+	SAVE 1 BADNAME.COM	Save 100-1ff to disk     
+	DDT BADNAME.COM		Bring in under DDT (or SID)
+	D186,190		Dump the name
+	^C			Reboot (some people use G0)
+	ERA BADNAME.COM		ERA the temporary file.
+
+Sorry for that hack, but I thought it better to put LINKASM
+in the CP/M UG with that problem, rather than holding it
+back "trying to make it perfect".
+		----------------
+I have not encountered any problems using LINKASM as my
+main assembler for about the last 6 months.  Among other
+things, I use it to assemble CBBS.ASM which, with its 14
+or so LINKed files, is over 6000 lines.  It takes about 5 1/2
+minutes, as I recall (HEX and SYM, no PRN).
+
+				Ward Christensen
+

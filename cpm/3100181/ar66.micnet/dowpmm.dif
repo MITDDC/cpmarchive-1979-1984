@@ -1,0 +1,97 @@
+13,14c 19312
+;  *** See modification note of 4/02/82 below! ***
+;            
+;               3/24/82 -- FIRST SOURCE RELEASE
+;
+.
+60a 48068
+subrev	equ	'2'	; sub-revision
+.
+63a 62498
+;	 4-02-1982	Ver. 1.22 - Several minor mods. including addition
+;			of PMMI drivers, replacement of warmboot (labeled
+;			coldboot!) with a return, etc. (C. Strom)
+;
+.
+78a 58114
+	ld	hl,0		; stash CP/M's stack
+	add	hl,sp
+	ld	(stack),hl
+.
+106c 30642
+	jp 	exit 		; terminate
+.
+124c 24630
+	defb	cr,lf,'Download Vers. ',vers,'.',rev,subrev,cr,lf
+.
+197c 35138
+	jp	exit		; and terminate abnormally
+.
+377c 56634
+	jp	exit		; and abort
+.
+449,457c 42525
+; This routine must send the char in the accumulator to the modem
+; port as 8 bit byte
+;
+punout:
+;
+basprt	equ	0c0h		;pmmi modem base i/o port
+ctl	equ	basprt		;primary control port
+sioprt	equ	basprt+1	;serial data port
+sioir	equ	02h		;data input ready flag
+siotr	equ	01h		;transmitter ready flag
+;
+	push	af
+outwt:	in	a,(ctl)		;read status
+	and	siotr		;isolate bit
+	jr	z,outwt		;wait till ready
+	pop	af
+	out	(sioprt),a	;output char to modem
+.
+468,469d 43843
+471,473c 63427
+;
+pcharin:
+;
+	in	a,(ctl)		;get status
+	and	sioir		;isolate bit
+	jr	z,pcharin	;ready?
+	in	a,(sioprt)	;yup, so get char
+	and	7fh		;strip parity
+.
+481c 17445
+;**************************************************************************
+; ROUTINE TO PRINT A MESSAGE ON THE CONSOLE DEVICE- uses standard cp/m convention
+;
+prnmes:
+	ld	c,pstrg		; print string function	
+	call	bdos		; to cpm
+	ret			; to caller
+;
+;
+;**************************************************************************
+; ROUTINE TO READ A BUFFER FROM OPERATOR - RETURNS STANDARD CONSOLE BUFFER
+mesinp:
+	ld	c,rdcbuf	; read console buffer function	
+	call	bdos		; call op/sys
+	ret			; to caller
+.
+498,513c 17583
+; Routine to exit gracefully without a warm boot (known to Bob R.
+; as a coldboot)
+exit:
+	ld	de,80h		; restore dma adress
+	ld	c,fn$std	; to keep op sys happy
+	call	bdos
+	ld	hl,(stack)	; restore old stack
+	ld	sp,hl
+	ret			; and bow out
+;
+.
+513a 49895
+stack:
+	defs	02h		; CP/M's stack
+.
+$a 36135
+.

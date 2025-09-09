@@ -1,0 +1,219 @@
+                                INDEX PROGRAM
+                                 Version 3.0
+
+                                      by
+                                 F. J. Greeb
+                               1915 S. Cape Way
+                           Denver, Colorado  80227
+                              Copyright (C) 1981
+
+     INDEX is a CP/M (R) utility program combining the features of DIR and
+STAT.  It provides an alphabetical listing of the disk directory, spaced in
+columns across the screen, and may include the file size for each entry.  The
+total number of files, the total number of directory entries used, the disk
+space used, and the disk space remaining is also reported.
+
+     The general form of the command is
+
+            INDEX {/OPTIONS} {DRIVE:}{FILENAME}{.}{FILETYPE}
+
+where all of the parameters in the braces are optional.  Wild card characters
+(* and ?) can be included in the file name designations.  The following
+example commands, and their results, illustrate the wild character capability
+of the program.
+
+
+          INDEX                 Directory of all files on current drive
+          INDEX B:              Directory of all files on drive B
+          INDEX *.COM           Directory of all COM files on drive B
+          INDEX A??.*           Directory of all three letter or less
+                                file names begining with the letter A
+                                on the current drive
+          INDEX B:A*.*          Directory of all files on drive B which
+                                begin with the letter A, regardless of
+                                the file name length.
+
+     OPTIONS - The options which are allowed are:
+
+          /R          Resets the disk system before performing the
+                      directory search.  Use this option if you
+                      change disks without doing a Control C.
+
+          /P          Directs the output to the printer rather than
+                      to the console.
+
+          /F          Outputs a form feed character (Control L) before
+                      printing the directory (console or printer).
+
+          /T          Allows a title to be input (immediately following
+                      the T) which will replace the DRIVE designator on
+                      the directory output.  The maximum title length is
+                      20 characters, and no spaces may be contained in
+                      the input title.  To include spaces in the output
+                      title, use the underline character.  The underline
+                      will be translated to a space before the title is
+                      printed.  If you are using the Master Catalog Program
+                      and your disks have a disk name file with a dash as
+                      the first character, the disk name may be used as the
+                      title by using a /T- option.  This form of the title
+                      option causes the INDEX program to read the disk name
+                      and substitute it for the normal title.
+
+          /B          Sets the brief mode.  The size reporting for each
+                      individual file is suppressed.  The total disk space
+                      used is still reported.  This mode is useful for
+                      large directories, since more columns will fit on
+                      the screen.
+
+          /Wn         Set the output width to n, where n is a number in the
+                      range of 32 to 255.  This command can be used to
+                      adjust the program for screens smaller than the
+                      nominal value of 80, or to set the width to a
+                      larger number for directories sent to the printer.
+                      The number of columns is automatically adjusted to
+                      fit the width you specify.
+
+          /S          Include system files in the directory listing
+                      (CP/M Version 2 only).  System files are
+                      normally suppressed from the directory.  This
+                      option allows you to display them.
+
+          /M          Modify the program to reset any of the above
+                      options to the default value.  For example,
+                      INDEX /B/M will modify the program so that the
+                      brief mode is the normal state.  Including the
+                      /B command will then cause the expanded output
+                      form to be used.  /T-/M will cause the title to
+                      default to the disk name.  If no disk name is
+                      found, the normal DRIVE A title will be used.
+                      You can not set up any other title as the
+                      default value.  See the note below concerning
+                      this option.
+
+           /V         Reports the version number for the INDEX program
+                      you are using.  Please include this version number
+                      when reporting any bugs or suggested improvements
+                      to the program.
+
+           /Un        Lists the directory for user number n, where n
+                      is a number in the range of 0 to 15
+                      (CP/M Version 2 only).
+
+           /H         Print a short help message on the console, which
+                      lists all of the available options.
+
+
+     The options may be chained together by separating then with a slash,
+which is used as the option designator character.  Chained options may appear
+in any sequence and may also include a space as a separator if desired.  There
+must be at least one space following the last option and any drive or file
+designator which is included.
+
+     For example, the command
+
+          INDEX /R/P /F/TSYSTEM_FILES B:*.COM
+
+will reset the disk system, use a title of SYSTEM FILES, and output the
+directory of all COM files on drive B to the printer, with a leading form
+feed.  A little experimentation with the options and file name wild card
+characters will give a better understanding of their operation.  Note that all
+inputs may be in either lower or upper case, and are translated internally to
+upper case only, in keeping with the CP/M format.  This does not include the
+titles, which may be output in upper or lower case.
+
+
+                                Error Messages
+
+     There are three error messages which may be output by the program.  These
+are:
+
+          INVALID FILE NAME  - Indicates that the file name specified is not a
+valid CP/M file name.  This usually means that it is too long, although other
+problems can cause this error message to appear.
+
+          UNRECOGNIZED OPTION IGNORED - Indicates that an option has been
+included in the command string that the program does not recognize.  The error
+is ignored and all other options are still in effect.
+
+          FILE ERROR DURING MODIFY - Indicates that the modify option was not
+completed successfully.  This can occur if the file INDEX.COM is not found on
+the default disk, if the program and disk version numbers do not match, or if
+a disk write error occurs.
+
+
+                                Modify Option
+
+     A word of caution if you use the Modify option.  This option requires
+that the INDEX.COM program is on the default disk.  If you are logged on to
+Drive A, and you issue the command B:INDEX /B/M to set the default to the
+brief mode, the program will search for a program named INDEX.COM on Drive A.
+If you do not have a second copy of the program on Drive A, an error will be
+reported and no serious consequences will result.  However, if there is a file
+named INDEX.COM on Drive A, and it is not the same as the program on Drive B,
+or is a completely different program, it is possible that it will be
+destroyed.  The modify command performs a check for the correct version number
+and a partial contents comparison before allowing the modify operation to be
+completed, but this is not completely foolproof.  The modify command asks for
+confirmation before updating the program so if you input the modify option by
+mistake you can abort it before any harm is done.
+
+     The modify command can be used to set up a default value for performance
+of a series of runs, and then be used again to restore the program to its
+original state.  For example, if you want to list a series of directories on
+the printer, with a leading form feed for each printout, the command
+
+          INDEX /P/F/R/M
+
+can be used to set up the desired default mode.  You can then list all of the
+disks, assuming you are logged on to Drive A, using the command
+
+          INDEX B:
+
+The new default values eliminate the need to list the options separately for
+each disk that you put in the B drive.  Including the reset option allows the
+disk space remaining to be reported correctly, without having to input a
+Control C after each disk change.
+
+     After you have printed all of the desired directories, the program output
+can be restored to the console by using the command
+
+          INDEX /P/M
+
+The /P option toggles the printer flag, and since the current default was for
+printer output, this returns the default to the console.  Also, since the /F
+and /R options were not reset, they are still in effect as the default mode.
+Using this technique, you can set up any available options that you desire as
+the default mode.  Note that only options preceeding the /M option in the
+command line will be modified.  A command of the form
+
+          INDEX /B/M/P
+
+will send a brief mode directory to the printer, but only the brief mode will
+be reset as the default value.  Since the /P option is after the /M option,
+the printer will be used for this run only, rather than becoming the default
+mode.
+
+
+                            Operating Restrictions
+
+     The program is configured in a general manner and should work with any
+version of CP/M, with mini-disks, 8 inch disks, or even hard disks.  The
+program has been tested with CP/M Version 1.4 and 2.2 using both single and
+double density 8 inch disks, and with Version 2.2 using mini disks and hard
+disks.  Please report any errors or bugs which are detected to the author at
+the address listed above, including the INDEX version number as reported by
+the /V option, and as much detail about the system configuration and disk
+status as possible.
+
+     There is one known case where file sizes may not be reported correctly.
+If you use the random write capability of CP/M Version 2, and write a file
+with holes (such as initially writing only record 10 and record 2356), the
+file size reported may not be correct.  Since this type of file occurs only
+rarely (most random files are initially created sequentially) the extra code
+necessary to assure correct size reporting for them has not been included in
+the program.  If you have a file of this type, the CP/M STAT command can be
+used to verify the file size.
+
+
+CP/M is a registered trademark of Digital Research.
+

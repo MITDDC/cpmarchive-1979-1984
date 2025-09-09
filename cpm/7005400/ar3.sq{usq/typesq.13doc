@@ -1,0 +1,45 @@
+Date: 24 August 1981 03:22-EDT
+From: Keith B. Petersen, W8SDZ
+To:   All
+Re:   TYPESQ version 1.3 now available
+
+TYPESQ version 1.2 (previously called TYPESQ2), the program for typing
+"squeezed" ASCII files, has been updated as of today (thanks to Bob
+Mathias).  TYPESQ2 was printing CR-CR-LF when it came to a CR-LF in
+the file.  This has been corrected, and a message has been added to
+the 40 and 80 character limited versions to tell when the limit has
+been exceeded.  The previous versions simply stopped printing.
+
+New version 1.3 .COM files:
+
+--> FILE:  TYPSQ40A.COM		CRC = 5B A9	<--limit 40 lines
+
+--> FILE:  TYPSQ80A.COM		CRC = 3B 10	<--limit 80 lines
+
+--> FILE:  TYPESQ13.COM		CRC = 52 C5
+
+
+Source code for new version 1.3:
+
+--> FILE:  TYPESQ13.C  		CRC = D1 9C
+
+--> FILE:  SPCLDIO .C  		CRC = C5 DC
+
+
+
+	  TYPESQ.DOC as of 7/6/81
+   by Bob Mathias and Keith Petersen, W8SDZ
+
+TYPESQ.COM is a program primarily for use on remote
+CP/M systems to allow typing "squeezed" files.  It
+does not accept wild cards, but will accept multiple
+file names on the command line, separated by spaces.
+The output to the console is "filtered" (like MLIST)
+to eliminate control characters other than CR, LF,
+TAB, or FORMFEED.
+
+TYPESQ is based on USQ by Richard Greenlaw, and was
+written by Bob Mathias, with suggestions from Keith
+Petersen.
+
+

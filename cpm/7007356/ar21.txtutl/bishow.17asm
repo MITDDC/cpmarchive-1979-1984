@@ -1,0 +1,710 @@
+;	title	'BISHOW v1.07 - buffered bidirectional file scroll utility'
+;
+; Ver 1.07, 1 Aug 83, Ted H. Emigh  ...!unc!tucc!emigh
+;	- added screen width specification
+;	- added screen definition commands (see notes below)
+;
+; Ver 1.06, 2 Jul 83, Chuck Forsberg
+;	- added commands for more, mince, vi familiarity. Bad cmd gives help
+;
+; Ver 1.051, 26 June 83, Dick Mead
+;	- added "?" for help on commands.
+;
+; Ver 1.05, 31 May 83, Bruce Ratoff
+;	- added 'N' (next line) and 'P' (previous line) cmds
+;	- decreased buffer from 8k to 4k (8k takes too long)
+;
+; Ver 1.04, 15 May 83, Keith Petersen, W8SDZ
+;	- fixed bug which caused display past end-of-file
+;		and added bugus eof in case none at file end
+;	- added strip of high-order bit in line count routine
+;	- added exit clear of any left-over keyboard character
+;
+; Ver 1.03, 11 May 83, Keith Petersen, W8SDZ
+;	- fixed to allow assembly with ASM.COM
+;	- fixed screen clear bug when crossing read boundries
+;	- added strip for high-order bit in character before
+;		printing (needed for WordStar files)
+;	- improved stack routines
+;	- fixed bug in console input routine
+;	- removed Z80 dependant code (now works on 8080 too)
+;
+; Ver 1.02, 06 May 83, Lucien Pan, Toronto, Canada
+; 	- fixed some minor bugs
+; 	- returns to ccp w/o warm boot
+; 	- filters form-feeds (useful in .PRN files)
+; 	- scrolls foward/backwards by same number of lines
+; 	- disable/enable cursor during scroll for H-19
+;
+; Ver 1.01, 30 Mar 83 - added BDOS function  6.  W.F.Mcgee
+;
+; Ver 1.00, 23 Aug 82 Phil Cary, 748 Kenilworth Parkway, Baton
+; Rouge, LA  70808
+;
+; BISHOW is a  buffered,  bidirectional  version  of  SHOW.ASM
+; which first appeared in Interface Age, November, 1981.  That
+; program  could  only  scroll  forward  in  a  file, and read
+; sectors from disk one at a time as they  were  sent  to  the
+; console.   I  used SHOW frequently to take a quick look at a
+; file without loading a  big  text  editor,  and  to  examine
+; another  file  with the RUN command while in Wordstar.  TYPE
+; does not work since it is not a file that Wordstar can  load
+; and run.
+;
+; It was annoying when I went past the point I was looking for
+; in a file with SHOW, and could not go backwards.  Thus, this
+; bidirectional  version  which  uses  random access reads. In
+; addition, buffering was added so that  the  number  of  disk
+; reads  would  be  reduced,  and  moving  back and forth in a
+; moderate sized file would be speeded up.  There is  a  trade
+; off between the size of the buffer and the length of time it
+; takes to refill the buffer which should be set to the user's
+; preference.
+;
+; There are several customizing items in this program.  One is 
+; the equate "maxsec" which sets the buffer size.   Another is 
+; the  string  in the subroutine "clrscr" just after  the  org 
+; statement.   This should be changed to erase the screen  and 
+; home  the cursor for the user's terminal.   The program,  as 
+; written,  requires a terminal with an erase screen and  home 
+; cursor  function.   Some  terminals  do not allow  the  80th 
+; column  to be filled without going to the  next  line.   For 
+; this reason, the screen width ("maxchr") initially is set to 
+; 79.   The screen sizes can be changed using the "S" (screen) 
+; command.  The parameters that can be changed are the maximum 
+; column  displayed ("maxchr"),  the minimum column  displayed 
+; (allowing  you  to "window" the output),  and the number  of 
+; lines ("scroln").   A zero for the maximum column  displayed 
+; will  give and unlimited screen width.   The maximum  column 
+; displayed  and  the number of lines can be set when  calling 
+; BISHOW,  e.g.,  "BISHOW file.nam 79 24" will give 79 columns 
+; and 24 lines,  and "BISHOW file.nam 79" will give 79 columns 
+; with the default number of lines.  The last customizing item 
+; is the "short" equate.   If this is chosen, the multiplicity 
+; of command forms is not allowed (see the beginning to change 
+; the  commands  used),  and certain messages  are  shortened.  
+; This will allow BISHOW to fit into a 1K area.  If "short" is 
+; false, the program is slightly over 1K.  Finally, direct I/O 
+; to the console is used to avoid echoing the commands to  the 
+; console as the CP/M write console function does.
+;
+; Just  a  small contribution to the public domain software as
+; partial payment for the many fine and  educational  programs
+; the system has given me.  Phil Cary.
+;
+;Define version number for help message
+vers	equ	1
+revs	equ	70
+;
+false	equ	0
+true	equ	not false
+;
+;	Operational equates
+;
+maxsec	equ	32		;number of sectors in buffer
+scroln	equ	24		;number of lines per scroll
+maxchr	equ	79		;number of characters per line
+fulbuf	set	dskbuf+(maxsec*128)	;need to know end of buffer
+;
+heath	equ	false		;assemble for H-19 terminal
+short	equ	true		;set to true if you want the short version
+				;which is less than 1K
+;
+base	equ	0		;standard zero base CP/M
+;
+;	BDOS functions
+;
+conout	equ	2		;console write
+open	equ	15		;open file
+readr	equ	33		;read file random access
+stdma	equ	26		;set dma address
+;
+;	Page zero equates
+;
+wboot	equ	base		;warm boot entry point
+bdos	equ	wboot+5		;BDOS entry point
+fcb	equ	wboot+5ch	;default fcb drive number
+cmdtail	equ	wboot+80h	;location of command tail
+fcbfn	equ	fcb+1		;start of filename
+fcbft	equ	fcb+9		;start of filetype
+fcbex	equ	fcb+12		;current extent number
+fcbcrr	equ	fcb+33		;current record number, random access
+tpa	equ	wboot+100h	;transient program area
+;
+;	ASCII equates
+;
+endmsg	equ	0		;null
+bell	equ	7		;bell
+tab	equ	9		;tab
+lf	equ	0ah		;line feed
+cr	equ	0dh		;carriage return
+eof	equ	1ah		;end of file
+esc	equ	1bh		;escape
+space	equ	20h		;space
+;
+; Equates for the short version
+;
+; Any invalid command gives help
+; in addition to quit, ^C ends the program
+; Be sure to change the help2 printout
+;
+nxtpag	equ	space		;next page
+back	equ	'B'		;scroll backward
+next	equ	cr		;next line
+prev	equ	'-'		;previous line
+screen	equ	'S'		;set screen parameters
+quit	equ	'Q'		;exit bishow
+first	equ	'1'		;first page
+;
+	org	tpa
+;
+	jmp	start		;skip over next subroutine
+;
+clrscr:	if	not heath
+	call	cdisp
+	db	esc,'+',endmsg	;put your screen clear string here
+	endif
+;
+	if	heath
+	call	cdisp		;command to erase screen and home cursor
+	db	esc,'E',endmsg	;__for H/Z-19 terminal. change as required
+	endif
+;
+wait:	mvi	b,0		;waste time (may or may not be necessary)
+;
+wait1:	xthl			;good time gobbeler!
+	xthl
+	dcr	b
+	jnz	wait1
+	ret			;return from clrscr
+;
+help2:
+if not short
+	call	cdisp
+	db	cr,lf,'Commands:',cr,lf
+	db	'^F,F,^V,sp=next page, ^B,B=back page',cr,lf
+	db	'CR,+,N=next line, '
+	db	'-,P=back line, 1=1st line, ^C,Q=exit',cr,lf,endmsg
+	jmp	getcmd
+endif
+if short
+	call	cdisp
+	db	cr,lf,'Commands:',cr,lf
+	db	'sp=next page, B=back page',cr,lf
+	db	'CR=next line, '
+	db	'-=back line, 1=1st line, ^C,Q=exit',cr,lf,endmsg
+	jmp	getcmd
+endif
+;
+start:	lxi	h,0		;get ccp's stack
+	dad	sp
+	shld	stack		;save old stack for later
+	lxi	sp,stack	;set new stack
+	lxi	h,cmdtail	;point to command tail
+	mov	b,m		;get number of char in tail
+	inx	h		;point to first character
+	inr	b
+eatsp:	mov	a,m		;get character if there is one
+	inx	h
+	dcr	b		;b=number of characters left
+	jz	openf		;no more characters
+	cpi	space		;ignore spaces
+	jz	eatsp
+filnam:	mov	a,m		;get characters in file name
+	inx	h
+	dcr	b		;b=number of characters left
+	jz	openf		;only file name in tail
+	cpi	space		;wait for next space
+	jnz	filnam
+	lxi	d,chrmax	;point to chr/line
+	call	getnbr		;get number of characters/line
+	jc	help		;invalid number
+	lxi	d,linmax	;point to number of lines
+	cnz	getnbr		;call only if characters still in
+				;__command tail
+	jc	help		;invalid number
+;
+openf:	call	opnfil		;open file in default fcb
+;
+wrtfwd:	xra	a		;get a 0
+	sta	lincnt		;store in line count
+	sta	chrcnt		;store in character count
+	sta	fcbex		;zero current extent
+	sta	fcbcrr		;zero current record
+	sta	fcbcrr+1	;__both bytes
+	sta	fcbcrr+2	;__and the overflow
+	call	clrscr		;erase the screen
+;
+wrtfw0:	call	filbuf		;fill the disk buffer
+	lxi	h,dskbuf	;point to beginning of buffer
+;
+wrtfw1:	mov	a,m		;get a character
+	cpi	eof		;see if eof
+	jz	getcmd		;yes, wait for command
+	inx	h		;bump pointer
+	ani	7fh		;strip high bit
+	cpi	'L'-40h		;filter form-feeds
+	jz	filter		;__commonly found in .PRN files
+	call	co1		;put it on console
+	cpi	cr		;see if end of line
+	jz	fwdcnt		;yes, adjust line count
+;
+wrtfw2:	lxi	d,fulbuf	;get end of buffer address
+	mov	a,d		;compare high
+	cmp	h		;__order bytes
+	jnz	wrtfw1		;if not equal, continue
+	mov	a,e		;else compare low
+	cmp	l		;__order bytes
+	jz	wrtfw0		;refill buffer and start over
+	jmp	wrtfw1		;else, continue with next character
+;
+help:	call	cdisp
+	db	'BISHOW version '
+	db	(vers mod 10)+'0','.'
+	db	revs/10+'0',(revs mod 10)+'0',cr,lf
+	db	'Usage: d:bishow d:fn.ft [cols [lines]]',cr,lf
+	db	endmsg
+	jmp	exit1
+;
+filter:	push	psw		;save status
+	mvi	a,'^'		;print '^' in front
+	call	co1		;__of control character
+	pop	psw		;restore status
+	adi	40h		;mask into displayable char
+	call	co1		;display filtered control char
+;
+fwdcnt:	lda	lincnt		;get number of lines displayed
+	inr	a		;bump it
+	sta	lincnt		;__and store it
+	mov	d,a		;save lincnt
+	lda	linmax		;get max number of line
+	cmp	d		;compare with line count
+	jnz	wrtfw2		;if not there, continue, else get command
+	xra	a		;zero the
+	sta	lincnt		;__line count
+;
+getcmd:	push	h
+	push	d
+	push	b
+;
+	if	heath
+	call	cdisp
+	db	esc,'x5',endmsg	;disable cursor
+	endif
+;
+getcm1:	mvi	c,6		;direct console I/O
+	mvi	e,0ffh		;__set up for input
+	call	bdos
+	ora	a		;loop till char avail
+	jz	getcm1
+	pop	b
+	pop	d
+	pop	h
+	cpi	'a'		;change command to
+	jc	getcm2		;__upper case
+	cpi	'z'+1
+	jnc	getcm2
+	xri	20h		;is lower case, make upper case
+getcm2:
+if not short
+	cpi	'1'		; 1 means goto 1st line
+	jz	wrtfwd
+	cpi	'?'		;help request
+	jz	help2
+	cpi	' '		;more use space
+	jz	wrtfw1
+	cpi	'F'		;scroll forward?
+	jz	wrtfw1		;br if yes
+	cpi	'F'-40h		;vi uses ^F
+	jz	wrtfw1
+	cpi	'V'-40h		;mince uses ^V
+	jz	wrtfw1
+	cpi	'B'		;scroll backward?
+	jz	wrtbak
+	cpi	'B'-40h		;vi uses ^B
+	jz	wrtbak
+	cpi	'N'		;scroll next line?
+	jz	wrtnxt
+	cpi	'+'
+	jz	wrtnxt
+	cpi	cr		;scroll next line?
+	jz	wrtnxt
+	cpi	lf
+	jz	wrtnxt
+	cpi	'P'		;scroll prev line?
+	jz	wrtprv
+	cpi	'-'
+	jz	wrtprv
+	cpi	'C'-40h		;must be exit
+	jz	exit		;return control to CCP if yes or
+	cpi	'Q'		;more use q for quit
+	jz	exit
+	cpi	'S'		;set screen parameters
+	jz	setscr
+	jmp	help2		;else give a hint
+endif
+if short
+	cpi	first		; 1 means goto 1st line
+	jz	wrtfwd
+	cpi	nxtpag		;scroll forward?
+	jz	wrtfw1		;br if yes
+	cpi	back		;scroll backward?
+	jz	wrtbak
+	cpi	next		;scroll next line?
+	jz	wrtnxt
+	cpi	prev		;scroll prev line?
+	jz	wrtprv
+	cpi	'C'-40h		;must be exit
+	jz	exit		;return control to CCP if yes or
+	cpi	quit		;alternative quit
+	jz	exit
+	cpi	screen		;set screen parameters
+	jz	setscr
+	jmp	help2		;else give a hint
+endif
+;
+wrtnxt:	lda	linmax
+	dcr	a		;fool wrtfw1 to only write one line
+	sta	lincnt
+	jmp	wrtfw1
+;
+wrtprv:	lda	linmax		;back up one screen + 1 line
+	inr	a
+	jmp	wrtbk0
+;
+wrtbak:	lda	linmax		;get screen line count
+	add	a		;__multiply by 2
+wrtbk0:	inr	a		;__and add 1
+	sta	lincnt		;__to backup to previous page
+	call	clrscr		;clear the screen
+;
+wrtbk1:	lxi	d,dskbuf	;get address of buffer start
+	mov	a,d		;compare high
+	cmp	h		;__order bytes
+	jnz	wrtbk2		;continue if not equal
+	mov	a,e		;else, compare low
+	cmp	l		;__order bytes
+	jnz	wrtbk2		;continue if not equal
+	jmp	filbak		;__and go write it
+;
+wrtbk2:	mov	a,m		;get a character
+	ani	7fh		;strip high bit
+	dcx	h		;decrement buffer
+	cpi	cr		;see if end of line
+	jz	bakcnt		;__or form-feed
+	cpi	'L'-40h		;__and adjust line count if so
+	jnz	wrtbk1		;else, loop if not
+;
+bakcnt:	lda	lincnt		;else, get number of lines to move back
+	dcr	a		;__and decrement it
+	sta	lincnt		;__store it
+	jnz	wrtbk1		;__and loop if not there
+	inx	h		;else bump pointer
+	inx	h		;__to account for dcx
+	jmp	wrtfw1		;and go write a screen
+;
+filbak:	lxi	d,maxsec	;get the buffer size
+	lhld	seccnt		;__and number of sectors last read
+	dad	d		;add them
+	xchg			;__and put them in DE
+	lda	fcbcrr		;subtract low order byte 
+	sub	e		;__from current record count
+	sta	fcbcrr		;__and store in current record count
+	lda	fcbcrr+1	;same with high order byte
+	sbb	d		;__but with borrow
+	jm	wrtfwd		;if beyond beginning of file, start over
+	sta	fcbcrr+1	;else, store high order byte
+	call	filbuf		;fill the buffer
+	lxi	h,fulbuf	;__and point to end of buffer
+	call	clrscr		;clear the screen
+	jmp	wrtbk2		;continue moving back in file
+;
+filbuf:	lxi	d,dskbuf	;load start of disk buffer
+	mvi	b,maxsec	;number of sectors to resd
+	lxi	h,0		;zero out the
+	shld	seccnt		;__number of sectors in buffer
+;
+filbu1:	push	h		;save all
+	push	d		;__registers from
+	push	b		;__BDOS clobber
+	mvi 	c,stdma		;set dma to
+	call	bdos		;__disk buffer
+	lxi	d,fcb		;set up to read
+	mvi	c,readr		;__a record
+	call	bdos		;do it
+	ora	a		;read OK?
+	lhld	fcbcrr		;get current record number
+	inx	h		;__bump it
+	shld	fcbcrr		;__and save it
+	lhld	seccnt		;get sectors in buffer
+	inx	h		;bump it
+	shld	seccnt		;store it
+	pop	b
+	pop	d
+	pop	h
+	jnz	rderr		;no, last sector read
+	dcr	b		;decrement it
+	rz			;if done return
+	lxi	h,128		;else, add 128 to
+	dad	d		;__dma address
+	xchg			;put it in de
+	jmp	filbu1		;read another sector
+;
+;We only get here if end of file
+;
+rderr:	mvi	a,eof		;get bogus eof
+	stax	d		;save at buffer end in case no eof in file
+	xra	a		;get a zero to direct to start of buffer
+	ret			;__on ret
+;
+opnfil:	lda	fcbfn		;point to first letter of filename
+	cpi	' '		;anything there?
+	jz	help		;no, give help message
+	lxi	d,fcb		;file name in default fcb
+	mvi	c,open		;set up to open
+	call	bdos		;do it
+	inr	a		;open OK?
+	rnz			;yes
+	call	cdisp		;else, give error msg and quit
+	db	'file not found ',endmsg
+	jmp	exit1		;leave msg on screen on exit
+;
+getnbr:	mov	a,m		;get first digit
+	inx	h
+	dcr	b		;b=number of characters left in buffer
+	rz			;no digit
+	cpi	space
+	jz	getnbr		;wait until next non-space
+	push	d		;save location to save number
+	mvi	d,0		;initialize number
+gnum1:	sui	30h		;change ASCII to number
+	jc	invnum		;not a number
+	cpi	10
+	cmc
+	jc	invnum		;not a number
+	push	psw		;save number
+	mov	a,d		;multiply old number by 10
+	add	a		;*2
+	add	a		;*4
+	add	a		;*8
+	add	d		;*9
+	add	d		;*10
+	mov	d,a
+	pop	psw		;restore new digit
+	add	d
+	mov	d,a
+	mov	a,m		;get next digit
+	inx	h
+	dcr	b
+	jz	endnum		;end of number
+	cpi	space
+	jnz	gnum1
+;
+endnum:	mov	a,d		;save number
+	dcr	a		;correct number for co routines
+	xchg			;set to restore save location
+	pop	h		;restore save location
+	mov	m,a		;save digit
+	xchg			;put buffer location where it belongs
+	mov	a,b		;see if any characters left in buffer
+	ora	a		;zero if no characters in buffer
+	ret
+;
+invnum:	pop	d		;correct stack
+	ret
+;
+asciin:	mvi	b,100		;divide by 100, then change
+	call	divide		;__digit to ASCII and store at hl
+	mvi	b,10		;divide by 10, then change
+	call	divide		;__digit to ASCII and store at hl+1
+	mvi	b,30h		;change ones place number
+	add	b		;__to ASCII and store at hl+2
+	mov	m,a
+;
+if not (short and heath)
+	dcx	h		;delete leading zeroes
+	dcx	h		;__in the number
+	mvi	c,space		;__and replace with spaces
+	mov	a,b
+	cmp	m		;check first digit for '0'
+	jnz	cdisp		;not zero
+	mov	m,c		;replace with space
+	inx	h
+	cmp	m		;check second digit for '0'
+	jnz	cdisp		;not zero
+	mov	m,c		;replace with space
+endif
+;
+cdisp:	xthl			;exchange top of stack and HL
+;
+cdis1:	mov	a,m		;HL now pointing to db message
+	ora	a		;see if 0 at end of message
+	inx	h
+	jz	cdis2		;yes, restore stack and return
+	call	co		;no, print the character
+	jmp	cdis1		;__and loop
+;
+cdis2:	xthl			;get return address on top of stack
+	ret			;__and return
+;
+co:	push	b		;Save the registers
+	push	d		;__from bdos
+	push	h		;__clobber
+co2:	push	psw
+co4:	mov	e,a		;set up character
+	mvi	c,conout	;__to send to console
+	call	bdos		;do it
+co3:	pop	psw
+co5:	pop	h		;restore
+	pop	d		;__the registers
+	pop	b
+	ret
+;
+co1:	push	b		;Save the registers
+	push	d
+	push	h
+	push	psw
+	lxi	h,chrcnt	;Get address of character count
+	cpi	cr		;see if end of line
+	jz	endlin		;update line information
+	cpi	lf		;ignore linefeed
+	jz	co4
+	lda	chrmax		;get maximum characters per line
+	cmp	m		;see if too many char
+	jc	co3		;don't print character
+	pop	psw		;__and print character
+	cpi	tab		;fix chrcnt for tabs
+	jz	tabfix
+	inr	m		;increment character count
+	mov	e,a
+	lda	chrmin		;see if up to minimum display yet
+	cmp	m
+	mov	a,e		;restore character
+	jnc	co5		;do not display character
+	jmp	co2		;finally, display character
+;
+endlin:	mvi	m,0		;reset character count
+	jmp	co4		;print cr
+;
+tabfix:	mvi	a,08h		;fix chrcnt for tabs
+	add	m		;increment to next 8-count
+	ani	0f8h		;make into multiple of 8
+tab2:	sub	m		;get number of space to go
+	mov	b,a
+tab1:	mvi	a,space		;expand tab
+	call	co1
+	dcr	b
+	jnz	tab1		;still more spaces
+	jmp	co5		;exit routine
+;
+setscr:	push	h
+	push	d
+	push	b
+getmax:	lda	chrmax		;get maximum number of characters
+	inr	a
+	lxi	h,huns
+	call	asciin		;put ASCII number in message		
+if not short
+	db	cr,lf,'Maximum Column: '
+endif
+if short
+	db	cr,lf,'Max Column: '
+endif
+huns:	db	30h
+	db	30h
+	db	30h
+	db	' New? ',endmsg
+	call	getinp		;read input from console
+	lxi	d,chrmax	;set new chrmax in memory
+	call	getnbr
+	jc	getmax		;if error, repeat last message
+getmin:	lda	chrmin		;get minimum character display
+	inr	a
+	lxi	h,hun
+	call	asciin		;put ASCII number in message		
+if not short
+	db	lf,'Minimum Column: '
+endif
+if short
+	db	lf,'Min Column: '
+endif
+hun:	db	30h
+	db	30h
+	db	30h
+	db	' New? ',endmsg
+	call	getinp		;read input from console
+	lxi	d,chrmin	;set new chrmax in memory
+	call	getnbr
+	jc	getmin		;if error, repeat last message
+getlin:	lda	linmax		;get number of lines per display
+	lxi	h,hund
+	call	asciin		;put ASCII number in message		
+	db	lf,'Lines Displayed: '
+hund:	db	30h
+	db	30h
+	db	30h
+	db	' New? ',endmsg
+	call	getinp		;read input from console
+	lxi	d,linmax	;set new chrmax in memory
+	call	getnbr
+	jc	getlin		;if error, repeat last message
+	pop	b
+	pop	d
+	pop	h
+;
+wrtsam:	lda	linmax		;write the same screen
+	jmp	wrtbk0
+;
+;
+getinp:	mvi	a,5		;get set to read new maximum column
+	sta	cmdtail
+	mvi	c,0ah
+	lxi	d,cmdtail
+	call	bdos		;get maximum column
+	lxi	h,cmdtail+1	;now, change to ASCII
+	mov	b,m
+	inx	h
+	inr	b
+	ret			;return with input in buffer
+;
+divide:	mvi	c,'0'-1		;extract dividend of a div c
+div1:	inr	c		;__and store in location pointed
+	sub	b		;__to by hl
+	jnc	div1
+	add	b
+	mov	m,c		;save ASCII digit
+	inx	h		;bump pointer to next location
+	ret
+;
+exit:	mvi	e,0ffh		;clear console of characters
+	mvi	c,6		;direct console I/O
+	call	bdos		;__get any waiting characters
+	call 	clrscr		;clear the screen
+;
+	if	heath
+	call	cdisp		;re-enable cursor
+	db	esc,'y5',endmsg
+	endif
+;
+	lxi	d,fcb		;close file
+	mvi	c,16		;--in case this is MP/M
+	call	bdos
+;
+exit1:	lhld	stack		;get old stack
+	sphl
+	ret			;return to CCP
+;
+;	Memory allocation
+;
+seccnt:	dw	0		;number of sectors read into buffer
+linmax:	db	scroln		;number of to write lines on console
+chrmax:	db	maxchr-1	;number of characters to display per line
+chrmin:	db	0		;character to start displaying on line
+chrcnt:	ds	1		;character number in line
+lincnt:	ds	1		;line number on write or move back in buffer
+	ds	60		;stack area
+stack:	ds	2		;old stack saved here
+dskbuf:	equ	$		;disk buffer area above the program
+;
+	end	tpa
+  

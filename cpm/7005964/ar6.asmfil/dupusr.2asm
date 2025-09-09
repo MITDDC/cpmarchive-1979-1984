@@ -1,0 +1,272 @@
+;	title	'dupusr - duplicate a directory entry under a new user'
+;	by Bruce R. Ratoff - first version 5/17/80
+;	modified 5/17/80 for wildcard processing
+;	modified 5/18/80 to zero drive number before making file.
+;	modified 5/18/80 to operate from originating user #
+;	modified 6/3/80  to fix problem w/ multi-extent files
+;
+; The purpose of this program is to create extra entries in a CP/M 2.x
+; directory that "point to" files which were actually created in a
+; different directory.  This way, you have access to the file from
+; both user numbers without having to keep multiple copies of the
+; actual file itself.  To create duplicate entries on drive "d" for
+; user "x" from files which currently reside at user "y", type:
+;	A>USER y			;log in to originating user y
+;	A>DUPUSR d:filename.typ x	;create files at destination user x
+; Note that this program will totally duplicate the directory entry in
+; all respects (except the user number, of course).  This means that
+; both entries will show the file with the same attributes, such as
+; "read-only" or "system".  The filename.typ may contain "?" and "*".
+;
+; The only known hazard in the use of this program occurs when erasing
+; one of the duplicate entries.  You must type control-c immediately
+; after erasing the entry, so that cp/m is forced to rebuild the allocation
+; vector for that drive.  This is because the erase command frees the
+; blocks shown for the erased file without checking if they are in use
+; elsewhere.  If you didn't type control-c, the next disk write would
+; clobber these blocks, voiding all other pointers to the file.
+; Unfortunately this would only be apparent the next time you tried
+; to read the file from another user number, at which time you would
+; read garbage.
+;
+; Please forward all comments, suggestions and improvements to:
+;	Bruce R. Ratoff
+;	80 Gill Lane, Apt 1B
+;	Iselin, New Jersey 08830
+;
+;
+;
+bdos	equ	5		;cp/m entry point
+exit	equ	0		;cp/m exit point
+dfcb	equ	5ch		;cp/m default fcb
+dbuff	equ	80h		;default disk buffer
+;
+pmessg	equ	9		;print message function
+seldsk	equ	14		;select drive function
+open	equ	15		;open file function
+close	equ	16		;close file function
+srchfst	equ	17		;search for first file match
+srchnxt	equ	18		;search for next file match
+delete	equ	19		;delete file function
+make	equ	22		;make file function
+attrib	equ	30		;set file attributes function
+gsuser	equ	32		;get/set user function
+;
+;
+	org	100h
+begin:
+	lhld	bdos+1		;set up a stack
+	sphl			;at top of tpa
+	mvi	c,gsuser	;get our user #
+	mvi	e,0ffh
+	call	bdos
+	sta	ourusr		;save for later
+	lda	dfcb		;check for specific drive
+	dcr	a
+	mov	e,a		;set up for select disk call
+	mvi	c,seldsk
+	inr	a		;if no specified drive, skip call
+	cnz	bdos
+	sub	a		;now zap out drive spec
+	sta	dfcb
+	mvi	a,'?'		;force extent number wild
+	sta	dfcb+12
+	lxi	h,dfcb+17	;point to originating user # in cmd line
+	mvi	e,0
+numlup:
+	mov	a,m		;get numeric (i hope) character
+	inx	h		;bump char pointer
+	sui	'0'		;remove ascii bias
+	jc	numdone
+	cpi	10		;check if past 9
+	jnc	numdone		;any invalid char ends number
+	mov	d,a
+	mov	a,e		;get accumulated number
+	add	a		;times two
+	add	a		;times four
+	add	e		;times five
+	add	a		;times ten
+	add	d		;plus new digit
+	mov	e,a		;save accumulation
+	jmp	numlup		;loop back for next char
+numdone:
+	lda	ourusr		;make sure not same as us
+	cmp	e
+	jz	badusr
+	mov	a,e		;get destination user number
+	sta	dstusr		;save it
+	cpi	16		;legal?
+	jc	userok
+badusr:
+	lxi	d,ilgusr
+	mvi	c,pmessg	;bitch about illegal user #
+	call	bdos
+	jmp	exit
+ilgusr:
+	db	'Invalid destination user #$'
+userok:
+	sub	a		;zero out file count
+	sta	filcnt
+	lxi	d,dfcb		;find the first file and get its block map
+	mvi	c,srchfst
+	call	bdos
+	inr	a		;search successful?
+	jnz	gotfile		;yes, go process rest
+	lxi	d,nofile
+	mvi	c,pmessg	;say "no file"
+	call	bdos
+	jmp	exit
+nofile:
+	db	'Originating file not found$'
+gotfile:
+	dcr	a		;compensate for inr above
+	rrc			;file offset to bits 5 and 6
+	rrc
+	rrc
+	ani	60h
+	lxi	h,dbuff		;point to base of buffer
+	mov	c,a
+	mvi	b,0
+	dad	b		;index by file offset
+	push	h		;save for the moment
+	lxi	b,filetable
+	call	filepoint	;get table pointer to hl
+	xchg			;de now points to place in table
+	lda	filcnt
+	inr	a
+	sta	filcnt		;bump file count
+	pop	h		;hl points to directory entry
+	mvi	b,32
+	call	blkmov		;copy entry into table
+	mvi	c,srchnxt	;search for another entry
+	lxi	d,dfcb
+	call	bdos
+	inr	a		;returns 0ffh at end of search
+	jnz	gotfile		;got another one...go save it
+;
+; end of directory encountered, now process them
+;
+	lda	dstusr		;set to dest user
+	mov	e,a
+	mvi	c,gsuser
+	call	bdos
+;
+; main loop to set up one duplicate entry
+;
+makefile:
+	lxi	b,filetable-32	;allow for filcnt one greater than desired
+	call	filepoint
+	push	h		;save pointer
+	lxi	d,dfcb		;copy next name to default fcb
+	mvi	b,32
+	call	blkmov
+	sub	a
+	sta	dfcb		;clear drive number
+	lxi	d,-20		;point back to extent field
+	dad	d
+	mvi	m,'$'		;tag end of print here
+	pop	d		;get back pointer to start of entry
+	inx	d		;bump fwd to name
+	mvi	c,pmessg
+	call	bdos		;say what we're working on
+	lxi	h,dfcb
+	lxi	d,ourfcb	;copy name data to work fcb
+	mvi	b,14
+	call	blkmov
+	lxi	h,0
+	shld	ourfcb+14	;zap frebyt, extlen
+	lda	ourfcb+9
+	ani	7fh		;clear r/o flag for create
+	sta	ourfcb+9
+	sub	a
+	sta	ourfcb		;clear drive number
+	lxi	d,ourfcb
+	mvi	c,open
+	call	bdos		;check for existing file of same name
+	inr	a
+	jnz	makeok		;skip create if already there
+	lxi	d,ourfcb
+	mvi	c,make		;create the file
+	call	bdos
+	inr	a		;check for errors
+	jnz	makeok
+	lxi	d,makerr
+	mvi	c,pmessg	;say can't make file
+	call	bdos
+	jmp	exit
+makerr:
+	db	', Cannot create file$'
+makeok:
+	lxi	h,dfcb+12	;copy bookkeeping stuff from orig file
+	lxi	d,ourfcb+12
+	mvi	b,20
+	call	blkmov
+	lda	ourfcb+14	;set update flag so that altered fcb
+	ani	1fh		;gets written by close function
+	sta	ourfcb+14	;(retain module # in low 5 bits)
+	lxi	d,ourfcb
+	mvi	c,close		;do a close to set size and block map
+	call	bdos
+	inr	a
+	jnz	closok		;check for errors
+	lxi	d,closerr
+	mvi	c,pmessg
+	call	bdos		;say close error
+	jmp	exit
+closerr:
+	db	', Cannot close file$'
+closok:
+	lda	dfcb+9		;was original file r/o?
+	ora	a		;set sign bit if yes
+	jp	nextfile	;done if no
+	sta	ourfcb+9	;make our new file r/o to match
+	lxi	d,ourfcb
+	mvi	c,attrib	;do set attributes call
+	call	bdos
+nextfile:
+	lxi	h,filcnt	;point to file counter
+	dcr	m		;count it down
+	jz	exit		;exit if done
+	lxi	d,crlf
+	mvi	c,pmessg	;else do a crlf
+	call	bdos
+	jmp	makefile	;and go work on next one
+crlf:
+	db	13,10,'$'
+;
+;
+; subroutine to do block moves
+blkmov:
+	mov	a,m		;copy byte from m(hl) to m(de)
+	stax	d
+	inx	h		;bump pointers
+	inx	d
+	dcr	b		;loop for count in b
+	jnz	blkmov
+	ret
+;
+;
+; subroutine to index bc by file counter
+filepoint:
+	lhld	filcnt		;get file counter
+	mvi	h,0		;force hi ord to 0
+	dad	h		;multiply by 32
+	dad	h
+	dad	h
+	dad	h
+	dad	h
+	dad	b		;use as index to file table
+	ret
+;
+;
+;
+;
+filcnt:	ds	1		;count of files in filetable
+ourusr:	ds	1		;storage for our user number
+dstusr:	ds	1		;storage for destination user number
+ourfcb:	ds	32		;file control block for create function
+;
+filetable	equ	$	;start table here, take all avail memory
+;
+	end
+

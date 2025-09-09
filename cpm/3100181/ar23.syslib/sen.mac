@@ -1,0 +1,13 @@
+;
+;  EN -- 
+;	EXCHANGE NYBBLES OF REG A
+;
+EN::
+	RLC		; 4 ROTATES
+	RLC
+	RLC
+	RLC
+	RET
+
+	END
+

@@ -1,0 +1,15 @@
+; 12-28-81
+pip b:yamsys.h=b:yamz89.h
+cc1 b:yam1.c -e 6B00
+cc1 b:yam2.c -e 6B00 -o
+cc1 b:yam3.c -e 6B00 -o
+cc1 b:yam5.c -e 6B00 -o
+cc1 b:yam7.c -e 6B00 -o
+cc1 b:yam10.c -e 6B00 -o
+l2 b:yam1 b:yam2 b:yam3 b:yam5 b:yam7 b:yam8 b:yam9 b:yam10 -wa
+b:
+era yam.com
+ren yam.com=yam1.com
+a:
+
+

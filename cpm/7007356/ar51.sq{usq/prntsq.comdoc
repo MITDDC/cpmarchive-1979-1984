@@ -1,0 +1,12 @@
+Date: 09/10/82
+From: Sigi Kluger
+To:   All
+Re:   PRINTSQ
+
+"PRINTSQ.COM" is a version of TYPE15, which I rewrote for
+printout to the LST: device.  I did that on request from
+someone who wanted to print out STARTREK.PQC, but only
+has 90k room on a disk - not enough to hold the unsqueezed
+file.  Thought it might be useful to someone else, so I
+left it here....
+

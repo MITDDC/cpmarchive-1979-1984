@@ -1,0 +1,53 @@
+TOPIC  :  FILE.COM (current version FILE14)
+
+FROM   :  IRV HOFF
+
+DATE   :  01 JUNE 83
+
+
+NOTE:  ORIGINAL NAME WAS 'FILE'.  RENAMED EARLY 1981 TO 'FILEFIND' BY
+       SOMEONE OTHER THAN ORIGINAL AUTHOR.  NOW CORRECTLY NAMED 'FILE'.
+
+
+SYSOPS:  THIS IS AN IDEAL PGM FOR USE AS  A0>FILE.COM  TO AUGMENT (OR
+         REPLACE THINGS LIKE  DIR NAME*.* $U0AD.
+
+
+     This program finds a requested file on any/all disk drives and any
+user area allowed by the system.  Just say:
+
+    
+A>FILE NAME*.*
+
+ 
+     and it will find any file commencing with 'NAME' on any disk drive
+and any user area.  It doesn't matter what user area or drive you are
+in when you start, it commences at A0:  
+
+     This takes the place of things like:  A>DIR NAME*.* $U0AD,  or
+A>DIR NAME $AD, etc.  (Those commands normally commence at whatever
+drive you are already on.  If starting from D3, you must reset to A0:
+before commencing the search or it will skip the A: B: and C: dives com-
+pletely.  'FILE' starts at A0: regardless, making it very convenient to
+use.)  It is an universal program that adapts equally well to CBBS, RBBS,
+DATATECH, OXGATE and other similar RCPM systems.  It is easy to use and
+gives all users on all systems a common command.
+
+     (You can also get the entire directory of all drives and all avail-
+able user areas by saying:
+
+A>FILE *.*
+
+
+
+NOTE TO SYSOPS:  If you have SAP.COM on A0: then you or others can ask
+                 for SAP at periodic intervals.  This alphabetizes the
+                 directory automatically, and FILE.COM will then show
+                 the requested files in proper alphabetic order.  Under
+                 normal circumstances this is not important since the
+                 user generally is looking for a specific file, not for
+                 everything you have.
+
+					- Irv Hoff
+
+

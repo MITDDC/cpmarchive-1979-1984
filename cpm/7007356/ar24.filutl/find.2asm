@@ -1,0 +1,607 @@
+*;	FIND.ASM	VERSION 2.0	10/05/82
+*;
+*;	Requires MAC for Assembly
+*;
+*;	ORIGINALLY WRITTEN BY WARD CHRISTENSEN
+*;	ENHANCED AND REWRITTEN BY RICH ANGELO - 10-05-82
+*;
+*;	'FIND's ASCII, character strings in a file.
+*; May take a generic file name, thus may search all *.ASM files
+*; on a disk.  Also very useful for finding things in MAST.CAT - 
+*; for example if you are looking for all MODEM or BYE Programs
+*; you could FIND MAST.CAT MOD|BYE TO see them all.
+*;
+*;	Another useful function is for Documentation. For example;
+*;
+*;	Print all of this, enter:	FIND FIND.ASM *;
+*;
+*;	Print Mainline comments,	FIND FIND.ASM *>
+*;
+*;	Print Subroutines,		FIND FIND.ASM *S>
+*;
+*;	Or try this,			FIND FIND.ASM *>|*S>
+*;
+*;	Print Macros used,		FIND FIND.ASM *M>
+*;
+*; Documenting a Program in this fashion is an easy way to seperate
+*; comments from code. There are many ways to Identify a portion of
+*; a Program.  Maybe a standard can be established, that we all can
+*; share. This is the first step in that direction.
+*;
+*;		Any comments use,
+*;		One of the Popular Chicago area RBBS or CBBS Systems.
+*;
+*;				Rich Angelo
+*;
+*;	Used with  LIST.COM  which  takes a starting line number,
+*; you can:  1)  use  find to find a particular part of the code,
+*; then 2) use LIST specifying a starting line number just before
+*; the part of the code you wanted to see.
+*;
+*;	Note that  FIND  now has a DEFAULT File Name and the ability
+*; to PROMPT for SEARCH STRING. This feature is handy if you want to
+*; search for specific characters only, whereas entering the  search
+*; string on the command line will display both upper and lower case.
+*;
+*;	Special Search features of FIND are;
+*;
+*;	1.	Make "_" match a Tab
+*;	2.	Make "|" AN "OR"
+*;		AS IN: FIND B:*.ASM  _IN_|_OUT_
+*;
+*;
+*;	COMMAND FORMATS;
+*;
+*;	FIND		<--- Defaults to Filename In DFLTNAM.
+*;			Will Prompt for Search String Lower Case Valid.
+*;			Also will search for any character seq. passed
+*;			thru CPM Read String Function.
+*;
+*;	FIND fn.ft	<--- Prompt for Search String.
+*;
+*;	FIND fn.ft str	<--- Will Display Upper & Lower Case of string
+*;			Using File specified.
+*;
+*;	fn.ft may be Ambiguous, *.ASM OR CBBS*.ASM
+*;
+*;----------------------------------------------------------------------
+*;
+
+;THE USUAL EQUATES
+
+RDCON	EQU	1
+WRCON	EQU	2
+PRINT	EQU	9
+RSTRING	EQU	10
+CONST	EQU	11
+OPEN	EQU	15
+CLOSE	EQU	16
+SRCHF	EQU	17
+SRCHN	EQU	18
+ERASE	EQU	19
+READ	EQU	20
+WRITE	EQU	21
+MAKE	EQU	22
+REN	EQU	23
+STDMA	EQU	26
+
+BDOS	EQU	5
+FCB	EQU	5CH 
+FCB2	EQU	6CH
+FCBEXT	EQU	FCB+12
+FCBRNO	EQU	FCB+32
+TBUFF	EQU	80H
+
+CR	EQU	0DH
+LF	EQU	0AH
+EOF	EQU	1AH
+TAB	EQU	09H
+
+******M> START OF MACRO DEFINITIONS
+******M>
+******M>DEFINE DATA MOVE MACRO: MOVE from,to,length
+******M>from may be addr, or quoted string
+******M>
+MOVE	MACRO	FROM,TO,LEN
+	LOCAL	SKIP
+	JMP	SKIP
+
+?MOVE:	MOV	A,B
+	ORA	C
+	RZ
+	MOV	A,M
+	STAX	D
+	INX	H
+	INX	D
+	DCX	B
+	JMP	?MOVE
+
+MOVE	MACRO	?F,?T,?L
+	IF	NOT NUL ?F
+	IRPC	?C,?F
+?Q	SET	'&?C&?C' ;;TEST FOR QUOTE
+	EXITM
+	ENDM
+	IF	?Q EQ ''''
+	LOCAL	?B,?Z
+	CALL	?Z
+?B	DB	?F
+?Z	POP	H	;GET FROM
+	LXI	B,?Z-?B	;GET LEN
+	ELSE
+	LXI	H,?F
+	ENDIF
+	ENDIF
+	IF	NOT NUL ?T
+	LXI	D,?T
+	ENDIF
+	IF	NOT NUL ?L
+	LXI	B,?L
+	ENDIF
+	CALL	?MOVE
+	ENDM
+SKIP:	MOVE	FROM,TO,LEN
+	ENDM
+
+******M>DEFINE COMPARE MACRO: COMPAR from,to,length
+******M>from may be addr, or quoted string.
+******M>
+COMPAR	MACRO	FROM,TO,LEN
+	LOCAL	SKIP
+	JMP	SKIP
+
+?COMPAR:MOV	A,B
+	ORA	C
+	RZ
+	LDAX	D
+	CMP	M
+	RNZ
+	INX	D
+	INX	H
+	DCX	B
+	JMP	?COMPAR
+
+COMPAR	MACRO	?F,?T,?L
+	IF	NOT NUL ?F
+	IRPC	?C,?F
+?Q	SET	'&?C&?C' ;;TEST FOR QUOTE
+	EXITM
+	ENDM
+	IF	?Q EQ ''''
+	LOCAL	?B,?Z
+	CALL	?Z
+?B	DB	?F
+?Z	POP	H	;GET FROM
+	LXI	B,?Z-?B	;GET LEN
+	ELSE
+	LXI	H,?F
+	ENDIF
+	ENDIF
+	IF	NOT NUL ?T
+	LXI	D,?T
+	ENDIF
+	IF	NOT NUL ?L
+	LXI	B,?L
+	ENDIF
+	IF	NOT NUL ?I
+	LOCAL	?B,?Z
+	CALL	?Z
+?B	DB	?I
+?Z	POP	D	;GET TO
+	LXI	B,?Z-?B
+	ENDIF
+	CALL	COMPARR
+	ENDM
+SKIP:	COMPAR	FROM,TO,LEN
+	ENDM
+
+******M>DEFINE CP/M MACRO - CPM fnc,parm
+******M>
+CPM	MACRO	?F,?P
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	IF	NOT NUL ?F
+	MVI	C,?F
+	ENDIF
+	IF	NOT NUL ?P
+	LXI	D,?P
+	ENDIF
+	CALL	BDOS
+	POP	H
+	POP	D
+	POP	B
+	ENDM
+******M>
+******M> END OF MACRO DEFINITIONS
+******M>
+
+	ORG	100H
+
+*******>PROGRAM - FIND - 
+	JMP	START
+
+*++++++>   Data Area
+
+PGMID:	DB	'FIND - Version 2.0 10/05/82'	;*>Rich Angelo
+	DB	CR,LF,'$'
+	DB	EOF
+
+DFLTNAM:DB	'MAST    CAT'		;DEFAULT FILE NAME
+
+ABORT:	DB	CR,LF,'++FIND ABORTED++$'
+NOFILE:	DB	CR,LF,'++CANNOT FIND'
+FILMSG:	DB	'----> FILE '
+FNAME:	DB	'XXXXXXXX.XXX'
+	DB	CR,LF
+CRLF:	DB	CR,LF,'$'
+PROMPT:	DB	CR,LF,'Enter String>$'
+
+	;RDBYTE FIELDS
+EFCB:	DW	BUFF		;BUFFER ADDR
+EFCBCT:	DW	0		;BYTES LEFT
+	DB	20		;BUFFER SIZE (IN PAGES)
+	DW	FCB		;FCB ADDRESS
+
+	;MFNAME FIELDS
+MFFLG1:	DB	0		;1ST TIME SW
+MFREQ:	DS	12		;REQ NAME
+MFCUR:	DS	12		;CURR NAME
+
+CONBUF:	DB	CONLEN		;LENGTH OF CONSOLE BUFFER
+CONSIZ:	DS	1		;RESULTING SIZE AFTER READ
+STRING:	DS	30		;WHAT TO SEARCH FOR
+CONLEN	EQU	$-CONSIZ
+LINENO:	DB	'    ',TAB,'$'	;LINE NUMBER
+
+	DS	32		;STACK AREA
+STACK:	DS	2
+STRPTR:	DS	2		;POINTER FOR "|" SCAN
+LINE:	DS	133
+
+*------>	END OF DATA AREA
+
+
+*******>
+*******>START - Save stack, print Sign-on, Look for file spec.
+START:	LXI	H,0		;SAVE STACK
+	DAD	SP
+	SHLD	STACK
+	LXI	SP,STACK
+	CPM	PRINT,PGMID	;PRINT SIGNON
+	LDA	FCB+1
+	CPI	' '		;IF A FILE WAS SPECIFIED
+	JNZ	SETSTR		;   GO SET UP STRING ENTERED
+				; ELSE
+	MOVE	DFLTNAM,FCB+1,11;   MOVE IN DEFAULT FILENAME
+	JMP	GETSTR		;   GO PROMPT FOR STRING.
+
+*******>SETSTR - Set String pointers, and end delimiter.
+SETSTR:	LXI	D,TBUFF		;DE=TBUFF
+	LDAX	D		;LENGTH
+	MOV	C,A		;SAVE LENGTH
+	MVI	B,0		;SETUP BC FOR MOVE
+	INX	D		;PAST LENGTH
+	MOV	L,A		;L=LENGTH
+	MVI	H,0		;HL=LENGTH
+	DAD	D		;HL=LAST CHAR
+	MVI	M,0		;STORE END DELIM
+	XCHG			;START TO HL
+
+*******>SCAN - Look for String, If found save it.
+SCAN:	INX	H		;TO NEXT CHAR
+	MOV	A,M		;LOOK FOR ' '
+	ORA	A		;END?
+	JZ	GETSTR		;..YES, THEN GET IT FROM THE CONSOLE
+	CPI	' '		;
+	JNZ	SCAN		;NOT AT ' '
+	INX	H		;TO STRING
+	MOVE	,STRING, 	;HL = FROM, BC=LENGTH
+	CALL	FRSTFI		;SEE IF FILE EXISTS
+	JMP	OPFILE		;GO PROCESS IT
+
+*******>GETSTR - Accept String from console.
+GETSTR:	CALL	FRSTFI		;LOOK FOR FILE
+	CPM	PRINT,PROMPT	;DISPLAY PROMPT
+	CPM	RSTRING,CONBUF	;GET STRING
+	LDA	CONSIZ
+	ORA	A
+	JZ	EXIT
+	MOV	L,A		;STORE DELIMITER
+	MVI	H,0
+	LXI	D,STRING
+	DAD	D
+	MVI	M,0
+	CPM	PRINT,CRLF
+	JMP	OPFILE		;PROCESS FILE
+
+*******>FRSTFI - Search for Initial file and print it's name.
+FRSTFI:	CALL	MFNAME		;IF FILE DOES NOT EXIST
+	RNC			; TELL THEM AND EXIT.
+	MOVE	FCB+1,FNAME,8
+	MOVE	FCB+9,FNAME+9,3
+	CPM	PRINT,NOFILE
+	JMP	EXIT
+
+*******>NEXTFL - Look for another file, If none then exit.
+NEXTFL:	CPM	PRINT,CRLF
+	CALL	MFNAME
+	JC	EXIT
+
+*******>OPFILE - Open file and print name.
+OPFILE:	CPM	OPEN,FCB
+	INR	A
+	JZ	EXIT
+	MOVE	'   0',LINENO
+	MOVE	FCB+1,FNAME,8
+	MOVE	FCB+9,FNAME+9,3
+	CPM	PRINT,FILMSG	;SAY WHICH FILE
+	LXI	H,0
+	SHLD	EFCBCT
+
+*******>NEXTLN - Set up next line number.
+NEXTLN:	LXI	H,LINENO+3
+NEXT01:	MOV	A,M		;GET DIGIT
+	ORI	'0'		;MAKE ASCII
+	INR	A
+	MOV	M,A
+	CPI	'9'+1		;CARRY?
+	JNZ	NEXTNC
+	MVI	M,'0'
+	DCX	H
+	JMP	NEXT01
+
+*******>NEXTNC - Read a line from file.
+NEXTNC:	LXI	H,LINE
+	MVI	B,0FFH		;SO LONG LINE WON'T BLOW
+NEXT02:	INR	B
+	JM	LONG		;TOO LONG A LINE
+	PUSH	B
+	PUSH	H
+	LXI	H,EFCB
+	CALL	RDBYTE
+	POP	H
+	POP	B
+	MOV	M,A
+	INX	H
+	CPI	EOF
+	JZ	NEXTFL		;NEXT FILE
+	CPI	LF
+	JNZ	NEXT02
+	JMP	EOL
+
+*******>LONG - Got a long line, chop it off.
+LONG:	MVI	M,CR
+	INX	H
+	MVI	M,LF
+
+*******>EOL - Check for operator abort, point to String.
+EOL:	CPM	CONST		;TEST FOR ABORT
+	ORA	A
+	JNZ	CHRXIT		;ABORT REQUESTED
+	LXI	H,STRING
+
+*******>XXXXXX - We have a line, now Scan for the String.
+ORLINE:	SHLD	STRPTR
+	LXI	H,LINE
+NEXTST:	XCHG
+	LHLD	STRPTR
+	XCHG			;(HL)->LINE - (DE)->STRING
+	PUSH	H
+
+*******>NEXTC - Replace '_' with a TAB.
+NEXTC:	LDAX	D
+	CPI	'_'
+	JNZ	NOTAB
+	MVI	A,TAB
+NOTAB:	INX	D
+	ORA	A		;END OF STRING?
+	JZ	MATCHED
+	CPI	'|'
+	JZ	MATCHED		;FIRST PART
+	MOV	C,M		;FOR LOWER CASE TEST
+	CMP	M
+	INX	H
+	JZ	NEXTC
+	MOV	B,A		;SAVE CHAR
+	MOV	A,C		;GET CHAR
+	CPI	61H		;LOWER?
+	JC	NOTEQ		;NO, SO NO MATCH
+	CPI	7BH
+	JNC	NOTEQ
+	ANI	5FH		;MAKE UPPER CASE
+	CMP	B
+	JZ	NEXTC		;MATCHED
+
+NOTEQ:	POP	H		;RESTORE ADDR
+	INX	H
+	MOV	A,M
+	CPI	CR
+	JNZ	NEXTST
+	LHLD	STRPTR
+
+*******>FINDOR - If an "OR" (|) is in the line, Scan for it.
+FINDOR:	MOV	A,M
+	INX	H
+	CPI	'|'
+	JZ	ORLINE
+	ORA	A
+	JNZ	FINDOR
+	JMP	NEXTLN
+
+*******>MATCHED - Got a match print it.
+MATCHED:POP	H		;KILL STACKED ADDR
+	CPM	PRINT,LINENO	;PRINT LINE NUMBER
+	LXI	H,LINE
+MATCHLP:MOV	A,M
+	MOV	E,A
+	CPM	WRCON
+	MOV	A,M
+	INX	H
+	CPI	LF
+	JNZ	MATCHLP
+	JMP	NEXTLN
+
+*******>CHRXIT - Read Keyboard, Print Abort message.
+CHRXIT:	CPM	RDCON
+	CPM	PRINT,ABORT
+
+*******>EXIT - Restore Stack and Return to CP/M.
+EXIT:	LHLD	STACK
+	SPHL
+	RET			;TO CCP
+
+******S>  SUBROUTINES
+******S>
+******S>RDBYTE - READ BYTE FROM FILE.
+******S>  HL POINTS TO EFCB:
+******S>  EFCB;
+******S>      2 BYTE BUFFER ADDR
+******S>      2 BYTE "BYTES LEFT" (INIT TO 0)
+******S>      1 BYTE BUFFER SIZE (IN PAGES)
+******S>      2 BYTE FCB ADDRESS
+******S>
+RDBYTE:	MOV	E,M		;DE = BUFFER ADDR
+	INX	H		;X
+	MOV	D,M		;X
+	INX	H		;BC = BYTES LEFT
+	MOV	C,M		;X
+	INX	H		;X
+	MOV	B,M		;X
+	MOV	A,B		;IF BYTE-COUNT NOT = ZERO
+	ORA	C		;   GO READ NEXT BYTE
+	JNZ	RDGETB		; ELSE
+	INX	H		;   READ ANOTHER SECTOR.
+	MOV	A,M		;GET COUNT
+	ADD	A		;MULTIPLY BY 2
+	MOV	B,A		;SECTOR COUNT IN B
+	INX	H		;TO FCB
+	PUSH	H		;SAVE FCB POINTER
+	MOV	A,M		;GET..
+	INX	H		;..FCB..
+	MOV	H,M		;..ADDR..
+	MOV	L,A		;..TO HL
+
+RDBLP:	MVI	A,EOF		;PUT EOF CHAR IN BUF
+	STAX	D		;  IN CASE OF EOF.
+	PUSH	D		;SAVE DMA ADDR
+	PUSH	H		;SAVE FCB ADDR
+	CPM	STDMA		;SET DMA ADDR
+	POP	D		;GET FCB
+	CPM	READ		;READ SECTOR
+	ORA	A		;CHECK FOR EOF
+	POP	H		;HL=DMA, DE=FCB
+	JNZ	RDBRET		;GOT EOF
+	MOV	A,L		;BUMP BUFFER POINTER
+	ADI	80H		;TO NEXT BUFF
+	MOV	L,A		;X
+	MOV	A,H		;X
+	ACI	0		;X
+	MOV	H,A		;X
+	XCHG			;DMA TO DE, FCB TO HL
+	DCR	B		;MORE SECTORS?
+	JNZ	RDBLP		;YES, MORE
+RDBRET:	POP	H		;GET FCB POINTER
+	DCX	H		;TO LENGTH
+	MOV	A,M		;GET LENGTH
+	DCX	H		;TO COUNT
+	MOV	M,A		;SET PAGE COUNT
+	DCX	H		;TO LO COUNT
+	DCX	H		;TO HI FCB
+	DCX	H		;TO EFCB START
+	JMP	RDBYTE		;LOOP THRU AGAIN
+
+RDGETB:	INX	H		;POINT TO BUFFER SIZE
+	MOV	A,M		;GET LENGTH (PAGES)
+	XCHG			;BUFF TO HL
+	ADD	H		;HL = END OF BUFF
+	MOV	H,A		;X
+	MOV	A,L		;X
+	SUB	C		;HL = DATA POINTER
+	MOV	L,A		;X
+	MOV	A,H		;X
+	SBB	B		;X
+	MOV	H,A		;X
+	MOV	A,M		;GET BYTE
+	XCHG			;EFCB POINTER BACK TO HL
+	CPI	EOF		;EOF?
+	RZ			;YES, LEAVE POINTERS
+	DCX	B		;DECR COUNT
+	DCX	H		;POINT BACK TO "BYTES LEFT"
+	MOV	M,B		;STORE BACK COUNT
+	DCX	H		;X
+	MOV	M,C		;X
+	RET			;RETURN TO CALLER
+
+******S>
+******S>
+******S>
+******S>MFNAME - MULT-FILE ACCESS SUBROUTINE.
+******S>
+******S> MULTI-FILE ACCESS SUBROUTINE.  ALLOWS PROCESSING
+******S> OF MULTIPLE FILES (I.E. *.ASM) FROM DISK.  THIS
+******S> ROUTINE BUILDS THE PROPER NAME IN THE FCB EACH
+******S> TIME IT IS CALLED.  THIS COMMAND WOULD BE USED
+******S> IN SUCH PROGRAMS AS MODEM TRANSFER, TAPE SAVE,
+******S> ETC IN WHICH YOU WANT TO PROCESS SINGLE OR
+******S> MULTIPLE FILES.
+******S> 
+******S> JUST CALL "MFNAME" (Multiple File NAME) AND THE FCB
+******S> WILL BE SET UP WITH THE NEXT NAME, READY TO
+******S> DO NORMAL PROCESSING (OPEN, READ, ETC.)
+******S> 
+******S> CARRY IS SET IF NO MORE NAMES CAN BE FOUND
+******S> 
+******S> THE ROUTINE IS COMMENTED IN PSEUDO CODE,
+******S> EACH PSEUDO CODE STATEMENT IS IN <<...>>
+******S> 
+MFNAME:	CPM	STDMA,80H	;<<INIT DMA ADDR, FCB>>
+	XRA	A 
+	STA	FCBEXT
+	STA	FCBRNO
+
+	LDA	MFFLG1		;<<IF FIRST TIME>>
+	ORA	A
+	JNZ	MFN01
+	MVI	A,1		;  <<TURN OFF 1ST TIME SW>>
+	STA	MFFLG1
+	MOVE	FCB,MFREQ,12	;  <<SAVE THE REQUESTED NAME>>
+	LDA	FCB
+	STA	MFCUR
+	MOVE	MFREQ,FCB,12	;  <<SRCHF REQ NAME>>
+	CPM	SRCHF,FCB
+	JMP	MFN02		;<<ELSE>>
+
+MFN01:	MOVE	MFCUR,FCB,12	;  <<SRCHF CURR NAME>>
+	CPM	SRCHF,FCB
+	MOVE	MFREQ,FCB,12	;  <<SRCHN REQ NAME>>
+	CPM	SRCHN,FCB	;<<ENDIF>>
+				
+MFN02:	INR	A		;<<RETURN CARRY IF NOT FOUND>>
+	STC
+	RZ
+
+	DCR	A		;<<MOVE NAME FOUND TO CURR>>
+	ANI	3
+	ADD	A
+	ADD	A
+	ADD	A
+	ADD	A
+	ADD	A
+	ADI	81H
+	MOV	L,A
+	MVI	H,0
+	PUSH	H
+	MOVE	,MFCUR+1,11
+
+	POP	H		;<<MOVE NAME FOUND TO FCB>>
+	MOVE	,FCB+1,11
+
+	XRA	A		;<<SETUP FCB>>
+	STA	FCBEXT
+	RET			;<<RETURN>>
+
+BUFF	EQU	$		;DISK READ BUFER
+
+	END
+

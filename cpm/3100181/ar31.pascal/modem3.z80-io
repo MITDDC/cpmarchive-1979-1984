@@ -1,0 +1,64 @@
+; Assembly language functions for MODEM3.PAS
+; for Z80 processor.
+; Written by Jack M. Wierda  Chicago Illinois
+; This software is in the public domain.
+;
+; Routines: STAT, INPUT, OUTPUT, READMEM
+;
+	.FUNC   STAT,3
+;
+	POP     HL      ;GET RETURN ADDRESS
+	POP     DE      ;GET ZERO
+	POP     BC      ;GET ZERO
+	POP     BC      ;GET MASK
+	POP     DE      ;GET EXPECTED RESULT
+	LD      D,C
+	POP     BC      ;GET PORT
+	IN      A,(C)   ;READ PORT
+	AND     D       ;AND DATA & MASK
+	CP      E       ;COMPARE WITH EXPECTED RESULTS
+	JR      NZ,$1
+	LD      DE,1    ;LOAD BOOLEAN TRUE
+	PUSH    DE      ;RETURN RESULT ON STACK
+	JP      (HL)
+$1      LD      DE,0    ;LOAD BOOLEAN FALSE
+	PUSH    DE      ;RETURN RESULT ON STACK
+	JP      (HL)    ;RETURN
+;
+;
+	.FUNC   INPUT,2
+	;
+	POP     HL      ;GET RETURN ADDRESS
+	POP     DE      ;GET ZERO
+	POP     BC      ;GET ZERO
+	POP     DE      ;GET MASK
+	POP     BC      ;GET INPUT PORT
+	IN      A,(C)   ;READ PORT
+	AND     E       ;MASK DATA
+        LD      E,A
+	PUSH    DE      ;RETURN RESULT ON STACK
+	JP      (HL)    ;RETURN
+	;
+	;
+	.PROC   OUTPUT,2
+	;
+	POP     HL      ;GET RETURN ADDRESS
+	POP     DE      ;GET DATA
+	POP     BC      ;GET OUTPUT PORT
+	OUT     (C),E   ;OUTPUT DATA
+	JP      (HL)    ;RETURN
+	;
+	;
+	.FUNC   READMEM,1
+;
+	POP     HL      ;GET RETURN ADDRESS
+	POP     DE      ;GET ZERO
+	POP     BC      ;GET ZERO
+	POP     DE      ;GET ADDRESS
+	LD      A,(DE)  ;READ MEMORY
+	LD      C,A
+	PUSH    BC      ;RETURN RESULT ON STACK
+	JP      (HL)    ;RETURN
+	.END
+	
+

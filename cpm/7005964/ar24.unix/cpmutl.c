@@ -1,0 +1,994 @@
+/* copyright (c) by Aaron Wohl, 1981
+  written by Aaron Wohl 12-24-81 (wohl@cmuc)
+  This file may be used for non-profit use provided this
+    this notice remains at the front of the file.
+
+  This program reads and writes cpm format floppy disks.
+  cpm is a trade mark of Digital Reasearch.  It runs under
+  version 7 unix.  unix is a trademark of bell labs.
+  See the function help() for documentation.
+
+  please mail any bug fixes to wohl@cmuc
+  the source for this file is on the unix host vlsi@cmuc
+    pathname /usr/avw/src/cpmutl.c (vlsi is not on the arpa-net)
+  a copy is also kept on mit-mc cpm;ar11:cpmutl c
+  mail will be sent info-cpm announcing new versions
+  
+*/
+
+#define version 3
+#define when "12-28-81"
+
+/* change log:
+
+ ver   when          who                why
+ ---  --------  -------------   --------------------
+   2  12-27-81	    wohl@cmuc   allow a trailing * to cross the . in a ufn
+   3  12-28-81	    wohl@cmuc   remove refrences to cmu local functions
+				honor the record count when reading
+*/
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <ctype.h>
+
+#define TRUE 1
+#define FALSE 0
+#define CP_NUMDIR 64		/* number of directory slots */
+#define DIR_EXT (CP_NUMDIR+1)	/* fake index to allocate directory space */
+#define CP_DIRSEC 16		/* number of sectors of directory */
+#define CP_NAMESIZE (8+3+1+1)	/* file name, name+ext+dot+null */
+#define CP_BASE	(26*2)		/* sector of start of file system */
+#define CP_SIZE	(26*77)		/* sectors on a disk */
+#define CP_CLUSTER 8		/* sectors in a allocation cluster */
+#define CP_CLCHAR (CP_CLUSTER*128) /* number of bytes in a cluster */
+#define CP_ALOC ((CP_SIZE-CP_BASE)/CP_CLUSTER) /* clusters per disk */
+#define SPACE 040		/* ascii space character */
+#define np(val) ((val) & 0177)	/* no parity please */
+#define FT_SZ 3			/* number of bytes in a file type */
+#define FN_SZ 8			/* number of bytes in a file name */
+#define SEC 128			/* bytes in a sector */
+#define DM 16			/* number of disk map entries */
+#define DELF 0xe5		/* entry type for a deleted file */
+
+/* what a directory entry looks like */
+struct cp_dir_ext {
+  unsigned char cp_et;		/* entry type */
+  unsigned char cp_fn[FN_SZ];	/* file name */
+  unsigned char cp_ft[FT_SZ];	/* file type */
+  unsigned char cp_ex;		/* extent number */
+  unsigned char cp_fl[2];	/* filler */
+  unsigned char cp_rc;		/* record count */
+  unsigned char cp_dm[DM];	/* disk allocation map */
+};
+
+struct cp_dir_ext cp_dir[CP_NUMDIR];
+
+char cp_name[CP_NUMDIR][CP_NAMESIZE]; /* name as file.typ */
+int ext_next[CP_NUMDIR];	/* slot of next higher extent */
+int ext_prev[CP_NUMDIR];	/* slot of next lower extent */
+int cp_btb[CP_ALOC];		/* allocation bit table */
+int dsk_inuse;			/* number of clusters in use */
+int num_fil;			/* number of files */
+int num_ext;			/* number of extents */
+int dir_err;			/* number of directory errors */
+				/*  includes number of i/o errors in dir */
+int io_err;			/* number of i/o errors */
+
+#define flag(c) (flg[(c) - 'a'])
+
+char *man = { "clgp" };
+char *opt = { "iatb" };
+
+char *flname;
+int fldes;
+long lseek();
+
+int gcmd(),lcmd(),icmd(),ccmd(),pcmd(),ncmd(); /* command functions */
+
+int (*comfun)();
+char flg[26];
+char mode = 'u';
+int file;
+
+/* main program */
+main(argc, argv)
+char *argv[];
+{ register char *cp;
+  fprintf(stdout,"cpmutl version(%d), date:%s\n",version,when);
+  init_data();			/* initialize data */
+  cp = argv[1];
+  for(cp = argv[1]; *cp; cp++)
+    switch(*cp) {
+    case 'a':
+      flag('a')++;
+      continue;     
+
+    case 't':
+      mode = 't';
+      continue;
+
+    case 'b':
+      mode = 'b';
+      continue;
+
+    case 'o':
+      flag('o')++;		/* allow writes to a damaged directory */
+      continue;
+
+    case 'i':
+      flag('i')++;
+      continue;
+
+    case 'n':
+      flag('w')++;		/* will be writing */
+      setcom(ncmd);
+      continue;
+
+    case 'p':
+      flag('w')++;		/* will be writing */
+      setcom(pcmd);
+      continue;
+
+    case 'c':
+      flag('w')++;		/* will be writing */
+      setcom(ccmd);
+      continue;
+
+    case 'g':
+      setcom(gcmd);
+      continue;
+
+    case 'l':
+      setcom(lcmd);
+      continue;
+
+    case 'f':
+      flname = argv[2];
+      argv++;
+      argc--;
+      continue;
+
+    case 'h':
+      help();
+
+    default:
+      quit(1,"\ncpmutl: bad option '%c'. use h for help\n", *cp);
+    }
+  if(comfun == 0) {
+      quit(1,"\ncpmutl: one of [%s] must be specified. use h for help\n",man);
+    }
+  (*comfun)(argc-2,&argv[2]);
+  fprintf(stdout,"\n");
+  exit(0);
+}
+
+/* command parsing subroutines */
+
+need_mode()
+{ if(mode == 'u')
+    quit(1,"\ncpmutl: mode t(ext) or b(inary) must be specified\n");
+}
+
+setcom(fun)
+int (*fun)();
+{ if(comfun != 0)
+    quit(1,"\ncpmutl: only one of [%s] allowed\n", man);
+  comfun = fun;
+}
+
+help()
+{ fprintf(stdout,"commands:\n");
+  fprintf(stdout," l afn                  list  files matching afn\n");
+  fprintf(stdout," g afn [unix_prefix]    get files matching afn\n");
+  fprintf(stdout," p ufn unix_file_name   put a file to floppy\n");
+  fprintf(stdout," p '*' unix_files       put a bunch of files\n");
+  fprintf(stdout," n afn                  nuke - delete matching files\n");
+  fprintf(stdout," c                      create a new file system\n");
+  fprintf(stdout,"\noptions:\n");
+  fprintf(stdout," t - text mode  b - binary mode\n");
+  fprintf(stdout," i - don't do interleaving\n");
+  fprintf(stdout," a - absolute disk address, start.length e.g. 0.2002\n");
+  fprintf(stdout," f - use the named unix file instead of /dev/floppy\n");
+  fprintf(stdout," o - override, allows writes to a damaged directories\n");
+  fprintf(stdout,"\nterms:\n");
+  fprintf(stdout," afn - ambiguous cpm file name, e.g. *.asm or foo*\n");
+  fprintf(stdout,"   *** don't forget to quote afns to the shell, '*.asm'\n");
+  fprintf(stdout," ufn - unambiguous file name\n");
+  fprintf(stdout," interleaving - tracks 2-76 are normaly interleaved\n");
+  fprintf(stdout,"   with a skew of 6 sectors\n");
+  exit(1);
+}
+
+/* create a new file system */
+ccmd()
+{ int i;
+  fprintf(stdout,"initializing file system ");
+  fflush(stdout);
+  lread(CP_BASE,CP_DIRSEC,cp_dir);	/* read in the directory */
+					/* so we can zap disk to undo this */
+  for(i=0; i<CP_NUMDIR; i++)
+    cp_dir[i].cp_et = DELF;		/* set all the extents deleted */
+  lwrite(CP_BASE,CP_DIRSEC,cp_dir);	/* write it back */
+  fprintf(stdout," [ok]\n");
+} 
+
+/* get some files from the floppy */
+gcmd(argc,argv)
+ char *argv[];
+ int argc;
+{ char *unix_name,*cpm_name;
+  int index,cur;
+  struct cp_dir_ext wild;
+  cpm_name = argv[0];
+  if (argc > 2) toomany();
+  if(flag('a')) {			/* want absolute disk addresses? */
+    if(argc < 2) toofew();
+    abs_read(cpm_name,argv[1]);
+    return;
+    }
+
+  need_mode();				/* need have given a file mode */
+  if (argc == 1)
+    unix_name = "";			/* no unix prefix */
+  else
+    unix_name = argv[1];		/* use this unix prefix */
+  parse_ext(&wild,cpm_name);
+  getdir();				/* read the directory */
+  cur = -1;				/* start looking here */
+  while((cur = lookup(&wild,cur)) != -1) /* find the next matching file */
+    getfile(cur,unix_name);
+}
+
+/* pcmd - put files on the floppy */
+pcmd(argc,argv)
+ char *argv[];
+ int argc;
+{ int i;
+  if(argc<2) toofew();
+  if(flag('a')) {			/* want absolute disk addresses? */
+    if(argc > 2) toomany();
+    abs_write(argv[0],argv[1]);
+    return;
+    }
+
+  need_mode();
+  getdir();
+  for(i=1; i<argc; i++)			/* write out the unix files */
+    writefile(argv[0],argv[i]);
+}
+
+/* write a bunch of sectors into a file */
+abs_write(whereto,unix_name)
+{ int start,size,status;
+  char buf[SEC];
+  FILE *ifile;
+  if(sscanf(whereto,"%d.%d",&start,&size) != 2)
+    quit(1,"\ncpmutl:can't parse start.size address\n");
+  if ((ifile = fopen(unix_name,"r")) == NULL) /* try to open the unix file */
+    quit(1,"\ncpmutl:can't open unix file %s for read\n",unix_name);
+  markerrs();
+  fprintf(stdout,"writing %s => sector %d, length %d ",unix_name,start,size);
+  fflush(stdout);
+  while(size--) {
+    if((status = fread(buf,1,SEC,ifile)) != SEC) /* read a sector from unix */
+      quit(1,"\ncpmutl:read error on unix file %s\n",unix_name);
+    lwrite(start,1,buf);
+    start++;				/* advance to the next sector */
+    }
+ reporterrs();
+ fclose(ifile);
+}
+
+/* ndcm - nuke some files */
+ncmd(argc,argv)
+char *argv[];
+int argc;
+{ struct cp_dir_ext del_ext;
+  if(argc < 1) toofew();
+  if(argc > 2) toomany();
+  getdir();				/* get the directory */
+  parse_ext(&del_ext,argv[0]);		/* parse the file spec to delete */
+  nuke_ext(&del_ext);			/* delete matching extents */
+  putdir();
+}
+
+/* delete matching entries */
+nuke_ext(nuk_me)
+struct cp_dir_ext *nuk_me;
+{ int i;
+  for(i=0; i<CP_NUMDIR; i++)
+    if((cp_dir[i].cp_et != DELF) &&
+       match_ext(nuk_me,&cp_dir[i]))	/* does this extent match? */
+      flush_ext(i);			/* yes flush it */
+}
+
+/* flush this extent */
+flush_ext(index)
+{ int i,where;
+  num_ext--;				/* one less extent exists */
+  if(cp_dir[index].cp_ex == 0)
+    fprintf(stdout,"deleting file:[cpm]%s\n",cp_name[index]),
+    num_fil--;				/* one less file */
+  for(i=0; i<DM; i++)			/* release its disk space */
+    if((where = cp_dir[index].cp_dm[i]) != 0) { /* this cluster allocated? */
+      if(cp_btb[where] != index)	/* we did have it didn't we? */
+       dir_err++,			/* no, an error then */
+       fprintf(stderr,"\ncpmutl:cluster being deleted is not assigned\n"); 
+      cp_btb[where] = -1;
+      dsk_inuse--;
+      }
+  ext_prev[index] = -1;			/* no links this way */
+  ext_next[index] = -1;			/* or that */
+  cp_dir[index].cp_et = DELF;		/* do the deed */
+}
+
+/* copy the name of an extent */
+copy_ext(src,dst)
+struct cp_dir_ext *src,*dst;
+{ int i;
+  for(i=0; i<FN_SZ; i++)		/* copy over the file name */
+    dst->cp_fn[i] = src->cp_fn[i];
+  for(i=0; i<FT_SZ; i++)		/* copy over the file type */
+    dst->cp_ft[i] = src->cp_ft[i];
+}
+
+/* lcmd - list the floppy directory */
+lcmd(argc,argv)
+char *argv[];
+int argc;
+{ int i,cur,curext;
+  int totrec=0,totext=0,totk=0;
+  struct cp_dir_ext wild;
+  char *cpm_name;
+  if(argc > 1) toomany();
+  if(argc == 0)
+    cpm_name = "*.*";		/* default file name */
+  else
+    cpm_name = argv[0];
+  getdir();			/* read in the directory */
+  fprintf(stdout,
+    "disk status: %d files, %d extents, %dK allocated, %dK free\n\n",
+    num_fil,num_ext,dsk_inuse-2,(CP_ALOC-dsk_inuse)-2);
+  fprintf(stdout,"    recs     K   ex     name\n");
+
+  parse_ext(&wild,cpm_name);	/* parse the cpm file name */
+  cur = -1;
+  while((cur = curext = lookup(&wild,cur)) != -1) { /* find a file */
+    int recsiz=0,ksiz=0,numext=0;
+    while(curext != -1) {		/* do all of its extents */
+      numext++;				/* found one more extent */
+      recsiz += cp_dir[curext].cp_rc;	/* this many records */
+      ksiz += ((cp_dir[curext].cp_rc+CP_CLUSTER-1)/CP_CLUSTER); /* k size */
+      curext = ext_next[curext];	/* move on */
+      }
+    fprintf(stdout,
+      "    %4d   %3d   %2d   %s\n",recsiz,ksiz,numext,cp_name[cur]);
+    totrec += recsiz;
+    totk += ksiz;
+    totext += numext;
+    }
+  fprintf(stdout,"    ----   ---   --\n");
+  fprintf(stdout,"    %4d   %3d   %2d\n",totrec,totk,totext);
+}
+
+/*
+   read subroutines
+*/
+
+/* read a file from the floppy */
+getfile(index,unix_prefix)
+int index;
+char *unix_prefix;
+{ int clstr,cur_io_err,extsiz,currec;
+  FILE *ofile;
+  char *unix_name;
+  char buf[100];			/* default to the prefix */
+  if (*unix_prefix == 0)		/* is there a unix file name */
+    unix_name = cp_name[index];		/* no, just use the cpm name */
+  else {
+    char *cp;
+    for(cp = unix_prefix; *cp; *cp++ );	/* find the end */
+    cp--;				/* point to the last char */
+    if (*cp != '/')			/* is this a prefix */
+      unix_name = unix_prefix;		/* no, its a name */
+    else
+      strcpy(buf,unix_prefix),		/* put on the prefix */
+      strcat(buf,cp_name[index]),	/* then the name */
+      unix_name = buf;			/* that's it */
+    }
+
+  if ((ofile = fopen(unix_name,"w")) == NULL) /* try to open the unix file */
+    quit(1,"\ncpmutl:can't create unix file %s\n",unix_name);
+  fprintf(stdout,"%s => [cpm]%s ",cp_name[index],unix_name);
+  fflush(stdout);
+  markerrs();
+  for( ; index != -1; index=ext_next[index]) { /* all extents */
+    extsiz = cp_dir[index].cp_rc;	/* read all the records */
+    for(currec=0; currec < extsiz; currec++) { /* read all the records */
+     if(read_sector(cp_dir[index].cp_dm[currec/CP_CLUSTER],
+                    currec % CP_CLUSTER,ofile))
+       break;				/* stop at eof */
+     }
+    }
+  reporterrs();
+}
+
+/* more read subroutines */
+
+/* read a bunch of sectors into a file */
+abs_read(wherefrom,unix_name)
+{ int start,size,status;
+  char buf[SEC];
+  FILE *ofile;
+  if(sscanf(wherefrom,"%d.%d",&start,&size) != 2)
+    quit(1,"\ncpmutl:can't parse start.size address\n");
+  if ((ofile = fopen(unix_name,"w")) == NULL) /* try to open the unix file */
+    quit(1,"\ncpmutl:can't create unix file %s\n",unix_name);
+  markerrs();
+  fprintf(stdout,
+    "reading from sector %d, length %d => %s ",start,size,unix_name);
+  fflush(stdout);
+  while(size--) {
+    lread(start,1,buf);			/* read a sector from the floppy */
+    status=fwrite(buf,1,SEC,ofile);	/* write it to the file */
+    if(status != SEC)
+      quit(1,"\ncpmutl:file write error for unix file %s\n",unix_name);
+    start++;				/* advance to the next sector */
+    }
+  reporterrs();
+  fclose(ofile);
+}
+
+/* read in a sector */
+int read_sector(dsk_adr,sec,ofile)
+int dsk_adr,sec;
+FILE *ofile;
+{ int i;
+  char buf[SEC],cur;			/* sector buffer */
+  lread((dsk_adr*CP_CLUSTER)+CP_BASE+sec,1,buf); /* read it in */
+  if(sec == 0)				/* start of a cluster? */
+    putc('.',stdout),			/* yes */
+    fflush(stdout);
+  if (mode == 't') {
+    for(i=0; i<SEC; i++)		/* do text translation */
+      switch(cur=np(buf[i])) {
+      case 'Z'-64:
+        return TRUE;			/* stop at eof */
+      case 'M'-64:
+        continue;			/* throw away returns */
+      default:
+	if(fwrite((char *)&cur,1,1,ofile) != 1)
+          quit(1,"\ncpmutl:write error on unix file\n");
+      }
+    }
+  else if(fwrite(buf,SEC,1,ofile) != 1)
+    quit(1,"\ncpmutl:write error on unix file\n");
+ return FALSE;
+}
+
+/* extent handling */
+
+/* see if ext1 matches ext2 */
+match_ext(ext1,ext2)
+struct cp_dir_ext *ext1,*ext2;
+{ int i;
+  for(i=0; i<FN_SZ; i++)
+    if((np(ext1->cp_fn[i]) != np(ext2->cp_fn[i])) && /* fail if not equal */
+       (np(ext1->cp_fn[i]) != '?'))		/* and ext1 not wild */
+      return FALSE;
+  for(i=0; i<FT_SZ; i++)
+    if((np(ext1->cp_ft[i]) != np(ext2->cp_ft[i])) && /* fail if not equal */
+       (np(ext1->cp_ft[i]) != '?'))		/* and ext1 not wild */
+      return FALSE;
+  return TRUE;					/* success */
+}
+
+/* parse the passed extent */
+parse_ext(rslt,name)
+struct cp_dir_ext *rslt;
+char *name;
+{ int i; char cur;
+  ini_ext(rslt);			/* initialize the extent */
+  for(i=0; i<FN_SZ; i++) {
+    cur = *name;			/* fetch the char */
+    if(islower(cur))
+      cur = toupper(cur);		/* convert to upper case */
+    if((cur == 0) || (cur == '.'))	/* stop at eos */
+      break;
+    else if(cur == '*')			/* is it a star? */
+      rslt->cp_fn[i] = '?';		/* fill out with ? then */
+    else
+      rslt->cp_fn[i] = cur,
+      name++;
+    }
+
+  if(*name == '*') {			/* need to skip a star? */
+    *name++;				/* get out of the * */
+    if(*name == 0)			/* the end of the string? */
+     name = "*";			/* yes, start crosses the . then */
+    }
+  if(*name == '.') *name++;		/* maybe skip the separator */
+
+  for(i=0; i<FT_SZ; i++) {
+    cur = *name;			/* fetch the char */
+    if(islower(cur))
+      cur = toupper(cur);		/* convert to upper case */
+    if(cur == 0)			/* stop at eos */
+      break;
+    else if(cur == '*')			/* is it a star? */
+      rslt->cp_ft[i] = '?';		/* fill out with ? then */
+    else
+      rslt->cp_ft[i] = cur,
+      name++;
+    }
+  if(*name == '*') *name++;		/* get out of the * */
+  if(*name != 0)
+    quit(1,"\ncpmutl:cpm file name to long\n");
+}
+
+ini_ext(rslt)
+struct cp_dir_ext *rslt;
+{ int i;
+  rslt->cp_et = 0;		/* mark this extent in use */
+  for(i=0; i<FN_SZ; i++)	/* set up the file name */
+    rslt->cp_fn[i] = SPACE;
+  for(i=0; i<FT_SZ; i++)	/* and the file type */
+    rslt->cp_ft[i] = SPACE;
+  rslt->cp_rc = 0;		/* no records yet */
+  rslt->cp_ex = 0;		/* relative extent number */
+  for(i=0; i<DM; i++)
+    rslt->cp_dm[i] = 0;		/* no disk space assigned yet */
+}
+
+/* random small subroutines */
+
+/* record io errors for a transfer */
+int cur_io_err;
+markerrs()
+{ cur_io_err = io_err;
+}
+
+/* print [ok] or number of io errors */
+reporterrs()
+{ if(cur_io_err != io_err)
+    fprintf(stderr,"\ncpmutl:%d io errors\n",io_err-cur_io_err);
+  else
+    fprintf(stdout," [ok]\n");
+}
+
+/* find the next file to match cpm_name */
+lookup(wild,index)
+int index;
+struct cp_dir_ext *wild;
+{ index++;				/* skip over the current extent */
+  for( ; index<CP_NUMDIR; index++) {
+    if ((cp_dir[index].cp_et == DELF) || /* forget if deleted */
+        (cp_dir[index].cp_ex != 0) ||	/*  or not extent 0 */ 
+        (!match_ext(wild,&cp_dir[index])))
+      continue;				/* forget it */
+    return(index);			/* found a match */
+    };
+  return -1;				/* no more matches */
+}
+
+/* assert that the directory has not been found to be inconsistent */
+dirok()
+{ if (dir_err == 0)			/* is the directory ok? */
+    return;
+  if(flag('o')) {				/* override */
+    fprintf(stderr,
+      "\ncpmutl:directory has %d error(s).  proceeding...\n",dir_err);
+    return;
+    }
+  quit(1,"\ncpmutl:command aborted due to %d directory error(s)\n",dir_err);
+}
+
+/* some more random subroutines */
+
+/* too many args */
+toomany()
+{ quit(1,"\ncpmutl:too many arguments\n");
+}
+
+/* too few args */
+toofew()
+{ quit(1,"\ncpmutl:too few arguments");
+}
+
+/* initialize data */
+init_data()
+{ int i;
+  for(i=0; i<CP_ALOC; i++)
+    cp_btb[i] = -1;		/* initialize the bit table to free */
+  dsk_inuse=num_fil=num_ext=0;	/* random statistics counters */
+  io_err=dir_err=0;		/* error counts */
+  for(i=0; i<CP_NUMDIR; i++) {	/* set up the links */
+    ext_next[i]=ext_prev[i] = -1; /* no links */
+    cp_name[i][0]=0;		/*  or names yet */
+    }
+  flname = "/dev/floppy";	 /* default floppy file */
+}
+
+/* mark a bit in use in the bit table */
+set_btb(where,who)
+int where,who;
+{ if((who != DIR_EXT) &&	/* really part of the directory? */
+     (where == 0))		/* is it really allocated? */
+    return;			/* no, just a place holder */
+  if (where >= CP_ALOC) {	/* does this cluster exist? */
+    dir_err++;
+    fprintf(stderr,"\ncpmutl:illegal cluster %d in disk map for ",where);
+    prname(who);
+    fprintf(stderr,"\n");
+    }
+  else if (cp_btb[where] != -1) { /* has someone else already claimed it? */
+    dir_err++;
+    fprintf(stderr,"\ncpmutl:Cluster %d multiply linked:\n",where);
+    fprintf(stderr,"  first file: "); prname(who);
+    fprintf(stderr,"  second file: "); prname(cp_btb[where]);
+    }
+  else {
+    cp_btb[where] = who;	/* remember who has it for debugging */
+    dsk_inuse++;		/* one more cluster in use */
+    }
+}
+
+/* print the name of a file */
+prname(index)
+int index;
+{ int i,temp;
+  if(index == DIR_EXT)
+    fprintf(stderr,"directory\n");
+  else
+    fprintf(stderr,"name:%s, extent:%d, recs:%d, slot:%d\n",
+	    cp_name[index],cp_dir[index].cp_ex,cp_dir[index].cp_rc,index);
+}
+
+/* check that the record count for index is consistent with */
+/* the list of clusters allocated to it in the extent map */
+check_rc(index)
+int index;
+{ int bit_aloc,j;
+  bit_aloc=(cp_dir[index].cp_rc+CP_CLUSTER-1)/CP_CLUSTER;
+  if(bit_aloc > DM) {			/* is it in range? */
+    dir_err++;				/* no */
+    fprintf(stderr,"\ncpmutl:record count out of bounds\n  for extent:");
+    prname(index);
+    return;				/* give up on this one */
+    }
+
+  for(j=0; j<bit_aloc; j++)		/* there should be enough clusters */
+    if(cp_dir[index].cp_dm[j] == 0)	/* allocated to cover all records */
+      dir_err++,			/* else an error */
+      fprintf(stderr,
+        "\ncpmutl:allocation index %d should be allocated but isn't\n",j),
+      fprintf(stderr,"  for extent:"),
+      prname(j);
+
+  for(j=bit_aloc; j<DM; j++)		/* the rest (if any) shouldn't be */
+    if(cp_dir[index].cp_dm[j] != 0)	/* allocated */
+      dir_err++,			/* else an error */
+      fprintf(stderr,
+        "\ncpmutl:allocation index %d shouldn't be allocated but is\n",j),
+      fprintf(stderr,"  for extent:"),
+      prname(j);
+}
+
+/* link extra extents to there next lower extent */
+link_ext()
+{ int index,j;
+  for(index=0; index<CP_NUMDIR; index++) { /* link to previous extents */
+    if ((cp_dir[index].cp_et == DELF) || /* if this extent is deleted */
+        (cp_dir[index].cp_ex == 0))	/*  or there is no lower extent */
+      continue;				/* then nothing to link to */
+    for(j=0; j<CP_NUMDIR; j++) {	/* find the lower extent */
+      if ((cp_dir[j].cp_et == DELF) ||	/* is [j] deleted */
+          (cp_dir[j].cp_ex != cp_dir[index].cp_ex-1) || /*  or wrong ext */
+          (strcmp(cp_name[j],cp_name[index]) != 0)) /*  or the wrong name */
+        continue;			/*  then keep looking */
+      ext_next[j] = index;		/* set the links */
+      ext_prev[index] = j;
+      if(cp_dir[j].cp_rc != SEC)	/* the lower extent does have the */
+        dir_err++,			/* correct record count doesn't it? */
+        fprintf(stderr,"\ncpmutl:incorrect record count: "),
+        prname(j);
+      break;
+      };
+    if (j >= CP_NUMDIR) {		/* was a lower extent found ? */
+      dir_err++;			/* no, that is an error */
+      fprintf(stderr,"\ncpmutl:can't find lower extent: "); prname(index);
+      }
+    }
+}
+
+/* set cp_name from cp_fn and cp_ft */
+setname(index)
+{ int i,j,temp;
+  j=0;					/* index into the file name */	
+  for(i=0; i<FN_SZ; i++) {
+    temp = np(cp_dir[index].cp_fn[i]); /* no phoonly attributes */
+    if ((temp < SPACE) || temp == 0177)	/* is it printable? */
+      dir_err++,
+      fprintf(stderr,
+        "\ncpmutl:illegal char 0%o in file name, slot:%d\n",temp,index);
+    if (temp == SPACE)
+      break;				/* stop on a space */
+    cp_name[index][j++] = temp;
+    }
+  cp_name[index][j++] = '.';		/* put in the . */
+  for(i=0; i<FT_SZ; i++) {
+    temp = np(cp_dir[index].cp_ft[i]);	/* no phoonly attributes */
+    if ((temp < SPACE) || temp == 0177)	/* is it printable? */
+      dir_err++,
+      fprintf(stderr,
+        "\ncpmutl:illegal char 0%o in file type, slot:%d\n",temp,index);
+    if (temp == SPACE)
+      break;				/* stop on a space */
+    cp_name[index][j++] = temp;
+    }
+  cp_name[index][j++] = 0;
+
+  for(j=0; cp_name[index][j] != 0; j++)	/* convert the name to lower case */
+    if(isupper(temp =  cp_name[index][j]))
+      cp_name[index][j] = tolower(temp);
+}
+
+/* write the out the directory */
+putdir()
+{ dirok();				/* make sure it is ok */
+  lwrite(CP_BASE,CP_DIRSEC,cp_dir);
+  dirok();				/* make sure it is ok */
+}
+
+/*
+  read in the floppy directory
+*/
+getdir()
+{ int index,j;
+  lread(CP_BASE,CP_DIRSEC,cp_dir);	/* read in the directory */
+  for(j=0; j<2; j++)			/* allocate the directory */
+    set_btb(j,DIR_EXT);			/* so it isn't free */
+  for(index=0; index<CP_NUMDIR; index++) { /* parse each entry */
+    cp_name[index][0]=0;		/* initial name */
+    if (cp_dir[index].cp_et == DELF)	/* is this a deleted file? */
+      continue;				/* not interesting then */
+    setname(index);			/* make up cp_name */
+    num_ext++;				/* found one more extent in use */
+    if (cp_dir[index].cp_ex == 0)	/* is it the first extent? */
+      num_fil++;			/* yes */
+    for(j=0; j<DM ;j++)			/* record the disk blocks in use */
+      if (cp_dir[index].cp_dm[j] != 0)	/* is this entry in use? */
+        set_btb(cp_dir[index].cp_dm[j],index); /* yes, owned by this extent */
+    check_rc(index);			/* check that rc matches allocation */
+    }    
+  link_ext();				/* link extra extents to main file */
+  dirok();				/* make sure it is ok */
+}
+
+int cur_ext;				/* current extent or -1 */
+int cur_pos;				/* current position in extent */
+char buff[CP_CLCHAR];			/* data buffer */
+
+/* write a file */
+writefile(cpm_name,unix_name)
+char *unix_name,*cpm_name;
+{ extern int cur_ext;
+  extern int cur_pos;
+  int i,cur_io_err;
+  FILE *ifile;
+  char *new_file_name,*scan;
+  char ch;
+  if((ifile = fopen(unix_name,"r")) == NULL) /* open the unix file */
+    quit(1,"\ncpmutl:open for read of unix file %s failed\n",unix_name);
+  new_file_name = cpm_name;		/* default to the users arg */
+  if(*cpm_name == '*') {		/* need to make up a name? */
+    new_file_name = unix_name;		/* yes, start with this one */
+    scan = unix_name;			/* scan for the last / */
+    while (*scan != 0)			/* scan the unix name */
+      if(*scan++ == '/')		/* is this a / ? */
+        new_file_name = scan;		/* yes, remember where it is */
+    }
+
+  start_new_file(new_file_name);	/* prepare for some cpm_puts */
+  markerrs();
+  fprintf(stdout,"%s => [cpm]%s ",unix_name,cp_name[cur_ext]);
+  fflush(stdout);
+  while(TRUE) {
+    i = fread((char *)&ch,1,1,ifile);	/* get the next input byte */
+    if(i == 0) break;			/* stop this at eof */
+    if(i != 1)
+      quit(1,"\ncpmutl:read error on unix file %s\n",unix_name);
+    if(mode == 't') {
+      if((ch = np(ch)) == '\n')
+        cpm_put('M'-64),		/* new line is cr */
+        cpm_put('J'-64);		/* then lf */
+      else
+        cpm_put(ch);
+      }
+    else
+      cpm_put(ch);
+    }
+
+  if(mode == 't') cpm_put('Z'-64);	/* the finishing touch for text */
+  if((cur_pos % CP_CLCHAR) != 0)	/* data left in the floppy buffer */
+    flbuf();				/* yes, flush the buffer */
+  fclose(ifile);			/* close the input file */
+  putdir();				/* write the directory back */
+  reporterrs();
+}
+
+/*
+  write routines
+*/
+
+cpm_put(curchar)
+char curchar;
+{ extern int cur_ext;
+  extern int cur_pos;
+  extern char buff[];
+  int new_ext,i,buf_ptr;
+  if(cur_pos >= (CP_CLCHAR*DM)) { 	/* this extent already full? */
+    new_ext = aloc_ext();		/* make the new extent */
+    cur_pos = 0;			/* reset position pointer */
+    copy_ext(&cp_dir[cur_ext],&cp_dir[new_ext]); /* copy over the name */
+    cp_dir[new_ext].cp_ex = cp_dir[cur_ext].cp_ex + 1;
+    ext_next[cur_ext] = new_ext;	/* forward link */
+    ext_prev[new_ext] = cur_ext;	/* back link */
+    cur_ext = new_ext;
+    setname(cur_ext);			/* set up cp_name for it */
+    }
+  if((cur_pos % SEC) == 0)		/* going into a new record ? */
+    cp_dir[cur_ext].cp_rc++;		/* yes */
+  buf_ptr = cur_pos % CP_CLCHAR;	/* where in the buffer */
+  if(buf_ptr == 0)			/* need a new cluster */
+    cp_dir[cur_ext].cp_dm[cur_pos / CP_CLCHAR] = aloc_cluster(cur_ext);
+  buff[buf_ptr] = curchar;		/* store the char */
+  if(buf_ptr == (CP_CLCHAR-1))		/* last char of the buffer? */
+    flbuf();				/* yes, flush the buffer */
+  cur_pos++;				/* advance to the next character */
+}
+
+flbuf()
+{ extern int cur_ext;
+  extern int cur_pos;
+  extern char buff[];
+  lwrite((cp_dir[cur_ext].cp_dm[cur_pos / CP_CLCHAR])*CP_CLUSTER+CP_BASE,
+      CP_CLUSTER,buff);			/* write out the buffer */
+  putc('.',stdout);
+  fflush(stdout);
+}
+
+start_new_file(name)
+char *name;
+{ extern int cur_ext;
+  extern int cur_pos;
+  int cur,i;
+  struct cp_dir_ext temp_ext;
+  parse_ext(&temp_ext,name);		/* parse the file name */
+  nuke_ext(&temp_ext);			/* nuke matching current extents */
+  cur_pos = 0;
+  cur_ext = aloc_ext();			/* make up an extent for the file */
+  copy_ext(&temp_ext,&cp_dir[cur_ext]);	/* give it a name */
+  num_fil++;				/* this extent is really a file */
+  setname(cur_ext);			/* set up cp_name */
+  dirok();				/* make sure directory is ok */
+}
+
+
+/* allocate a new extent */
+int aloc_ext()
+{ int i,newext;
+  for(newext=0; newext<CP_NUMDIR; newext++) /* look through all the extents */
+    if(cp_dir[newext].cp_et == DELF)
+      break;
+  if(newext >= CP_NUMDIR)	/* was a free extent found? */
+    quit(1,"\ncpmutl:allocate extent failure, floppy directory full\n");
+    
+  num_ext++;			/* one more extent now in use */
+  ini_ext(&cp_dir[newext]);	/* clear it */
+  return(newext);		/* return the extent to the user */
+}
+
+/* allocate a new cluster */
+int aloc_cluster(extent)
+int extent;
+{ int i;
+  for(i=0; i<CP_ALOC; i++)
+    if(cp_btb[i] == -1) {
+    cp_btb[i] = extent;		/* record who has it */
+    dsk_inuse++;		/* one more cluster in use */
+    return i;			/* return it to the user */
+    }
+  quit(1,"\ncpmutl:allocate disk cluster failure, floppy file system full\n");
+}
+
+/*
+  low level read/write support routines
+*/
+
+fl_init()
+{ static int inited = 0;
+  int flmode = 0;
+  if(inited) return;		/* if already open leave it alone */
+  inited = 1;			/* yes */
+  if(flag('w')) flmode = 2;	/* need to write? */
+  if((fldes = open(flname,flmode)) < 0)
+    quit(1,"\ncpmutl:Open of floppy device %s failed",flname);
+  if(flag('i'))
+    fprintf(stdout," interleaving off"),
+    fflush(stdout);
+}
+
+/*  logical to physical address translation */
+long trans(logical)
+register int logical;
+{ static int xlate[] =
+    {1,7,13,19,25,5,11,17,23,3,9,15,21,2,8,14,20,26,6,12,18,24,4,10,16,22};
+  register int sector, track;
+
+
+  if ((logical < CP_BASE) ||	/* is this even in the file system? */
+      flag('i'))		/* is interleaving enabled? */
+    return(logical);		/* no, never interleaved */
+  sector = logical % 26;
+  sector = xlate[sector]-1;
+  track = logical / 26;
+
+  return((track *26) + sector);
+}
+
+/*
+  read/write block routines
+*/
+
+lread(startad,count,obuff)
+int startad, count;
+char *obuff;
+{ long trans();
+  extern fldes;
+  fl_init();
+  while (count--) {
+    lseek(fldes, trans(startad)*SEC, 0);
+    if (read(fldes,obuff,SEC) != SEC) {
+      io_err++;
+      fprintf(stderr,"\ncpmutl: read sector error %d\n",startad);
+      if ((startad >= CP_BASE) && /* is this in the directory? */
+          (startad <  (CP_BASE + CP_DIRSEC)))
+        dir_err++;		/* it counts as a directory error */
+      }
+    obuff += SEC;
+    startad++;
+    }
+}
+
+/* write some sectors to the floppy doing interleaving */
+lwrite(startad,count,obuff)
+int startad, count;
+char *obuff;
+{ long trans();
+  extern fldes;
+  fl_init();
+  while(count--) {
+    lseek(fldes, trans(startad)*SEC, 0);
+    if (write(fldes,obuff,SEC) != SEC) {
+      io_err++;
+      fprintf(stderr,"\ncpmutl: write sector error %d\n",startad);
+      if ((startad >= CP_BASE) && /* is this in the directory? */
+          (startad <  (CP_BASE + CP_DIRSEC)))
+        dir_err++;		/* it counts as a directory error */
+      }
+    obuff += SEC;
+    startad++;
+    }
+}
+
+/* quit - a cmu local function */
+quit(status,fmt,args)
+int status;
+char *fmt;
+{ _doprnt(fmt,&args,stderr);
+  exit(status);
+}
+ 

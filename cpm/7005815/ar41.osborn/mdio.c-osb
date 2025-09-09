@@ -1,0 +1,182 @@
+/*
+	Osbourne Modem I/O Routines
+	These routines are the Osbourne
+	versions of the routines needed
+	to make TELNET work.
+	To make TELNET work with the Osb 1
+	make the obvious modifications to 
+	telnet.c and recompile.
+
+	by:	Dan Sunday
+		7473 Broken Staff
+		Columbia, MD 21044
+
+		(301)-730-6838
+
+	date:	4-23-82
+
+	Note:	by suitably resetting the
+		io byte assignments in this
+		package, I and Dave Richardson
+		have successfully used the
+		modio.c routines to get TELNET
+		working on the TRS-80 Model 2
+		using Pickles & Trout
+*/
+#include "a:osbdscio.h"
+
+
+/*
+	Routine to return true if input is present
+	at the modem port.
+*/
+
+miready()
+{
+	char c;
+	char *iob,sviob;
+
+	iob = 3;
+	sviob = *iob;	/* save io byte */
+	*iob = 1;	/* console:= serial port */
+	c = bios(2);	/* get console status */
+	*iob = sviob;	/* restore io byte */
+	return c;	/* return input status */
+}
+
+
+/*
+	Routine to return true if modem is ready 
+	to output a byte.
+*/
+
+moready()
+{
+	char c;
+	char *iob,sviob;
+
+	iob = 3;
+	sviob = *iob;	/* save io byte */
+	*iob = 0x40;	/* list device:= serial port */
+	c = bios(16);	/* get list device status */
+	*iob = sviob;	/* restore io byte */
+	return c;	/* return output status */
+}
+
+/*
+	Get a byte from the modem:
+*/
+
+mgetch()
+{
+	char c;
+	char *iob,sviob;	/* I/O Byte */
+	unsigned n;	/* time-out counter */
+
+	for (n=20000; !miready() && n; n--)
+	   if (kbabort())
+		return ABORT;	/* Abort Input */
+	if (!n) return TIMOUT;	/* Read Time Out */
+
+	iob = 3;
+	sviob = *iob;	/* save io byte */
+	*iob = 1;	/* console:= serial port */
+	c = bios(3,0);	/* get input char */
+	*iob = sviob;	/* restore io byte */
+	return c;	/* return input */
+}
+
+
+/*
+	Output a byte to the modem:
+*/
+
+
+mputch(c)
+char c;
+{
+	char *iob,sviob;
+
+	while (!moready())
+	    if (kbabort())
+		return ABORT;	/* Abort Output */
+
+	iob = 3;
+	sviob = *iob;	/* save io byte */
+	*iob = 0x40;	/* list:= serial port */
+	bios(5,c);	/* output char */
+	*iob = sviob;	/* restore io byte */
+	return OK;	/* A-OK */
+}
+
+
+mputs(s)
+char *s;
+{
+	while (*s)
+		mputch(*s++);
+}
+/*-----------------------------------------*/
+/*
+	Return true if keyboard hit and SPECIAL
+	typed:
+*/
+
+kbabort()
+{
+	if (kbready() && getch() == SPECIAL)
+		return ABORT;
+	return OK;
+}
+
+
+
+kbready()
+{
+	return bios(2);
+}
+
+
+
+/*
+	Get a character from the keyboard:
+	(Uses a direct BIOS instead of going through
+	the BDOS. By naming this the same as the library
+	version of "getchar", we insure that THIS version
+	is used by things like "gets" instead of the library
+	version.)
+*/
+
+getchar()
+{
+	char c;
+	c = getch();
+	if (c == '\r') c = '\n';
+	putchar(c);
+	return c;
+}
+
+
+getch()
+{
+	return bios(3);
+}
+
+
+/*
+	Write a character to the console.
+*/
+
+putchar(c)
+char c;
+{
+	if (c == '\n') putch2('\r');
+	putch2(c);
+}
+
+putch2(c)
+char c;
+{
+	bios(4,c);
+}
+

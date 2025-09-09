@@ -1,0 +1,82 @@
+           From "EDN" magazine, June 5, 1979, page 84
+           ------------------------------------------
+
+              8080 ROUTINE GENERATES CRC CHARACTER
+                         by Fred Gutman
+            California Microwave, Inc., Sunnyvale, CA
+
+Communications  and magnetic-storage controllers often use cyclic 
+redundancy checking (CRC) to enhance data-transmission  accuracy; 
+this method's popularity is due, in part, to its easy implementa-
+tion  with shift registers and exclusive-OR gates (EDN,  Sept  5, 
+1978, pgs 119-123).
+
+  Many  software methods can emulate this hardware mechanization.  
+The more natural software method discussed here directly executes 
+the division of a message by a generating polynomial. An example, 
+programmed on the 8080, appears in the figure.
+
+  CRC  divides  a  message M(x) of any  length  by  a  generating 
+polynomial  P(x)  to form a quotient Q(x) and a  remainder  R(x): 
+M(x)/P(x)=Q(x)+R(x).  R(x) is appended to the message and checked 
+at  the receiving end of the communication channel or upon  read-
+back of magnetic-storage information.
+
+  In  these operations,  addition and division are based  on  the 
+exclusive-OR function without carry;  only bit-by-bit differences 
+are  important,  not  their arithmetic  sum.   Thus,  while  this 
+process resembles nonrestoring binary division, its mechanization 
+is  somewhat  simpler.   Note  that you don't have to  store  the 
+quotient - the remainder is the only useful part.  This versatile 
+method  accepts  different generating  polynomials  (table);  you 
+simply insert them into the routine in the figure.  In each case, 
+an  R-bit remainder is left in location REM for  transmission  or 
+checking.  (R is the order of the generating polynomial.)
+
+
+                            TABLE
+
+         POLYNOMIAL                MASK         HEX FORM
+
+CR16:  x16+x15+x2+1                H=128          8005
+SDLC:  x16+x12+x5+1                H=128          1021
+CCITT: x16+x15+x10+x6+x5+1         H=128          8461
+       x16+x15+x13+x7+x4+x2+x+1    H=128          A097
+HDLC:  x14+x2+x+1                  H=128          4007
+       x8+x7+x2+1                  L=128          0185
+CR12:  x12+x11+x3+x2+x+1           H=8            180F
+BCC:   x8+1                        L=128          0101
+CR16 REVERSE: x15+x14+x+1          H=128          4003
+CCIT REVERSE: x16+x11+x4+1         H=128          0811
+              x8+x7+x5+x4+1        L=128          01B1
+
+
+                         FIGURE
+
+011F         MESS    DS    1
+0120 0000    REM     DW    0
+0122         DIVP    LHLD  REM   ;REMAINDER
+0125 7C              MOV   A,H
+0126 E680            ANI   128   ;Q-BIT MASK SEE TABLE
+0128 F5              PUSH  PSW   ;SAVE STATUS
+0129 29              DAD   H     ;2 X R(X)
+012A 3A1F01          LDA   MESS  ;MESSAGE BIT IN LSB
+012D 85              ADD   L
+012E 6F              MOV   L,A
+012F F1              POP   PSW
+0130 CA3B01          JZ    $+11  ;IF Q-BIT IS ZERO
+0133 7C      QB      MOV   A,H
+0134 EE10            XRI   10H   ;MS HALF OF GEN. POLY
+0136 67              MOV   H,A
+0137 7D              MOV   A,L
+0138 EE21            XRI   21H   ;LS HALF
+013A 6F              MOV   L,A
+013B 222001          SHLD  REM
+013E C9              RET
+013F                 END   100H
+
+An   8080  routine  for  generating   a   cyclic-redundancy-check 
+character leaves that character in location REM.
+
+END
+

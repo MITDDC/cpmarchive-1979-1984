@@ -1,0 +1,144 @@
+;;; -*- lisp -*-
+
+(eval-when (compile eval)
+   (or (get 'loop 'macro)
+       (load '((liblsp) loop))))
+
+(declare (special er-topfn-symbol))
+
+(eval-when (eval load)
+   (and (status feature complr)
+	(setq er-topfn-symbol
+	      (let ((obarray sobarray))
+		 (implode '(T O P F N))))))
+
+(eval-when (eval load)
+   (or (fboundp 'format)
+       (load '((lisp)format))))
+
+(declare (*lexpr format ?format))
+
+(eval-when (eval load)
+   (if (status nofeature complr) nil
+       (*lexpr format ?format ferror)))
+
+(defvar er-ferror-pre-arg '| Error in ~S:~%; |)
+(defvar er-format-pre-arg '|~%; Warning from ~S:~%; |)
+
+(defun er-unique (x)
+   (loop for zt on x
+    unless (memq (car zt)(cdr zt)) 
+    collect (car zt)))
+
+(defun er-walk-find (form superform)
+   (cond ((eq form superform) t)
+	 ((atom superform) nil)
+	 ((loop for x in superform 
+                when (er-walk-find form x)
+		return t)
+	   t)
+	 (t nil)))
+
+(defun er-find-form-in-defs (form fns)
+   (loop for f in (er-unique fns)
+	 for temp = (getl f '(expr fexpr subr lsubr))
+	 when (and (memq (car temp) '(expr fexpr))
+		   (er-walk-find form (cddr (cadr temp))))
+	 return f
+	 finally (return nil))))
+
+(defun er-find-macro-caller (form)
+  ;; Crock function to attempt to determine in what function a 
+  ;; macro call appears.  Returns NIL if it can't tell.
+  ;; Assumes that FORM is currently under evaluation or compilation.
+  ;; Remember, there might be forms getting EVAL'ed in the compiler!
+  ;; If COMPILER-STATE is NIL or DECLARE we want to search
+  ;; the stack, otherwise use TOPFN.
+   (cond ((memq compiler-state '(NIL DECLARE))
+	  (cond ((null *rset)
+		 (?format t
+ '|~&;Setting *RSET to T for convenience of error macros~%|)
+		 nil)
+		((er-find-form-in-defs form (mapcar 'car (baklist))))
+		(t nil)))
+	 (t (symeval er-topfn-symbol))))
+
+(defprop er-error |ER-ERROR MACRO| macro)
+   ;; evaluates all arguments
+
+(defun |ER-ERROR MACRO| (form)
+   (cond ((macrofetch form))
+         (t (let ((caller (er-find-macro-caller form)))
+	       (cond ((null caller)
+		      `(ferror nil ,@ (cdr form)))
+		     (t (macromemo form
+			 `(ferror nil 
+			     ,(er-make-format-arg er-ferror-pre-arg (cadr form) nil)
+			     ',caller ,@(cddr form))
+			 'er-error)))))))
+
+(defun er-make-format-arg (pre-arg user-form post-arg)
+   ;; Pre-args for ER-ERROR and ER-WARN expect
+   ;; an extra arg form (QUOTE <caller>) to be added
+   ;; to the FORMAT call.  Post-arg may be NIL ==> none.
+   ;; Bletch on this code!!
+ (if (null post-arg)
+     (cond ((atom user-form)
+	    `(cons ',pre-arg
+		   (cond ((atom ,user-form)
+			  (ncons ,user-form))
+			 (t ,user-form))))
+	   ((memq (car user-form) '(cons xcons ncons append nconc list list*))
+	    `(cons ',pre-arg ,user-form))
+	   ((eq (car user-form) 'quote)
+	    (if (atom (cadr user-form))
+		`(quote (,pre-arg ,(cadr user-form)))
+		`(quote (,pre-arg ,@(cadr user-form)))))
+	   (t (let ((s (gensym)))
+		 `(cons ',pre-arg
+			((lambda (,s)
+			    (cond ((atom ,s)
+				   (ncons ,s))
+				  (t ,s))) ,user-form)))))
+     (cond ((atom user-form)
+	    `(cons ',pre-arg
+		   (cond ((atom ,user-form)
+			  (list ,user-form ',post-arg))
+			 (t (append ,user-form '(,post-arg))))))
+	   ((memq (car user-form) '(cons xcons ncons append nconc list list*))
+	    `(cons ',pre-arg (append ,user-form '(,post-arg))))
+	   ((eq (car user-form) 'quote)
+	    (if (atom (cadr user-form))
+		`(quote (,pre-arg ,(cadr user-form) ,post-arg))
+		`(quote (,pre-arg ,@(cadr user-form) ,post-arg))))
+	   (t (let ((s (gensym)))
+		 `(cons ',pre-arg
+			((lambda (,s)
+			    (cond ((atom ,s)
+				   (list ,user-form ',post-arg))
+				  (t (append ,s '(,post-arg))))) ,user-form)))))))
+
+(defprop er-warn |ER-WARN MACRO| macro)
+   ;; evaluates all arguments
+
+(defun |ER-WARN MACRO| (form)
+   (cond ((macrofetch form))
+         (t (let ((caller (er-find-macro-caller form)))
+	       (cond ((null caller)
+		      `(format msgfiles 
+			       ,@ (cdr form)))
+		     (t (macromemo form
+			 `(format msgfiles
+			     ,(er-make-format-arg er-format-pre-arg (cadr form) '|~%|)
+			     ',caller ,@(cddr form))
+			 'er-warn)))))))
+
+(defmacro er-conditional-warn (condition msg &rest args)
+   `(and ,condition (er-warn ,msg ,@ args)))
+
+(defmacro er-continue-warn (msg &rest args)
+   `(format msgfiles ,(er-make-format-arg '|~&; | msg '|~%|) ,@ args))
+
+(defmacro er-continue-conditional-warn (condition msg &rest args)
+   `(and ,condition (er-continue-warn ,msg ,@ args)))
+

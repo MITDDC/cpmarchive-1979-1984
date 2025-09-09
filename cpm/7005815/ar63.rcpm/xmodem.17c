@@ -1,0 +1,623 @@
+ /*This program implements the Ward Christenson assembly language
+program in C. All of the original modes are available, and a
+hide mode is added for restriction of file availability. A logger
+has been added, to keep a record of which files are most
+popular with BBS callers. Also, a local CRT display of errors
+and progress is implemented. This program as written is for the
+PMMI modem board, but may be changed for the D.C.Hayes via the
+proper equates. It requires CP/M Vers. 2.x to operate. Derived
+from CMODEM13.C, the CRC protocol has also been added.
+
+In this version, the log file XMODEM.LOG will be maintained in
+C15: in the following format: drive/user followed by the file name
+followed by the first 4 letters of the caller's name (actually,
+anything at 0x40..0x43). If bit 7 of byte 12 is set, it means
+transfer was with CRC.
+
+Ver 1.7  9/05/82 revamped logging again for use with rbbs31,
+		 which places name at 0x40. extended buffer
+		 to 0x1000.(SFK)
+Ver 1.6  9/04/82 removed time logging from logfil(file).(SFK)
+Ver 1.5a 8/21/82 changed for use with El Paso RCPM to directly
+		 replace xmodem53 without mods to BYE, etc.(SFK)
+Ver 1.5 6/14/82 move logging to finish of files xfer.
+	8/1/82 change syntax check to plug loopholes.
+
+			original by Jack M. Wierda
+			modified by Roderick W. Hart
+			modified by William D. Earnest
+			modified by Sigi Kluger
+*/
+#include <bdscio.h>
+#include <dch.h> /* change to pmmi.h for PMMI board */
+
+#define SOH 1
+#define EOT 4
+#define ACK 6
+#define TAB 9
+#define CPUCLK 4
+#define ERRORMAX 10
+#define RETRYMAX 10
+#define PANEL 0XFF
+#define LF 10
+#define CR 13
+#define SPS 3000 /* 3000 loops per second */
+#define NAK 21
+#define CAN 24
+#define CTRLZ 26
+#define DELETE 127
+#define TIMEOUT -1
+#define LRL 16 /* logger record lgth */
+#define RPB 8 /* logger rcrds per sector */
+#define SYSRAM 0x3D
+#define NAMELOC 0x40
+#define SECSIZ 0x80
+#define TBFSIZ 0x1000 /*moderate size, 0x8000 will not work
+with BDS C, reduce buffer size as necessary
+for smaller systems*/
+
+char thedisk,crc,option,buffer[TBFSIZ],fcb[36],crtm[24];
+char fnam[12];
+unsigned checksum,accum;
+int j,seccnt,lpc;
+
+main(argc,argv)
+int argc;
+char **argv;
+{
+	char *s;
+	printf("XMODEM (DCH/BDS-C) V 1.7 05-Sep-82\n");
+	s=*++argv;
+	++argv;
+	if (argc < 3)
+		prompt();
+
+	switch(s[0])
+	{
+	case 'R':
+	case 'S':
+	case 'H':
+	case 'Q':
+		option = s[0];
+		thedisk = peek(0x04) & 0x0f;
+		if(matchr(*argv,':'))
+			thedisk = *argv[0] - 'A';
+		break;
+
+	default:
+		prompt();
+	}
+
+	switch(option)
+	{
+	case 'R':
+
+	case 'H':
+		if (thedisk == 2)
+		{
+			printf("Drive C can't accept files, pick another.\n");
+			exit();
+		}
+		ckfile(argv);
+		if (filfnd(*argv))
+		{
+			printf("\nFile %s exists, pick another name.\n",*argv);
+			exit();
+		}
+		else
+		{
+			if (s[1] == 'C')
+				crc = 'C';
+			else
+				crc = NAK;
+			readfile(*argv);
+		}
+		break;
+
+	case 'S':
+
+		ckfile(argv);
+		sendfile(*argv);
+		break;
+
+	case 'Q':
+		ckfile(argv);
+		docfile(*argv);
+		break;
+	}
+}
+
+prompt()
+{
+	printf("Command format: XMODEM option filename.typ\n");
+	printf("Available options are:\n");
+	printf("\tS  Send file   R  Receive file\n");
+	printf("\tQ  Query file size & xmit time\n");
+	printf("\tRC Receive with CRC protocol.\n");
+	exit();
+}
+
+moready()
+{
+	return (inp(STATPORT) & TBMT) == (MAHI ? TBMT : 0);
+}
+
+miready()
+{
+	return (inp(STATPORT) & DAV) == (MAHI ? DAV : 0);
+}
+
+ctsready()
+{
+	int lpc,seccnt;
+	for(lpc=0; lpc < 25; lpc++)
+	{
+		seccnt = SPS * CPUCLK;
+		while((inp(MODEMCP2) & CTS) == (CTSHI ? 0 : CTS) && seccnt--)
+			;
+		if(seccnt >= 0)
+			return;
+	}
+	exit();
+}
+
+crtmsg(msg)
+char *msg;
+{
+	while (*msg)
+	{
+		while((inp(CSTAT) & COMASK) == (CAHI ? 0 : COMASK))
+			;
+		outp(CDATA,*msg);
+		msg++;
+	}
+}
+
+shocrt(sec,try,tot)
+int sec,try,tot;
+{
+	sprintf(crtm,"\015Blk%4d Try%2d Err%3d",sec,try,tot);
+	crtmsg(crtm);
+}
+
+sendline(data)
+char data;
+{
+#ifdef DEBUG
+	putchar(data);
+#else
+	ctsready();
+	while(!MOREADY())
+		;
+	outp(DATAPORT,data);
+#endif
+}
+
+readline(seconds)
+int seconds;
+{
+	for (lpc = 0; lpc < CPUCLK; lpc++)
+	{
+		seccnt = seconds * SPS;
+#ifdef DEBUG
+		while (bios(2,0) && seccnt--)
+			;
+		if (seccnt >= 0)
+			return(getchar());
+#else
+		ctsready();
+		while (!MIREADY() && seccnt--)
+			;
+		if(seccnt >= 0)
+			return(inp(DATAPORT));
+#endif
+	}
+	return(TIMEOUT);
+}
+
+purgeline()
+{
+	while (MIREADY())
+		inp(DATAPORT); /*PURGE THE RECEIVE REGISTER*/
+#ifndef DEBUG
+	ctsready();
+#endif
+}
+
+logfil(file) /* removed time loggin, substituted blanks */
+char *file;
+{
+	int fd,rnum,bnum,savusr;
+	char *i,*lrec,lbuf[128],*lnam;
+	lnam = "C:XMODEM.LOG";
+	savusr = bdos(32,-1);
+	bdos(32,15);
+	if((fd = open(lnam,2)) == -1)
+	{
+		if((fd = creat(lnam)) == -1)
+			return;
+		else
+		{
+			setmem(lbuf,16,0x20);
+			setmem(lbuf+16,112,CTRLZ);
+			rnum = 1;
+		}
+	}
+	else
+	{
+		read(fd, lbuf, 1);
+		rnum = atoi(lbuf)+1;
+	}
+	sprintf(lbuf,"%d",rnum);
+	seek(fd,0,0);
+	write(fd,lbuf,1);
+	bnum = rnum / RPB;
+	rnum = (rnum % RPB) * LRL;
+	seek(fd,bnum,0);
+	if(rnum == 0)
+		setmem(lbuf,128,CTRLZ);
+	else
+		read(fd,lbuf,1);
+	lrec = lbuf + rnum;
+	movmem(NAMELOC,lrec - 4 + LRL,4);
+	movmem(fnam,lrec,12);
+	if(fnam[0] == 0)
+		*lrec = (thedisk + 1) | (peek(4) & 0xf0);
+	if((option == 'R') || (option == 'H'))
+		*lrec = *lrec | 0x08;
+	if(crc == 'C')
+		lrec[12] = lrec[12] | 0x80;
+	seek(fd,bnum,0);
+	write(fd,lbuf,1);
+	close(fd);
+	bdos(32,savusr); /* restore orig user nr */
+}
+
+readfile(file)
+char *file;
+{
+	int firstchar, sectnum, sectcurr, sectcomp, errors;
+	unsigned toterr;
+	int bufctr,errorflag, fd;
+	char crflg;
+
+	fd = creat(file);
+	if(fd == -1)
+	{
+		printf("Cannot create %s\n",file);
+		exit();
+	}
+	else
+		printf("\nReady to receive %s\n",file);
+	sectnum = 0;
+	errors = 0;
+	toterr = 0;
+	bufctr = 0;
+	crflg = crc;
+	purgeline();
+	shocrt(0,0,0);
+	do
+	{
+		errorflag = FALSE;
+		do
+			firstchar = readline(10);
+			while(firstchar != SOH && firstchar != EOT && firstchar != TIMEOUT);
+
+		if(firstchar == TIMEOUT)
+			errorflag = TRUE;
+		if(firstchar == SOH)
+		{
+			crc = NAK;
+			sectcurr = readline(1);
+			sectcomp = readline(1);
+			if((sectcurr + sectcomp) == 255)
+			{
+				if(sectcurr == ((sectnum + 1) & 0xFF))
+				{
+					checksum = 0;
+					for(j = bufctr;j < (bufctr + SECSIZ);j++)
+					{
+						buffer[j] = readline(1);
+						if (crflg == 'C')
+							checksum = updcrc(buffer[j],checksum);
+						else
+							checksum = (checksum + buffer[j]) & 0xff;
+					}
+					if (crflg == 'C')
+					{
+						accum = readline(1) * 256 + readline(1);
+						checksum = updcrc(0,checksum);
+						checksum = updcrc(0,checksum);
+					}
+					else
+						accum = readline(1);
+					if(checksum == accum)
+					{
+						errors = 0;
+						sectnum = sectnum + 1;
+						bufctr = bufctr + SECSIZ;
+						if(bufctr == TBFSIZ)
+						{
+							bufctr = 0;
+							write(fd,buffer,TBFSIZ/SECSIZ);
+						}
+						shocrt(sectnum,errors,toterr);
+						sendline(ACK);
+					}
+					else
+						errorflag = TRUE;
+				}
+				else
+					if(sectcurr == (sectnum & 0xFF))
+				{
+					do
+						;
+						while(readline(1) != TIMEOUT);
+					sendline(ACK);
+				}
+				else
+					errorflag = TRUE;
+			}
+			else
+				errorflag = TRUE;
+		}
+		if(errorflag == TRUE)
+		{
+			errors++;
+			if(sectnum)
+				toterr++;
+			while(readline(1) != TIMEOUT)
+				;
+			shocrt(sectnum,errors,toterr);
+			sendline(crc);
+		}
+	}
+		while(firstchar != EOT && errors != ERRORMAX);
+
+	if((firstchar == EOT) && (errors < ERRORMAX))
+	{
+		sendline(ACK);
+		write(fd,buffer,(bufctr+SECSIZ-1)/SECSIZ);
+		close(fd);
+		if (crflg == 'C')
+			crc = 'C';
+		logfil(file);
+	}
+	else
+	{
+		printf("Aborting\n");
+		close(fd);
+		unlink(file);
+	}
+}
+
+sendfile(file)
+char *file;
+{
+	char *npnt;
+	int sectnum, sectors, attempts;
+	int bufctr, fd,toterr;
+
+	fd = open(file,0);
+	if(fd == -1)
+	{
+		printf("\n++File %s not found++\n",file);
+		exit();
+	}
+	else
+	{
+		npnt = fcbaddr(fd);
+		if(npnt[1] > 127 || npnt[2] > 127)
+		{
+			printf("\nFile %s not for distribution, Sorry.\n",file);
+			exit();
+		}
+		else
+		{
+			attempts = rcfsiz(fd);
+			docfile(file);
+			printf("Ready to send, Ctrl-X to Abort.\n");
+		}
+	}
+	purgeline();
+	attempts=0;
+	toterr = 0;
+	shocrt(0,0,0);
+	while((crc=readline(10)) != NAK && attempts < 10 && crc != 'C' && crc != CAN)
+	{
+		attempts++;
+		shocrt(0,attempts,0);
+	}
+	if (attempts == 10)
+	{
+		printf("\nTimed out awaiting initial NAK\n");
+		exit();
+	}
+	if (crc == CAN)
+		exit();
+
+	attempts = 0;
+	sectnum = 1;
+	if (crc == 'C')
+		crtmsg(" With CRC");
+	while((sectors = read(fd,buffer,TBFSIZ/SECSIZ)) && (attempts != RETRYMAX))
+	{
+		if(sectors == -1)
+		{
+			printf("\nFile read error.\n");
+			break;
+		}
+		else
+		{
+			bufctr = 0;
+			do
+			{
+				attempts = 0;
+				do
+				{
+					shocrt(sectnum,attempts,toterr);
+					sendline(SOH);
+					sendline(sectnum);
+					sendline(-sectnum-1);
+					checksum = 0;
+					for(j = bufctr;j < (bufctr + SECSIZ);j++)
+					{
+						sendline(buffer[j]);
+						if (crc == 'C')
+							checksum = updcrc(buffer[j],checksum);
+						else
+							checksum = (checksum + buffer[j]) & 0xff;
+					}
+					if (crc == 'C')
+					{
+						checksum = updcrc(0,checksum);
+						checksum = updcrc(0,checksum);
+						sendline(checksum >> 8);
+						sendline(checksum & 0xff);
+					}
+					else
+						sendline(checksum);
+					purgeline();
+					attempts++;
+					toterr++;
+				}
+					while((readline(10) != ACK) && (attempts != RETRYMAX));
+				bufctr = bufctr + SECSIZ;
+				sectnum++;
+				sectors--;
+				toterr--;
+			}
+				while((sectors != 0) && (attempts != RETRYMAX));
+		}
+	}
+	if(attempts == RETRYMAX)
+		printf("\nNo ACK on sector, aborting\n");
+	else
+	{
+		attempts = 0;
+		do
+		{
+			sendline(EOT);
+			purgeline();
+			attempts++;
+		}
+			while((readline(10) != ACK) && (attempts != RETRYMAX));
+		if(attempts == RETRYMAX)
+			printf("\nNo ACK on EOT, aborting\n");
+		else
+			logfil(file);
+	} 
+	close(fd);
+}
+
+docfile(file)
+char *file;
+{
+	int baud,fd;
+	unsigned rch,rcsz;
+	fd = open(file,0);
+	if(fd == -1)
+	{
+		printf("\n++File %s not found++\n",file);
+		exit();
+	}
+	else
+	{
+		rcsz=rcfsiz(fd);
+		switch (peek(SYSRAM))
+		{
+			case 0 : baud = 11; break;
+			case 1 : baud = 30; break;
+			case 2 : baud = 45; break;
+			case 3 : baud = 60; break;
+			case 4 : baud = 120; break;
+			default: baud = 960; /* assume rs232 printer port*/
+		}
+		rch = ((rcsz * 14) / baud) * 10;
+		if (rch < 10)
+			rch = 10;
+		printf("\nFile %s is ",file);
+		printf("%d (%04xH) sectors. ",rcsz,rcsz);
+		printf("At %d",baud);
+		printf("0 baud,\nit should take about ");
+		if (rch / 60)
+			printf("%d minute",rch / 60);
+		if ((rch / 60) > 1)
+			printf("s");
+		if ((rch / 60) > 0 && (rch % 60) > 0)
+			printf(", ");
+		if (rch % 60)
+			printf("%d seconds",rch % 60);
+		printf(" to send.\n");
+}
+}
+
+int filfnd(file)
+char *file;
+{
+	if(setfcb(fcb,file))
+		return FALSE;
+	if(bdos(17,fcb) != 255)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+char matchr(st,ch)
+char *st,ch;
+{
+	int i;
+	for(i=0; st[i]; i++)
+	{
+		if(st[i] == ch)
+			return(i);
+	}
+	return(0);
+}
+
+ckfile(argv) char **argv;
+{
+	char *s,l;
+	movmem(0x6c,fnam,12);
+
+	if(option == 'H')
+	{
+		l = matchr(*argv,'.');
+		if(((l+3) > strlen(*argv)) || (!l))
+		{
+			printf("\nMust have full .typ to Hide\n");
+			exit();
+		}
+	}
+
+	for(s=*argv; *s; s++)
+	{
+		if((*s == '?') || (*s == '*'))
+		{
+			printf("\nNo 'Wild Card' characters allowed\n");
+			exit();
+		}
+	}
+
+	for(s=*argv; *s; s++)
+	{
+		if((*s == '.') && ((option == 'R') || (option == 'H')))
+		{
+			if(s[1] == 'C' && s[2] == 'O' && s[3] == 'M')
+			{
+				printf("\nAuto Renaming Filetype to .OBJ\n");
+				s[1] = 'O'; s[2] = 'B'; s[3] = 'J';
+			}
+			if(option == 'H')
+				s[2] = s[2] | 0x80;
+		}
+	}
+}
+
+char bbcd(val)
+char val;
+{
+	return(((val / 10) << 4) + (val % 10));
+}
+
+    

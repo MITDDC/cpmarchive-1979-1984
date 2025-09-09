@@ -1,0 +1,134 @@
+;
+; TITLE		.UTL file linkage macro
+; FILENAME	UTL.LIB
+; AUTHOR	Robert A. Van Valzah   11/25/79
+; LAST REVISED	R. A. V.   11/25/79
+; REASON	removed comments following endm's
+;
+;
+; macro to define a string in memory backwards, followed
+; by its lenght
+;
+backwrd	macro	parm
+	  if		not nul parm
+?last	  set		0ffh
+	  rept		0ffh	;;do forever
+	    if		?last=0	;;well, at least until ?last=0
+	      exitm
+	    endif
+cnt	    set		0
+	    irpc	arg,parm
+	      if	cnt=?last
+	        exitm
+	      endif
+chr	      set	'&ARG'
+cnt	      set	cnt+1
+	    endm
+?last	    set		cnt-1
+	    db		chr
+	  endm
+cnt	  set		0	;;count lenght of arg
+	  irpc		arg,parm
+cnt	    set		cnt+1
+	  endm
+	  db		cnt
+	endm
+;
+; macro to produce sid interface for a .UTL file
+;
+utl	macro	parm1,parm2,parm3
+	local	ep1,ep2,ep3
+base:
+	jmp	entry
+symtbl:
+	backwrd	parm1
+	dw	ep1
+	backwrd	parm2
+	dw	ep2
+	backwrd	parm3
+	dw	ep3
+symlen	equ	$-symtbl
+ep1:	jmp	parm1
+ep2:	jmp	parm2
+ep3:	jmp	parm3
+;
+; parameter passed to relhdr
+;
+	dw	codelen	;length of code to be relocated
+	db	'(C) Copyright 1979, Robert A. Van Valzah'
+getline:		;;get a line to sid buffer
+	lxi	b,3
+	jmp	sidlink
+getchar:		;;get a character from buffer to reg a
+	lxi	b,6	;;converting to upper case
+	jmp	sidlink
+crlf:
+	mvi	a,13
+	call	conout
+	mvi	a,10
+conout:			;;send charcter from reg a to console
+	lxi	b,9
+	jmp	sidlink
+hexode:
+	push	d	;;save low byte
+	mov	a,d	;;print high byte
+	call	hexo
+	pop	d	;;get low byte
+	mov	a,e	;;fall thru to print it
+;
+hexo:			;;print reg a as two hex digits
+	lxi	b,0ch
+	jmp	sidlink
+parseline:		;;parse line in input buffer, returning
+	lxi	b,12h	;;reg a = number of args, and carry set
+	jmp	sidlink	;;if error
+getarg:			;;get argument from input buffer to
+	lxi	b,15h	;;reg hl
+	jmp	sidlink
+brktest:		;;call bdos break function
+	lxi	b,18h
+sidlink:
+	lhld	39h	;;address field of jmp @ rst 7
+	dad	b	;;add displacement into sid jmp table
+	pchl		;;and vector to desired routine
+;
+; print message pointed to by reg de unitl 0h is found
+;
+prmsg:
+	ldax	d	;;get a character of message
+	ora	a	;;end of message?
+	rz		;;yes - all done
+	inx	d	;;no - print character
+	push	d
+	call	conout
+	pop	d
+	jmp	prmsg	;;print more
+;
+entry:
+	lhld	bdos+1	;;get current sid base
+	shld	base+1	;;store it into utl base
+	lxi	h,base	;;make loc 5 jmp to utl base
+	shld	bdos+1
+	lxi	d,p1msg	;;print entry point addresses
+	call	prmsg
+	lxi	d,ep1
+	call	hexode
+	lxi	d,p2msg
+	call	prmsg
+	lxi	d,ep2
+	call	hexode
+	lxi	d,p3msg
+	call	prmsg
+	lxi	d,ep3
+	call	hexode
+	call	init	;;if additional init required
+	lxi	d,symlen ;;pass symbol table lenght back to sid
+	ret
+p1msg:
+	db	13, 10, '.&PARM1 = ', 0
+p2msg:
+	db	13, 10, '.&PARM2 = ', 0
+p3msg:
+	db	13, 10, '.&PARM3 = ', 0
+	endm
+

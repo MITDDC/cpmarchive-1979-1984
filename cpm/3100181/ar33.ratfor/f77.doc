@@ -1,0 +1,16 @@
+	A few of the additional features found in FORTRAN 77
+can be supported in most 8080 FORTRANs.  The CHARACTER to
+INTEGER conversions are performed for lengths of 1 and 2 only
+by the RATFOR INCLUDE file F77DEF, which also provides type
+descriptors for the functions on F77LIB which require them.
+There is also an INCLUDE file CONSTS which automatically
+defines some frequently used constants.
+	Most of the new standard ("intrinsic") FORTRAN
+functions can be employed by searching the file F77LIB.REL
+which will be created by compiling F77LIB.FOR.  The useful
+INDEX function cannot be implemented except by introducing
+a third argument which is the length in characters of the
+string to be found. Preferably, the length of the longer string
+should be passed also.   Additional arguments are required on
+most large systems which do not meet the standard.
+

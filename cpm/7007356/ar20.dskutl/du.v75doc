@@ -1,0 +1,193 @@
+
+		    DU-V75.DOC
+	       by Ward Christensen
+	with additional notes by Ron Fowler
+		(revised 1/23/81)
+
+	HOW TO USE DU ver 7.5 DISK UTILITY
+
+INSTALLATION:
+	The 7.0 and later versions of DU are designed to
+  be installed with a minimum of trouble.  In fact, in al-
+  most all cases, no changes to the source file should be
+  necessary to get DU up and running. This is because DU
+  uses the disk paramter block of CP/M to determine the
+  characteristics of the disk environment.  (see the dis-
+  claimer for certain non-standard versions of CP/M 1.4).
+	The only parameter that should need to be changed
+  will be the clock speed flag at 103H.  Leave this byte
+  zero if you have a 2 mhz clock.  Patch it non-zero for
+  4 mhz.  This is only needed for the "Z" (sleep) command.
+
+USE:
+
+Any valid command string may be placed as an
+operand of the original DU command, i.e.:
+
+     A>DU G0;D;G2;=OK<D><A><1A>;D
+
+Functions supported:
+
+	Tnn	Seek to track nn (no read)
+	Snn	Position to sector nn, and read
+	Gnn	Position to group nn and read.
+	G	Shows current position
+	V	Views the current sector.
+		(assumes ASCII data)
+	Vnn	Views nn sectors
+	Fname	print directory for file "name",
+		then positions to its directory 
+		sector. (Won't position under
+		CP/M 2.x, but see = command below.)
+
+	=string	Ascii search, starting at current
+		sector. <xx> hex may be imbedded,
+		or used alone:  To find "IN 0FEH":
+		=<db><fe>
+		Ignores bit 7 unless <xx> is used.
+
+	L	Re-logs in the current disk. You may pull
+		out a disk, put in a new, and "L" just
+		to log it in.
+
+	Lx	Logs in disk 'x', such as: LB
+
+	Ux	Logs user 'x' for next F command.  Gives
+		'?' error if not CP/M version 2.x.
+
+	D	Dump sector, hex + ASCII
+	A	Dump sector, ASCII only
+	H	Dump sector, hex only
+
+note all dump commands (D, A, H) may be optionally
+	followed by a starting and ending address:
+	D0,7F	is the same as just D
+	D3,5
+	A20,3F
+
+	CHaddr,val,val,val... change hex in sector
+	CAaddr,char string... change ASCII in sector
+		NOTE that <xx> may be hex imbedded
+		in the Ascii:  ca0,OK<d><a><1a>
+
+		----> Use W to write changes to disk.
+		Note that the C command echoes
+		the overlaid data for verification.
+
+	CHaddr-addr,byte
+ or	CAaddr-addr,byte	repeats a change
+
+	+	advance 1 sector (if below track 2,
+		this advances to next numerical, if
+		2 or >, advances based on CP/M's normal
+		sector scrambling algorithm, i.e. so +
+		will get the next logical sector of the file
+
+	-	backs up 1 logical sector
+
+		Note + and - may take an amount:
+		for example, +F steps in 15 sectors.
+
+		Note also that "-" issued at the first logical
+		sector of the disk will wrap back to the last.
+		Further, "+" issued at the last sector will
+		wrap forward to the first.
+
+	?	Gives command summary
+
+	#	Prints the disk parameters
+
+	M	Dumps a map of the group allocations
+		for files.
+	Mn	Shows which file is allocated to
+		group "n".
+
+	N	Resets CP/M via the BDOS.  This may
+		make it possible under some implementations
+		of CP/M to change the disk format (e.g., density,
+		sides, etc)
+
+	R	Reads the sector currently positioned to
+		into memory.  Note R (Read) is implicit in
+		the G, +, and - commands, but N-O-T in the
+		S and T commands (I did it because I was
+		tired of disk reading after T command before
+		I had a chance to issue the S command)
+
+	W	Write back the current sector (N-O-T-E may
+		not be used after an F command, as CP/M was
+		used to find the file in the directory
+
+	X	Exit back to CP/M (Must press return).  Ctl-c
+		was too easy to hit over modem lines, so I
+		decided on 2-byte (X, CR) to exit.
+
+	P	Toggle printer switch on/off
+
+	Z	Sleep - causes the program to pause, such
+		as to look at a dump.  Z is 1 sec.  Znn
+		is nn tenths of a second on a 2 MHz 8080.
+
+	<	Saves current sector in a save buffer
+
+	>	Gets saved buffer.  < and > may be used
+		to move a sector to another place.
+
+	/	Repeats entire command.  Defaults
+ or	/nn	to "forever".  NN may be 2 to 65535
+
+multiple commands may be separated by ";"
+
+Example: the following commands will erase the
+	 b disk directory to all E5's:
+
+	lb		log in b drive
+	g0		position to dir.
+	ch0-7f,e5	fill with e5
+	<		save the sector
+	>;w;+;/16	restore, write, next,
+			repeat 16
+
+----This could be shortened to:
+
+	lb;g0;ch0-7f,e5;<
+	>;w;+;/16
+
+
+
+INTERPRETATION OF DIRECTORY DATA PRESENTED BY THE DU PROGRAM
+
+
+The following explains the format of a CP/M directory entry
+as shown by DU, using either the "F" (find file) command,
+or just doing "D" (dump) of the directory sectors, which
+are located in groups 0 and 1 on a single density disk.
+		----------------
+Sample result of "FSID.COM" command:
+
+40  00534944 20202020  20434F4D 0000003A  *.SID     COM...:*
+50  33343536 3738393A  00000000 00000000  *3456789:........*
+
+First line -
+
+40  00534944 20202020  20434F4D 0000003A  *.SID     COM...:*
+||  |||                      |  ||    ||    |         |
+||  ||^----hex file name-----^  ||    ||    ^file name^
+||  ||                          ||    ||     in ASCII
+||  ||                   extent-^^    ||
+||  ||                                ||
+||  ||           file size in sectors-^^
+||  ||
+||  ^^-00 = file active
+||     E5 = file erased
+^^-displacement of line in directory sector
+
+Second line -
+
+50  33343536 3738393A  00000000 00000000  *3456789:........*
+    |				       |
+    |				       |
+    ^---allocation group numbers-------^
+
+END
+

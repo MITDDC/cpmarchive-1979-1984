@@ -1,0 +1,137 @@
+		    Teledit 1.1	   3/20/82
+		Documentation by Nigel Harrison
+
+	[Editor's note: "Teledit" is a cross between the original BDS
+	 Telnet program, Ward Christensen's MODEM program, its MODEM7
+	 derivative, a C version called XMODEM, and Nigel's tiny
+	 screen editor. In fact, this program was used for a while as
+	 the primary editor on a CDC 110 micro system, until they got
+	 Mince up. It may not be the LAST modem program you'll ever
+	 need, but it's gotta have more roots than any other!
+						-leor]
+
+	[ Converted to HDOS and C/80 by Al Bolduc ]
+
+	Teledit is a communications program for transmitting files and
+connecting to other systems or networks as an ASCII terminal.  It has a
+simple editor with which one can manipulate lines of text collected
+during a session with a remote system.  The file transmission modes 
+allow sending/receiving either binary or text files.  The modes selected
+from the menu are:
+
+T: Terminal mode - no text collection
+
+Teledit behaves like an ASCII terminal.  Eight-bit characters are sent
+and received; no parity bits are checked, inserted or removed.  To
+return to the selection menu the SPECIAL character is typed.  The 
+The SPECIAL character of <ctrl>shift uparrow was chosen because it
+is unlikely to be struck accidentally.  To change the SPECIAL character,
+recompile Teledit with the desired #define SPECIAL ...
+
+X: terminal mode with teXt collection
+
+Same as terminal mode above, except that any text characters received
+on the communication link are saved in a text buffer.  The tab, newline
+and formfeed characters are also placed into the buffer; any other
+characters are discarded.  While in terminal mode, the editor is
+entered by holding down the control key while typing the letter
+"E" (control-E).  X mode prompts the user for a filename to be used
+for the gathered text.  After 500 lines of text have been collected
+and saved in the text buffer, each additional line collected causes
+the console bell (alarm) to sound.  When this happens the user should
+find a convenient time to suspend communication with the remote
+station so that the accumulated text can be saved (flushed) onto
+disk as described below.
+
+G: toGgle echo mode (currently set to echo)
+
+Should not be toggled if the user is communicating in full duplex
+mode and receiving an echo from the remote station, or the user is
+in half duplex mode. Use this option to talk to another person running
+Teledit, typically in between file transfers to inform the person of the
+next file to be transmitted.
+
+E: Edit text collected
+
+Enters the editor from the menu display.  This will not work until
+X: terminal mode with teXt collection has been entered and a text
+collection file opened.  Editor commands are described below.
+
+F: Flush text collection buffer to text collection file
+
+Flushes the text collection buffer accumulated in text collection
+mode. Does not close the file.
+
+S: Send a file, MODEM protocol
+
+Prompts for the name of the file to send, then waits for the receiver
+(who must be using this program or one which uses the same protocol)   
+to "synch up".
+ 
+Returns to menu after completion, successful or not.
+
+R: Receive a file, MODEM protocol
+
+Prompts for the name of the file to be received, then waits for the
+sender to begin transmission.  The sender must be using Teledit or
+a program that employs the same MODEM protocol.       
+
+Q: Quit
+
+Quits.  If a text file has been accumulated in X mode, the user
+is asked whether or not he/she wants it saved.
+
+SPECIAL: sends SPECIAL character to the communication line,
+should that ever be necessary.
+
+
+			Editor
+
+The editor prompts with "*" when entered.  The current line usually
+appears directly below the prompt.  The editor commands are:
+
+A: Append (Yank in) a file and insert it before the current line.
+
+B: go to the Beginning of the file and display a page. The current line
+   becomes the first line of the text file.
+
+F: Find line that contains the pattern following the "F". If found, it       
+   becomes the current line.  Search starts forward and wraps around.
+
+I: enters Insert mode.  To leave insert mode, <ctrl>D is struck, followed
+   by <cr>.  The escape insert mode sequence should only be entered at
+   the beginning of a line; lines having an embedded ^D are lost.
+
+K: Kill the current line
+
+nK Kill n lines.
+
+L: Find line that begins with the pattern following the "L".
+
+O: Overwrite lines of text until <ctrl>D is struck.  <ctrl>D should
+   be struck only at the beginning of a new line.
+
+P: Page forward in text.  -P pages backward.
+
+Q: Quit editor.
+
+Sn<cr>  Sets screen size to n lines.  The default is 22 for 24-line
+	displays.  S23 should be used for 25-line consoles, and S28
+	for the Control Data 110.
+
+Z: Go to Zee end of the file.  Convenient, for example, to go to the end
+   then -P to view last page.
+
+n<cr>  Move forward in the file by n line(s).
+
+<cr>   Move forward in the file by one line.
+
+-n<cr> Move backward in the file by n line(s).
+
+Space Bar  Move backward in the file by one line.
+
+#      print number of text lines in file.
+
+
+<< END TELEDIT.DOC>>
+

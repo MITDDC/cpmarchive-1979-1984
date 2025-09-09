@@ -1,0 +1,265 @@
+;************************************************************************
+;    FIFO BUFFERS FOR CP/M BIOS
+;
+; The following code is submitted to the CP-MIG  by Glenn Ewing and 
+; Bob Richardson
+; of MicroPro.  It is intended as an aid to those who wish to implement
+; interrupts
+; in their systems.    Also included in the submission is a sample port
+; driver and console bios routine intended to show the implementation
+; of the routines as ring buffers for a Bios
+;  Further Distribution of this file should contain the notice:
+;         This code Copyright (c) 1981 MicroPro International Corp.
+;			made available by permission of the authors
+;			and by MicroPro. Not to be Resold. 
+;     Good Luck!  
+;		ps: most of this code is Glenn's - Bob R.
+.z80
+size0	equ	16	; size definition for the fifo queue -must be power of 
+;			  2 - actual size depends on the device in questionc
+;
+;	fifo stuf
+	defb	'COPYRIGHT (c) 1981 MicroPro International Corp'  
+;
+;
+;	This module impliments first-in-first-out buffers for the
+;	various BIOS I/O paths.  The buffers function as follows:
+;
+;	If:
+;		cnt = number of characters currently stored in buffer, and
+;
+;		nout = relative position in buffer of characer to be output
+;		          next, and
+;
+;		size = size of buffer (even power of 2), and
+;
+;		base = address of bottom of buffer, then
+;
+;	A character is stored in the buffer at address:
+;
+;		base + ((cnt + nout) mod size)
+;
+;	and the variables are updated:
+;
+;		cnt = (cnt + 1) mod size
+;
+;	Alternately, a character is retrieved from address:
+;
+;		base + nout
+;
+;	and the variables are updated:
+;
+;		cnt = (cnt - 1) mod size
+;
+;		nout = (nout + 1) mod size.
+;
+;
+;	These items are stored in memory as follows:
+;
+fifo	macro	size
+;
+	defb	0		; cnt
+	defb	0		; nout
+	defb	size-1		; mask for mod ops
+	defs	size		; actual buffer
+	endm
+;
+;
+;
+;	The fifo input and output routines provide no protection
+;	from underflow and overflow.  The calling code must use
+;	the fstat routine to ensure that these conditions are
+;	avoided.  Also, the calling code must enable and disable
+;	interupts as appropriate to ensure proper maintainance of
+;	the variables.
+;
+;
+fstat:
+;	routine to determine status (fullness) of a buffer.
+;	enter with ix = adr of cnt.
+;	return Z-flag set if buffer empty, Cy set if buffer full.
+;	note that buffer capacity is actually size-1.
+;
+	ld	a, (ix + 0)		; get cnt
+	push	de
+	ld	e, (ix + 2)		; get mask
+	and	e			; cnt = cnt mod size
+	dec	e			; e = size - 2
+	cp	e			; test for full
+	pop	de
+	inc	a			; clear z leaving cy
+	dec	a
+	ccf
+	ret
+;
+;
+fin:
+;	routine to enter a character into a buffer.
+;	enter with c=chr, ix=.cnt
+;
+	ld	a, (ix + 0)		; compute: (cnt + nout) mod size
+	inc	(ix + 0)		; first update cnt
+	add	a, (ix + 1)
+	and	(ix + 2)
+	push	de
+	ld	e, a			; compute base + nin
+	ld	d, 0
+	inc	ix
+	inc	ix
+	inc	ix
+	add	ix, de
+	pop	de
+	ld	(ix+0), c		; store character
+	ret
+;
+;
+;
+fout:
+;	routine to retreve a character from a buffer.
+;	enter with ix=.cnt
+;	return with c=chr
+;
+	dec	(ix + 0)		; update cnt
+	ld	a, (ix + 1)		; compute: base + nout
+	inc	(ix + 1)
+	and	(ix + 2)
+	push	de
+	ld	e, a
+	ld	d, 0
+	inc	ix
+	inc	ix
+	inc	ix
+	add	ix, de
+	pop	de
+	ld	c, (ix + 0)		; get chr
+	ret
+;
+fifo0:	fifo	size0			;  sample invocation of the fifo macro
+fifo1:	fifo	size0			; dummy queues for sample codes 
+;
+sample:
+	jp	cboot			; phoney jp
+	jp	wboot			; phoney jp
+	jp	const			; console status
+	jp	conin			; console input vector
+	jp	conout			; console output routine
+; end of phoney bios branch vector-
+; note that for this end of the queueing, all that is necessary is to test
+; the status of the queue and return a value based on the queue status-
+; not the status of the device-
+;
+;*************************************************************************
+; start of the front end queue - dequeue routines - these routines are
+; code samples only and are not intended to run on any particular machine
+; and in fact ignore specifically some details of implementation
+const:
+	ld	ix,fifo0		; note on real sys, you must save ix
+;					  this sets up the pointer for the 
+;					  fifo routines
+	call	fstat			; check on the status of the queue
+	ret	z			; return if z-flag set, and hence
+;					; no char is ready - this will
+;					; also have zero in a at this point
+	ld	a,0ffh			; get flag to show that a char is rdy
+	ret				; and return that value -
+;
+;
+conin:					; read a char from the queue
+	call	const			; first, wait until a char is
+					; available - necessary to avoid 
+					; underflow
+	jp	z,conin			; loop until char is ready
+	di				; interrupts must be off to use
+					; fin and fout routines
+	call	fout			; get a character from the queue
+	ld	a,c 			; and put it in correct register
+	and	07fh			; strip parity per spec
+	ret				; to caller
+;
+;
+conout:					; send a character to the console
+	ld	ix,fifo1		; setup for console output queue
+	call	fstat			; test queue status
+	jp	c,conout		; wait for a space in the queue
+					; note: carry set if queue is full
+	di				; interrupts off for queue manipulation
+	push	ix			; save queue pointer for conditional
+					; output routine 
+	call	fin			; put a character into the fifo queue
+	pop	ix			; restore pointer
+	call	tryout 			; routine to output a character and
+					; turn on interrupts from console
+					; if a character is waiting and if
+					; port is not busy
+	ei				; restart interrupts
+	ret				; to caller
+
+tryout:
+;     This routine is installation dependant-
+;     it must output a character to the console if and only if
+;     the port is ready to accept a character
+;     I will not supply the routine, but rather the logic for the routine
+;     which would run as follows:
+;         select the status port for the console or modem
+;	  test the tx ready bit
+;	  return if not ready
+;	  otherwise if tx is ready to go
+;	  call	fout <- gets next char in c register
+;  	  output the character to the data port
+;	  then return
+;*****************************************************************************
+;*****************************************************************************
+;  now - the easy part - servicing the interrupts from the console/printer/
+;  whatever you have hooked up - I am going to just give you the logic for
+; the routine we have been working on, without getting into details as this
+; is obviously a highly installation dependant part of the code.
+;        the philosophy of the coding is, however, the same as the front end
+;   when the device needs a character, get one from the queue with
+;	   call  fout 			; and then 
+;   send the character to the device through whatever mode you use to speak
+;   to it - if the queue becomes empty, you generally want to ignore the next
+;   interrupt
+;  ++++++++++++++++++++++++++++++++++++++++++++
+;   if, therefore
+;   it is an input device with a character ready
+;   read the character from the device and then
+;   use
+;	   call  fin		; to put the newly read character into  queue
+;  if the input queue fills up, you will want to ignore further characters-
+;  one standard thing to do is just throw them into the bit bucket and return
+;  from the interrupt
+;  sample code for the output interrupt on an sio might read:
+sint0:
+	ld	ix,fifo1	; get output queue
+	call	fstat		; check queue status
+;
+	jp	z,underf	; the queue is empty - no more chars to send
+	call	tryout		; note: this is the same routine we created
+				; prviously to handle output to port if not
+				; busy -
+;  This is interrupt code so it is not necessary to disable the interrupts
+;  before calling the fin and fout routines
+underf:
+;this routine should turn off the transmit interrupt with a device dependant
+; code - ie, for the sio it would send a 28h to the status port for the sio
+; and then
+	ret
+;the code for an input interrupt would be similar, except the routine would
+; read a byte from the device
+; call fstat
+; ret  c	; throw away character if queue full
+; call fin	; else put it in queue
+; ret		; and return
+;
+;
+;
+;
+;******************************************************************************
+; the end - note - this file is copyright (c) Micropro International Corp.
+; and may not be duplicated in whole or in part for resale. The code
+; contained here does not exist in any real implementation of bios except for
+; the fifo routines and are presented here as a service and in expression
+; of our support for this group.  Any source copy of the fifo stuff must
+; retain the credits for this piece of code.  Good luck, may all your 
+; interruptions be quick ones.
+;                             -bob-

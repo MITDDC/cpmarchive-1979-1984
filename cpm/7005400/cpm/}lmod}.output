@@ -1,0 +1,254 @@
+   +++ Remote CP/M Software Exchange Systems, List #19 +++
+
+                  Last Revised August 16,1981
+
+==============================================================
+ A  summary of all known (and running) Remote CP/M  Software 
+ Exchange Systems using XMODEM for program transfers.  It  
+ would be appreciated if operators of new RCPM systems will
+ transmit the needed information about their systems to Ben 
+ Bronson [Hyde Park RCPM (312) 955-4493] or to Kelly Smith
+ [CP/M-Net (805) 527-9321]
+
+ Ben  and  Kelly  will attempt to coordinate updates  to  the 
+ RCPMLIST as they occur...
+
+         List #19 revised and updated courtesy of:
+		    Hyde Park RCPM 
+==============================================================
+
+          Revision Summary as of August 16,1981:
+
+(19)  5 systems added since RCPMLIST.18: California (1),
+	Maryland (1), S. Carolina (1), Indiana (1),
+	Ohio (1)
+
+(18)  1 system added since RCPMLIST.17:  California (1)
+
+(17)  1 system added since RCPMLIST.16:  New York (1)
+
+(16)  3 systems added since RCPMLIST.15: New York (1),
+        Illinois (1), Kentucky (1)
+
+Note:   [^ or ^^ = data changed since RCPMLIST.18,  07/21/81]
+	[$ or $$ = data changed since RCPMLIST.17a, 06/20/81]
+	[# or ## = data changed since RCPMLIST.17,  06/09/81]
+        [-->    =  data changed since RCPMLIST.16,  06/07/81]
+---------------------------------------------------------------
+                             EAST 
+---------------------------------------------------------------
+Mississauga (Toronto) RCPM, 416-826-5394, Jud Newell.  No call 
+back.  RBBS 24 hrs; RCPM 1800-0700 wkdys & 24 hrs wkends.  110,
+300,600,710 baud.  No a.l.d.s.  Up as of 08/15/81.  @ 5+ Mb of 
+files on 3 floppies & a hard disk.  [Toronto area]
+   (10 Mb hard disk is now on line.  Much of this will be used
+    for downloadable programs.  Active also as a bulletin bd.)
+^^ (A second system will soon be put up by the same sysop)
+---------------------------------------------------------------
+SuperBrain RCPM,  617-862-0781, Paul Kelly.  1900-0700 wkdys,
+24 hrs wkends.  110, 300, & 1200 baud.  SPRINT, ITT, MCI.  Up 
+as of 07/18/81.  @ 300 K files on-line. [Lexington, MA: Boston 
+area]
+   (Special interest in Superbrain-adapted CP/M programs)
+---------------------------------------------------------------
+Long Island RBBS, 516-698-8619, Tim Nicholas.  Call back. 24
+hrs.  300, 450 & 1200 baud.  SPRINT, MCI (no ITT). Up as of 08/
+15/81.  @ 1 Mb of files on 2 drives.  [New York City area] 
+   (Soon with 2 lines & modems, one half-duplex at 1200 baud) 
+---------------------------------------------------------------
+Valley Stream RBBS/RCPM, 516-791-5041, Mike Schiller.  No 
+call back.  24 hrs.  110,300 baud.  SPRINT & MCI?  Up as of 
+08/15/81 (?)  @ 300 k of files on 2 drives.  [NYC area]       
+^^ (Down in late Jul & early Aug but believed to be back
+    up now)
+---------------------------------------------------------------
+Johnson City, NY SJBBS, 607-797-6416, Charles ---.  No call
+back.  Eves., etc.  300 baud.  No alternative long-distance
+service.  Up as of 07/18/80.  @ 500 K(?) of files on 2 drives.
+[Upstate New York]
+---------------------------------------------------------------
+Bearsville Town SJBBS, 914-679-6559, Hank Sryszka.  No call
+back.  110,300,450,600,710 baud.  No a.l.d.s. Up as of 07/16/81.
+@ 2MB of files on 4 drives.  [Upstate New York].
+## (Installing MP/M.  All CPMUG programs available by request. 
+    General CP/M software)
+---------------------------------------------------------------
+Brewster RBBS, 914-279-5693, Paul Bosshold & Carl Erhorn.  No
+callback 5pm-10pm, callback 10am-5pm, up 24 hrs wkends.  300,
+450, 600, 710 baud.  No a.l.d.s.  Up as of 08/15/81.  @ 500 K 
+of files on 1 drive.  [Downstate New York]
+    (S-100 based.  General CP/M software)  
+---------------------------------------------------------------
+Rochester RBBS, 716-223-1100, Arnie McGall.  No call back. 24
+hrs.  110 & 300 baud.  SPRINT, MCI, ITT.  Up as of 08/14/81.
+@1.8 Mb of files on 3 drives.  [Upstate New York]
+   (S-100 based.  General CP/M software. The standard RBBS/
+    RCPM system coexists with a separate passworded message 
+    system called Datastar, which can be entered from CP/M 
+    but runs on a separate computer.  600 baud capability 
+    expected soon)
+---------------------------------------------------------------
+Remote CP/M and Bulletin Board System of Cranford, New Jersey
+201-272-1874, Bruce Ratoff.  Eves., etc.  No call back.  110,
+300, 450 & 600 baud.  SPRINT, MCI.  Up as of 08/14/81.  2-3 Mb
+of files on 3 drives.  [New Jersey]
+   (General CP/M software; active also as a bulletin board)
+---------------------------------------------------------------
+Allentown RBBS/RCPM System, 215-398-3937, Bill Earnest.  24
+hrs.  No call back.  110, 300, 450, 600, 710 baud.  SPRINT &
+ITT.  Up as of 08/15/81.  @ 4.25 Mb. of files on hard disk
+(=4 logical disks). [E.Pennsylvania]
+   (General CP/M software.  Bulletin board of the Lehigh
+    Valley Computer Club)
+---------------------------------------------------------------
+Baltimore Micro-Mail, 301-655-0393, Rod Hart.  Call back.  
+Days & Eves. until 2200.  110, 300, 450, 600, 710 baud.  SPRINT, 
+ITT, MCI.  Up as of 06/03/81.  @ 1 Mb of files on 2 drives.
+[Maryland]
+   (General CP/M software.  Special interest in Ham programs
+    & modem s'ware in PASCAL & C)
+---------------------------------------------------------------
+^ Prodigy Systems RBBS, 301-337-8825.  No call back.  24 hrs.
+300 baud.  ITT, SPRINT, MCI.  Up as of ?? . @ 500 K of files
+on 2 drives.  [Baltimore area]
+^^ (Believed to be back up again after 2 months of equipment 
+    troubles)
+---------------------------------------------------------------
+Protieus RBBS/RCPM, 301-879-7841,  Bob Loesch.  No call back.
+24 hrs.  110,300 baud.  MCI,ITT,SPRINT.  Up as of 08/13/81.
+@ 1.2 Mb of files on 2 drives.  [Bel Air, Maryland]
+-->(Note that telno has been changed to make A.L.D.S. possible)
+---------------------------------------------------------------
+                           MIDWEST
+---------------------------------------------------------------
+Columbus CBBS, 614-268-2227 [268-CBBS], Ben Miller.  No call 
+back.  24 hrs.  110-600 baud.  SPRINT, ITT, (MCI?).  Up as of 
+08/14/81.  @ 300 K of files on 3 drives.  [Ohio]
+^^ (Now running MP/M, on a Tarbell SD controller; occasional
+    slow response means the sysop is also using the system;
+    special interest in BDS-C programs.  Also active as a
+    bulletin board) 
+---------------------------------------------------------------
+^ Newark RBBS/RCPM, 614-366-3252, Bo McCormick.  No call back.
+24 hrs.  300 baud.  No a.l.d.s.  2 drives with @ 500K of files
+on line. [Newark, Ohio]
+^^ NEW SYSTEM (Based on a homebrew S-100.  Special interest in
+   general software, offbeat graphics.  Much other software 
+   may be requested from on-line master catalog)
+---------------------------------------------------------------
+Westland, Michigan RBBS/RCPM, 313-729-1905, Ron Fowler.  Call
+back.  24 hrs.  110, 300, 450 & 600 baud. SPRINT, MCI, ITT.  
+Up as of 08/14/81.  @ 1.4 Mb. of files on 2 drives.   [Detroit]
+   (Emphasis on very recent releases)
+---------------------------------------------------------------
+Technical CBBS, 313-846-6127, Dave Hardy.  No call back.  24
+hrs.  110, 300, 450 & 600 baud. ITT, SPRINT, MCI. Up as of
+08/14/81.  @ 3 Mb of files on 3 drives.  [Detroit area]
+   (Emphasis on very recent releases.  RCPM sysops desiring 
+    access to the passworded RCPM Clearing House system should 
+    leave a msg on TCBBS.  Active message system)
+---------------------------------------------------------------
+Royal Oak CP/M, 313-588-7054, Keith Petersen.  Call back.  24
+hrs.  110, 300, 450, 600, baud.  ITT, SPRINT, MCI. Up as of
+08/14/81.  @ 600 K on 2 floppy drives + 10 Mb on hard disk
+(=2 logical drives).  [Detroit area]
+   (Emphasis on new programs, & very recent updates of stan-
+    ard programs)
+---------------------------------------------------------------
+MINICBBS/Sorcerer's Apprentice Group, 313-535-9186, Bob Hage-
+man.  Call back.  24 hrs. 110, 300, 450, 600 baud. ITT, SPRINT,
+MCI. Up as of 05/03/81.  @ 500 K on 2 drives. [Michigan]
+   (Running on an Exidy Sorcerer.  Needs password, "SORCERER".  
+    Special interest in adapting CP/M software and assorted 
+    hardware to Sorcerer systems)
+--------------------------------------------------------------
+Southfield, Mi, RBBS/RCPM, 313-559-5326, Howard Booker.  No
+callback.  24 hrs.  300, 450 baud.  ITT, SPRINT, MCI.  Up as
+of 07/18/81.  @ 1 Mb on 2 drives.  [Michigan]
+   (Special interest in file directories & catalogs of other 
+    RCPM systems as well as general s'ware)
+--------------------------------------------------------------
+^ Dick Hill's RBBS, 219-465-1056.  No callback. 1900-2200 
+wkdys, 24 hrs wkends.  300,450,600,710 baud.  No a.l.d.s.
+Up as of 08/15/81.  @ 4 Mb of files on 4 drives.  [Valparaiso,
+Indiana]
+^^ (NEW SYSTEM  (S-100 based.  General CP/M software.  Will go 
+    to 24 hr operation after initial testing period)
+--------------------------------------------------------------
+Calamity Cliffs Computer Center, 312-234-9257. No call back.
+1400-0200 daily.  --> 300, 450 & 600 baud.  ITT, SPRINT, MCI.
+Up as of 08/15/81.  @ 11 Mb of files on a hard disk & 2
+floppies.  [Chicago area]
+   (All CPMUG & SIG/M programs available by request, and many
+    on line)
+---------------------------------------------------------------
+TC-80 TRS/RCPM System, 312-949-6189, Chuck Witbeck.  No call
+back.  1800-0100 wkdys, 1200-0100 wkends.  110, 300, 600  baud. 
+MCI, SPRINT, ITT.  Up as of 08/15/81. @ 500 Kb of files on 3-4
+drives. [Chicago]   
+^^ (The change from a TRS-80 with an Omikron & Vadic to a
+    PMMI-equipped S-100 system is now complete.   Some general
+    software available, but main emphasis is on communications 
+    programs, including versions adapted to non-standard CP/M
+    systems)
+---------------------------------------------------------------
+Hyde Park RCPM/RBBS, 312-955-4493, Ben Bronson.  No call back.
+0100-1700 daily.  110, 300, 450, 600, 710 baud. SPRINT, ITT,
+MCI.  Up as of 08/15/81. @ 2 Mb of files on 2 drives. [Chicago]
+   (Special interest in hard- & software reviews, C progs,
+    & very recent releases of standard programs)
+---------------------------------------------------------------
+Chicago RAPM (Remote Apple CP/M), 312-384-4762, David Moritz.
+No call back.  24 hrs/7 days (Initially sporadic). 300 & 450
+baud.  SPRINT, ITT, MCI.  Up as of 08/15/81.  @ 250 K files on
+2 drives. [Illinois]
+   (Special interest in telecom & other utilities for Apple/
+    Softcard CP/M.  The 450 baud capability is achieved using a
+    modified Hayes modem)
+---------------------------------------------------------------
+Logan Square RCPM, 312-252-2136, Earl Bockenfeld.  No call
+back.  0100-1900 wkdys, irreg. on wkends.  110, 300, 450, 600,
+710 baud.  SPRINT, ITT, MCI.  Up as of 08/15/81.  @ 1 Mb of
+files on 2 drives.  [Chicago]
+   (Special interest in recent releases and developing
+    on-line databases, with daily change of software on 
+    B drive) 
+---------------------------------------------------------------
+HUG-CBBS, 312-671-4992, Paul Mayer & Dave Leonard.  No call
+back.  2300-1900, 7 dys/wk.  300 baud.  SPRINT, ITT, MCI. Up as
+of 08/15/81.  @ 2 Mb of files on 2 drives.  [Chicago]
+   (H-89 based, operated for the Heath-Zenith Users' Group 
+    and with a special interest in H19- & H89-adapted (as 
+    well as general CP/M) software)
+---------------------------------------------------------------
+Palatine RCPM, 312-359-8080, Tim Cannon.  Call back.  1800-
+2400 wkdys, irreg on wkends.  300 & 1200 baud.  SPRINT, MCI,
+ITT. Up as of 08/15/81. @ 850 K of files on 4 drives. [Chicago]
+   (With a Bell-made 212A 1200 baud modem.  The 3rd 1200-baud 
+    RCPM system in North America)
+---------------------------------------------------------------
+Rick Martinek's System, 414-774-2683.  No call back.  Eves. &
+wkends.  110,300,450,600 baud.  ITT, SPRINT, MCI.  Up as of 
+07/17/80.  @ 1200 K of files on 2 drives.  [Milwaukee]    
+$$ (Now with PMMI baud rates & DD disks)
+^^ (Error in previous RCMLISTs -- no call back)
+---------------------------------------------------------------
+                            SOUTH
+---------------------------------------------------------------
+^ Fort Mill RIBBS, 803-547-6578, Bill Taylor.  No call back.
+24 hrs.  300 & 1200 baud.  No a.l.d.s.  Up as of 08/15/81. @ 3
+Mb of files on 3 drives. [Fort Mill, South Carolina]
+^^ NEW SYSTEM (Heath/Zenith-based with 212-compatible modem.
+   The system carries ham stuff, general s'ware, & on-line 
+   games.  The 4th 1200-baud RCM) 
+---------------------------------------------------------------
+Louisville RBBS/RCPM, 502-245-7811, Mike Jung.  No call back.
+0900-2100 wkdys, 24 hrs wkends.  300 baud.  SPRINT, MCI. Up
+as of 07/15/81.  @ 2.5 Mb. of files on 5 drives.  [Kentucky]
+   (Heath/Zenith-based.  Emphasisis on BASIC software.  Some 
+    HDOS stuff available for downloading)
+---------------------------------------------------------------
+NACS/UAH RBBS/RCPM, 205-895-6749, Don Wilkes.  Call back.
+24 hrs. 110, 300, 450, 600 baud.  No a.l.d.s.  Up as of 07/17
+/81.  @ 700 K of files on 4 drives.  [Huntsville, Alabama]
+   (Run for N. Ala. Computer 

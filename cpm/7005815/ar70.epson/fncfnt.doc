@@ -1,0 +1,29 @@
+This program demonstrates the amazing quality and variety of
+text printing that can be achieved with an Epson printer and
+special software.  A number of character sizes (8 to 40 pt.)
+and styles are demonstrated, including Old English and Script.
+
+The program requires a CPM system and an Epson MX80, MX80FT or
+MX100 printer equipped with Graftrax80 or Graftrax-Plus.
+
+The demonstration package consists of the following:
+
+  FancFont.COM    demonstration program
+  FancFont.DM1    demonstration data file 1
+  FancFont.DM2    demonstration data file 2
+  FancFont.DOC    this file
+
+To use the demonstration program, type:
+   FancFont <list of demonstration data files>
+
+Examples:
+   FancFont FancFont.DM1
+
+or
+   FancFont FancFont.DM1 FancFont.DM2
+
+The demonstration package is in the public domain and may be
+freely copied and distributed.
+
+For additional information, contact: SoftCraft (213) 641-3822
+  8726 S. Sepulveda Blvd. Suite 1641, LA, CA 90045

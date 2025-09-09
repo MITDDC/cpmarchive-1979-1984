@@ -1,0 +1,736 @@
+
+>>>>>>>>>>>>>>>>>>>>> CP/M-Net News <<<<<<<<<<<<<<<<<<<<<<<<
+
+============================================================
+Number 4	       April, 1981	   Volume 4, Issue 4
+============================================================
+
+		      In This Issue
+		      =============
+
+	      Programming Style Comparisons:
+	Digital Research PL/I-80 and Microsoft BASIC
+		   by: Michael J. Karas
+
+	Installing a Computer Bulletin Board Program
+		     by: Ben Bronson
+
+	       CP/M-Net "Tip-of-the-Month"
+    Changes Required to XMODEM and TAG When Using MP/M
+		   by: Richard Rodman
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	       >>>>> SPECIAL NOTICE <<<<<
+
+ The	following   information   was	"down-loaded"	from
+CBBS/Detroit on March 1,  1981.  Please pass this around  to
+any other CBBS, RCPM or ABBS that you use.
+
+ "Sunday,  22  February  1981:	A.B.S Computer	Services  in
+Olympia  Washington  was robbed and its  owners,  Henry  and
+Laverne Rumburger, were killed."
+
+ "The  following  is  a partial list of  items	stolen	with
+serial numbers.  Note especially the Apple III!  With few of
+them around, it might easier to find."
+
+ "If  you  discover any of these  items,  contact  Detective
+Jones, Olympia, Washington Police, (206)-753-8300."
+
+The stolen items are:
+
+     Apple III	    (128k)	       #001065
+     Apple II	    (A2M030)	       #11892
+     Apple II	    (48k/A2SA)	       #152415
+     Apple II	    (48k)	       #95802
+     Disk II	    (with controller)  #215227
+     BMC Monitor		       #65101709
+     Sony KB1216 television	       #503527
+     Centronics 737 printer	       #12349
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+		Programming Style Comparisons:
+		==============================
+
+	 Digital Research PL/I-80 and Microsoft BASIC
+	 ============================================
+
+		     by: Michael J. Karas
+
+ I   recently  purchased  a  copy  of  a  newly   introduced
+applications   programming  development  system  that  is  a
+microprocessor	 oriented   implementation   of   the	PL/I
+programming language.  This language,  developed by  Digital
+Research Inc.,	Pacific Grove, CA, is a powerful, structured
+compiler  that is based upon the ANSII Standard PL/I  Subset
+G. Gary Kildall of DRI has made this package compatible with
+the  CP/M operating system for use on 8080/8085/Z80 types of
+microprocessors.  The machine code developed by the compiler
+is also compatible with the above family of microprocessors.
+
+ PL/I  was  originally developed by IBM as  a  large  system
+language  that	was  to be the last answer  for  programming
+languages  in  that  it contained  capabilities  similar  to
+FORTRAN,  COBOL, ALGOL, and PASCAL. Over the years since its
+introduction PL/I has gained a reputation and a "following".
+The  reputation has been that the compiler is huge and	that
+the  machine code modules produced are also huge.  (ie	many
+many bytes of memory are needed to run the compiler and  the
+resulting programs).  The "following" is a growing number of
+systems  and applications programmers that have come to know
+the power of PL/I,  ease of developing programs,  degree  of
+self documentation within programs,  structure,  and ease of
+maintaining  programs.	As  the language  gained  popularity
+several   manufacturers  of  minicomputers  (including	DEC)
+developed subset implementations of PL/I for their machines.
+Somewhere  along the line a committee was formed to  develop
+an   ANSII   standard	PL/I  subset   to   permit   program
+transportability.  Note  that the idea of developing a	PL/I
+subset was not to remove power or to limit capability of the
+language.  Instead,  much redundancy and feature overlap was
+removed  to  make  the	compiler  requirements	smaller  and
+manageable in "minicomputer amounts of memory".
+
+ About three years ago Gary Kildall of Digital Research  saw
+that  there  would be a need and a market place for  a	good
+compiler type language for microprocessors.  He decided that
+PL/I in a subset form would be the way to go. The results of
+his (and I'm sure also that of others at Digital) efforts is
+PL/I-80.  This compiler, in my opinion, is the best thing to
+happen	to  the microprocessor field in several  years.  For
+those people who are serious applications programmers trying
+to develop sophisticated applications packages,  the PL/I-80
+system is the way to go.  The reasons are multitude, some of
+which  were mentioned in the previous paragraphs.  In  using
+PL/I-80  for  several  months now I have  to  say  that  the
+programs  made	in  PL/I  are  blessed	with  the  following
+advantages:
+
+a) Structure is inherent in the programming style.
+
+b) Programs are extremely self documenting.
+
+c)   The compiler is fast!...  and makes efficient code that
+   also runs fast!
+
+d)  Linkage  of programs to assembly language  or  the	CP/M
+   operating system is really easy!
+
+e)  The  linkage  capability  includes an easy	to  use  and
+   powerful library and overlay generation capability.
+
+f) Data types included in the language are comprehensive.
+
+ The  PL/I-80 system has some small disadvantages that	I'll
+mention just to set things straight for all those people who
+are  hung  up on other languages for various  good  reasons.
+Being a compiler the development time from coding to running
+code is much longer that an intrepreted language like BASIC.
+The  program  development  time for the  inexperienced	PL/I
+programmer  will  generally  be about 5 times  as  great  as
+programming  in  BASIC.  I  have  found  that  as  I  gained
+familiarity  with the PL/I-80 features and had the use of  a
+good screen mode video editor that program development	time
+was some what less than twice that of BASIC.
+
+ Also  small  programs seem to turn in to awful  large	.COM
+files. (small programs that do any I/O get large fast due to
+included   device   and  file  interface  code.)  The	real
+efficiency  of the generated code is felt when	source	code
+programs  start to get up into the hundreds of lines.  Small
+programs will typically be 60 to 100 lines and will generate
+9 to 15 k bytes of machine code.  Once large portions of the
+runtime  library  become utilized by  the  programs  logical
+contents  then	each additional 20 to 30 lines of  code  may
+only add a portion of a "Kbyte" to the .COM file.
+
+ Program  checkout also tends to be harder if you desire  to
+be a "seat of the pants" programmer. Small editing and logic
+mistakes  cause a lot of time to be consumed in  re-editing,
+re-compiling,  and  re-linking	the  program that  is  under
+development.   Most  BASIC  programmers  I  know,  including
+myself,  tend  to  design and kludge programs right  at  the
+console  due to immediate testing convenience offered by  an
+interpretive language.	A more serious programmer will	tend
+to  "design and conceptualize" a program ahead of the coding
+process.  This makes a better, more structured, well thought
+out, and logically correct program. (For additional thoughts
+on design and conceptualization see Greg Williams  editorial
+on  page 6 of the March 1981 BYTE Magazine).  When I make  a
+PL/I program it tends to be developed by the latter process.
+The  linking capability also allows programs to be developed
+in  modules so that editing and manipulation of programs  is
+done in small pieces.
+
+ I often get asked the question, 'What is PL/I-80 like?'. In
+an attempt to answer that the remainder of this article will
+present  a programming problem in both Microsoft  BASIC  and
+Digital Research PL/I-80. The aim is not to try to teach the
+reader	how to write PL/I-80 programs or to demonstrate  the
+full power of the language. I also want to stress that while
+this  example can be implemented in either BASIC or PL/I-80,
+it  should be noted that the latter language will  generally
+provide  a  much  better vehicle  for  implementing  complex
+algorithms  into  a program due to  the  available  language
+features   and	 constructs.   Obviously  this	 cannot   be
+demonstrated  in  a  short article as  this.  The  following
+examples  are meant primarily to show one simple  method  of
+solving   the	same  problem  in  two	different   computer
+languages.  The comparison to BASIC was selected due to  the
+fact  that  more readers probably know BASIC than any  other
+language.  This  will permit the most enjoyable contrast  of
+programming styles for those readers that are just now going
+to get their first glimpse of PL/I-80.
+
+ The  example programs are both designed to perform  exactly
+the    same   function.    The	 idea	is   to    read    a
+name/address/telephone number file in sequence.  The data is
+then  formatted to list the names and addresses in a  format
+compatible with mailing labels on the printer.	As each name
+is  printed on its label,  the name and telephone number are
+listed	on  the  console.   This  example  is  designed  for
+demonstration  purposes  only  and  may  not  represent   an
+efficient  or feasible implementation of the above name  and
+address algorithm.
+
+ The  input  data to the program is expected to exist  in  a
+file  named "NAMES.DAT" on the default CP/M disk  unit.  The
+demo  format  for this file and some test records are  shown
+below. Note that the data may have been formatted into these
+records by another program or through use of an editor. Also
+the field length is only typical and may be impractical in a
+real  processing  application.	Field identification  is  as
+follows:
+
+     last name, 8 bytes
+     first name, 8 bytes
+     middle initial, 1 byte
+     address, 20 bytes
+     city, 11 bytes
+     state, 2 bytes
+     zip code, 5 bytes
+     phone number, 10 bytes
+
+ Records  are terminated with carriage return and line	feed
+pairs.
+
+		      EXAMPLE INPUT DATA
+		      ------------------
+
+KARAS	MICHAEL J2468 HANSEN CT      SIMI VALLEYCA930658055277922
+SMITH	KELLY	S3055 WACO AVE	     SIMI VALLEYCA930638055270518
+JOHNSON JACOB	B2793 ANDREW COURT   MANKADO	MN567056123424469
+ERICKSONSHIELA	P454 B UNIVERSITY AVEFARGO	ND581024154435523
+WILLIAMSDALE	F35912 CIRCLE MTN DR DAVENPORT	IW590342179657451
+HANSEN	MICHAEL H2486 KARAS CT	     SIMI VALLEYCA930658055279355
+KARAS	HANSEN	J8324 MICHAEL CT     SIMI VALLEYCA930658055277922
+NIXON	GERALD	R9355 KENNEDY BRIDGE OVER RIVER MS204312225551212
+PAULSON DEBBI	Q6699 HOLLOW TREE RD ROLLING LOGIL569433984535551
+ABUSE	VERBAL	T23 BELOW NOSE	     FACE CITY	NY432216589412257
+PRETTY	BOY	M523 TOO SHORT CT    BUMMER HILLKS582344325673349
+
+
+ The   following   program  listing   presents	 a   PL/I-80
+implementation of a program to read the above data and print
+the  console  list  and  the mail  labels  at  the  printer.
+Observation of the program structure and the various PL/I-80
+constructs is left for the reader.
+
+/******************************************************************
+
+	A SHORT MAILING LABEL PRINTING PROGRAM IN PL/1-80
+
+ *****************************************************************/
+
+maillab:
+	procedure options(main);
+	dcl				/* declare all variables */
+		database	file,
+		syslist		file,	/* printer output name */
+		nulstr		char(1) varying,
+		1 record,		/* a structure for data */
+		  2 lastname	char(8),
+		  2 firstname	char(8),
+		  2 midinit	char(1),
+		  2 address	char(20),
+		  2 city	char(11),
+		  2 state	char(2),
+		  2 zip_code	char(5),
+		  2 phone_num	char(10),
+		  2 filler	char(2), /* cr-lf filler from record */
+		1 phone_format	based(p),/* overlay template for phone # */
+		  2 area	char(3),
+		  2 prefix	char(3),
+		  2 line	char(4),
+		p		pointer;
+
+	open file(database) input record sequential title('names.dat');
+	open file(syslist) output stream print title('$lst');
+
+/* setup what to do if we try to read the file and there is no more data */
+
+	on endfile(database) begin;
+				close file(database);
+				put file(syslist) skip;
+				stop;
+			     end;
+
+/* tell operator to put mail labels into printer */
+
+	put edit('Put mail labels into printer.',
+		 'Type "GO" when ready....')
+		(skip(3),a,skip,a);
+	get list(nulstr);
+
+/* set address pointer for phone format overlay template */
+
+	p=addr(record.phone_num);
+
+/* read data into structure and then print the mail labels */
+
+	do while('1'b);		/* a forever loop!? */
+
+		read file(database) into(record);
+
+		/* put names and phone numbers to console */
+
+		put skip edit(strip(firstname),' ',
+			      strip(lastname),' (',
+			      area,') ',prefix,'-',line)
+			 (3(a),col(30),6(a));
+
+		/* print names to printer on mail labels */
+
+		put file(syslist) edit(strip(firstname),midinit,
+				       '.',strip(lastname),
+				       strip(address),strip(city),
+				       state,zip_code)
+				(skip(3),a,x(1),a,a,x(1),a,skip,a,
+				 skip,3(a,x(2)));
+	end;
+
+/* function routine to return a string of varying length based upon
+   input string with all trailing blanks removed */
+
+strip:
+	proc(string) returns(char(50) varying);
+	dcl
+		string	char(50) varying,
+		i,j	bin fixed(15);
+
+	i=0;
+	do i=0 repeat (i+1)
+		while(substr(string,(length(string)-i),1)=' ');
+	end;
+	string=substr(string,1,(length(string)-i));
+	return (string);
+	end strip;
+
+	end maillab;
+/* end of pl/i program */
+
+ The  following  listing  shows  a  simple  Microsoft  BASIC
+program to perform the same function of printing the console
+listing  and  mail labels upon the printer.  Once again  the
+program  analysis  is  left to the  reader.  Note  that  the
+logical  program  structure  of the BASIC  program  is	kept
+nearly	 the  same  as	the  previous  PL/I-80	program   to
+facilitate program comparisons.
+
+10 REM
+20 REM	       A SHORT MAILING LABEL PROGRAM IN MBASIC
+30 REM
+40 REM
+50 REM	 TELL OPERATOR TO PUT LABELS INTO PRINTER
+60 REM
+70 PRINT:PRINT:PRINT
+80 PRINT "Put mail labels into printer."
+90 INPUT "Type 'GO' when ready....",NUL$
+100 OPEN "I",#1,"NAMES.DAT"
+110 REM
+120 REM  SETUP FOR END OF FILE EXIT
+130 REM
+140 IF EOF(1)<0 THEN 470
+150 REM
+160 REM   READ FILE RECORD AND FORMAT DATA
+170 REM
+180 LINE INPUT #1,REC$
+190 STRIP$=MID$(REC$,1,8)
+200 GOSUB 530
+210 LN$=STRIP$
+220 STRIP$=MID$(REC$,9,8)
+230 GOSUB 530
+240 FNM$=STRIP$
+250 MI$=MID$(REC$,17,1)
+260 STRIP$=MID$(REC$,18,20)
+270 GOSUB 530
+280 AD$=STRIP$
+290 STRIP$=MID$(REC$,38,11)
+300 GOSUB 530
+310 CTY$=STRIP$
+320 ST$=MID$(REC$,49,2)
+330 ZP$=MID$(REC$,51,5)
+340 PH$=" ("+MID$(REC$,56,3)+") "+MID$(REC$,59,3)+"-"+MID$(REC$,62,4)
+350 REM
+360 REM PRINT NAME AND PHONE NUMBERS TO CONSOLE
+370 REM
+380 PRINT FNM$;" ";LN$;TAB( 30);PH$
+390 REM
+400 REM PRINT NAMES ON LABELS AT PRINTER
+410 REM
+420 LPRINT:LPRINT
+430 LPRINT FNM$;" ";MI$;". ";LN$
+440 LPRINT AD$
+450 LPRINT CTY$;"  ";ST$;"  ";ZP$
+460 GOTO 140
+470 CLOSE 1
+480 SYSTEM
+490 END
+500 REM
+510 REM   SUBROUTINE TO STRIP EXCESS BLANKS OFF THE END OF A STRING
+520 REM
+530 IF MID$(STRIP$,LEN(STRIP$),1)<>" " THEN RETURN
+540 STRIP$=MID$(STRIP$,1,LEN(STRIP$)-1)
+550 GOTO 530
+
+ If  either of the above programs is run the output  at  the
+console  appears  as follows.  <cr> indicates operator	data
+entry and carriage return key depression.
+
+		 CONSOLE OUTPUT FROM PROGRAM
+		 ---------------------------
+
+Put mail labels into printer.
+Type 'GO' when ready....GO<cr>
+
+
+
+MICHAEL KARAS		      (805) 527-7922
+KELLY SMITH		      (805) 527-0518
+JACOB JOHNSON		      (612) 342-4469
+SHIELA ERICKSON 	      (415) 443-5523
+DALE WILLIAMS		      (217) 965-7451
+MICHAEL HANSEN		      (805) 527-9355
+HANSEN KARAS		      (805) 527-7922
+GERALD NIXON		      (222) 555-1212
+DEBBI PAULSON		      (398) 453-5551
+VERBAL ABUSE		      (658) 941-2257
+BOY PRETTY		      (432) 567-3349
+A>
+
+ The following listing shows the printer output from  either
+program.  Only a portion of the listing is shown to give the
+idea without wasting too much paper.
+
+		      PRINTER OUTPUT
+		      --------------
+
+MICHAEL J. KARAS
+2468 HANSEN CT
+SIMI VALLEY  CA  93065
+
+
+KELLY S. SMITH
+3055 WACO AVE
+SIMI VALLEY  CA  93063
+
+
+JACOB B. JOHNSON
+2793 ANDREW COURT
+MANKADO  MN  56705
+
+
+SHIELA P. ERICKSON
+454 B UNIVERSITY AVE
+FARGO  ND  58102
+
+
+DALE F. WILLIAMS
+35912 CIRCLE MTN DR
+DAVENPORT  IW  59034
+
+
+MICHAEL H. HANSEN
+2486 KARAS CT
+SIMI VALLEY  CA  93065
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Installing a Computer Bulletin Board Program
+	============================================
+
+		     By: Ben Bronson
+
+ If  you  want	to  put up a bulletin  board  or  a  program
+exchange  system that runs under CP/M (and if you don't want
+to  write all your own software from scratch) you  have  two
+choices:  Ward	Christensen's  and Randy  Suess's  assembly-
+language  CBBS and the BASIC-language RBBS written by Howard
+Moulton, Bruce Ratoff, Ron Fowler, Tim Nicholas and others.
+
+		    The Real CBBS
+		    -------------
+
+ CBBS is the daddy of all bulletin board programs for micro-
+computers  and as such has been imitated to some  extent  by
+all other public-domain and commercial BBS software.   It is
+also an excellent program: fast, compact, and flexible.  One
+of  its  best features is its sophisticated message  editing
+capability. However, as its authors tell the would-be system
+operator  quite  plainly,  installing  it  (not  to  mention
+modifying  it)	does require a good  knowledge	of  assembly
+language.   CBBS  is written as a whole set of modules	that
+have to be configured,	then linked,  and finally maintained
+with another set of programs.
+
+ If you are good at assembly language,	you should certainly
+choose	it  over RBBS.	 The cost is negligible in terms  of
+what you get -- Send a check for $50 made out to Randy Suess
+to:  CBBS,  5219 W Warwick,  Chicago,  Ill. 60641.  You will
+receive  a  copy of the CBBS source program and files  on  2
+CP/M format soft sectored 8" floppy disks.
+
+		       MINICBBS
+		       --------
+
+ If you are only moderately familiar with assembler and want
+to  run  a system dedicated to software  downloading  rather
+than   message	interchange,   there  is  one	intermediate
+alternative  that  should be  mentioned:   Keith  Petersen's
+stripped-down version called MINICBBS,	which runs as a  COM
+file  on  a CP/M system to which (as is normal with  program
+downloading or RCPM setups) the caller has access.  MINICBBS
+can  be obtained in already assembled form from any  of  the
+SYSOPS (Keith himself,	Dave Hardy,  Calamity Cliffs or Dave
+Moritz)  who  use  it,	but (as CBBS is copyrighted  and  as
+MINICBBS  needs  several of the  auxiliary  and  maintenance
+programs  supplied on the CBBS distribution disks) they will
+only  release it to those who have  bought  CBBS.   MINICBBS
+retains  the  good  message editingfeatures  of  its  parent
+program and occupies only about l0K of disk space.   It is a
+good deal easier to get up and running than the full CBBS.
+
+ The  only  disadvantages  of MINICBBS are (1)	that  making
+modifications  requires greater familiarity  with  assembler
+and  (2)  that	its  method of storing	new  messages  makes
+keeping  these private from other users a  bit	complicated.
+The  programs  to  do this are well worked out	and  in  the
+public domain (for example,  SECURITY.ASM and TAG2.ASM), but
+most  MINICBBS	sysops still find it necessary to  keep  the
+program  and  its messages in a very high user area  and  to
+move  everything  back	down whenever they want to  do	some
+purging and editing.
+
+		     RBBS, Etc.
+		     ----------
+
+ The main (and only) alternative to the CBBS series is	RBBS
+or  its  two  RCPM-specialized	descendants,   ENTERBBS  and
+MINIRBBS.  The RBBS programs have several shortcomings.   In
+their  current	form  they  have  inferior  message  editing
+features.   They  are impossibly slow when run as BAS  files
+under  MBASIC.	 And when compiled with BASCOM (which  makes
+them almost as fast as CBBS or sometimes even as fast), they
+are  bulky.   A compiled RBBS occupies 34K of disk space and
+RAM,  and  a  compiled	MINIRBBS needs 30K  all  by  itself,
+compared with the 10K used by MINICBBS.   While most  people
+have enough RAM so that size in memory is not a problem, the
+RBBS  series performs noticeably worse on systems with	slow
+disk drives.
+
+ On the other hand, RBBS has a single great advantage: it is
+a  lot	easier	to  install.   If you  have  a	very  modest
+knowledge of BASIC and own or have access to BASCOM, you can
+get a RBBS system up and running in a single evening,  while
+installing  CBBS  takes several days for a  crack  assembly-
+language  programmer.	To  the RCPM operator its use  of  a
+MBASIC-type  sequential message file is also an advantage --
+access to messages can be controlled simply by declaring the
+MESSAGES file a $SYS file,  and can easily be protected from
+XMODEMing by using TAG2.COM.
+
+ RBBS is essentially self-explanatory, but a few notes might
+ease the installation process even  further.   Briefly,  one
+becomes an RBBS SYSOP like this:
+
+		   Installing RBBS
+		   ---------------
+
+(1)  Get  RBSUTL22.BAS (or ASC) and RBBS24.BAS	(and  later,
+ENTBBS24  & MINBBS24.BAS as well) from a local RCPM  system.
+As  indicated earlier,	you will also need to have a version
+of  BYE (PMMIBY63,  BYE65 and BYE67 all can load a COM	file
+automatically	after  bringing  themselves  up   when	 the
+telephone  rings,  so choose one of those -- the COM file in
+question will of course be RBBS.COM).
+
+(2) Try the program with MBASIC in interpreter	mode.	Just
+type MBASIC RBBS24 and see what happens.
+
+(3) Look at the disk directory after you have exited back to
+CP/M.	You'll	notice	that  several new  files  have	been
+created:   MESSAGES,   CALLERS,  USERS,  COUNTERS,  SUMMARY,
+LASTCALR and (if you have left yourself a comment) COMMENTS.
+These  are  7/11 of the auxiliary files that a	full-fledged
+RBBS can use, and 7/7 of those it absolutely has to use.
+
+(4) Now use an editor (or a word processor that does not put
+queer  control	characters  in the  file--WordStar  in	non-
+document  mode works fine) to write four brief	text  files.
+Put  amything  you want into three of them,  and  call	them
+INFO,  BULLETIN and NEWCOM.   Just that.   Filenames without
+filetypes.  The fourth file, PWDS, should contain only three
+words separated by commas:
+
+		HONDURAS,BANANA,NOPASS
+
+ These are the P1$,  P2$ and P3$ you will see referred to in
+the early parts of the source code.  "HONDURAS" and "BANANA"
+can be replaced with whatever you like;  those are passwords
+for  you,  the	SYSOP  to use for quick entry  and  message-
+killing authority within the system.   "NOPASS" is what  you
+put  in if the system is to be for unrestricted public	use.
+Anything  else here will become the access password for  all
+users.	Now return to CP/M.
+
+(5)  Try the MBASIC RBBS routine again several times.	Sign
+in with the same name,	then with different  names.   Notice
+which  text files are printed where when the name is new and
+when  it  is one the program  already  knows.	Try  signing
+yourself  in  with the first name SYSOP and the second	name
+anything but BANANA or whatever your P2$ is.   When you have
+had enough of this,
+
+(6) TYPE all the files with one-word names to see what	they
+look like.  If you look at them with an editor you'll notice
+that  the  ones created by the program rather than  you  all
+have fixed-length lines.  Use the editor to put asterisks in
+front  of  a  couple of the names you've invented  that  are
+already   in   the  USERS  file.    Make  sure	 you   don't
+inadvertently make the lines with asterisks longer than  the
+others,  and  put the asterisks at the very beginning of the
+line.
+
+(7) Go back to CP/M and do MBASIC RBBS24.   Sign in with one
+of  the names you have marked with an asterisk and see	what
+happens.  Play around with passwords a bit more.  By now you
+should understand most of the program's tricks.
+
+(8)  So  go  into  RBBS24 (again  with	an  editor  or	word
+processor  that does not create MBASIC-incompatible  conttol
+characters) and personalize the various messages that appear
+in  quotation  marks.	Exit.	Test with MBASIC.   Try  all
+combinations  of  commands and make sure  they	still  work.
+Kill  a  couple of messages.   Notice that you can kill  the
+passworded ones if you're the SYSOP.
+
+(9) Next try RBSUTL22.BAS.  Run it with MBASIC.  Look at the
+menu  and  do what it tells you to do.	 Purge the  file  of
+killed	messages.   Remember  to rebuild the  SUMMARY  file.
+Exit.  Look  at the directory and what has happened  to  the
+MESSAGES  and other files.   Now you know how to maintain an
+RBBS system.
+
+(10) And then compile.	 You'll need about 50-52K of  memory
+to hold both BASCOM and RBBS.	If you don't have that much,
+prevail  on  a friend or a local SYSOP (who is likely to  be
+delighted  at the idea of a new system that'll take some  of
+the  pressure off his) to compile it for you.	Use  the  /X
+switch	(check the manual for why if you're curious).	Load
+with L80 with the /E and /N switches.  And presto.  You have
+a file called RBBS24.COM.  Do the same with RBSUTL22.
+
+(11) Run it.  Make sure it works as advertised.  Notice that
+it  picks up all the files created while you were trying the
+program  out with MBASIC and treats those files as its	own.
+Rewrite  the INFO,  BULLETIN and NEWCOM files so  that	they
+contain  appriate messages.   Test RBSUTL22.   Note that  it
+runs a good deal faster in compiled form.
+
+(12)  Last,  assemble BYE with the filename of whatever  you
+have   called	RBBS24.COM  (that'll  work  fine)   in	 the
+appropriate  place.   Load  it so that it too becomes a  COM
+file.
+
+(13)  Type BYE.  Notice that it responds "COM FILE  LOADED".
+Wait for the telephone to ring.
+
+(14)  With any luck at all,  you will find that you are  now
+the proud proprietor of a Computer Bulletin Board.
+
+ The rest is up to you.   You'll have to decide whether  you
+want  public or passworded access,  emphasis on messages  or
+programs,  and that sort of thing.  If you opt for a RCPM or
+program  down-loading function,  RBBS will work quite nicely
+for that too, but you may care to try ENTBBS24 and MINBBS24,
+which  offer less temptation to people who want to  use  the
+system	 as  primarily	a  message  service.	Once  you've
+succeeded in getting RBBS up,  ENTERBBS & MINIRBBS will be a
+piece of cake.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+	       CP/M-Net "Tip-of-the-Month"
+	       ===========================
+
+    Changes Required to XMODEM and TAG When Using MP/M
+    ==================================================
+
+			  By:
+
+		     Richard Rodman
+		  Micro Research, Inc.
+		  8303 Arlington Blvd
+		    Fairfax VA 22031
+
+ While the CP/M and MP/M manuals both say that the bits  f1'
+thru 4' are user-definable, it so happens that under MP/M, a
+process  with bit 7=1 on the first letter of its name cannot
+be  broken with Control-C or output stopped with  Control-S,
+et cetera.   Therefore, f1' actually is not available to the
+user.  For this reason,  you must move the tag bit to f2' if
+you  intend to run MP/M on a remote system utilizing  XMODEM
+with "tagged" files (i.e. "tagged" to prevent file transfers
+of "distribution-protected" programs OUT of the remote	MP/M
+system).
+
+ I have included some relevant listing portions below,	from
+TAG and XMODEM, to fix the problem.
+
+from TAG:
+
+pext:
+	...
+	rrc			;bit 7=0 for R, 1 for S
+	ani	80h
+	mov	b,a		;save mask
+	lxi	d,dfcb+2	;point to f2
+	ldax	d		;get it
+	ani	7fh		;strip f2'
+	ora	b		;set bit if option was S
+	stax	d		;put it back
+	dcx	d
+	dcx	d		;Added one more
+	...
+	call	bdos
+nextfile:
+	lda	dfcb+2		;get f2
+	rlc			;isolate f2'
+	ani	1
+	...
+
+from XMODEM:
+
+;Check for distribution-protected file
+;
+OPENOK	LDA	FCB+2	;second CHAR OF FILE NAME
+	ANI	80H	;CHECK BIT 7
+	JZ	OPENOK2 ;IT WAS OFF, FILE CAN BE SENT
+	...
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -1,0 +1,530 @@
+
+>>>>>>>>>>>>>>>>>>>>> CP/M-Net News <<<<<<<<<<<<<<<<<<<<<<<<
+
+============================================================
+Number 4		May, 1981	   Volume 1, Issue 5
+============================================================
+
+		      In This Issue
+		      =============
+
+		   RCPM Midwest Update
+		     by: Ben Bronson
+
+      Computer Widows: To the wifes, girlfriends, etc.
+	      by: Jane Smith, Wife of "SYSOP"
+
+    MP/M: A User's Comments and Implementation Methods
+		     by: Kelly Smith
+
+		CP/M-Net "Tip-of-the-Month"
+  Seven Byte Program to Discourage TRACE with DDT or SID
+	     by: Kelly Smith, CP/M-Net "SYSOP"
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+		    RCPM Midwest Update
+		    ===================
+		      by Ben Bronson
+
+ The  big news in these parts as far as programs go  is  (1)
+MicroTelnet (MTN21.OBJ, DOC, MSG, & MTNMSGS.OVR), a splendid
+new terminal program by one of your California people, Frank
+Wancho (Maybe not a Californian,  come to think of it);  (2)
+FINDBD52,  Ron Fowler's long-awaited "universal" FINDBAD [he
+has  used the tricks he invented for DU-V75 to make it	work
+for  just  about  any  controller  without  bothering  about
+assembly  options];  and  (3) RUN80,  which came  here	from
+Dick's system and you know about already. Also an assortment
+of smaller programs.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+      Computer Widows: To the wifes, girlfriends, etc.
+      ================================================
+		by Jane Smith, Wife of "SYSOP"
+
+ When Kelly asked me if I would be interested in writing  an
+article  for his "newspaper",  my first response was  "NO!".
+First  of  all,  I have no training in article	writing  and
+secondly  being a housewife,  hanging around with the  kids,
+dog,  cats,  etc.,  all  day  doesn't tend to increase	ones
+vocabulary.  Well,  I take that back...I've learned lots  of
+four letter words,  mostly in self-defense!  But then, after
+thinking it over,  I thought "What the hell" (there's one of
+those four letter words!).
+
+ I  think  this  "home computer" thing started  when  Pertec
+(where Kelly works) loaned us a TRS-80 to play with at home.
+
+[Editor Comment:  they were having me evaluate it, to see if
+we could make one better and cheaper!].
+
+ We  had  lots of fun playing games on it and even  kind  of
+missed it when it went back to Pertec. So Kelly put together
+a little system for us at home...It has ballooned from there
+to  the  point	of  adding a room onto	our  house  for  the
+computers, complete with it's own air conditioning unit (God
+forbid, it should get too hot!).
+
+ I  probably wouldn't be too far off to say that 85% of  the
+time that Kelly is home,  he is with the computers,  another
+5%  is spent thinking about it (you can always tell by	that
+blank  stare  into space),  probably 7% devoted  to  eating,
+sleeping,  etc.,  and maybe I get 3%.  I get the  impression
+that  the  computer  doesn't like me...it usually  plans  on
+breaking about the time Kelly and I are going to spend	some
+time together.
+
+ An  example of it's dislike for me was the time Kelly	went
+on  a  business trip for two weeks and left me in charge  of
+running the computer.  As soon as it figured out that  Kelly
+had gone (and had not taken it along), it decided to throw a
+fit  and not talk to anyone when they called!  So  everytime
+the  phone would ring,	I had to run in "it's room" and  re-
+boot  the system...a good friend of Kelly's kindly came over
+to have a look at it.  It ran fine for him all day,  but  as
+soon  as  he was in his car it said "DISK BOOT  ERROR".  The
+last thing I did before going out the door to pick up Kelly,
+was to re-boot the system.  The minute Kelly stepped in  the
+door,  it straightend right up and never to my knowledge did
+it do that again.  I beleive its jealous and that was one of
+its  little plots to make Kelly think that I'm the one	with
+the loose screw...
+
+ I  also  find	it difficult to join in  conversations	when
+Kelly's friends come to visit. They sit around and talk in a
+foreign language!  I've tried to join in once or twice,  and
+usually  come up with some intelligent phrase (just  to  get
+your  foot  in the door) like "Boy,  something really  funny
+happened on the way to the grocery store!"...at which  point
+(if they even heard you), you get a blank stare as if you're
+the  one  talking in a foreign language!  Then without	even
+asking	"what  was  funny?" the conversation  goes  back  to
+"SYSGEN" this, or "PIP" that, or "star-dot-doc".
+
+ Do you remember when we were teenagers and we'd invent some
+language such as "pig-latin" to talk to our friends,  so our
+parents wouldn't understand what we were saying? Sometimes I
+think that's what these guys are doing, and they're planning
+a  "Stepford"  community...what they're really  spending  so
+much time doing is making "Stepford Wives"! I, for one, have
+warned my friends to keep a close eye one me for any changes
+along those lines...
+
+ I'm  also watching for the program "star-dot-sex".  That'll
+mean it's finally programmed for sex, and there goes my 3%!
+
+ I'm  sure  that this isn't what Kelly had in mind  when  he
+asked  for  an	article,   but	maybe  some  of  the  wives,
+girlfriends, etc., can identify with this...
+
+ To  sum up,  I must say that I am glad that you're at	home
+Kelly...even if you are with the computer.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    MP/M: A User's Comments and Implementation Methods
+    ==================================================
+	      by Kelly Smith, CP/M-Net "SYSOP"
+
+ Up front, let me recommend that MP/M is NOT for someone who
+doesn't  know the difference between a 'NOP' and an  'XTHL'!
+All  those  that  fail	this  test,  please  read  the	next
+article...this	is definetely not for you.  MP/M is NOT  for
+someone that has NOT PURCHASED CP/M 2.2, and MP/M is NOT for
+someone  who has purchased CP/M 2.2 but does NOT have a copy
+of  the ENTIRE BIOS (i.e.,  that means ANYONE who has  taken
+the  "easy way out" by buying a ready to run CP/M  2.2  from
+Lifeboat Associates).  Also,  I suspect that MP/M is NOT for
+someone  who has ALREADY purchased a microprocessor  system!
+"What?" you ask...well since I have your attention this far,
+read on.
+
+ MP/M	is  a  powerful  multi-tasking/multi-user  operating
+system that in the hands of the skillful user, a system-wise
+('wise' meaning darned smart!) implementor,  and the  PROPER
+hardware environment, can be a very useful software tool.
+
+ As  always,  Digital  Research provides less than  adequate
+documentation  for  explaining "how to get it  running"  for
+anyone	with  less  than  a  Master's  Degree  in   Computer
+Sciences...it can be done,  but you better really "dig  in",
+learn to "read between the lines", and CAREFULLY EXAMINE the
+program  examples given (the MP/M 1.0 release  documentation
+had  a few "bugs" that if used,  would not  work!).  Digital
+Research  has done an excellent job on their PL/I-80 and BT-
+80,  manuals  however...but I always wondered why they	kept
+putting  those	PL/M examples in their CP/M manuals  (as  if
+everyone  programmed in PL/M and had an  Intel	MDS-800...oh
+well).
+
+ O.K.,	so you ARE an expert,  and (let's hope) you have NOT
+purchased  a  microcomputer  system  (Oh  yeah,   forgot  to
+mention: it MUST BE a 8080/Z80 based system!). Let's examine
+my  implementation of MP/M on a typical "semi-roll-your-own"
+microcomputer...in  this  case,   an  IMSAI  8080  with   56
+kilobytes  of  RAM,  two floppies,  one "local user" with  a
+terminal,  and one "remote user" (via an auto-answer modem).
+
+ The  system "boot and signon" will best illustrate WHY  you
+should NOT purchase a microcomputer system...so here is what
+USER 1 (remote) will see at signon:
+
+
+    MP/M-Net (tm), System #1 <--- (autoload under CP/M 2.2)
+>> Multi-user Software Access <<
+	    [USER 1] <--- (your user number)
+
+Enter USER 0<cr>, if you require
+access to other MP/M facilities.
+===============================
+ MP/M is a registered trademark
+	       of		 <--- (giving credit!)
+	Digital Research
+===============================
+Booting MP/M Version 1.1 now.... <--- (a slight pause)
+MP/M 1.1 Loader <--- (MP/M "boot loader", MPMLDR.COM)
+===============
+Number of consoles =  2 <--- (indicates 2 user configuration)
+Breakpoint RST #   =  5 <--- (SID or DDT "break-point" vector)
+Top of memory	   =  DFFFH <--- (56 Kilo-bytes of memory)
+Memory Segment Table:
+SYSTEM	DAT  DF00H  0100H <--- (system configuration data)
+CONSOLE DAT  DD00H  0200H <--- (system user console data)
+USERSYS STK  DC00H  0100H <--- (system user stack area)
+XIOS	SPR  D800H  0400H <--- (extended I/O system process's)
+BDOS	SPR  C400H  1400H <--- (basic disk operating system)
+XDOS	SPR  A500H  1F00H <--- (extended disk operating system)
+ABORT	RSP  A400H  0100H <--- (resident system process, abort)
+MPMSTAT RSP  9700H  0D00H <--- (resident system process, MP/M status)
+Sched	RSP  9200H  0500H <--- (resident system process, scheduler)
+-------------------------
+Memseg	Usr  8000H  1200H <--- (memory for user 0,  4 Kilo-bytes)
+Memseg	Usr  0000H  8000H <--- (memory for user 1, 32 Kilo-bytes)
+
+MP/M 1.1 <--- (MP/M "sign-on")
+1A> <--- (MP/M prompt for user 1)
+
+ Now examine the signon carefully...EGADS! A 56k system, and
+only 36 kilobytes left BETWEEN USER 0 and USER 1...and whats
+worse,	is  that  resident  system process's  for  TIME  and
+SPOOLER  can't be included without giving up some meaningful
+amount of memory for user application programs!  ARGH...here
+I sit with $8,000 worth of hardware and I can't run diddely!
+
+ So get the picture?  Now it's the old "whip-out-the-wallot-
+time-again-folks" syndrome..."let's see, just how much bank-
+switched  memory can I get for...oh heck, got'ta pay Ma'Bell
+first,	for  that  three hour modem transfer  from  Bruce!".
+Well,  as I said...DO NOT purchase the computer FIRST!  Make
+some strong considerations as to WHY you think you need MP/M
+then  start configuring a system (on paper) with  what  your
+requirements will be and,  of course the final problem: will
+my  wife  let me buy it?  (!).  I would suggest that  for  a
+meaningful environment for MP/M to "live in", you want about
+128 Kilobytes of bank-switched memory...that's for just  two
+"hackers"  on the system...and maybe,  JUST MAYBE,  allowing
+one  of you to be zapping Klingons while the other is  going
+"Oooh Aaah" with Wordstar. But then, things get worse:
+
+ So you've got memory "up-the-kazoo" huh?  Great, so we just
+rip  along (both users hacking away),  and you got  the  TOD
+(time  of  day) set and you "schedule" an assembly for  your
+wiz-bang newest program...but wait,  that means a  real-time
+clock...ARGH again!  Well let's see,  maybe if I turn in ALL
+the Coke bottles, and...
+
+ Now  we  have a real-time clock board,  and it  includes  a
+"tick-toc"  interrupt that we had to have anyway for "round-
+robin" polling of all the darned hardware...couldn't  afford
+to go fully interrupt driven (in fact I scrounged a MITS 88-
+VI/RTC  board from a friend!).  Oh yah...change the XIOS  to
+disable  interrupts  during floppy disk DMA (we got  one  of
+those (GAG) Tarbell Double Density disk controllers).
+
+ So  back to scheduling that assembly...Hmmm,  we seem to be
+running  a  little  late...let's look  at  the  system  with
+MPMSTAT...no,  the  suckers on the queue...must be coming up
+soon.  Well  let's  see  what time it is  according  to  the
+system...(we type in TOD<cr>).  WHAT THE HECK???  The darned
+clock is late! NOW WHAT (mumble, mumble)?
+
+ Well  SON-OF-A...Oops,  won't go to heaven if we keep  this
+up!  Turns out that to run the disk,  we had to turn of  the
+interrupts,  and since we did that, the clock lost time, and
+we can't run the schedular properly...now comes ARGH #3.
+
+ Where  do I find a disk controller that doesn't DMA or  hog
+the buss,  or...worst yet, if I find one, HOW will I pay for
+it!?!  Let's see,  could I sell my wife to the mo'cycle gang
+down the street?
+
+ O.k.,  got a heck of a deal on her for $3,500...just enough
+to pay for a "buffered" (read "grab data at our leisuer, not
+at  the disk data rate" here) double density disk controller
+from Pertec (An OBVIOUS plug: Model FD3812 or single density
+FD3712)...but, OH CRAP (and diddely-squat!)!  Now I have  to
+rewrite my MPMLDR and XIOS...(weep, ARGH #4).
+
+ Now  I've developed the MPMLDR and XIOS (and of course I've
+also developed this annoying 'tick' and people wonder why  I
+keep  jamming  the fork into my forehead when  I  eat)...but
+this  is part of the FUN OF IT ALL...Right?  So now we  fire
+the  turkey computer up again...WOW!  FAR OUT!  Time of  day
+clicking right along,  schedular bashing programs,  on time,
+keyboard  getting overrun...WHAT?  KEYBOARD  OVERRUN???  Now
+WHAT????
+
+ We examine the system with MPMSTAT again...Hmmm,  that jerk
+on  USER  1 is still playing Startrek.  Well what  could  be
+going  on?  Let's think about Startrek for a  minute...let's
+see,  setting up arrays, figuring navigation, just plain old
+compute bound stuff...Ooops!  COMPUTE BOUND!  That's IT! One
+piddely  little 8080 CPU (beating it's heart out) trying  to
+handle  some  heavy-weight  computations while  I  sit  here
+slogging  it out with this text editor...ARGH #5.  Well this
+ones  a "tuffy",  'cause now I have to go totally  interrupt
+driven...and the story goes on, and on and...
+
+ So  that  story summarizes the agony of the  potential  for
+disaster if you DON'T PLAN AHEAD.  So what did we learn from
+all this?  Well I figure that we spent about $7,000, my wife
+is living with a bunch of Harley Freaks, and I got canned at
+work  because of the obscene things I was doing with a	fork
+in  the  company cafeteria.  I could have had  two  SEPERATE
+computers  and	REALLY IMPRESSED the guys  at  the  computer
+club!
+
+ Well  in any case,  let's see what we can do with MP/M,  so
+first we'll see whats going on in the system with MPMSTAT:
+
+1A>mpmstat<cr> <--- ( we type this in...)
+
+
+***** MP/M 1.1 Status Display ****** <--- (MP/M responds)
+
+Top of memory = DFFFH <--- (yah, 56k; it was just a story!)
+Number of consoles = 02
+Debugger breakpoint restart # = 05
+Stack is swapped on BDOS calls
+
+Ready Process(es):
+  MPMSTAT  Idle
+Process(es) DQing:
+ [ABORT   ] ABORT
+ [Sched   ] Sched
+ [CliQ	  ] cli
+ [ATTACH  ] ATTACH
+Process(es) NQing:
+Delayed Process(es):
+Polling Process(es):
+  Tmp0	
+Process(es) Flag Waiting:
+  01 -	Tick	
+  02 -	Clock	
+Flag(s) Set:
+  03
+Queue(s):
+  ABORT    MPMSTAT  Sched    CliQ     ATTACH   MXParse	MXList	
+  MXDisk
+Process(es) Attached to Consoles:
+  [0] - Tmp0	
+  [1] - MPMSTAT
+Process(es) Waiting for Consoles:
+  [1] -  Tmp1	
+Memory Allocation:
+  Base = 0000H	Size = 8000H  * Free * <--- FREE Hell! 56k cost
+  Base = 8000H	Size = 1200H  * Free *	    me almost $1,600!!!
+1A> <--- (MP/M waiting to do your bidding)
+
+ "Well,  what does it all mean?" you ask. So here is a brief
+explanation:
+
+Ready  Process(es) - process(es) that are ready to  execute,
+		     and  waiting  for the system  (CPU)  to
+		     relinquish time.  In this case  MPMSTAT
+		     has    the    highest   priority	 and
+		     momentarily has control.
+
+Process(es) DQing  - processes	that  are   waiting   for
+		     'messages' from the queues that are  in
+		     brackets, and displayed from highest to
+		     lowest system priority.
+
+Process(es) NQing -  processes writing to queues,  but	none
+		     at this time in progress.
+
+Delayed  Process(es)  - processes  waiting for	a  specified
+		     amount  of  clock 'ticks' on the  basic
+		     system time unit,	but none waiting  at
+		     this time.
+
+Polling  Process(es) - Terminal Message Process USER  0,  is
+		     polling the console device.
+
+Process(es)  Flag  Waiting  - processes that set  and  alter
+		    "syncronization flags" for task building.
+
+Flag(s) Set -	    the flag indicating that the "one minute
+                    interval" is set.
+
+Queue(s)  -	     all the present queues on	the  system;
+		     the  queues in upper case	letters  may
+		     receive  messages from the Command Line
+		     interpreter (e.g., ABORT followed by  a
+		     filename).
+
+Process(es)  Attached to Consoles - processes 'attached'  to
+		     the console,  listed by console  number
+		     (user)  and  process name...USER 0  has
+		     gone to sleep.
+
+Process(es) Waiting for Consoles - Terminal Mesage Processor
+		     USER 1 is waiting for console  1,	from
+		     which it was 'detached'.
+
+Memory Allocation -  unallocated user memory segments;	will
+		     indicate  which  programs	are  activly
+		     executing	and  to  which	user  it  is
+		     assigned.	 Currently  non-active,  but
+		     then what can you do in 38k anyway with
+		     two users?
+
+ If you care to set the "time of day", then enter the month,
+day, year, hour, minute, and second, as follows:
+
+1A>TOD 10/04/81 07:35:00<cr> <--- (you enter this)
+Strike key to set time<cr> <--- (MP/M responds, you do <cr>)
+
+Sat 10/04/81 07:35:00	    <--- (the current "time of day")
+
+ Now  you  may want to "schedule" a task to be  executed  at
+some later time by MP/M.  For example, schedule the "time of
+day"  to  be  displayed  exactly two  minutes  from  now  by
+entering the following scheduler command:
+
+1A>SCHED 10/04/81 07:37:00 TOD<cr>
+
+ Two minutes "tick" by...
+
+1A>Sun 10/04/81 07:37:01    <--- ("time of day" is executed)
+
+ The  SCHEDuler  works	with all file  and  resident  system
+process's,  and  allows the user to "stack" a  multitude  of
+tasks on the system for later (and unattended) execution.
+
+
+ Keeping  in mind that you are USER 1,	you may display  the
+directory for the diskette in drive A as follows:
+
+
+1A>dir<cr>		<--- (you type DIR, carriage return)
+
+Directory for User  1:
+A: MESSAGE  X12 : KILLED       : MESSAGE  X08 : MESSAGE  X06
+A: MESSAGE  X02 : MESSAGE  X04 : MESSAGE  X00 : CBBS	 COM
+A: WELCOME	: SCANHELP     : PASSWORD     : LOG	
+A: MESSAGE  X10 : HELP	       : FIRSTIME     : ENTRHELP
+A: ENTINTRO	: BULLETIN     : NEXT	      : MESSAGE  X20
+A: NOT-FOR  YOU : USER	   ASM : DUPUSR   ASM : FILE-XT2 ASM
+A: SYSTEM'S DOC : XMODEM   COM : MESSAGE  X14 : MESSAGE  X16
+A: MESSAGE  X18 : SUMMARY
+
+ Now  you  may	wish to see what's "on file" in  other  user
+areas.	For example,  all the MP/M "system" files are in the
+USER 0 area of the diskette in drive A:
+
+1A>user 0<cr>	     <--- (you type USER 0, carriage return)
+User Number = 0
+
+0A>dir<cr>	    <--- (...and DIR, carriage return again)
+
+Directory for User  0:
+A: MPM	    SYS : LDRBIOS  ASM : ODOS	  SPR : BDOS	 SPR
+A: BNKBDOS  SPR : XIOS	   ASM : ABORT	  RSP : SPOOL	 RSP
+A: MPMSTAT  RSP : SCHED    RSP : CONSOLE  PRL : DIR	 PRL
+A: DSKRESET PRL : ERA	   PRL : ERAQ	  PRL : MPMSTAT  PRL
+A: PRLCOM   PRL : REN	   PRL : SUBMIT   PRL : TOD	 PRL
+A: TYPE     PRL : USER	   PRL : SPOOL	  PRL : STOPSPLR PRL
+A: SCHED    PRL : ABORT    PRL : ED	  PRL : PIP	 PRL
+A: STAT     PRL : RDT	   PRL : ASM	  PRL : GENMOD	 COM
+A: GENHEX   COM : LOAD	   COM : GENSYS   COM : SUBMIT	 COM
+A: XDOS     SPR : MAC	   COM : MPMLDR   COM : SYSTEM	 DAT
+A: XIOS     SPR : DISKDEF  LIB : ASMPRL   SUB : ASMSPR	 SUB
+A: MACPRL   SUB : MACSPR   SUB
+0A>
+
+ Now,  stop and consider this: ALL those "built in" commands
+that  you  used in CP/M 1.4 and 2.2 are now  DISK  RESIDENT.
+That means they take up ROOM on your diskette!	And precious
+little	room there is,	'cause the resident system processes
+also  have to be on the disk,  and in addition it  would  be
+nice  to  have	some applications programs to run  when  two
+users are on the same diskette...I sure hope that was double
+density  that we bought for the system...a standard  8	inch
+floppy can just about hack it with two users.
+
+ In  conclusion,  I  would NOT suggest MP/M for the  average
+"hacker"...the  cost-versus-performance  on  a  low   budget
+system	is  something  of a disappointment if  you  are  not
+prepared to empty your checking account (or sell your wife!)
+to  add  the hardware that is essential to make MP/M  really
+"shine".  Your  hardware/software dollars would probably  be
+better	spent on a second system,  as the  "work-horse"  for
+printing  and  number crunching while you edit and  assemble
+programs on the first.	In any case, it was a fun experience
+and I did learn alot about system planning/design, interrupt
+driven software environments,  and just how far you can push
+one 8080 CPU!  I hope that my experience is of some help  to
+you......now where's that CP/Net manual?
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+		 CP/M-Net "Tip-of-the-Month"
+		 ===========================
+
+  Seven Byte Program to Discourage TRACE with DDT or SID
+  ======================================================
+	      by Kelly Smith, CP/M-Net "SYSOP"
+
+ Here's a simple routine to add to any program to discourage
+anyone	from tracing (and revealing) your program's internal
+operation. In it's simplist form:
+
+check$ddt$or$sid:   ; check if program is being looked at
+;
+     lda  6	    ; get content of address 6
+     ora  a	    ; set flags
+     jz   banzai    ; use what ever means you think fit to
+		    ; clobber this guy...
+;
+     ...	    ; continue normal execution of program
+
+ This  short  routine works as follows:  Address  6  is  the
+(normally)  least  significant	byte of the  address  to  be
+called	for any operations of the CP/M BDOS (the CALL is  at
+address  5),  and  as  such it's value is  06  Hex.  Digital
+Research's  DDT and SID debugger programs,  when present  in
+the system,  always leave a CALLing address on an EVEN	page
+boundry  in memory at address 6...this means that address  6
+will  have  a 00 Hex byte for the least significant byte  of
+the  address...so this routine simply checks to see  if  the
+address  is 0!	Now if it is,  you can BANZAI the  continued
+operation  of the TRACE by...hmmm,  erase the disk directory
+(?),  or  erase  ALL of memory (?),  or...well you  get  the
+point.	To  be really clever with this,  save the result  of
+address  6...let the jerk trace for awhile to lose track  of
+why  you  did the LDA 6,  then set  the  flags,  run  awhile
+longer,  then  (after he/she has forgotten that also)  check
+the result of the flags...
+
+ P.S.  This  will not work with FAST running in  conjunction
+with your program, so watch out! Also, my prefered method to
+BANZAI the person trying to "tear apart" my software,  is to
+scramble   the	 program,   then  write  it  back   out   to
+disk...remember,  that BDOS CALL's cannot be traced  anyway,
+so  about  the	time that the "tracer"  realizes  that  file
+open/write/close occurs...it's just to late!
+

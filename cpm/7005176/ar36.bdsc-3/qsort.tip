@@ -1,0 +1,33 @@
+
+
+Note to BDS C Users Who Use the "qsort" Library Function:
+	(From Leor Zolman, Feb 1982)
+
+
+The low-level swap function that qsort uses, called "_swp", is pretty
+inefficient. A version that works much more quickly is given below, but
+note that this method necessarily requires that some upper maximum be set
+on the size ("width") of a single object of the class being sorted. The
+new _swp function is as follows:
+
+
+-------------------------------------------------------------------------------
+#define MAX_WIDTH 1000		/* largest allowable width */
+
+_swp(width, a, b);
+{
+	char swapbuf[MAX_WIDTH];
+	movmem(a,swapbuf,width);	/* simply swap through the temporary */
+	movmem(b,a,width);		/* buffer allocated on the stack     */
+	movmem(swapbuf,b,width);
+}
+
+-------------------------------------------------------------------------------
+To install this modification, replace the _swp function in STDLIB1.C with
+this version, recompile STDLIB1.C, and use the librarian (CLIB) to delete
+the old version of "_swp" in DEFF.CRL and replace it with the new one from
+STDLIB1.CRL. And make sure that the MAX_WIDTH define is set so that you're
+never likely to want to sort object of larger size. If you DO, remember to
+go back and change the define....
+	-leor
+

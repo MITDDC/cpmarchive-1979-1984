@@ -1,0 +1,42 @@
+                 DOCUMENTATION FOR ZCPR8080.ASM
+
+
+ZCPR8080 is an 8080 translation of ZCPR2 by Richard Conn, a Z80 
+CCP (Console Command Processor) replacement for CP/M version 2.2.
+Being a long-time user of ZCPR1 as well as a member of the group
+that assisted Richard Conn with testing and development of ZCPR2, 
+I was dismayed at the thought of having to abandon it and return 
+to the stock CCP when migrating to my newly-purchased Compupro 
+8085/88 CPU board. Inspection of the ZCPR2 file made it obvious 
+that it would not be a difficult task to convert to 8080 code, 
+the result being ZCPR8080.ASM. 
+
+All other files in the ZCPR2 package may be used in their 
+distribution form with the following exceptions: DU2.ASM, 
+LRUNZ.ASM, and HELP2.ASM employ Z80 code as well, and have been 
+converted to 8080 instructions exclusively resulting in
+DU2-8080.ASM, LRUN8080.ASM, and HELP8080.ASM. I would appre-
+ciate receiving reports of any other ZCPR2 utilities that do 
+not operate properly in the 8080 environment.
+
+Caveat: One of Richard's reasons for coding ZCPR2 in Z80 
+instruction code is due to the limitation of the CCP to 800h
+bytes in length. Needless to say, conversions of all relative
+to absolute jumps and other necessary conversion resulted in a 
+swollen CCP. Fortunately, several of the features Rick intro- 
+duced in ZCPR2 allow a reduction in code size. My ZCPRHDR.LIB 
+customization includes an external CCP stack and FCB as well as 
+enabling the multiple command line feature. Each of these 
+features results in a substantial space savings in the CCP
+itself by moving these buffers to protected memory. It was also 
+necessary to disable SUBMIT processing; this is no real loss with 
+utilities such as ZEX available. Note that ZCPR2 will generate an 
+error message if the 2K restriction is violated.
+
+Please send bug reports, suggestions, etc. to me on CP-MIG, the 
+CP/M interest group on Compuserve at PPN [70210,104], to the 
+ARPAnet (CSTROM at MIT-MC), or through Keith Petersen's Royal Oak 
+RCPM.
+
+					Charles H. Strom
+					May 15, 1983

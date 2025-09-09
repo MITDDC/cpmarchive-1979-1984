@@ -1,0 +1,35 @@
+
+SIG/M volume 13		a) MITS to CP/M file conversion system
+			b) HELP file system
+			c) related system support programs
+                        d) FIG-FORTH 1.1 system
+
+number	name		size	description
+
+13.1	MITSCNVT.ASM	28K	MITS to CP/M file conversion
+13.2	MITSCNVT.COM	 7K	   /
+13.3	MITSCNVT.CPM	 3K	  /
+13.4	MITSCNVT.DOC	 7K	 /
+13.5	MITSCNVT.HEX	 8K	/
+
+13.6	ABORTSUB.COM	 2K	HELP file system
+13.7	HELP.ASM	13K	       /
+13.8	SYSLIB.HLP	37K	      /
+13.9	SYSLIB.REL	 9K	     /
+13.10	HELP.COM	 2K	    /
+13.11	MASM.SUB	 1K	   /
+13.12	PHELP.COM	 2K	  /
+13.13	PHELP.MAC	 6K	 /
+13.14	HELP.DOC	 4K	/
+
+13.15	SD-2/6.ASM	18K	updated SUPER DIRECTORY display
+13.16	SD.COM		 2K	/	
+13.17	ENTAB.ASM	 6K	space suppression program
+13.18	ENTAB.COM	 1K	/
+13.19	UTIL.FOR	 2K	FORTRAN array handling subroutine
+13.20	LOOPBAK1.BAS	 2K	PMMI loop back test
+
+13.21   FORTH11.ASM     40K     FIG-FORTH version 1.1
+13.22   FORTH11.COM     23K      /
+13.23   FORTH11.DOC      4K     /  
+

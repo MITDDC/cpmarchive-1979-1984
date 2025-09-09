@@ -1,0 +1,113 @@
+The  following is a message I recently received on MicroNet from  Russ 
+Ranshaw  of  CIS.   It covers some of the  problems  encountered  with 
+various network facilities.
+
+----forwarded message follows----
+
+Sb: File transfer protocols
+    16-Mar-82  13:55:18
+Fm: Wiz-10 70000,1
+To: Keith Petersen 70535,1245
+
+There  are several layers of network and switch gear between the  user 
+and  the program running on one of our PDP-10 hosts.   First there  is 
+the local node to which he is connected.  If it is a CIS node, then it 
+is a PDP-11 or some varient.  That -11 is connected via a long-line to 
+another  -11.  Depending on location of the local node,  there may  in 
+fact be several -11's by the time the connection ends up in  Columbus.  
+Once  here,  the  termination  is in another -11  which  is  cross-bar 
+connected  to a set of PDP-15's.   Each -15 services four KI-10 hosts.  
+Normally,  the delays from node to host are reasonably small.  Once at 
+the host, you are subjected to the problem that there are several jobs 
+running, not just yours, and the monitor will schedule your job to run 
+under any of several circumstances.   If it is waiting for input, then 
+the  job will awaken when input is ready from the terminal.   Here  is 
+another  difficulty.   To really do what you indicate,  the job  would 
+have to run in what we call "break on all character mode," where  each 
+character  input  from the terminal is sent immediately to  the  host.  
+The  problem  with this is that it dilutes the bandwidth of  the  9600 
+baud  long  lines if there are a lot of jobs doing that.   The  normal 
+mode  is  that  characters are assembled into "packets"  of  24  bytes 
+before being sent,  and a "break" character (CR,  LF,  ESC, BEL, and a 
+few others) will terminate a packet and send it along.   We prefer  to 
+run in this mode in order to better utilize the long-lines.
+
+Running in 8-bit mode is no problem on CIS nodes,  but it has its  own 
+problems.  There are two ways to run in 8-bit image mode: break on all 
+characters  or  buffered.   The b.o.a.c.  has the same  difficulty  as 
+above,  so we don't want to do it.  The buffered mode suffers from the 
+fact  that there is no "break" character because all bit patterns must 
+be treated as data, hence the node has to "dummy up" a situation which 
+will terminate a packet.  We chose to send the packet if there is a 2-
+character time delay with no input.
+
+Now for the effect on up/down loading.
+
+A  block  of data is transmitted.   The far end (be it host  or  local 
+system) sends its ACK.   If uploading,  the ACK enters the node, waits 
+for  2  character times,  and is on its way.   It might take  say  1/2 
+second to arrive at the host.  The job running on the host has to wake 
+up to process the ACK.   If it happens to be swapped out, it has to be 
+swapped back in before it can run.  If there is a lot of terminal  I/O 
+going on,  then the scheduler queue which services terminal-bound jobs 
+is  rather long,  and our transfer probram run request gets stacked on 
+the bottom of the queue.   Finally our job can run again,  and manages 
+to  send  out the next block of data,  which the network  can  usually 
+digest  quite rapidly due to the buffering action of the  intermediate 
+nodes.  It now takes maybe another 1/2 second for the data to traverse 
+all the nodes and begin arriving at your system.  Typically, the over-
+all  delay runs to about 1.5 to 2.5 seconds,  depending on system  and 
+network loading.   That delay is going to be there regardless of  what 
+protocol you are running.  What can be done?
+
+One thing is to transmit larger blocks.  I picked up a lot when I went 
+from line-at-a-time to 256-bytes at a time,  in fact,  from an average 
+of  8-10 CPS to about 25 CPS.   The block size could be made GIGANTIC, 
+like several thousand bytes.   However, the error detection capability 
+begins to deteriorate at large block sizes,  and worse,  if you have a 
+noisy  local  telephone system/modem/???,  you will  likely  encounter 
+frequent  retransmission,  and  it takes a long time  totransmit  long 
+blocks.   Incidently, with the current A-protocol and 256-byte blocks, 
+the effective thru-put is at best 29.5 CPS;  the above delays  account 
+for the difference.
+
+Another  thing  which we can try is to employ a  synchronous  protocol 
+instead  of an asynchronous one (the A-protocol,  and Ward Christensen 
+protocol  are  asynchronous).   This means that we  would  transmit  a 
+block,  then  immediately tranmit the next one,  hoping to receive the 
+ACK or NAK for the first one before the second one has  finished.  But 
+now we have other problems.  What do we do if there is an error in the 
+first  block?   We have the choice of holding the second one (if it is 
+okay) until the first one gets correctly transmitted,  or we can  toss 
+it  away.   If we toss it away,  making the sender resend it,  we have 
+diluted  our  thruput.   If  we keep it  for  later,  we  are  opening 
+Pandora's box of troubles.   If you are familar with IBM Bisync, there 
+are  lots  of  situations where this scheme falls apart  due  to  mis-
+understood ACKs or NAKs.  The "toss it away" attitude is the concensus 
+of most networkers today.   DDCMP,  one of the most reliable and wide-
+spread  network protocols,  does just this.   They opt to reduce their 
+thru-put in favor of greater reliability.
+
+I  hope all of this indicates to you that our protocols and procedures 
+are not random or capricious!
+
+I  think  that the best way for us to go is to  get  compressed  files 
+working.   If  we can achieve a 30-40% reduction if file size over the 
+comm.  link, the transmission time for actual data will in fact exceed 
+the link's bandwidth.
+
+I forgot the "masking" which we do.  Many of our users (about 25%) use 
+Tymnet.   Tymnet does a poor job handling control characters and bit-7 
+characters  at times.   In particular,  control-B and control-O  cause 
+problems on the Tymcom node.   Telenet has its own problems.  In order 
+to get around some of these diffuculties,  we "mask" control codes  by 
+sending  them as <DLE><code+040>.   I am currently looking into  bit-7 
+masking as well, although it will be employed only in the event of two 
+successive retransmissions.
+
+I do hope this gives you some insight into our situation and problems.  
+Your comments are of course welcome.
+
+        Russ
+
+

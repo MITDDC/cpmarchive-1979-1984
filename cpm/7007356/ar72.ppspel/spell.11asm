@@ -1,0 +1,1145 @@
+	.TITLE "A poor person's spelling checker"
+	.PAGE 96,84
+;
+	.EPOP
+	.ZOP
+	.PABS
+	.PHEX
+	.XLINK
+	ASEG
+;
+;	version 1.1  (04/30/82)  (Jim Byram)
+;	Changed last instruction of GBYTE1 from OR A to AND 7FH
+;	to clear high bit of text character as well as to reset
+;	carry.  Necessary to scan WordStar files.
+;	Changed all unconditional JR instructions to JP to speed
+;	execution.  Moved BDOS calls in-line.
+;	Added file output using routines from SD-42.ASM.  Words
+;	not matched are written to console and (optionally) to
+;	the printer and/or to a file named SPELL.LEX.  The file
+;	is created on the default drive if it did not previously
+;	exist.  If it did exist, the new list of unmatched words
+;	is appended to the file.  This feature allows generation
+;	of word lists which can be sorted and edited and then
+;	added to your MASTER.LEX.
+;	Added command line options for file and printer output.
+;
+;	version 1.0  (Alan Bomberger)
+;
+;	Bomberger, Alan.  1982.  A poor person's spelling
+;	checker. Dr. Dobb's Journal 7(4):42-53. (DDJ #66)
+;
+;	Released for NON COMMERCIAL USE ONLY
+;	   (c)  1981  Alan Bomberger
+;
+;	USAGE:  [d:]spell [d:]filename.typ [fp]
+;
+;		spell filename.typ    --> output to console
+;
+;		spell filename.typ f  --> ..and to file
+;
+;		spell filename.typ p  --> ..or to printer
+;
+;		spell filename.typ fp --> output to all three
+;
+;	The input file is checked using the lexicon files and
+;	misspelled words (i.e., unmatched words) are printed in
+;	the order they appear in the text.
+;
+;	The input file is broken down into a word list and the
+;	user is prompted to enter the name of each lexicon to
+;	be scanned.
+;
+;	Note -- a lexicon is a list of words usually separated
+;	by <crlf>.  The words comprising a lexicon may be in
+;	any order, but program execution is much faster if all
+;	lexicon words are UPPER CASE.
+;
+;	The word list will fill all available memory so only
+;	very large documents will require more than one pass
+;	of the lexicons.
+;
+BOOT	EQU	0
+BDOS	EQU	5
+;
+PCHAR	EQU	2
+LISTC	EQU	5
+PSTRING	EQU	9
+RSTRING	EQU	10
+OPENF	EQU	15
+CLOSEF	EQU	16
+SRCHF	EQU	17
+READF	EQU	20
+WRITEF	EQU	21
+MAKEF	EQU	22
+SETDMA	EQU	26
+;
+FCB	EQU	5CH
+FCB2	EQU	6CH
+BUFF1	EQU	80H
+;
+CR	EQU	0DH
+LF	EQU	0AH
+BELL	EQU	7
+;
+	ORG	100H
+;
+SPELIT:
+	LD	SP,STACK	; a new stack pointer
+	LD	A,(FCB2+1)	; check for output options
+	CP	" "		; any options?
+	JR	Z,NOOPT
+	CALL	CHKOPT		; yes, determine which
+	LD	A,(FCB2+2)	; check for second option
+	CP	" "		; another option?
+	JR	Z,NOOPT
+	CALL	CHKOPT		; yes, determine which
+NOOPT:
+	LD	DE,COPYR
+	LD	C,PSTRING
+	CALL	BDOS
+	CALL	OPENIN		; open input files
+	CALL	ZCHN		; zap chains
+BUILDL:
+	CALL	GWORD		; get the next word of text
+	JR	C,ENDIN		; no more left, check spelling
+	CALL	SEARCH		; see if in word list
+	JR	NC,BUILDL	; yes, it is
+	CALL	ADDW		; no, so add it in
+;
+;	"WORK" contains the address of the last word put into
+;	the word list.  See if this word is past the threshold
+;	of memory.
+;
+	CALL	COMPARE
+	JR	NC,BUILDL	; no, so continue
+	LD	HL,NUMWDC+2	; mark as incomplete
+	LD	(HL),"*"
+	CALL	SPELL		; check the current list
+	CALL	PTABLE		; print the misspelled words
+	LD	IX,COMWDL	; the last of the common words
+	SET	WFLGSL,(IX+WFLGS) ; mark this as the last in list
+	LD	C,6
+	LD	B,0
+	LD	DE,NUMWD
+	LD	HL,ZCOUNT	; zero counter
+	LDIR
+	CALL	ZCHN		; zap chains
+	JP	BUILDL		; and get next word
+ENDIN:
+	CALL	SPELL		; check spelling of words in list
+	LD	DE,FCB
+	LD	C,CLOSEF
+	CALL	BDOS		; close up input file
+	CALL	OUTPUT		; print the words not in lexicon
+	JP	CLZOUT		; close output file and exit
+;
+;	chkopt
+;
+;	determine whether file and/or printer output selected
+;	any unrecognized options will be ignored
+;
+CHKOPT:
+	CP	"F"		; file output wanted?
+	JR	NZ,NOTF		; no, what about printer?
+	LD	A,0
+	LD	(FOPFLG),A	; set flag
+	RET
+NOTF:
+	CP	"P"		; printer output wanted?
+	RET	NZ		; no
+	LD	A,0
+	LD	(POPFLG),A	; set flag
+	RET
+;
+;	compare
+;
+;	compare the value in work with "endmem"
+;
+COMPARE:
+	LD	HL,WORK		; address of last word
+	LD	A,(ENDMEM)	; end of memory
+	SUB	(HL)
+	LD	A,(ENDMEM+1)
+	INC	HL
+	SBC	A,(HL)		; double precision subtract
+	RET
+;
+;	openin
+;
+;	open input file and locate end of memory
+;
+OPENIN:
+	LD	DE,FCB		; input file
+	LD	C,OPENF
+	CALL	BDOS
+	LD	DE,NINPUT	; in case not there
+	INC	A
+	JR	Z,FAILED	; no file
+	LD	A,128
+	LD	(IBP),A		; set so 1st call gets disk record
+;
+;	find end of memory
+;
+	LD	HL,(6)		; address of bdos
+	LD	BC,64		; a margin
+	OR	A		; clear carry
+	SBC	HL,BC		; subtract margin
+	LD	(ENDMEM),HL
+	RET
+FAILED:
+	LD	C,PSTRING
+	CALL	BDOS
+	JP	BOOT		; quit now
+;
+;	gword
+;
+;	get next word in text into cword
+;	carry flag on means end of input
+;
+GWORD:
+	LD	A,128
+	LD	(CFLAGS),A	; set this word as last
+	LD	DE,0		; length of word
+GWORDL:
+	CALL	GBYTE		; get next byte of text
+	JR	C,GWORDE	; end of input
+	LD	BC,(DELIML)	; length of delimiter table
+	LD	HL,DELIMT	; the table
+	CPIR			; is it a delimiter?
+	JR	Z,DELIM		; yes
+	LD	BC,(ALPHAL)
+	LD	HL,ALPHA	; is it alphabetic?
+	CPIR
+	JR	NZ,GWORDL	; no, skip it
+	CP	"a"		; is it lower case
+	JR	C,GWORDU	; no
+	CP	"{"		; lower
+	JR	NC,GWORDU
+	AND	5FH		; make all upper case
+GWORDU:
+	LD	HL,CWORD+4	; place to build word
+	ADD	HL,DE
+	LD	(HL),A		; put byte in word
+	INC	E		; new length
+	LD	A,E
+	LD	(CLEN),A	; update in word entry
+	CP	30		; how long is word?
+	JR	Z,GWORDT	; too long a word
+	JP	GWORDL		; loop
+DELIM:
+	LD	A,E		; current length
+	CP	0
+	JR	Z,GWORDL	; skip leading delimiters
+	OR	A		; zero carry
+GWORDE:
+	RET
+GWORDT:
+	LD	DE,LNGWD1	; first part of text
+	LD	C,PSTRING
+	CALL	BDOS
+	LD	DE,CWORD+4
+	LD	C,PSTRING
+	CALL	BDOS
+	LD	DE,LNGLX2	; second part
+	LD	C,PSTRING
+	CALL	BDOS
+	OR	A
+	JP	GWORDE
+;
+;	getbyte
+;
+;	get next byte of text
+;	carry flag on for end of file
+;
+GBYTE:
+	PUSH	DE
+	LD	A,(IBP)
+	CP	128		; do we need another buffer full?
+	JR	NZ,GBYTE1	; no
+	LD	DE,FCB
+	LD	C,READF
+	CALL	BDOS		; read a block
+	CP	0		; did it ok?
+	SCF			; in case not
+	JR	NZ,GBYTER	; end of file return
+GBYTE1:
+	LD	E,A		; has current byte index to fetch
+	LD	D,0		; double precision
+	LD	HL,BUFF1
+	ADD	HL,DE
+	INC	A		; next index
+	LD	(IBP),A
+	LD	A,(HL)		; get byte
+	CP	1AH		; check for end
+	SCF			; in case it is
+	JR	Z,GBYTER	; yes
+	AND	7FH		; clear carry and set bit 7 to 0
+GBYTER:
+	POP	DE
+	RET
+;
+;	search
+;
+;	search word list for match with cword
+;
+;	on return ix will point to matched entry or last in list
+;	carry on if no match
+;
+;	searc1 is the entry when searching on a chain
+;
+SEARCH:
+	LD	IX,WORDS	; start of list
+SEARC1:				; entry if starting with chain
+SLOOP:
+	LD	A,(CLEN)	; length of current word
+	CP	(IX+WLEN)	; must be same as list entry
+	JR	NZ,NEXTW	; try next entry
+	CALL	CLC		; compare
+	JR	Z,MATCH		; it is a match
+NEXTW:
+	BIT	WFLGSL,(IX+WFLGS) ; is this the last entry?
+	JR	NZ,NMATCH	; yes, then no match
+	LD	A,(IX+WCHN)	; get chain pointer
+	LD	(WORK),A
+	LD	A,(IX+WCHN1)	; both parts
+	LD	(WORK+1),A
+	CP	0		; this is high order (zero only if end)
+	JR	Z,NMATCH	; end of chain
+	LD	IX,(WORK)
+	JP	SLOOP
+MATCH:
+	OR	A		; clear carry
+	JP	SRET
+NMATCH:
+	SCF			; set carry
+SRET:
+	RET
+;
+;	clc
+;
+;	compare logical character
+;	cword with list entry pointed to by ix
+;	a contains length
+;
+CLC:
+	PUSH	IX
+	LD	C,A		; length for down count
+	LD	HL,CWORD+4	; compare here
+CLCL:
+	LD	A,(IX+WORD)	; first character
+	CP	(HL)		; is it?
+	JR	NZ,CLCE		; no, stop
+	INC	HL
+	INC	IX
+	DEC	C
+	JR	NZ,CLCL		; not end so continue
+CLCE:
+	POP	IX
+	RET
+;
+;	addw
+;
+;	add word to list
+;	word is in cword and ix points to last entry
+;
+ADDW:
+	LD	(WORK),IX	; save
+	LD	IY,(WORK)	; old position
+	LD	A,0
+	LD	(CCHN),A
+	LD	(CCHN1),A	; zero chain pointer
+	RES	WFLGSL,(IX+WFLGS) ; clear this is last entry flag
+	LD	B,0
+	LD	A,(IX+WLEN)	; get length of last word
+	ADD	A,4
+	LD	C,A		; include chain and stuff
+	ADD	IX,BC		; skip over last entry
+	LD	(WORK),IX
+	LD	A,(WORK)	; get low byte
+	LD	(IY+WCHN),A	; to chain
+	LD	A,(WORK+1)
+	LD	(IY+WCHN1),A	; to chain
+	LD	A,(CLEN)
+	ADD	A,4
+	LD	C,A
+	LD	HL,CWORD	; source
+	LD	(WORK),IX
+	LD	DE,(WORK)	; can't get there from here
+	LDIR			; move it
+	CALL	COUNTW		; bump count
+	RET
+;
+;	spell
+;
+;	check each lexicon word with list entries
+;	mark correct (found) words in list
+;
+SPELL:
+	LD	DE,NUMWD
+	LD	C,PSTRING
+	CALL	BDOS		; inform of number of words
+	CALL	SETCHN		; set up chains
+	LD	DE,BUFF2	; switch buffers
+	LD	C,SETDMA
+	CALL	BDOS
+NEXTLEX:
+	CALL	GETLEX		; get a lexicon file
+	JR	C,SPELLR	; none, so return
+	LD	DE,LFCB		; get lexicon file
+	LD	C,OPENF
+	CALL	BDOS
+	LD	DE,NOLEX	; in case not there
+	INC	A
+	JR	NZ,GOTLEX	; it is a valid lexicon
+	LD	C,PSTRING
+	CALL	BDOS		; it is not a valid lexicon
+	JP	NEXTLEX		; try again
+GOTLEX:
+	LD	DE,LFCB		; lexicon fcb
+	LD	C,READF
+	CALL	BDOS		; read first record
+	CP	0		; did it
+	JR	NZ,ENDL		; quick exit
+	LD	DE,CHECKM	; tell customer
+	LD	C,PSTRING
+	CALL	BDOS		; that we begin
+	LD	A,0
+	LD	(IBPL),A
+	LD	(COMP),A	; say not compacted
+	LD	A,(BUFF2)	; first of compacted
+	CP	0FFH
+	JR	NZ,SPELLL
+	LD	A,1
+	LD	(COMP),A	; set compacted
+	LD	(IBPL),A	; skip ff
+SPELLL:
+	CALL	LWORD		; get a word in cword
+	JR	C,ENDL		; end of lexicon
+	LD	IX,CWORD
+	CALL	GETCHN		; get correct chain for this word
+	LD	E,(HL)		; low order byte
+	INC	HL
+	LD	D,(HL)		; high order byte
+	LD	(WORK),DE	; get first word in list
+	LD	IX,(WORK)	; place to start
+	LD	A,(WORK+1)
+	CP	0
+	JR	Z,SPELLL	; if zero no words this letter
+	CALL	SEARC1		; look for word in chain
+	JR	C,SPELLL	; did not find it
+	SET	WFLGSC,(IX+WFLGS) ; mark spelled correctly
+	JP	SPELLL		; and loop
+ENDL:
+	LD	DE,LFCB		; close
+	LD	C,CLOSEF
+	CALL	BDOS
+	JP	NEXTLEX		; get another lexicon
+SPELLR:
+	LD	DE,BUFF1	; reset dma
+	LD	C,SETDMA
+	CALL	BDOS		; in case more input
+	RET
+;
+;	getlex
+;
+;	get a lexicon file from the customer
+;	if none requested (null input) return with carry flag on
+;
+GETLEX:
+	LD	DE,ASKLEX
+	LD	C,PSTRING
+	CALL	BDOS		; type prompt
+	CALL	ANSWER		; get answer
+	JR	C,GETLXR	; return, no lexicon
+	CALL	BLDFCB		; build a new fcb
+	OR	A		; clear carry
+GETLXR:
+	RET
+;
+;	answer
+;
+;	get answer to question in buff2
+;
+ANSWER:	LD	DE,BUFF2
+	LD	A,80
+	LD	(BUFF2),A
+	LD	C,RSTRING
+	CALL	BDOS		; get answer
+	LD	A,(BUFF2+1)	; get length of answer
+	CP	0		; see if any
+	SCF			; none
+	JR	Z,ANSWRT	; quit now
+	OR	A		; clear carry
+ANSWRT:
+	RET
+;
+;	bldfcb
+;
+;	build an fcb from information in buff2
+;	assumes file type of .LEX
+;
+BLDFCB:
+	LD	HL,DEFFCB	; the default fcb
+	LD	DE,LFCB		; goes here
+	LD	BC,16		; move this much
+	LDIR			; move it
+	XOR	A		; get a zero
+	LD	(LFCBCR),A	; zero this as well
+	LD	HL,BUFF2+2
+	LD	A,(BUFF2+1)	; get number of bytes in name
+	LD	C,A		; b is zero from block above
+BLLOOP:
+	LD	A,(HL)		; get a byte
+	CP	" "		; is it a blank?
+	JR	NZ,NOBLK	; no
+	INC	HL
+	DEC	C
+	JR	NZ,BLLOOP	; skip leading blanks
+	JP	BLDRET		; return with bad fcb
+NOBLK:
+	INC	HL		; skip disk name if present
+	LD	A,(HL)		; get suspected ":"
+	DEC	HL		; back to first character
+	CP	":"		; is it a disk name?
+	JR	NZ,NODSK	; no, just a name
+	LD	A,(HL)		; get disk name
+	AND	0FH		; to cp/m standards
+	LD	(LFCBDN),A	; to fcb
+	INC	HL
+	INC	HL		; skip name and ":"
+	DEC	C
+	JR	Z,BLDRET	; quit with bad fcb
+	DEC	C
+	JR	Z,BLDRET	; quit with bad fcb
+NODSK:
+	LD	DE,LFCBFN	; place for name
+	LD	A,8		; max length at this point
+	CP	C		; are we ok?
+	JR	Z,BLDRET	; no, so leave blank
+FILELP:
+	LD	A,(HL)
+	CP	"."		; this is end (we ignore)
+	JR	Z,BLDRET
+	CP	" "		; also end
+	JR	Z,BLDRET	; and this
+	CP	"a"		; lower case alpha?
+	JR	C,FILEL1	; no
+	AND	5FH		; make upper
+FILEL1:
+	LD	(DE),A		; put in fcb
+	INC	DE
+	INC	HL
+	DEC	C
+	JR	NZ,FILELP	; loop
+BLDRET:
+	RET
+;
+;	lword
+;
+;	get a lexicon word
+;	carry flag on if end of lexicon
+;
+LWORD:
+	LD	DE,0		; length of word
+LWORDL:
+	CALL	LCHAR		; get char from file
+	JR	C,LWORDR	; if end
+	CP	LF		; skip these if present
+	JR	Z,LWORDL
+	CP	" "
+	JR	Z,LWORDL	; skip blanks in lexicon
+	CP	CR		; end of word
+	JR	Z,LWORDE	; done
+	CP	1AH		; end
+	JR	Z,LWORDF	; set carry and return
+	CP	"a"		; lower case?
+	JR	C,LWORDU	; no, upper
+	CP	"{"
+	JR	NC,LWORDU
+	AND	5FH		; make sure upper case
+LWORDU:
+	LD	HL,CWORD+4	; place to put it
+	ADD	HL,DE
+	LD	(HL),A		; build word
+	INC	E		; bump count
+	LD	A,E
+	LD	(CLEN),A
+	CP	30		; how long?
+	JR	Z,LWORDT	; too long
+	JP	LWORDL		; get more bytes
+LWORDE:
+	LD	A,E		; check for null word
+	CP	0		; any so far?
+	JR	Z,LWORDL	; no, so continue
+	OR	A		; clear carry
+LWORDR:
+	RET
+LWORDF:
+	SCF
+	JP	LWORDR		; return
+LWORDT:
+	LD	DE,LNGLX1	; first part
+	LD	C,PSTRING
+	CALL	BDOS
+	LD	DE,CWORD+4
+	LD	C,PSTRING
+	CALL	BDOS
+	LD	DE,LNGLX2	; second part
+	LD	C,PSTRING
+	CALL	BDOS
+	OR	A
+	JP	LWORDR
+;
+;	lchar
+;
+;	get a character from lexicon (compacted or not)
+;
+LCHAR:
+	LD	A,(COMP)	; is it a compacted lexicon?
+	CP	0		; well?
+	JR	NZ,LCHARC	; yes
+	CALL	LBYTE		; no, get a byte
+	RET			; and return
+;
+LCHARC:
+	CALL	GNIB		; get a nibble
+	JR	C,LCHARE	; end already
+	CP	0FH		; is it a flag?
+	JR	Z,LCHARS	; yes, second set of letters
+	LD	C,16		; size of table
+	LD	HL,T1		; in table one
+LCHAR1:
+	CP	C
+	JR	NC,LCHARE	; too big
+	LD	B,0
+	LD	C,A
+	ADD	HL,BC
+	JP	LCHARG		; got it
+LCHARE:
+	LD	DE,BADLEX
+	LD	C,PSTRING
+	CALL	BDOS
+	SCF
+	RET			; say end of lexicon
+LCHARS:
+	CALL	GNIB
+	JR	C,LCHARE
+	LD	C,14		; search length
+	LD	HL,T2
+	JP	LCHAR1		; loop here
+LCHARG:
+	LD	A,(HL)
+	OR	A		; clear carry
+	RET
+;
+;	gnib
+;
+;	get a nibble from compacted lexicon
+;
+GNIB:
+	LD	A,(LRNIB)
+	CP	1		; left or right?
+	JR	Z,GNIBR		; right
+	LD	A,1
+	LD	(LRNIB),A
+	CALL	LBYTE		; get a byte
+	JR	C,GNIBR		; report carry
+	LD	(BYTE),A
+	SRL	A
+	SRL	A
+	SRL	A
+	SRL	A		; put left in lower
+	OR	A		; clear carry
+	RET
+GNIBR:
+	LD	A,0
+	LD	(LRNIB),A
+	LD	A,(BYTE)
+	AND	0FH
+	RET
+;
+;	lbyte
+;
+;	get a byte from lexicon file
+;	carry flag on for end of file
+;
+LBYTE:
+	PUSH	DE
+	LD	A,(IBPL)	; get buffer pointer
+	CP	128		; at end?
+	JR	NZ,LBYTE1	; no
+	LD	DE,LFCB		; fcb for lexicon
+	LD	C,READF
+	CALL	BDOS
+	CP	0		; did it work?
+	SCF			; in case not
+	JR	NZ,LBYTER	; return with carry if end
+LBYTE1:
+	LD	E,A		; position in buffer
+	LD	D,0
+	LD	HL,BUFF2
+	ADD	HL,DE		; correct byte
+	INC	A		; for next time
+	LD	(IBPL),A
+	LD	A,(HL)		; get the byte
+	OR	A		; clear carry
+LBYTER:
+	POP	DE
+	RET
+;
+;	count words
+;
+COUNTW:
+	LD	HL,NUMWDC	; get lowest byte
+	LD	A,":"		; a test for too large
+COUNTL:
+	INC	(HL)
+	CP	(HL)		; see if too big
+	RET	NZ		; no
+	LD	(HL),"0"	; yes, set to 0
+	DEC	HL
+	JP	COUNTL		; backup and try again
+;
+;	zchn
+;
+;	zero chain headers
+;
+ZCHN:
+	LD	A,0		; get a zero
+	LD	C,54		; number
+	LD	HL,ALPHC	; place
+ZCHNL:
+	LD	(HL),0
+	INC	HL
+	DEC	C
+	JR	NZ,ZCHNL
+	RET
+;
+;	getchn
+;
+;	get address of chain head of word pointed to by ix
+;
+GETCHN:
+	LD	A,(IX+WORD)	; first char
+	LD	B,0
+	LD	HL,ALPHC	; first chain head
+	CP	"A"		; first
+	JR	C,CHNOTH	; lower use other
+	CP	"["
+	JR	NC,CHNOTH	; greater use other
+GETCHA:
+	AND	1FH		; mask
+	DEC	A
+	SLA	A		; double it
+	LD	C,A		; displacement
+	ADD	HL,BC
+	RET
+CHNOTH:
+	LD	A,"["
+	JP	GETCHA		; use last chain
+;
+;	setchn
+;
+;	scans word list and rechains it by letter
+;
+SETCHN:
+	LD	IX,WORDS	; place to start
+SETCH0:
+	CALL	GETCHN		; get the correct header
+	LD	A,0		; get a zero
+SETCHL:
+	INC	HL		; to high order byte
+	CP	(HL)
+	JR	NZ,NXTCHN	; not this one
+	LD	(WORK),IX	; goes here
+	LD	DE,(WORK)	; get it
+	LD	(HL),d
+	DEC	HL
+	LD	(HL),E
+	LD	(IX+WCHN),A	; zero forward
+	LD	(IX+WCHN1),A
+	JP	SETCHW		; next word
+NXTCHN:
+	LD	D,(HL)
+	DEC	HL
+	LD	E,(HL)
+	EX	DE,HL
+	INC	HL
+	INC	HL		; to chain portion of word
+	JP	SETCHL
+SETCHW:
+	BIT	WFLGSL,(IX+WFLGS)
+	JR	NZ,SETCHR	; return
+	LD	A,(IX+WLEN)
+	ADD	A,4
+	LD	C,A
+	LD	B,0
+	ADD	IX,BC
+	JP	SETCH0
+SETCHR:
+	RET
+;
+;	output
+;
+;	create or open output file for unmatched words
+;
+OUTPUT:
+	LD	A,(FOPFLG)	; is file output active?
+	OR	A
+	JP	NZ,PTABLE	; no, begin console output
+	LD	DE,OUTBUF	; set dma for output buffer
+	LD	C,SETDMA
+	CALL	BDOS
+;
+;	first pass on file append
+;	prepare SPELL.LEX to receive new or appended output
+;
+	LD	DE,OUTFCB	; does file already exist?
+	LD	C,SRCHF
+	PUSH	DE
+	CALL	BDOS
+	POP	DE
+	INC	A
+	JR	NZ,OPENIT	; yes, open it for processing
+	LD	C,MAKEF
+	CALL	BDOS		; no, create the output file
+;
+	INC	A
+	JP	NZ,PTABLE	; continue if open successful
+;
+;	if make or open fails, declare error
+;
+OPNERR:
+	CALL	ERXIT
+	DB	CR,LF,"OPEN$"
+;
+WRTERR:
+	CALL	ERXIT
+	DB	CR,LF,"WRITE$"
+;
+;	openit
+;
+;	output file already exists - open it and position to
+;	the last record of the last extent
+;
+OPENIT:
+	LD	C,OPENF
+	PUSH	DE
+	CALL	BDOS		; open 1st extent of output file
+	POP	DE
+	INC	A
+	JR	Z,OPNERR	; bad deal if 1st won't open
+OPNMOR:
+	LD	A,(OUTFCB+15)
+	CP	128
+	JR	C,RDLAST	; if rc <128, this is last extent
+	LD	HL,OUTFCB+12
+	INC	(HL)		; else, bump to next extent
+	LD	C,OPENF
+	PUSH	DE
+	PUSH	HL
+	CALL	BDOS		; and try to open it
+	POP	HL
+	POP	DE
+	INC	A
+	JR	NZ,OPNMOR	; open extents until no more
+	DEC	(HL)		; then, reopen preceding extent
+	LD	C,OPENF
+	PUSH	DE
+	CALL	BDOS
+	POP	DE
+	LD	A,(OUTFCB+15)	; get rc for the last extent
+;
+;	rdlast
+;
+;	at this point, outfcb is opened to the last extent of
+;	the file, so read in the last record of the last extent
+;
+RDLAST:
+	OR	A		; is this extent empty?
+	JR	Z,PTABLE	; yes, start a clean slate
+	DEC	A		; normalize record count
+	LD	(OUTFCB+32),A	; set record number to read
+	LD	C,READF
+	PUSH	DE
+	CALL	BDOS		; and read last record of file
+	POP	DE
+	OR	A		; was read successful?
+	JR	Z,RDOK		; yes, go scan for eof mark
+;
+;	if read or append fails, declare error
+;
+APERR:
+	CALL	ERXIT
+	DB	CR,LF,"APPEND$"
+;
+;	rdok
+;
+;	we now have the last record of the file in our buffer
+;
+;	scan the last record for the eof mark, indicating where
+;	we can start adding data
+;
+RDOK:
+	LD	HL,OUTBUF	; point to start of output buffer
+	LD	B,128		; get length of output buffer
+SCAN:
+	LD	A,(HL)
+	CP	"Z"-40H		; have we found end of file?
+	JR	Z,RESCR		; yes, save pointers and reset cr
+	INC	HL
+	DEC	B
+	JR	NZ,SCAN		; no, keep looking til end of buffer
+;
+;	rescr	reset current record
+;
+;	if we find an explicit eof mark in the last buffer (or an
+;	implied eof if the last record is full), move the fcb record
+;	and extent pointers back to correct for the read operation
+;	so that our first write operation will effectively replace
+;	the last record of the spell.lex file
+;
+RESCR:
+	PUSH	HL		; save eof buffer pointer
+	PUSH	BC		; save eof buffer remaining
+	LD	HL,OUTFCB+32	; get current record again
+	DEC	(HL)		; dock it
+	JP	P,SAMEXT	; if cr >=0, still in same extent
+	LD	HL,OUTFCB+12	; else, move to previous extent
+	DEC	(HL)
+	LD	C,OPENF
+	CALL	BDOS		; then, reopen the previous extent
+	INC	A
+	JR	Z,APERR		; append error if we can't reopen
+	LD	A,(OUTFCB+15)	; position to last record of extent
+	DEC	A
+	LD	(OUTFCB+32),A
+SAMEXT:
+	POP	AF		; recall where eof is in buffer
+	LD	(BUFCNT),A	; and set buffer counter
+	POP	HL		; recall next buffer pointer
+	LD	(BUFPNT),HL	; set pointer for first addition
+;
+;	ptable
+;
+;	print misspelled words from list
+;
+PTABLE:
+	LD	B,0
+	LD	IX,WORDS	; start
+PTLOOP:
+	BIT	WFLGSC,(IX+WFLGS) ; is this one correct?
+	JR	NZ,PNEXT	; yes, don't print it
+	CALL	PWORD		; print the word
+PNEXT:
+	BIT	WFLGSL,(IX+WFLGS)
+	JR	NZ,PTABR
+	LD	A,(IX+WLEN)	; get length this entry
+	ADD	A,4
+	LD	C,A
+	ADD	IX,BC
+	JP	PTLOOP		; try again
+PTABR:
+	RET
+;
+;	pword
+;
+;	print word pointed to by ix
+;
+PWORD:
+	PUSH	IX
+	LD	B,(IX+WLEN)
+PWLOOP:
+	LD	E,(IX+WORD)	; a character
+	CALL	TYPE
+	DEC	B
+	JR	Z,CRLF
+	INC	IX		; next character
+	JP	PWLOOP
+CRLF:
+	LD	E,CR
+	CALL	TYPE
+	LD	E,LF
+	CALL	TYPE
+	POP	IX
+	RET
+;
+;	type
+;
+;	output character in e to console and (optionally) to
+;	output file and/or to printer
+;
+TYPE:
+	PUSH	BC
+	PUSH	DE		; save the character to output
+	LD	C,PCHAR
+	CALL	BDOS		; send it to console
+	POP	DE		; restore the output character
+	LD	B,E		; save character to b
+	LD	A,(FOPFLG)	; is file output active?
+	OR	A
+	JR	NZ,NOWRIT	; no, bypass file output
+;
+;	file output mode active
+;
+;	make sure we have room in buffer to add next character
+;
+;	if buffer full, write out current record first and then
+;	start a new record with current character
+;
+	LD	HL,(BUFPNT)	; get current buffer pointer
+	LD	A,(BUFCNT)	; get buffer capacity remaining
+	OR	A
+	JR	NZ,PUTBUF	; continue if buffer not full
+	LD	DE,OUTFCB	; otherwise, write current buffer
+	LD	C,WRITEF
+	PUSH	BC
+	CALL	BDOS		; (call must save character in b)
+	POP	BC
+	OR	A
+	JP	NZ,WRTERR	; error exit if disk full or r/o
+	LD	HL,OUTBUF	; reset buffer pointer
+	LD	A,128		; reset buffer capacity
+;
+PUTBUF:
+	LD	(HL),B		; shove char to next buffer position
+	INC	HL		; bump buffer pointer
+	LD	(BUFPNT),HL	; and save it
+	DEC	A		; dock count of chars left in buffer
+	LD	(BUFCNT),A	; and save it
+NOWRIT:
+	LD	E,B
+	LD	C,LISTC		; set up list output call
+	LD	A,(POPFLG)	; is printer output active?
+	OR	A
+	CALL	Z,BDOS		; yes, list character on printer
+	POP	BC
+	RET
+;
+;	clzout
+;
+;	we've finished all of our outputting
+;	flush the remainder of the output buffer and close the
+;	file before making our exit
+;
+CLZOUT:
+	LD	A,(FOPFLG)	; is file output active?
+	OR	A
+	JP	NZ,BOOT		; no, exit from program
+	LD	HL,BUFCNT
+	LD	A,(HL)		; get # of unflushed chars in buffer
+	OR	A		; if bufcnt=128, empty so set sign bit
+	JP	M,CLOZE		; close spell.lex if buffer is empty
+	JR	Z,FLUSH		; write last record if buffer full
+;
+	LD	HL,(BUFPNT)	; else, pad unused buffer with ctrl-zs
+PUTAGN:
+	LD	(HL),"Z"-40H
+	INC	HL
+	DEC	A
+	JR	NZ,PUTAGN	; continue until buffer filled out
+;
+FLUSH:
+	LD	DE,OUTFCB	; flush the last output buffer
+	LD	C,WRITEF
+	CALL	BDOS
+	OR	A
+	JP	NZ,WRTERR
+CLOZE:
+	LD	DE,OUTFCB	; close the output file
+	LD	C,CLOSEF
+	CALL	BDOS
+	JP	BOOT		; exit
+;
+;	erxit
+;
+;	abort program on output file error and define error
+;
+ERXIT:
+	POP	DE		; get pointer to message string
+	LD	C,PSTRING
+	CALL	BDOS		; print it
+	LD	DE,DSKERR	; print " ERROR"
+	LD	C,PSTRING
+	CALL	BDOS
+	JP	BOOT		; exit
+;
+;
+	DS	64
+STACK:	DS	1
+ENDMEM:	DS	2
+DEFFCB:	DB	0,"        LEX",0,0,0,0
+LFCB:	DS	33
+LFCBCR	EQU	LFCB+32
+LFCBEX	EQU	LFCB+12
+LFCBS1	EQU	LFCB+13
+LFCBS2	EQU	LFCB+14
+LFCBRC	EQU	LFCB+15
+LFCBDN	EQU	LFCB+0
+LFCBFN	EQU	LFCB+1
+LFCBFT	EQU	LFCB+9
+IBP:	DS	1
+IBPL:	DS	1
+WORK:	DS	2
+BYTE:	DS	1
+LRNIB:	DB	0
+COMP:	DB	0
+BUFF2:	DS	128
+ZCOUNT:	DB	"0000  "
+NUMWD:	DB	"0000   distinct words in text.",CR,LF,"$"
+NUMWDC	EQU	NUMWD+3
+LNGLX1:	DB	"Lexicon word '$"
+LNGLX2:	DB	"' longer than 29 characters.",CR,LF,"$"
+LNGWD1:	DB	"Text word '$"
+BADLEX:	DB	"Error in compacted lexicon.",CR,LF,"$"
+NINPUT:	DB	"Input file not specified or non-existant.",CR,LF,"$"
+NOLEX:	DB	CR,LF,"Lexicon file not specified or non-existant."
+	DB	CR,LF,"$"
+CHECKM:	DB	CR,LF,"Begin spelling check pass...",CR,LF,"$"
+ASKLEX:	DB	"Enter lexicon file name (.LEX assumed) or 'return' "
+	DB	BELL,CR,LF,"$"
+COPYR:	DB	CR,LF,"Poor Person Speller (c) 1981, Alan Bomberger"
+	DB	CR,LF,CR,LF,"$"
+CWORD:	DS	34
+	DB	"$"
+CFLAGS	EQU	CWORD
+CLEN	EQU	CWORD+1
+CCHN	EQU	CWORD+2
+CCHN1	EQU	CWORD+3
+WFLGS	EQU	0
+WLEN	EQU	1
+WCHN	EQU	2
+WCHN1	EQU	3
+WORD	EQU	4
+WFLGSL	EQU	7
+WFLGSC	EQU	6
+WFLGSP	EQU	5
+;
+FOPFLG:	DB	"F"		; file output option flag
+POPFLG:	DB	"P"		; printer output option flag
+;
+BUFPNT: DW	OUTBUF		; next location in output buffer
+BUFCNT: DB	128		; number bytes left in output buffer
+OUTFCB:	DB	0,"SPELL   LEX"
+	DB	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+OUTBUF:	DS	128		; output file buffer
+DSKERR: DB	" ERROR",CR,LF,"$"
+;
+DELIMT:	DB	" .,:;'""-?!/()[]{}",CR,LF,9
+	DB	0,0,0,0,0,0,0,0
+DELIML:	DB	DELIML-DELIMT-8,0
+ALPHA:	DB	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	DB	"abcdefghijklmnopqrstuvwxyz"
+	DB	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ALPHAL:	DB	ALPHAL-ALPHA-20,0
+T1:	DB	"EISNATR"
+	DB	"OLDCUGP",CR
+T2:	DB	"MHBYFVW"
+	DB	"KZXQJ",1AH
+ALPHC:	DS	54
+WORDS:
+COMWDL:	DB	192,1,0,0,"A"
+
+	END	100H
+

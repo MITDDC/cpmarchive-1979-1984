@@ -1,0 +1,30 @@
+Date: 16 November 1982 21:55-EST
+From: Charlie Strom <CSTROM>
+To:   info-cpm at BRL
+Re:   Cache/Q
+
+	I feel that I must warn potential purchasers of the disk
+buffering program called Cache/Q that it has serious bugs and is an
+unacceptable product in my opinion. This program is currently being
+heavily advertised in Infoworld. The bugs I found about 8 weeks ago
+are that the feature of specification of file type to buffer does not
+work (it is an all or nothing choice now) and even more seriously, the
+author forgot to include a BDOS disk reset upon warm boot. The result
+is that one cannot switch disks under the buffering program. It
+appears that development was performed on a hard disk and there were
+no beta tests using floppies!
+	I have spoken to the author at least four times since I
+discovered these bugs and have gotten a different excuse each time; my
+next (and last verbal effort) will be for a request for the source
+code so I can fix the problems myself, an immediate replacement or a
+refund. I am not sanguine to say the least.
+	The design of the program, which allows the use of
+bank-switched memory (a nice feature) is to buffer on a file rather
+than a track basis - a big mistake.
+	I see in the latest Infoworld ad that Tecne Software will be
+at the L.A. Computer Showcase Expo Nov. 18-20. Are there any souls
+interested in calling this guy on the defective software he is
+peddling?
+
+						Charlie Strom
+

@@ -1,0 +1,1616 @@
+;
+;  PROGRAM:  XDIR III
+;  AUTHOR:  RICHARD CONN
+;  VERSION:  1.2
+;  DATE:  2 NOV 82
+;  PREVIOUS VERSIONS:  1.1 (30 OCT 82), 1.0 (20 OCT 82)
+;
+;  XDIR III -- Extended Disk Directory Program
+;		CP/M 2.2 Version
+;
+;	XDIR III produces a formatted, alphabetized listing of the contents
+; of the disk directory of the implied (current logged-in) or specified disk.
+;
+;	XDIR III is invoked by a command line of the following form --
+;
+;		XDIR dir:filename.typ ooo...
+; or
+;
+;		XDIR /oooo...
+;
+; where:
+;	dir is an optional directory name or a disk/user specification (du)
+;	if dir is omitted, XDIR III defaults to the current disk/user
+;	filename.typ is an ambiguous file name and type (* and ? may be used)
+;	o are option letters as follows:
+;		Aa - Set the attributes of the files to be displayed;
+;			a=S for System Files, a=N for Non-System Files
+;			a=A for All Files (System and Non-System)
+;		D  - Send Output to Disk as well as screen
+;		Ff - Engage File Name Buffer Facility
+;			f=L to Log File Names to Disk
+;			f=P to Print Names Logged to Disk
+;			f=S to Scan Disk for File Names and Compare to Logged
+;		G  - Toggle Grouping (group files by file name and type or
+;			type and name)
+;		H  - Toggle Horizontal or Vertical format of display
+;		I  - Inspect files selected by FL option for inclusion
+;		N  - Negate selection; select those files which do NOT
+;			match the ambiguous file name
+;		P  - Print display as well as show it on the screen
+; Options may be combined as desired; note that AA is the same as AS and AN,
+; but AS by itself negates AN and vice-versa, with AN taking precident
+;
+
+;
+;  Version Number
+;
+vers	equ	12
+
+;
+;  CP/M Equates
+;
+base	equ	0
+wboot	equ	base
+bdose	equ	base+5
+fcb	equ	base+5ch
+buff	equ	base+80h
+cr	equ	0dh
+lf	equ	0ah
+esize	equ	16	; size of directory entries
+optch	equ	'/'	; option char
+maxent	equ	45	; maximum number of entries/screen
+
+;
+;  External Routines
+;
+	ext	bdos	; BDOS
+	ext	ziniext	; init for external paths
+	ext	zfname	; file name parser with named directories
+	ext	dbuffer	; disk routines
+	ext	dfree
+	ext	diralpha
+	ext	dirsload
+	ext	dirpack
+	ext	dirnpack
+	ext	dirsel
+	ext	dparam
+	ext	fsize
+	ext	fo0$open	; byte-oriented file output
+	ext	fo0$close
+	ext	f0$put
+	ext	fo1$open
+	ext	fo1$close
+	ext	f1$put
+	ext	fi1$open
+	ext	fi1$close
+	ext	f1$get
+	ext	bbline	; input line editor
+	ext	retud	; get current user and disk
+	ext	print	; print routines
+	ext	pstr
+	ext	lpstr
+	ext	lcrlf
+	ext	caps	; capitalize char
+	ext	cin	; console in char
+	ext	lout	; print char
+	ext	cout	; console out char
+	ext	crlf	; new line
+	ext	madc	; a as dec chars in memory
+	ext	mhldc	; hl as dec chars in memory
+	ext	fillb	; memory fill
+	ext	moveb	; memory move
+	ext	codend	; beginning of buffer area
+
+	jmp	start	; skip over user-configurable buffers
+;
+;  Buffers which may be initialized by an external routine
+;
+dok:	db	0ffh	; ok for disk
+uok:	db	0ffh	; ok for user
+igrp:	db	0ffh	; Group by file type and name
+ifmt:	db	0	; vertical format
+iatt:	db	10000000b	; Non-System files only
+iscn:	db	0	; 0=dir display, 0ffh=scan for files by default
+fenab:	db	0ffh	; enable F options (0=no)
+lenab:	db	0ffh	; enable FL option (0=no)
+asenab:	db	0ffh	; enable AS option (0=no)
+udenab:	db	0ffh	; enable user to specify user number and disk (0=no)
+extpab:	db	0ffh	; enable external paths
+extpth:	dw	40h	; base address of external path if named dir scan on
+
+;
+;  Buffers
+;
+aflg:	ds	1	; attibute flag
+dflg:	ds	1	; disk output on flag
+fflg:	ds	1	; 0=no file name buffer function
+gflg:	ds	1	; 0=group by name/type
+hflg:	ds	1	; 0=vertical list
+iflg:	ds	1	; 0=no inspect
+nflg:	ds	1	; 0=no negate
+pflg:	ds	1	; printer output on flag
+fopt:	ds	1	; file name buffer option
+crcnt:	ds	1	; entry counter
+fmark:	ds	1	; first file marker
+dflgt:	ds	1	; temp flags
+pflgt:	ds	1
+dflgs:	ds	1
+pflgs:	ds	1
+disk:	ds	1	; selected disk
+curdisk:
+	ds	1	; current disk
+rem:	ds	1	; remainder buffer
+firstf:	ds	2	; ptr to first file of group to print
+totfil:	ds	2	; total number of files on disk
+fcount:	ds	2	; count of files
+countf:	ds	2	; down count of files
+freesiz:
+	ds	2	; amount of free space on disk
+totsiz:
+	ds	2	; total size of all files
+ptr1:	ds	2	; col output ptrs
+ptr2:	ds	2
+ptr3:	ds	2
+entptr:	ds	2	; current entry ptr
+numbuf:	ds	6	; number buffer
+dfnbuf:
+	ds	12	; disk file name buffer
+dskfcb:
+	db	0
+	db	'XDIR    DIR'
+	db	0,0,0,0
+	ds	16
+	ds	4
+fnfcb:
+	db	0
+	db	'FNAMES  DIR'
+	db	0,0,0,0
+	ds	16
+	ds	4
+cmdlne:
+	ds	210	; 210 bytes for command line
+	ds	100	; 100 bytes for stack
+stack:	ds	2	; stack ptr
+	db	0
+
+;
+;  Command Line Option Table
+;
+optab:
+	db	'A'
+	dw	opta
+	db	'D'
+	dw	optd
+	db	'F'
+	dw	optf
+	db	'G'
+	dw	optg
+	db	'H'
+	dw	opth
+	db	'I'
+	dw	opti
+	db	'N'
+	dw	optn
+	db	'P'
+	dw	optp
+	db	0
+
+;
+;  Start of XDIR III
+;
+start:
+
+;  Save stack ptr for return later
+	lxi	h,0	; get stack
+	dad	sp
+	shld	stack	; save stack ptr for return
+	lxi	sp,stack
+
+;  Mark end of command line
+	lxi	h,buff	; place ending zero in command line buffer
+	mov	a,m	; get char count
+	inx	h	; pt to first char
+	add	l	; pt to after last char
+	mov	l,a
+	mov	a,h
+	aci	0
+	mov	h,a
+	mvi	m,0	; store ending zero
+
+;  Save command line in CMDLNE buffer
+	lxi	h,buff+1	; copy input line into command line buffer
+	lxi	d,cmdlne
+start1:
+	mov	a,m	; get byte
+	stax	d	; put byte
+	inx	h	; pt to next
+	inx	d
+	ora	a	; end of line?
+	jnz	start1
+
+;  Initialize for ZFNAME
+	lda	extpab	; enable external paths?
+	ora	a	; 0=no
+	jz	noext
+	lhld	extpth	; base of external paths
+	call	ziniext	; set external path base address
+
+;  Get and save current user number
+noext:
+	call	retud	; get current user and disk
+	mov	a,c	; get user into A
+	sta	aflg	; current user number
+	mov	a,b	; get disk into A
+	sta	curdisk	; current disk number
+	mvi	a,0ffh	; set default user flag
+	sta	disk	; default disk selected
+
+;  Set flag values
+	lda	igrp	; set grouping (file name/type or type/name)
+	sta	gflg
+	lda	ifmt	; set listing format (vertical or horizontal, 0=vert)
+	sta	hflg
+	lda	iatt	; set file attributes
+	mov	c,a	; save in c
+	lda	aflg	; get current user number
+	ora	c	; mask in file attributes
+	sta	aflg	; save flag
+	lda	iscn	; set initial function (Scan or Dir)
+	sta	fflg
+	xra	a	; A=0
+	sta	nflg	; set no negation
+	sta	dflg	; set no disk output
+	sta	pflg	; set no printer output
+	sta	iflg	; set no file name inspection (for /FP)
+
+;  Assume wild file name
+	lxi	h,fcb+1	; store '?' chars
+	mvi	a,'?'
+	mvi	b,11	; 11 chars
+	call	fillb
+
+;  Scan command line for options
+	lxi	h,cmdlne	; pt to first char
+	call	sblank	; skip over blanks
+	ora	a	; end of line?
+	jz	xdir	; begin main processing
+	inx	h	; prep for invalid option
+	cpi	optch	; option?
+	jz	opt	; process options
+	dcx	h	; ok to process for dir:filename.typ form
+;  Process for DIR:FILENAME.TYP form
+	push	h	; save ptr to first char of file name
+	call	codend	; get scratch area ptr
+	mov	b,h	; bc pts to scratch area
+	mov	c,l
+	pop	h	; get ptr to first char of file name
+	lxi	d,fcb	; extract file name into fcb, and get user and disk
+;  named directory scan
+	call	zfname	; hl pts to first char of file name, de pts to fcb,
+			;   bc pts to scratch area
+;  scan complete -- check for valid user and disk
+	jnz	udok	; no user or disk number error
+	call	print
+	db	cr,lf,'Error -- Invalid Directory or Disk/User Specified',0
+	jmp	return
+;  scan complete -- look for possible following option char
+udok:
+	call	sblank	; skip over blanks
+	mov	a,m	; option char follows?
+	cpi	optch
+	jnz	skipo
+	inx	h	; skip over option char
+;  HL now pts to possible set of options
+skipo:
+	lda	udenab	; enable user and disk selection?
+	ora	a	; 0=no
+	jnz	skipo1
+	lxi	b,0ffffh	; select defaults for disk and user
+;  check for disk select and select if so
+skipo1:
+	mov	a,b	; disk number in a
+	sta	disk
+	cpi	0ffh	; default?
+	jz	skipd	; skip disk selection if so
+	push	b	; save bc
+	push	h	; save hl ptr
+	mov	e,b	; disk number in e
+	dcr	e	; adjust to 0-15
+	mvi	c,14	; select disk
+	lda	dok	; ok to select a disk?
+	ora	a	; 0=no
+	cnz	bdos
+	pop	h	; get hl ptr
+	pop	b	; get bc
+;  check for user select and select if so
+skipd:
+	mov	a,c	; user number in a
+	cpi	0ffh	; default?
+	jz	selcu	; select current user if so
+	cpi	'?'	; all users?
+	jz	selau	; select all users if so
+	ani	1fh	; mask for user number
+setusr:
+	mov	c,a	; result in c
+	lda	aflg	; get attribute flag
+	ani	0c0h	; get rid of old user
+	ora	c	; mask in user number
+	sta	aflg	; set attribute flag
+	jmp	opt	; now process options
+;  select current user
+selcu:
+	lda	aflg	; get current user
+	ani	1fh	; select user number only
+	jmp	setusr
+;  select all users
+selau:
+	lda	aflg	; get attribute flag
+	ori	20h	; select all users
+	sta	aflg
+
+;  Look for options -- main loop; HL pts to next char
+opt:
+	mov	a,m	; get option char
+	inx	h	; pt to next
+	ora	a	; end of line?
+	jz	xdir	; begin main processing
+	cpi	' '	; skip over spaces
+	jz	opt
+	cpi	optch	; option char?
+	jz	opterr	; loop back if so
+	lxi	d,optab	; pt to option table
+	mov	b,a	; option char in b
+;  Scan option table
+opt1:
+	ldax	d	; get option table char
+	ora	a	; end of table?
+	jz	opterr	; invalid option error
+	cmp	b	; compare to passed option
+	jz	opt2	; process if match
+	inx	d	; skip address
+	inx	d
+	inx	d	; pt to next opt char
+	jmp	opt1
+;  Process option found
+opt2:
+	inx	d	; pt to low-order address
+	ldax	d	; get it
+	mov	c,a	; low in C
+	inx	d	; pt to high-order address
+	ldax	d	; get it
+	mov	b,a	; high in B
+	push	b	; BC on stack
+	ret		; Process option routine
+;  Option A -- File Attributes
+opta:
+	mov	a,m	; get next option letter
+	cpi	'N'	; Non-System files?
+	jz	optan
+	cpi	'S'	; System files?
+	jz	optas
+	cpi	'A'	; All files?
+	jnz	opterr	; error if not
+;  Option AA -- All Files
+optaa:
+	lda	asenab	; enable system files?
+	ora	a	; 0=no
+	jz	optan
+	mvi	c,11000000b	; System and Non-system
+optaret:
+	lda	aflg	; get flag
+	ani	3fh	; leave in user selection
+	ora	c	; mask in sys/non-sys
+	sta	aflg	; restore flag
+	inx	h	; pt to next
+	jmp	opt
+;  Option AS -- System Files
+optas:
+	lda	asenab	; enable system files?
+	ora	a	; 0=no
+	jz	optan
+	mvi	c,01000000b	; System Only
+	jmp	optaret
+;  Option AN -- Non-System Files
+optan:
+	mvi	c,10000000b	; Non-system Only
+	jmp	optaret
+
+;  Option F - select file name buffer functions
+optf:
+	mvi	a,0ffh	; set flag
+	sta	fflg
+	mov	a,m	; get option char
+	sta	fopt
+	cpi	'L'	; log file names to disk
+	jz	optfok
+	cpi	'P'	; print names of files
+	jz	optfok
+	cpi	'S'	; scan disk for files
+	jz	optfok
+	jmp	opterr	; error otherwise
+optfok:
+	inx	h	; pt to next option letter
+	jmp	opt
+
+;  Option G - toggle it; grouping (0=file name and type)
+optg:
+	lda	gflg	; get flag
+	cma		; toggle it
+	sta	gflg
+	jmp	opt	; continue option processing
+
+;  Option H -- toggle it; horizontal/vertical listing (0=vertical)
+opth:
+	lda	hflg	; get flag
+	cma		; toggle it
+	sta	hflg
+	jmp	opt	; continue option processing
+
+;  Option I -- enable it; inspect for FL option only
+opti:
+	mvi	a,0ffh	; ON
+	sta	iflg
+	jmp	opt
+
+;  Option D -- enable it; Disk output
+optd:
+	mvi	a,0ffh	; ON
+	sta	dflg
+	jmp	opt
+
+;  Option P -- enable it; Printer output
+optp:
+	mvi	a,0ffh	; ON
+	sta	pflg
+	jmp	opt
+
+;  Option N -- enable it; Negate Selection
+optn:
+	mvi	a,0ffh	; ON
+	sta	nflg
+	jmp	opt
+
+;  Option error message
+opterr:
+	xra	a	; set no disk or printer output
+	sta	dflg
+	sta	pflg
+	call	banner	; print banner
+	call	print
+	db	'     Invalid Option --> ',0
+	dcx	h	; pt to first char
+	call	pstr	; print string pted to by hl
+	call	print
+	db	cr,lf,'XDIR III command lines are:'
+	db	cr,lf,'		XDIR dir:filename.typ ooo...'
+	db	cr,lf,'or'
+	db	cr,lf,'		XDIR /oooo...'
+	db	cr,lf,'where:	dir: is optional and indicates selected '
+	db	'directory (DIR or DU form)'
+	db	cr,lf,'	filename.typ is an ambiguous file name and type '
+	db	'(also optional)'
+	db	cr,lf,'	o are option letters as follows:'
+	db	cr,lf,'		Aa - Set the file attributes'
+	db	cr,lf,'		  a=S for System, a=N for Non-System'
+	db	cr,lf,'		  a=A for All Files (System and Non-System)'
+	db	cr,lf,'		D  - Send Output to Disk File XDIR.DIR'
+	db	cr,lf,'		Ff - Enable a File Buffer Function'
+	db	cr,lf,'		  f=L for Log Names to FNAMES.DIR'
+	db	cr,lf,'		  f=P to Print Names stored in FNAMES.DIR'
+	db	cr,lf,'		  f=S to Scan Disk and Compare to FNAMES.DIR'
+	db	cr,lf,'		G  - Toggle Grouping (name/type or type/name)'
+	db	cr,lf,'		H  - Toggle Horizontal or Vertical format'
+	db	cr,lf,'		I  - Inspect Logged Files (for FL Option Only)'
+	db	cr,lf,'		N  - Negate selection'
+	db	cr,lf,'		P  - Send display to printer'
+	db	cr,lf,' Options may be combined as desired',0
+
+;  Return to CP/M
+return:
+	call	crlfx	; new line
+	lda	dflg	; disk output?
+	ora	a	; 0=no
+	cnz	fo0$close	; close file if so
+	lhld	stack	; get old stack ptr
+	sphl
+	ret		; return to CP/M
+
+;  Memory Overflow Error
+memerr:
+	call	printx
+	db	cr,lf,'Not Enough Room in TPA -- Aborting',0
+	jmp	return
+
+;  Print banner of XDIR III
+banner:
+	call	printx
+	db	'XDIR III, Version '
+	db	vers/10+'0','.',(vers mod 10)+'0',0
+	ret
+
+;
+;  Begin XDIR III processing
+;
+xdir:
+
+;  This section disables the /Ff option and /FL option if default set
+	lda	fenab	; enable FFLG? (/Ff option)
+	ora	a	; 0=no
+	jnz	xdst1
+	xra	a	; turn off FFLG
+	sta	fflg
+xdst1:
+	lda	lenab	; enable FL option?
+	ora	a	; 0=no
+	jnz	xdst2
+	lda	fflg	; FFLG on?
+	ora	a	; 0=no
+	jz	xdst2
+	lda	fopt	; check for L
+	cpi	'L'
+	jnz	xdst2
+	mvi	a,'P'	; switch L to P
+	sta	fopt
+xdst2:
+	lda	fflg	; file name buffer option?
+	ora	a	; 0=no
+	jz	xdirst
+	xra	a	; A=0
+	sta	gflg	; group by file name and type
+	lda	fopt	; print immediately if P option
+	cpi	'P'	; print?
+	jnz	xdirst
+	call	banner	; print banner
+	jmp	xdirfp	; print file names
+
+;  Get files from disk
+xdirst:
+	lda	pflg	; printer output?
+	ora	a	; 0=no
+	jz	xdirgo
+	call	print	; message to user
+	db	cr,lf,'XDIR III Print -- Please Input Header: ',0
+	xra	a	; no caps
+	call	bbline	; input line from user
+	ora	a	; no chars?
+	jz	xdirgo
+	call	lpstr	; print header line
+	call	lcrlf	; new line
+xdirgo:
+	call	crlf	; new line on console
+	call	codend	; end of code
+	call	dbuffer	; set buffers
+	jz	memerr	; memory overflow error?
+	push	h	; save regs
+	push	d
+	call	dfree	; compute amount of free space on disk
+	xchg		; amount in hl
+	shld	freesiz	; save free space count
+	pop	d	; get regs
+	pop	h
+	call	dirsload	; load with sizing information
+	jz	memerr	; memory overflow error?
+	push	h	; save hl
+	mov	h,b	; HL=number of files loaded
+	mov	l,c
+	shld	totfil	; save total count
+	push	b	; save bc
+	lda	curdisk	; prepare to relog in disk
+	mov	e,a
+	mvi	c,14	; select disk
+	lda	disk	; was disk changed?
+	cpi	0ffh	; 0ffh if not
+	cnz	bdos
+
+;  Open disk file if necessary for disk output
+	lda	dflg	; disk output?
+	ora	a	; 0=no
+	jz	xdir0
+	lxi	d,dskfcb	; open disk file for char output
+	call	fo0$open	; open file for output
+xdir0:
+	pop	b	; get count
+	pop	h	; get ptr
+
+;  Continue processing; select desired files
+	lda	aflg	; get file attributes
+	lxi	d,fcb	; get ptr to fcb
+	call	dirsel	; select files
+
+;  Now, pack and alphabetize directory
+	lda	nflg	; negate selection?
+	ora	a	; 0=no
+	cz	dirpack	; select marked entries
+	cnz	dirnpack	; select unmarked entries
+	lda	gflg	; get grouping flag
+	call	diralpha	; alphabetize directory
+	shld	firstf	; save ptr to first file
+	mov	h,b	; HL=file count
+	mov	l,c
+	shld	fcount	; save file count
+	shld	countf	; save file down count
+	lxi	h,0	; set file size counter
+	shld	totsiz	; save counter
+	lda	dflg	; set temp flags
+	sta	dflgt
+	lda	pflg
+	sta	pflgt
+
+;
+;  Major feature selection --
+;	Two major features of XDIR are selected at this time:
+;		1.  Directory Display Functions
+;		2.  File Name Buffer Functions
+;	At this point, the following key values are know:
+;		FIRSTF - Pointer to First File
+;		FCOUNT, COUNTF - Number of Files
+;
+	lda	fflg	; get flag
+	ora	a	; Z=Directory Display, NZ=File Name Buffer Fcts
+	jnz	xdirf	; Do File Name Buffer Fcts
+
+;
+;  Main Directory Print Routine -- This routine displays the directory to
+;  the console, printer, or disk as desired
+;
+;  Print header lines and one screen of entries
+xdir2:
+	lda	dflg	; save disk and print output flags
+	sta	dflgs
+	lda	pflg
+	sta	pflgs
+	lda	dflgt	; use temp flags
+	sta	dflg
+	lda	pflgt
+	sta	pflg
+	xra	a	; A=0
+	sta	dflgt	; clear temp flags so no banner 2nd time around
+	sta	pflgt
+;  Print: Main Banner
+	call	banner	; print banner
+;  Print: Horizontal/Vertical Listing Message
+	call	printx
+	db	'    ',0
+	lda	hflg	; get horizontal/vertical flag
+	ora	a	; 0=vertical
+	jnz	xdir2a
+	call	printx
+	db	'Vertical',0
+	jmp	xdir3
+xdir2a:
+	call	printx
+	db	'Horizontal',0
+;  Print: Listing by File Name and Type or Type and Name Message
+xdir3:
+	call	printx
+	db	' Listing by File ',0
+	lda	gflg	; grouping flag
+	ora	a	; 0=name and type
+	jnz	xdir3a
+	call	printx
+	db	'Name and Type',0
+	jmp	xdir4
+xdir3a:
+	call	printx
+	db	'Type and Name',0
+;  Print:  Disk and User
+xdir4:
+	call	printx	; print everywhere
+	db	cr,lf,' Disk: ',0
+	lda	curdisk	; get current disk
+	mov	c,a	; ... in C
+	lda	disk	; default disk?
+	cpi	0ffh
+	jz	xdir4a
+	dcr	a	; adjust disk number for following conversion
+	mov	c,a	; get selected disk
+xdir4a:
+	mov	a,c	; print disk in C
+	adi	'A'	; convert to ASCII
+	call	coutx	; print everywhere
+	call	printx	; print everywhere
+	db	'  User: ',0
+	lda	aflg	; get user number
+	ani	20h	; all?
+	jz	xdir4b
+	call	printx
+	db	'All',0
+	jmp	xdir5
+xdir4b:
+	lda	aflg	; get selected user
+	ani	1fh	; select user number
+	lxi	d,numbuf	; store number in buffer
+	call	madc	; get number
+	mvi	b,3	; 3 digits
+	call	prnumx	; print number everywhere
+;  Print: Selected File Attributes
+xdir5:
+	call	printx
+	db	', File Attributes: ',0
+	lda	aflg	; get flag
+	push	psw	; save A
+	ani	80h	; Non-system?
+	jz	xdir5a
+	call	printx
+	db	' Non-System',0
+xdir5a:
+	pop	psw	; get A
+	ani	40h	; System?
+	jz	xdir5b
+	call	printx
+	db	' System',0
+
+;  See if any files selected
+xdir5b:
+	lhld	countf	; get file down count
+	mov	a,h	; any files?
+	ora	l
+	jnz	xdir6
+	call	printx	; print everywhere
+	db	cr,lf,'No files selected',0
+	jmp	return
+xdir6:
+	lda	aflg	; all users selected?
+	ani	20h
+	jnz	xdir6a
+;
+;  This is the header which is printed if the files in only one user area are
+;    displayed
+;
+	call	printx	; specific user selected
+	db	cr,lf,cr,lf
+	db	'Filename.Typ Size K RS   '
+	db	'Filename.Typ Size K RS   '
+	db	'Filename.Typ Size K RS'
+	db	cr,lf
+	db	'-------- --- ------ --   '
+	db	'-------- --- ------ --   '
+	db	'-------- --- ------ --',0
+	jmp	xdir6b
+xdir6a:
+;
+;  This is the header which is printed if the files in all user areas are
+;    displayed
+;
+	call	printx	; all users selected
+	db	cr,lf,cr,lf
+	db	' U Filename.Typ Size K RS '
+	db	' U Filename.Typ Size K RS '
+	db	' U Filename.Typ Size K RS'
+	db	cr,lf
+	db	' - -------- --- ------ -- '
+	db	' - -------- --- ------ -- '
+	db	' - -------- --- ------ --',0
+
+;  Prepare Columnar Output
+xdir6b:
+	lda	dflgs	; restore disk and print flags
+	sta	dflg
+	lda	pflgs
+	sta	pflg
+	lhld	countf	; get file count down
+	lxi	d,maxent	; assume maxent entries to print
+	mov	a,h	; within range?
+	ora	a	; outside of range if not
+	jnz	xdir7	; subtract entries to print from total entries
+	mov	a,l	; within range?
+	cpi	maxent	; less than maxent entries left?
+	jnc	xdir7	; subtract entries to print from total entries
+	mov	d,h	; DE=HL=number of entries to print
+	mov	e,l
+xdir7:
+	mov	a,l	; subtract entries to print (DE) from total (HL)
+	sub	e
+	mov	l,a
+	mov	a,h
+	sbb	d
+	mov	h,a	; HL=result
+	shld	countf	; save new down count
+	mov	b,h	; BC=count
+	mov	c,l
+	lhld	firstf	; pt to first file
+;
+;  At this point, BC=number of remaining entries, DE=number of entries to
+;    print, and HL pts to first entry to print
+;
+	shld	ptr1	; save ptr to 1st entry
+	lda	hflg	; horizontal listing?
+	ora	a	; 0ffh = yes
+	jnz	xdir7c	; don't worry about columns if horizontal
+	push	d	; save count
+	call	divde3	; divide DE by 3, result*esize in BC, remainder in A
+	lxi	d,esize	; DE=ESIZE (size of entry)
+	dad	b	; add BC as a minimum
+	ora	a	; any remainder?
+	jz	xdir7a	; skip if none
+	dad	d	; add in ESIZE for additional length of 1st col
+xdir7a:
+	shld	ptr2	; save ptr to col 2
+	dad	b	; add BC as a minimum
+	cpi	2	; if remainder 2, add ESIZE for additional
+	jc	xdir7b
+	dad	d	; add in ESIZE
+xdir7b:
+	shld	ptr3	; save ptr to col 3
+	pop	d	; get count in de
+;
+;  Main entry print routine
+;
+xdir7c:
+	mvi	d,1	; set 3's counter
+xdir8:
+	lhld	ptr1	; pt to first entry
+	call	prentry	; print entry
+	shld	ptr1	; put ptr
+	lda	hflg	; horizontal?
+	ora	a	; 0ffh = yes
+	jnz	xdir9
+	dcr	e	; count down
+	jz	xdir10
+	lhld	ptr2	; get ptr
+	call	prentry	; print entry
+	shld	ptr2	; put ptr
+	dcr	e	; count down
+	jz	xdir10
+	lhld	ptr3	; get ptr
+	call	prentry	; print entry
+	shld	ptr3	; put ptr
+xdir9:
+	dcr	e	; count down
+	jnz	xdir8	; continue if not zero
+	shld	firstf	; save ptr to first of next set of entries to print
+	lhld	countf	; get count of remaining entries
+;
+;  At this point, HL=number of entries left
+;
+	mov	a,h	; anything left?
+	ora	l
+	jz	xdir10
+	call	print	; screen break
+	db	cr,lf,'Screen Break -- Type any character to continue ',0
+	call	cin	; get response
+	cpi	3	; abort?
+	jz	return
+	call	crlfx	; new line
+	jmp	xdir2	; new screen display
+;
+;  Print end statistics and exit
+;
+xdir10:
+	call	crlfx	; new line
+	lhld	fcount	; print file count
+	call	prhlx	; print it everywhere
+	call	printx
+	db	' Files Occupying ',0
+	lhld	totsiz	; get total of file sizes
+	call	prhlx	; print it everywhere
+	call	printx
+	db	'K, ',0
+	lhld	totfil	; print total file count
+	call	prhlx	; print it everywhere
+	call	printx
+	db	' Files on Disk and ',0
+	lhld	freesiz	; get amount of free space
+	call	prhlx	; print it everywhere
+	call	printx
+	db	'K Free',0
+	jmp	return
+
+;
+;  File Name Buffer Functions
+;
+xdirf:
+	call	banner	; print banner
+	lda	iscn	; just scan?
+	ora	a	; 0=no
+	jnz	xdirfs
+	lda	fopt	; get option of F command
+	cpi	'L'	; log names to disk?
+	jz	xdirfl
+	cpi	'S'	; scan names on disk?
+	jz	xdirfs
+;
+;  File Name Print Option; /FP option
+;
+xdirfp:
+	call	openin	; open FNAMES.DIR for input
+xdfp0:
+	call	printx
+	db	cr,lf,cr,lf
+	db	'Printout of Recorded File Names --',cr,lf,'     ',0
+;  Extract File Name Count
+	call	f1$get	; get low count
+	jnz	geterr
+	mov	l,a	; save in L
+	call	f1$get	; get high count
+	jnz	geterr
+	mov	h,a	; save in H
+	push	h	; save HL
+	call	prhlx	; print HL everywhere
+	call	printx
+	db	' File Names Recorded',cr,lf,0
+	call	prfhdr	; print file name header
+	pop	h	; get HL
+	mvi	c,0	; set entry counter
+;  Loop for extracting names from FNAMES.DIR and printing them
+xdfp1:
+	mov	a,h	; no more entries?
+	ora	l
+	jz	xdfp2
+	dcx	h	; count down
+	call	getdfn	; get next disk file name from FNAMES.DIR
+	call	prfnfx	; print file name entry
+	inr	c	; increment count
+	mov	a,c	; new line time?
+	ani	3
+	cz	crlfx
+	jmp	xdfp1
+xdfp2:
+	call	fi1$close
+	call	crlfx	; new line
+	jmp	return
+;
+;  Log File Names to Disk; /FL option
+;	Structure of FNAMES.DIR file is:
+;		File Name Count, Low-Order Byte
+;		File Name Count, High-Order Byte
+;		File Names, stored as 12 bytes -- User Number, FN, and FT
+;
+xdirfl:
+	lxi	d,fnfcb	; open file for output
+	call	fo1$open
+	jz	xdfl1
+	call	printx
+	db	cr,lf,'Cannot Open FNAMES.DIR for Output -- Aborting',0
+	jmp	return
+;  Log Files to Disk with possible initial inspect and select by user
+xdfl1:
+	lda	iflg	; inspect?
+	ora	a	; 0=no
+	cnz	flinsp	; inspect if selected
+;  Print file count
+	call	printx
+	db	cr,lf,cr,lf
+	db	'Logging File Names to Disk --',cr,lf,'     ',0
+	lhld	fcount	; get count
+	call	prhlx	; print it
+	call	printx
+	db	' File Names to be Logged to Disk',cr,lf,0
+;  Check file count and print appropriate header
+	lhld	fcount	; get number of files
+	mov	a,h	; any files?
+	ora	l
+	jz	xdfl1a
+	call	prfhdr	; print file name header
+	jmp	xdfl1b
+xdfl1a:
+	call	printx	; no files
+	db	'     No Files to be Logged',0
+;  Store file count to disk
+xdfl1b:
+	mov	a,l	; store low count
+	call	f1$put
+	jnz	puterr
+	mov	a,h	; store high count
+	call	f1$put
+	jnz	puterr
+	xchg		; ... in DE
+	lhld	firstf	; pt to first file
+	mvi	c,0	; set display counter
+;  Loop to store files names
+xdfl2:
+	mov	a,d	; done?
+	ora	e
+	jz	xdfl3
+	dcx	d	; count down
+;  Write entry to disk
+	push	d	; save count
+	push	h	; save ptr to file
+	mov	a,m	; get user number
+	call	f1$put	; save it
+	jnz	puterr
+	lxi	d,numbuf	; print user number
+	push	d	; save ptr
+	call	madc
+	pop	d	; get ptr
+	inx	d	; pt to 1st digit
+	ldax	d	; get it
+	call	coutx
+	inx	d	; pt to last digit
+	ldax	d	; get it
+	call	coutx
+	mvi	a,' '	; <SP>
+	call	coutx
+	inx	h	; pt to FN
+	mvi	b,8	; 8 chars
+	call	xdput
+	mvi	a,'.'
+	call	coutx
+	mvi	b,3	; 3 chars
+	call	xdput
+	mvi	a,' '	; print <SP>
+	call	coutx
+	call	coutx
+	inr	c	; increment count
+	mov	a,c	; get count
+	ani	3
+	cz	crlfx
+	pop	h	; get ptr to first file
+	pop	d	; get count
+	push	b
+	lxi	b,esize	; pt to next file
+	dad	b
+	pop	b
+	jmp	xdfl2
+;  Done with creation of FNAMES.DIR
+xdfl3:
+	call	fo1$close	; close file
+	jmp	return
+;  Write B chars pted to by HL to FNAMES.DIR and user
+xdput:
+	mov	a,m	; get char
+	call	coutx	; print it everywhere
+	call	f1$put	; put it on disk
+	jnz	puterr
+	inx	h	; pt to next
+	dcr	b	; count down
+	jnz	xdput
+	ret
+
+;
+;  Inspect Files for Logging to Disk
+;
+flinsp:
+	lhld	fcount	; get count of files
+	xchg		; ... in DE
+	mov	a,d	; any files selected?
+	ora	e
+	rz		; abort if none
+;  Inspection banner
+	call	printx
+	db	cr,lf,'Inspection of Files for Logging to Disk',0
+	lhld	firstf	; pt to first file
+;  Main inspection loop
+flil1:
+	mov	a,d	; any files selected?
+	ora	e
+	jz	flil3	; done if not
+	dcx	d	; count down
+	push	d	; save count
+	lxi	d,dfnbuf	; copy file name to buffer
+	mvi	b,12	; 12 bytes
+	call	moveb
+	call	printx
+	db	cr,lf,'Log ',0
+	call	prfnfx	; print file name for prompt
+	call	printx
+	db	' to Disk (Y/N/<CR>=Y)? ',0
+	call	cin	; get response
+	call	caps	; capitalize
+	call	coutx
+	cpi	'N'	; No?
+	jz	flil2
+	mov	a,m	; mark user number
+	ori	80h
+	mov	m,a
+flil2:
+	lxi	d,esize	; skip to next entry
+	dad	d
+	pop	d	; get count
+	jmp	flil1
+flil3:
+	lhld	fcount	; get number of files
+	mov	b,h	; count in BC
+	mov	c,l
+	lhld	firstf	; pt to first file
+	call	dirpack	; pack directory
+	mov	h,b	; new count in HL
+	mov	l,c
+	shld	fcount	; set counts
+	shld	countf
+	ret
+
+;
+;  Error Message for Output
+;
+puterr:
+	call	printx
+	db	cr,lf,'Error in Writing to Disk -- Aborting',0
+	jmp	return
+
+;
+;  Scan Disk for File Names; /FS option
+;
+xdirfs:
+	call	printx
+	db	cr,lf,'File Name Scanner',0
+	call	openin	; open FNAMES.DIR for input
+xdfs1:
+	call	printx
+	db	cr,lf,'Files Named in FNAMES.DIR missing from Disk --',cr,lf,0
+;  Get file name count
+	call	f1$get	; get file name count from disk
+	jnz	geterr
+	mov	c,a	; store low
+	call	f1$get
+	jnz	geterr
+	mov	b,a	; store high
+	lhld	fcount	; get count of number of files
+	xchg		; ... in DE
+	lhld	firstf	; pt to first file
+	xra	a	; A=0
+	sta	crcnt	; set counter for CRLF
+	sta	fmark	; mark no first file yet
+
+;
+;  At this point, HL pts to first file in buffer, DE is number of files in
+;	buffer, and BC is number of files in FNAMES.DIR
+;
+	mov	a,b	; any names in FNAMES.DIR?
+	ora	c
+	jz	xdfs5	; mark all names in buffer if not
+	call	getdfn	; get first disk name
+xdfs2:
+	mov	a,b	; see if any more files in FNAMES.DIR
+	ora	c
+	jz	xdfs5	; mark rest of files in buffer and continue
+	mov	a,d	; see if any more files in buffer
+	ora	e
+	jz	xdfs6	; name rest of files in FNAMES.DIR as missing and cont
+	call	compfn	; compare to file name pted to by HL
+	jz	xdfs3a	; advance to next file if they match
+	jc	xdfs3	; mark file name pted to by HL as additional
+	lda	fmark	; first file?
+	ora	a	; 0=yes
+	jnz	xdfs2a
+	mvi	a,0ffh	; set mark
+	sta	fmark
+	call	prfhdr	; print header
+xdfs2a:
+	call	prfnfx	; print file name in FNAMES.DIR
+	dcx	b	; count down
+	mov	a,b	; done?
+	ora	c
+	jz	xdfs2
+	call	getdfn	; get next name
+	lda	crcnt	; get entry counter
+	inr	a	; increment
+	sta	crcnt
+	ani	3	; mask
+	cz	crlfx	; new line every 4
+	jmp	xdfs2
+xdfs3:
+	mov	a,m	; get user number
+	ori	80h	; mark it
+	mov	m,a	; put it back
+	jmp	xdfs4
+xdfs3a:
+	call	getdfn	; get next name
+	dcx	b	; count down on names
+xdfs4:
+	push	d	; save count
+	lxi	d,esize	; pt to next entry
+	dad	d
+	pop	d	; get count
+	dcx	d	; count down
+	jmp	xdfs2	; continue
+;  Mark rest of files in buffer
+xdfs5:
+	mov	a,d	; check count
+	ora	e
+	jz	xdfs7
+	dcx	d	; count down
+	mov	a,m	; get user number
+	ori	80h	; mark it
+	mov	m,a	; put user number
+	lxi	b,esize	; skip to next file
+	dad	b
+	jmp	xdfs5	; continue
+;  Name rest of files in FNAMES.DIR as missing
+xdfs6:
+	call	prfnfx	; print file name in FNAMES.DIR
+	dcx	b	; count down
+	mov	a,b	; done?
+	ora	c
+	jz	xdfs7	; next phase
+	lda	crcnt	; get entry counter
+	inr	a	; increment
+	sta	crcnt
+	ani	3	; mask
+	cz	crlfx	; new line every 4
+	call	getdfn	; get next name
+	jmp	xdfs6
+;  Part 2 of Scan - Name Additional Files
+xdfs7:
+	lda	fmark	; no files printed?
+	ora	a	; 0=none
+	jnz	xdfs7a
+	call	printx
+	db	'   No Files Missing',0
+xdfs7a:
+	xra	a	; A=0
+	sta	fmark	; set mark for 2nd part
+	call	printx
+	db	cr,lf,'Additional Files on Disk NOT in FNAMES.DIR --',cr,lf,0
+	lhld	fcount	; get count of files
+	xchg		; ... in DE
+	lhld	firstf	; pt to first file
+	xra	a	; A=0
+	sta	crcnt	; set counter
+xdfs8:
+	mov	a,d	; check count
+	ora	e
+	jz	xdfs9	; done if zero
+	dcx	d	; count down
+	mov	a,m	; get user number
+	ani	80h	; marked?
+	jz	xdfs8b	; skip if not
+	mov	a,m	; get user number
+	ani	7fh	; mask
+	mov	m,a	; replace
+	lda	fmark	; first time?
+	ora	a	; 0=yes
+	jnz	xdfs8a
+	mvi	a,0ffh	; set mark
+	sta	fmark
+	call	prfhdr	; print header
+xdfs8a:
+	push	d	; save count
+	lxi	d,dfnbuf	; copy to buffer for print
+	mvi	b,12	; 12 bytes
+	call	moveb	; copy
+	pop	d
+	call	prfnfx	; print file name
+	lda	crcnt	; count down
+	inr	a
+	sta	crcnt
+	ani	3	; new line?
+	cz	crlfx
+xdfs8b:
+	lxi	b,esize	; pt to next entry
+	dad	b
+	jmp	xdfs8	; continue
+;  Done with Scan
+xdfs9:
+	lda	fmark	; no files printed?
+	ora	a	; 0=none
+	jnz	xdfs9a
+	call	printx
+	db	'   No Additional Files',0
+xdfs9a:
+	call	printx
+	db	cr,lf,'File Scan Complete',0
+	jmp	return
+
+;
+;  Compare file name pted to by HL with that in DFNBUF; return with Z if same,
+;	C if (HL)<(DFNBUF)
+;
+compfn:
+	push	h	; save regs
+	push	d
+	push	b
+	lxi	d,dfnbuf	; pt to buffer
+	xchg		; DE pts to file name, HL pts to DFNBUF
+	push	h	; save ptrs
+	push	d
+	mvi	b,11	; compare FN and FT
+cfn1:
+	inx	h	; pt to next
+	inx	d
+	mov	a,m	; get char from DFNBUF
+	ani	7fh	; mask MSB
+	mov	c,a	; save in C
+	ldax	d	; get name in memory buffer
+	ani	7fh	; mask MSB
+	cmp	c	; compare to name in DFNBUF
+	jnz	cfn2	; not same, so exit with flag set
+	dcr	b	; count down
+	jnz	cfn1
+	pop	d	; same so far, so compare user numbers
+	pop	h
+	mov	a,m	; get user number
+	ani	7fh	; mask MSB
+	mov	c,a	; save in C
+	ldax	d	; get user number
+	ani	7fh	; mask MSB
+	cmp	c	; compare
+	push	h	; fill stack for ext
+	push	h
+cfn2:
+	pop	h	; clear stack
+	pop	h
+	pop	b	; get regs and exit
+	pop	d
+	pop	h
+	ret
+
+;
+;  General Utility Routines
+;
+
+;
+;  Print user and file name stored in DFNBUF for /Ff functions
+;
+prfnfx:
+	push	h	; save regs
+	push	d
+	push	b
+	lxi	h,dfnbuf	; pt to first byte of buffer
+	mov	a,m		; get first byte (user number)
+	lxi	d,numbuf	; convert to chars in memory
+	call	madc
+	lxi	d,numbuf+1	; pt to first char
+	ldax	d	; get it
+	call	coutx
+	inx	d	; pt to 2nd char
+	ldax	d	; get it
+	call	coutx
+	mvi	a,' '	; <SP>
+	call	coutx
+	inx	h	; pt to FN
+	mvi	b,8	; 8 chars for FN
+	call	prch
+	mvi	a,'.'
+	call	coutx
+	mvi	b,3	; 3 chars for FT
+	call	prch
+	mvi	a,' '	; 2 <SP>
+	call	coutx
+	call	coutx
+	pop	b	; get regs
+	pop	d
+	pop	h
+	ret
+;
+;  Get next User Number, FN, and FT from disk and save it in buffer
+;
+getdfn:
+	push	h	; save regs
+	push	d
+	push	b
+	lxi	h,dfnbuf	; pt to buffer
+	mvi	b,12	; 12 bytes
+getdf1:
+	call	f1$get	; get user
+	jnz	geterr
+	mov	m,a	; store user
+	inx	h	; pt to next
+	dcr	b	; count down
+	jnz	getdf1
+	pop	b	; restore regs
+	pop	d
+	pop	h
+	ret
+;
+;  Print File Buffer Names Header Everywhere
+;
+prfhdr:
+	call	printx
+	db	'     Horizontal Listing by File Name and Type',cr,lf
+	db	' U Filename.Typ  '
+	db	' U Filename.Typ  '
+	db	' U Filename.Typ  '
+	db	' U Filename.Typ',cr,lf
+	db	' - -------- ---  '
+	db	' - -------- ---  '
+	db	' - -------- ---  '
+	db	' - -------- ---',cr,lf,0
+	ret
+;
+;  Get Error Message and Abort
+;
+geterr:
+	call	printx
+	db	cr,lf,'Premature EOF -- Aborting',0
+	jmp	return
+;
+;  Open FNAMES.DIR for byte-oriented input
+;
+openin:
+	lxi	d,fnfcb	; open file
+	call	fi1$open	; open for input
+	rz
+	call	printx
+	db	cr,lf,'FNAMES.DIR Not Found -- Aborting',0
+	jmp	return
+;
+;  Print disk entry for normal directory display functions
+;
+prentry:
+	dcr	d	; count <CRLF> counter
+	jnz	prent1
+	mvi	d,3	; reset count
+	call	crlfx
+prent1:
+	shld	entptr	; save entry ptr
+	lda	aflg	; all users selected?
+	ani	20h
+	jz	prent2
+;
+;  The following prints the user number if all user numbers are selected
+;
+	push	h	; save regs
+	push	d
+	push	b
+	mov	a,m	; get user number
+	ani	1fh	; mask it
+	lxi	d,numbuf
+	call	madc	; convert to chars in memory
+	lxi	h,numbuf+1	; pt to first char
+	mov	a,m	; get it
+	call	coutx
+	inx	h	; get 2nd char
+	mov	a,m
+	call	coutx
+	mvi	a,' '	; print <SP>
+	call	coutx
+	pop	b	; get regs
+	pop	d
+	pop	h
+prent2:
+	inx	h	; pt to first char of file name
+	mvi	b,8	; print 8 chars
+	call	prch
+	mvi	a,'.'	; print dot
+	call	coutx
+	push	h	; save RS ptr
+	mvi	b,3	; print 3 chars
+	call	prch
+	push	d	; save de
+	lhld	entptr	; pt to entry
+	mvi	a,' '	; skip 2 spaces
+	call	coutx
+	call	coutx
+	call	fsize	; compute file size
+	lhld	totsiz	; get total file size counter
+	dad	d	; add in new file
+	shld	totsiz	; save new total file size counter
+	xchg		; get file size into HL
+	call	prhlx	; print HL value
+	pop	d	; get de
+	pop	h	; pt to RS
+	mvi	a,' '	; print 1 space
+	call	coutx
+	mvi	b,'R'	; letter
+	call	prletx	; print R if bit set
+	inx	h
+	mvi	b,'S'	; letter
+	call	prletx	; print S if bit set
+	mvi	a,' '	; 1 space
+	call	coutx
+	lda	aflg	; all users?
+	ani	20h
+	jnz	prent3
+;
+;  The following prints 2 additional spaces if only one user area is selected
+;
+	mvi	a,' '	; 2 more spaces for not all users
+	call	coutx
+	call	coutx
+prent3:
+	lxi	b,6	; pt to next entry
+	dad	b
+	ret
+;
+;  Print B chars pted to by HL
+;
+prch:
+	mov	a,m	; get char
+	inx	h	; pt to next
+	ani	7fh	; mask out msb
+	cpi	' '	; within range?
+	jnc	prch1	; print special char if not valid char
+	mvi	a,'?'	; print ? if not valid char
+prch1:
+	call	coutx	; print it
+	dcr	b	; count down
+	jnz	prch
+	ret
+;
+;  Extended Print Routines
+;
+prletx:
+	mov	a,m	; get byte
+	ani	80h	; look at msb
+	jz	prlets
+	mov	a,b	; get letter
+	call	coutx
+	ret
+prlets:
+	mvi	a,' '	; print <sp>
+	call	coutx
+	ret
+prhlx:
+	lxi	d,numbuf	; store in number buffer
+	call	mhldc	; hl into memory as decimal
+	mvi	b,5	; 5 digits
+prnumx:
+	lxi	h,numbuf	; pt to buffer
+prnum:
+	mov	a,m	; get digit
+	inx	h	; pt to next
+	call	coutx	; print everywhere
+	dcr	b	; count down
+	jnz	prnum
+	ret
+printx:
+	xthl		; pt to string
+prxl:
+	mov	a,m	; get byte
+	inx	h	; pt to next
+	ora	a	; done?
+	jz	prxld
+	call	coutx	; print everywhere
+	jmp	prxl
+prxld:
+	xthl		; set ret adr
+	ret
+coutx:
+	push	b	; save bc
+	mov	b,a	; char in B
+	call	cout	; print to screen
+	lda	pflg	; printer on?
+	ora	a	; 0=no
+	mov	a,b	; get char
+	cnz	lout	; printer output if on
+	lda	dflg	; disk on?
+	ora	a	; 0=no
+	mov	a,b	; get char
+	cnz	f0$put	; output to file
+	pop	b
+	ret
+crlfx:
+	call	printx
+	db	cr,lf,0
+	ret
+;
+;  Divide DE by 3; return with BC=result*esize, a=remainder
+;
+divde3:
+	push	d	; save de, hl
+	push	h
+	mvi	d,0	; make sure D=0
+	mov	a,e	; value in A
+divd31:
+	sui	3	; subtract 3
+	jc	divd32
+	jz	divd33
+	inr	d	; add 1 to result
+	jmp	divd31
+divd32:
+	adi	3	; add back in
+	jmp	divd34
+divd33:
+	inr	d	; add 1 for even division
+divd34:
+	sta	rem	; save remainder
+	lxi	b,esize
+	lxi	h,0
+divd35:
+	mov	a,d	; done?
+	ora	a	; 0=yes
+	jz	divd36
+	dcr	d
+	dad	b	; add in another ESIZE
+	jmp	divd35
+divd36:
+	mov	b,h	; BC is result
+	mov	c,l
+	lda	rem	; A is remainder
+	pop	h	; restore regs
+	pop	d
+	ret
+;
+;  Skip blanks
+;
+sblank:
+	mov	a,m	; pt to char
+	cpi	' '	; blank?
+	rnz
+	inx	h	; pt to next
+	jmp	sblank
+
+	end
+

@@ -1,0 +1,366 @@
+                   PROTOCOL NOTES: CIS A PROTOCOL
+             by Bob Richardson, Carl Raff, and Scott Lowe
+                        Copyright (C) 1982
+                   Performance Business Machines
+
+            A Division of MicroPro International Corporation
+                       101 Lucas Valley Road
+                       San Rafael, California 94903
+
+            Revised by Ken Brassler,  4/2/83
+
+Note: this material was not prepared for or by CIS and they have no
+responsibility for the accuracy or completeness of the contents. We
+gratefully acknowlege their cooperation and the super job they are doing,
+and simply wish to help  document the file transfer protocol.
+
+INTRODUCTION
+
+The information presented here is intended to provide an outline of the
+written specifications for the CIS A Protocol. It is designed to be used by
+programmers who may need to debug or  write programs to interface with
+Compuserve Information  Services (CIS) terminal programs.
+
+The PBM 1000 supports a communication subsystem based on the CIS protocol.
+One reason is that the CIS protocol is a step in the direction of software
+standardization and higher compatibility among different computer systems.
+The CIS protocol supports flexible file transfer and is practical for
+in-house use on a direct-connect medium speed network. PBM tests show that
+the protocol runs effectively at 19.2 KB and can transfer data at a rate
+of up to 50 KB.
+
+In transferring files from one system to another, one CP/M- based system
+(with a copy of any of the CIS executives that supports the A protocol)
+acts as a terminal. The other system, referred to as the "host," treats the
+"terminal" system both as a console and as the source or target of the file
+transfer protocol.
+
+The following is a brief description of the CIS A Protocol used by CIS.
+Also included is a list of Executives compatible with it, and two new
+files which allow anyone with a CP/M remote system to support this
+protocol between CP/M systems. Note: CP/M is a registered trademark of
+Digital Research.
+
+The Executives
+
+1. MNEXEC [Old Executive]
+
+An older version of the Executive, MNEXEC supports ASCII transfer only .
+This executive is primarily useful for those who wish to buy programs from
+Softex, as its ESC I response is the only one that the Softex system
+currently recognizes as a file-xfer executive (see ESC I response). This
+program does not really support the A protocol, but rather a subset.
+
+2. CSEXEC [The Compuserve Executive]
+
+CSEXEC was the first "vanilla" version with binary support. It is a good
+executive to start with for those wishing to heavily modify the source
+because it  suffers less from "rampant equate-itis" than BUFEXEC (i.e, it
+accomplishes tasks in a more general fashion without presenting too many
+options to the user). The current version seems to be modified for the
+Apple computer.
+
+3. BUFEXEC [Buffered CSEXEC]
+
+BUFEXEC adds memory buffered hard copy to CSEXEC, as well as many
+customization equates. The Osborne  version is called "BUFEXO.ASM," and is
+identical to  BUFEXEC except for modifications for the Osborne I.
+
+4. IOBEXEC [IO/Byte Executive] This executive is identical to BUFEXEC,
+except that it  uses IOBYTE dispatch to access the serial port. If  your
+system is interrupt driven, you must use IOBEXEC  or modify one of the
+other executives. In addition,  IOBEXEC allows use of cursor positioning. 
+
+Note: There are a number of customized protocols floating around; most
+are based on BUFEXEC and represent adaptation for particular hardware
+such as the Osborne, Kaypro, Apple, etc.
+
+PROTOCOLS
+
+Characteristics of the physical protocol: asynchronous; 8-bit;  8 bits to
+the byte; 1 stop bit; no parity.
+
+The protocol mode is turned "on" by an SI instruction (shift in) from the
+host and the terminal then functions in protocol mode until an SO (shift
+out) instruction is received.
+
+The ESC "I" Response: Each terminal responds to an ESC "I"  with an ID
+string (see diagrams below).
+
+The ESC "A" Sequence: This initiates a file transfer.
+
+The ESC "L" Sequence: This starts a load sequence.
+
+Notes: The "." (period) is used to ACK a message (acknowledge and accept).
+The "/" (slash) is used to NAK a message (negative acknowledge; request
+retransmission). If Ack or Nak is not sent to CIS in a given period of time,
+CIS responds by re-sending ETX a total of 4 times, then aborts. A CTRL U
+sent to the host will abort the file transfer.
+
+A list of fields enclosed in [ ] marks indicate that 1 of the list will be
+transmitted, depending on the conditions at the time.
+
+ESC "I" Sequence
+
+Host                       Terminal
+         "SI" (Protocol on)            
+------------------------------------>
+         ESC I (Who are you?)
+------------------------------------>
+         ID String (see below)
+<-----------------------------------
+         "SO"  (Protocol  off)                       
+[---------------------------------->]
+         error; feature lock; end of function
+
+         Continue in Protocol
+[----------------------------------->]
+
+Action: The terminal sends its ID string to the host. The host checks the
+features list, etc.                   
+
+ID String: A full sample of the ESC I response for the  IOBEXEC protocol
+(assigned by CIS) is as follows:
+
+<#> <CPM> <MYSYSTEM>, CC, HC, PA, PL, <CR>  
+
+The first character is the protocol ID, followed by the OS  name and the
+computer name (optional). The string of four pairs  of characters are a
+series of features to be assigned if the  system supports them:
+
+CC, HC, PA, and PL  <CR>    
+CC = full cursor control
+HC = hard copy
+PA = "A" protocol
+PL = "L" protocol
+
+See the comments in any version of the executive for a  more detailed
+discussion of these fields.
+
+MNEXEC is an older version of the executive, and so  the ID string is
+slightly different in format than the one for the CIS Executive. A sample
+response follows:
+
+<01>,<BF>,<SYSTEM2>,<&CPM>,<D> <CR>
+
+The first character is the page address of the lowest available page of
+memory in the terminal, followed by the page address of the highest
+available page in memory, the computer ID, OS name, and "D" for disk
+drives.
+
+ESC "L" Sequence
+
+Host                       Terminal
+         SI
+------------------------------------>
+         ESC L
+------------------------------------>
+<count-1 byte> <low addr> <hi addr> <data> <CHKSUM>
+------------------------------------>
+         "." = ACK (Received; OK)
+[<----------------------------------]
+         "/" = NAK (Error; request retransmission)
+[<----------------------------------]
+         ESC L
+------------------------------------>
+         Next record
+------------------------------------>
+         "." = ACK (Received; OK)
+[<-----------------------------------
+         "/" = NAK (Error; request retransmission)
+[<-----------------------------------
+         SO (Done) 
+[----------------------------------->
+
+Action: The terminal loads <data> into memory starting at  address <low>
+<hi> for <count> bytes.
+
+ESC "A" Sequence: File Transfer
+
+Host                       Terminal
+         SI (Protocol on)
+------------------------------------>
+         ESC A (Start file transfer)
+------------------------------------>
+<1-byte SOH> <1-byte rec #> <U/D> <A/B> <file spec> <CR> <LF> <ETX> <CHKSUM>
+------------------------------------>
+         "." ACK (Received; OK)
+[<----------------------------------]
+         "/" NAK (Retransmit)
+[<----------------------------------]
+
+Action: The terminal sets up to read or write the file given in <file
+spec>.
+
+ESC "A" Sequence: File Transfer
+
+         Download Subsequence 
+
+Host                       Terminal
+         <SOH> <R/N> <Text> <ETX> <CHKSUM>
+------------------------------------>
+         "."  ACK (Accepted record)
+[<----------------------------------]
+         "/"  NAK (Rejected; retransmit)                      
+[<----------------------------------]
+         <SOH> <R/N> <Text> <ETX> <CHKSUM>
+------------------------------------>
+         "."  ACK (Accepted record)
+[<----------------------------------]
+         "/"  NAK (Rejected; retransmit)                      
+[<----------------------------------]
+         <SOH> <R/N> <Text> <EOT> <ETX> <CHKSUM>
+------------------------------------>
+         "." or "/"
+<------------------------------------
+         SO  (Shift out; protocol off)
+[---------------------------------->]
+         ESC A  (Next file)
+[---------------------------------->]
+                    ^
+                    |                   
+         Note: This is currently unused by CIS.
+
+ESC  "A" Sequence: File Transfer
+
+         Upload Subsequence 
+
+Host                       Terminal
+         "."  ACK               
+------------------------------------>
+         <SOH> <R/N> <Text> <ETX> <CHKSUM>
+<------------------------------------
+         "."  ACK  (Record accepted)
+[---------------------------------->]
+         "/"  NAK  (Record rejected; retransmit)
+[---------------------------------->]
+         <SOH> <R/N> <Text> <ETX> <CHKSUM>
+<------------------------------------
+         "."  ACK  (Record accepted)
+[---------------------------------->]
+         "/"  NAK  (Record rejected; retransmit)
+[---------------------------------->]
+         <SOH> <R/N> <Text> <EOT> <ETX> <CHKSUM>
+<------------------------------------
+         "."  ACK  (Record accepted)
+[---------------------------------->]
+         "/"  NAK  (Record rejected; retransmit)
+[---------------------------------->]
+         SO  (Shift out; exit protocol)
+[---------------------------------->]
+         ESC A  (Next file)
+[---------------------------------->]
+
+Field Definitions
+
+SI - Shift in (CTRL O). When received in the communications loop, the
+terminal software should jump to protocol mode. SI can be expected to
+include a parity bit, so ANI 7FH is necessary. Once in protocol, parity is
+disabled.
+
+SOH - Start of header (CTRL A). Each record begins with SOH.
+
+R/N - An Ascii character, starting with 1, and incremented by one ASCII
+number after each previous record is acknowledged (ACK). After 0, the R/N
+wraps back to 1.
+
+U/D - An Ascii character, the U/D instruction determines the direction of
+transfer. U = Upload, transfer to host; D = Download, transfer from host.
+
+A/B - An Ascii character, signifying an ascii or binary file. Careful
+consideration indicates that this is not necessary, since 8 data bits are
+received in either case.
+
+FILE SPEC - Standard CP/M file specification, with optional drive
+reference. This is a literal echo of what the terminal sends to CIS when a
+filename is requested. The terminal software should select the requested
+disk, Create the file for a download sequence, or Open the file for an
+upload sequence.
+
+CR - Carraige return, (CNTRL M). Signifies end of file spec in A Protocol
+header.
+
+LF - Linefeed, (CNTRL J). Inclusion of this character by the host MAY be
+determined by your personal DEFAULT settings. Although not mentioned in
+previous protocol definitions, it is transmitted by CIS in my case. (KCB)
+After CR is received, looping until ETX will cover either posibility.
+
+ETX - End of text, (CNTRL C). ETX ends each packet (a group or string of
+related characters), and is followed by CHKSUM.
+
+EOT - End of transmission, (CNTRL D). When EOT is encountered in the text
+field of a record, it ends the current file. CP/M end of file, 1AH (^Z) is
+not transmitted by the host, and should be inserted by the terminal
+software whenever EOT is received. A purist may elect to insert it only at
+the end of an Ascii file, but it does no harm at the end of a binary file
+also. For an upload sequence, EOT should be sent to the host in place of
+the 1AH Ascii end of file, or after the last sector in a binary file.
+
+Character Masking
+
+Data characters in the text field that would normally conflict with control
+characters (those less than 20h), are sent 'masked' by adding 40h to their
+value and preceeded by a DLE (unmasked).
+
+Control characters (those meant for control) are always sent unmasked.
+
+CHKSUM - Check sum on record calculated on all characters sent after (and
+not including) start of header (SOH) and until (and not including) ETX.
+Except that, DLE is not included in the checksum, and the following
+'masked' character is checksumed in it's unmasked state. EOT, however, is
+included in the checksum. How other control characters in the text field
+are checksummed is unknown, however, these appear to be the only two used.
+
+1. CHKSUM <--- (CHKSUM * 2) mod 256
+2. CHKSUM <--- CHKSUM + character
+3. CHKSUM <--- CHKSUM + carry
+
+If the check sum is less than hex '20', it is increased  by hex '40' and
+sent masked (preceded by a DLE  character). 
+
+APPENDIX
+
+Since the heart of the CIS Protocol is the checksum routines, the following
+code is included to amplify the verbal description. There are better ways
+to do everything, so feel free to hack away. This particular sequence is
+for a download.
+;
+;
+;a side effect of docks is that it returns with b=a. since etx is not
+;included in the checksum, the calling program can recognize that etx
+;has been received when a is not equal to b.
+;
+CHARCKS: CALL     CHARIN   ;get a char from modem
+         CPI      ETX      ;end of packet?
+         JZ       CHARETX  ;yes, don't include in checksum
+         CPI      DLE      ;is next char masked?
+         JZ       UNMASK   ;dle not included in checksum
+         CPI      EOT      ;end of xmission?
+         JZ       SETEOT   ;yes, set flag, and replace with 1ah
+         JMP      DOCKS    ;compute checksum and ret to caller
+;
+UNMASK:  CALL     CHARIN   ;get masked char
+         SUI      40H      ;unmask before checksum
+         JMP      DOCKS    ;compute checksum and ret to caller
+;
+SETEOT:  STA      EOTFLG   ;make flag non zero
+         CALL     DOCKS    ;include in checksum
+         MVI      A,1AH    ;replace with eof
+         MOV      B,A      ;set a = b for etx test
+         RET               ;to caller
+;
+CHARETX: MVI      B,0FFH   ;tell packet etx received
+         RET               ;to caller
+;
+DOCKS:   MOV      B,A      ;save original char
+         LDA      CHKSUM   ;get last check sum
+         RLC               ;do math
+         ADD      B
+         ACI      0
+         STA      CHKSUM   ;replace new checksum
+         MOV      A,B      ;replace orig char
+         RET
+;
+;        end of prtcol.cis
+   CHKSUM   ;replace new checksum
+         MOV      A,B      ;replace orig 

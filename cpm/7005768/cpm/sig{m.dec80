@@ -1,0 +1,105 @@
+		The SIG/M Report (December 1980)
+			 by Bruce Ratoff
+
+   The	SIG/M software library seems to have drawn great interest
+from  CP/M users both in and out of our  geographical  area.  The
+November  SIG/M  meeting at UCTI saw long lines of ACGNJ  members
+waiting  to  copy the available diskettes.  Many thanks  to  Jeff
+Kashinsky,  whose system got a real workout doing the copying.	A
+number	of  individuals  have  volunteered  their  assistance  in
+distributing  the library.  Their names and phone  numbers  (some
+BBS,  some  voice) appear below.  It is hoped that this  interest
+will  continue,  for a group such as SIG/M needs broad support in
+order to succeed.
+
+   One	regrettable mishap has occurred in compiling the  library
+disks.	Diskette number 4,  a collection of CP/M  utilities,  was
+defective at the time of the users' group meeting. Henry Kee, who
+compiled  this diskette,  seems to have discovered (the hard way)
+an  incompatibility  between Digital Research  PIP  and  Cromemco
+CDOS. The end result was several bad files. The diskette has been
+re-created and verified, and will be available for copying at the
+next  users'  group  meeting.  Those  of  you  who  received  the
+defective copies will of course receive a new one at no charge.
+
+		    SIG/M LOCAL COORDINATORS
+
+   The	following  people  and organizations have  offered  their
+assistance in distributing the library:
+
+  Kevin O'Connell				609-461-4351
+	  Distribution for southern New Jersey
+
+  Ray Glueck					201-227-5361
+	  Conversion/distribution on Micropolis format.
+
+  Dave Hardy - Technical CBBS			313-846-6127
+	  Distribution via modem in Dearborn, MI
+
+  Howard Moulton - SJBBS		     (R)617-388-5125
+	  Distribution via modem in Amesbury, MA
+
+  Keith Petersen - Remote CP/M		     (R)313-588-7054
+	  Distribution via modem in Royal Oak, MI
+
+  Kelley Smith - MP/M-Net			805-527-9321
+	  Distribution via modem in Simi Valley, CA
+
+  Bruce Ratoff - Remote CP/M		     (R)201-283-2724
+	  Distribution via modem in Iselin, NJ
+
+   Note  that  the  (R)  symbol indicates  a  modem  system  that
+requires "ring back".  These systems are accessed by dialing  the
+listed	number,  letting the phone ring exactly once,  hanging up
+and  dialing again within a time limit (usually 40  seconds).  If
+you  had  previously  offered your help and your  name	does  not
+appear above, let me know and it will be listed next month.
+
+   We are of course always looking for more help.  If you operate
+a  dial-up system with software exchange capability,  or you  can
+assist in distributing the library to some group of users not yet
+represented, please contact us by phone or via letter to our post
+office box: SIG/M, P.O. Box 97, Iselin, NJ 08830
+
+		       SIG/M CHAIRPERSONS
+
+	  Bruce Ratoff, Iselin, NJ	201-283-2724
+	  Bill Chin, Clifton, NJ	201-778-5140
+	  Marty Nichols, Dover, NJ	201-361-7180
+	  Henry Kee, Flushing, NY	212-539-3202
+
+
+		      CURRENT SIG/M VOLUMES
+
+	  SIG/M001	Standard ADVENTURE object code.
+	  SIG/M002	Standard ADVENTURE source code.
+	  SIG/M003	Super ADVENTURE object code.
+	  SIG/M004	Assembler-language utilities.
+	  SIG/M005	8080/8085 diagnostics package.
+	  SIG/M006	6502 monitor and simulator.
+	  SIG/M007	modem and BBS utilities.
+
+   These  diskettes are available for a donation of $4	each,  at
+the  users' group meetings or by writing to SIG/M at the  address
+given above.  When ordering the diskettes by mail, please include
+an additional $2 for postage. The catalog listings of each volume
+may  be found on all participating BBS's,  or may be obtained  by
+sending a self- addressed stamped envelope to SIG/M.
+
+			TIP-OF-THE-MONTH
+
+   Changing  the CP/M 2.2 backspace:  As many of you  know,  CP/M
+version 2 allows hardcopy-style line editing,  via the rubout and
+control-U  keys,  as  well as CRT-style  line  editing,  via  the
+backspace  (control-H) and control-X keys.  As supplied,  the CRT
+editing keys use a "backspace, forward space, backspace" sequence
+to erase characters from the screen.  If your terminal requires a
+character code other than control-H (08H) to move the cursor left
+one character, you may patch the correct character into locations
+1373H and 13ADH of MOVCPM. If you then use the modified MOVCPM to
+create a new system, it will use the new backspace character that
+you have designated.
+
+   If  you have a CP/M question or know a "trick" that you  would
+like to see as a "tip-of-the-month", please contact me via either
+the mailing address or telephone number listed above.

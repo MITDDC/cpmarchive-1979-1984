@@ -1,0 +1,405 @@
+ 
+ 
+                          BDS C User's Guide Addenda
+                       v1.45 Edition --  December, 1981
+ 
+                                  Leor Zolman
+                                  BD Software
+                                33 Lothrop st.
+                        Brighton, Massachussetts 02135
+ 
+ 
+Here are the bug fixes and extensions for BDS C version 1.45.  
+ 
+Note: If you are running under MP/M II, be sure to see item 10 below!  
+ 
+ 
+ 
+ 
+0.   Expressions of the form 
+     
+             !(expr || expr)
+        or   !(expr && expr)
+ 
+     may  not  have  worked  correctly  when  a  VALUE  was  required  for  the
+     expression; i.e., when used in some way other than in a flow control test.
+     For example, 
+     
+             x = !(a || b);
+ 
+     might have failed, but 
+     
+             if (!(a || b)) return 7;
+ 
+     would have worked, since the expression was used for flow control.  
+ 
+ 
+1.   Declarations  of  pointer-to-function  variables for functions returning a
+     CHARACTER value caused only one byte of  storage  to  be  reserved for the
+     pointer, instead of two bytes (all pointers-to-functions require two bytes
+     of storage, by virtue of being pointers). For example, in the sequence:  
+     
+             char c1, (*ptrfn)(), c2;
+             ...
+             ptrfn = &getc;
+ 
+     the  assignment  to  `ptrfn' would have incorrectly overwritten  the  `c2'
+     character variable, since  only  one  byte would have been reserved on the
+     stack for the `ptrfn' variable while the  assignment  operation would have
+     assumed there were two bytes reserved.  
+ 
+ 
+2.   A  bug  in  the  ternary  operator evaluator (?: expressions)  caused  the
+     high-order  byte of a 16-bit  result  to  be  incorrectly  zeroed  in  the
+     following situation: given a ternary expression of the form 
+     
+             e1 ? e2 : e3
+ 
+     where `e2' evaluated to a 16-bit value (int, unsigned or pointer) and `e3'
+     evaluated to a character value (type char only), the entire expression was
+     treated as having type char...so if `e1' was true and `e2' was bigger than
+     255, then the  value of the expression ended up as only the low-order byte
+     of the value of `e2'. For version 1.45, whenever `e2' and `e3' do not BOTH
+     evaluate to character  values  the  type  of  the  overall  expression  is
+     guaranteed not to be char.  
+ 
+ 
+3.   A  sequence  of  two `!' (logical `not') operators in a row did not always
+     produce the correct result in an expression. For example, 
+     
+             x = !!n;                /* convert n to a logical (0 or 1) value */
+ 
+     might have produced the wrong result (0 instead of 1, or vice-versa).  
+ 
+ 
+4.   A  stack-handling  bug   in  CC2  caused  problems  at  run  time  when  a
+     sufficiently complex sub-expression appeared in any but the final position
+     of an expression involving  the  comma  operator  (",").  For example, the
+     following statement would not have worked correctly:  
+     
+             for (i = 0; i < 10; x += y, i++) ...
+ 
+ 
+ 
+5.   CC1  has not been recognizing illegal octal character constants  as  such;
+     digits such as `8' and `9' within an octal constant will now draw an error
+     in cases  where  they  would have been ignored before. Also, certain other
+     forms of illegal constants (aside from character constants) are now better
+     diagnosed than before.  
+ 
+ 
+6.   I  found  one more case where  an  internal  table  overflow  during  code
+     generation  was  not  detected,  causing the final command file to bomb as
+     soon as it was executed (either by  crashing  the  machine  or immediately
+     re-booting.)  This  occurred when a single large function containing  many
+     string constants was compiled. All fixed now.  
+ 
+ 
+7.   An  extension  to the linker:  CLINK  now  recognizes  "DEFF3.CRL"  as  an
+     automatic library file, similar to DEFF.CRL and DEFF2.CRL. Note that there
+     is NO DEFF3.CRL  file  included  with  the BDS C package; this feature has
+     been added to allow you to fit more custom  functions  into  your  library
+     than  just  what  fits in DEFF.CRL and DEFF2.CRL (which are getting rather
+     full.) 
+ 
+     Also, CLINK will now search ALL default library files (DEFF.CRL, DEFF2.CRL
+     and  DEFF3.CRL  [if  it  exists])  when  a  carriage-return  is  typed  in
+     interactive mode.  Previously,  only  the  file  DEFF.CRL  was searched in
+     response to carriage-return.  
+ 
+ 
+8.   It  has been brought to my attention that the ^Q-CR sequence  required  by
+     CLINK  in  interactive  mode  (to abort the linkage in progress) cannot be
+     typed in under MP/M systems, since  ^Q is used to detach a process. If you
+     are running MP/M, then just type control-C  instead  of  ^Q-CR;  this will
+     also  work  for  CP/M systems...the only difference is that when ^Q-CR  is
+     used, then any currently  active "submit file" processing is automatically
+     aborted by CLINK before returning  to  command  level, as a convenience (I
+     assume that if you abort the linkage, you don't want to continue with your
+     submit file...). Under MP/M, you'll have to type characters quickly at the
+     keyboard (after ^C-ing CLINK) to abort any pending  submit  file activity.
+ 
+ 
+9.   A slight bug in CLIB.COM (The C Library manager program) made  it  hard to
+     exit  CLIB  from  within  a  submit  file  (assuming XSUB is in use).  The
+     problem was that CLIB requires a confirmation  character, `y', to be typed
+     after  the  `quit'  command is given.  CLIB was getting  the  confirmation
+     character by doing a single direct BDOS console input call, which required
+     the user to manually  type  in  the  letter before any pending submit file
+     processing could continue. This has been  fixed  by  having  CLIB  get  an
+     entire  line  of  input  (using BDOS call 10) when seeking a confirmation;
+     now the `y' may be inserted  into  submit  files.  Note  that  the  `quit'
+     command  and  the  `y' confirmation must be placed on separate consecutive
+     lines in the submit  file. If not using a submit file, the only difference
+     is that now a carriage-return is required after typing the `y'.  
+ 
+     Another minor problem  with  CLIB: function names longer than 8 characters
+     were not being truncated when  entered  for  operations  such as renaming,
+     resulting  in  too-long  CRL  file  directory entries. All names  are  now
+     properly limited to 8 characters.  
+ 
+ 
+10.  A problem with file I/O under MP/M Version  II  has  come up: The run-time
+     package routine "vclose", called by the library function  "close" whenever
+     a  file  needs to be closed, has been optimizing for files open  only  for
+     reading by  NOT  actually performing a "close" operation through the BDOS.
+     This worked fine under  CP/M,  because  CP/M  didn't care whether or not a
+     file that has had no changes made to it was ever  closed;  MP/M II, on the
+     other  hand, DOES seem to want such files to be explicitly closed...so  by
+     running  many  programs  that  didn't  close  their Read-only files, BDS C
+     programs eventually caused MP/M to not allow any  more files to be opened.
+ 
+     This  problem  has  been  fixed by adding a conditional  assembly  symbol,
+     called "MPM2", to the CCC.ASM  source  file. If you are running under MP/M
+     II, you should set the "MPM2" equate to  true  (1) and reassemble CCC.ASM,
+     yielding  a new C.CCC after loading and renaming  (you  should  only  need
+     ASM.COM for this, although MAC.COM works also). The change does NOT affect
+     the size of  C.CCC,  so  the libraries do not have to be reassembled as is
+     usually the case when the  run-time  package  is  customized.  The  change
+     simply causes a single conditional jump to be turned into three nop's,  so
+     that  ALL  files  are  always  closed,  instead  of only the ones open for
+     writing.  My apologies to MP/M users who may have had  confusing  troubles
+     because of this bug.  
+ 
+ 
+11.  A bug was found in the `_scn' library function (affecting `scanf'): when a
+     lone carriage-return  (newline)  was  typed  in  response to a "%s" format
+     conversion, the format conversion was totally ignored.    This  caused the
+     target  string to remain unchanged from its previous contents, instead  of
+     correctly having a null string (consisting of a single zero byte) assigned
+     to it.  
+ 
+ 
+12.  A bug was  found  in  the  `_spr'  library  function  (affecting `printf',
+     `sprintf', and `fprintf'): The default field width value  was 1, causing a
+     null string to be printed as a single space when the standard  "%s" format
+     conversion was used. For example, the statement:  
+     
+             printf("Here is a null string: \"%s\"\n","");
+ 
+     would have produced the output:  
+     
+             Here is a null string: " "
+ 
+     instead of:  
+     
+             Here is a null string: ""
+ 
+     The default field width value has been changed to 0, so null strings  will
+     now  print  correctly.  An explicit field width may always be given in any
+     format conversion, of course.  
+ 
+ 
+13.  When the library function  "sprintf"  (formatted  output  directly  into a
+     memory buffer) is used, a null byte is appended onto the end of the output
+     text.  I'm  not  absolutely  sure  whether  or  not  this  is  a "desired"
+     characteristic;  at  least one user has complained about it, but it  turns
+     out that "sprintf" on  the  large-scale  Unix system I have access to does
+     the same thing and I can think of applications  where the trailing null is
+     useful. So, the null stays in.  
+ 
+ 
+14.  In  several  library functions, as well as at one point  in  the  run-time
+     package, calls  were  made to BDOS function number 11 (interrogate console
+     status) followed by an  "ani  1"  instruction  to  test bit 0 of the value
+     returned by BDOS. I've been told that on some systems,  testing  bit  0 is
+     not  sufficient  since  sometimes values other than 0 and 1 (or 0 and 255)
+     are returned. SO, all such  sequences  have  been changed to do an "ora a"
+     instead  of  an  "ani  1",  so  that  a return value  of  exactly  00h  is
+     interpreted as "no character ready" and  any other value is interpreted as
+     "yes,  there  is  a  character  ready". The library  functions  that  were
+     modified this way are: `kbhit', `putchar',  `srand1', `nrand', `sleep' and
+     `pause'.  The sequence to clear console status  in  the  run-time  package
+     (CCC.ASM),  near the label "init:", has likewise been changed (but a "nop"
+     instruction was  added  to  keep  all  addresses  consistent  with earlier
+     versions of the run-time package.) 
+ 
+ 
+15.  When  customizing  the  run-time  package (CCC.ASM) with the "cpm"  symbol
+     equated  to zero, several symbols (named  "SETNM"  and  "SETNM3",  at  the
+     routine labeled  "PATCHNM") were undefined;  this has been fixed by adding
+     some conditional assembly directives to insure that the labels in question
+     are not referenced  under  non-"cpm" implementations, while the total code
+     size remains constant so that  the  addresses  of  later  run-time package
+     utility subroutines stay exactly the same for all implementations.  
+ 
+ 
+16.  A  problem  with  the "bdos" library function has come up that  is  rather
+     tricky, since it is  system-dependent: A program that runs correctly under
+     a normal Digital Research CP/M system might NOT run under MP/M or SDOS (or
+     who knows how many other  systems)  if  the  "bdos"  function  is  used. A
+     typical symptom of this problem is that upon character output, a character
+     on  the  keyboard needs to be hit once in order to make each character  of
+     output appear.  
+ 
+     To understand  the  problem,  we must first understand exactly how the CPU
+     registers are supposed to be set  after  an  operating  system  BDOS call.
+     Normal  CP/M  behavior  (which  the  C  library function "bdos" had always
+     assumed) is for registers A and L to contain  the  low-order  byte  of the
+     return value, and for registers B and H to contain the high order byte  of
+     a  return  value (which is zero if the return value is only one byte). The
+     CP/M interface guide explicitly states that "A == L and B == H upon return
+     in all cases",  and  I  figured  that  just in case CP/M 1.4 or some other
+     system didn't put the values in H and L  from B and A, I'd have the "bdos"
+     function copy register A into register L and copy register B into register
+     H, to make SURE the value is in HL (where  the return value must always be
+     placed by a C library function.) 
+ 
+     Not  all systems actually FOLLOW this convention.  Under  MP/M,  H  and  L
+     always  contain the correct value but B does not! So when B is copied into
+     H, the wrong  value  results.  So,  the way to make "bdos" work under both
+     CP/M 2.2 and MP/M was to discontinue  copying  B  and  A into H and L, and
+     just assume the value will always be correctly left in HL  by  the system.
+     This  was  done  for  v1.45, so at least CP/M and MP/M are taken care  of,
+     but...  
+ 
+     Under SDOS (and perhaps  other  systems), register A is sometimes the ONLY
+     register to contain a meaningful  return  value.  For example, upon return
+     from a function 11 call (interrogate console  status),  the  B,  H  and  L
+     registers  were all found to contain garbage.  So if no copying is done in
+     this case, the  return  value  never  gets  from  A to L and the result is
+     wrong;  but if B is copied into H along with A getting  copied into L, the
+     result is still wrong because B contains garbage.  Evidently  the only way
+     to get function 11 to work right under SDOS is to have the "bdos" function
+     copy  register A into L and ZERO OUT the H register before returning...but
+     then many  other  system  calls  which  return  values  in H wouldn't work
+     anymore.  And  that  is the problem: You can please SOME systems  ALL  the
+     time, but not ALL systems  all  the  time  with  only  one standard "bdos"
+     function!  
+ 
+     The way I left "bdos" for version 1.45 was so that it works  with CP/M and
+     MP/M (i.e., no register copying is done at all...HL is assumed  to contain
+     the  correct  value).  You  might  want to make a note in the User's Guide
+     library section (page 30) to the effect  that  A  and  B  are now ignored.
+     This,  of  course,  won't  work in all cases under SDOS and perhaps  other
+     systems...in those cases, you  need  to  either use the "call" and "calla"
+     functions  to  perform the BDOS call, or create  your  own  assembly-coded
+     version(s) of the  "bdos" function (with MAC.COM, CMAC.LIB and BDS.LIB) to
+     perform the correct  register manipulation sequences for your system. Note
+     that it may take more  than one such function to cover all possible return
+     value register configurations.  
+ 
+ 
+17.  The "creat" library function  had been creating new files and opening them
+     for writing ONLY; this caused some confusion, so `creat' has been modified
+     to open files for both reading  AND  writing  following  creation.  PLEASE
+     MAKE  A  NOTE  OF  THIS  UNDER  THE `CREAT' ENTRY IN THE STANDARD  LIBRARY
+     SECTION OF THE BDS C USER'S GUIDE.  
+ 
+ 
+18.  The "execv" function has been changed  to  return  ERROR  (-1)  on  error,
+     instead  of forcing an error message ("Broken pipe") to be printed to  the
+     standard error  device.  The  reason  I originally had it printing "Broken
+     Pipe" was because I was too lazy to figure  out how to fix the stack after
+     passing all the arguments; following some justified  bitching  from  Scott
+     Layson  I  went  in  there  and  fixed it so it does something reasonable.
+     PLEASE MAKE A NOTE OF THIS UNDER THE `EXECV' ENTRY IN THE STANDARD LIBRARY
+     SECTION OF THE BDS C USER'S GUIDE.  
+ 
+ 
+19.  The DIO (directed I/O and pipes) package  contained  an  obscure bug: if a
+     pipe operation was aborted before completion, leaving a "TEMPIN.$$$"  file
+     in  the  directory,  then the next pipe operation performed had gotten its
+     own output mixed up with  the output of the aborted pipe....the old output
+     was used as input to the new  next  command,  and the new output was lost.
+     The new DIO.C has been fixed. (Note: DIO.C has  also been slightly changed
+     to  properly  interact  with  the  new  version  of  the  "execv"  library
+     function.) 
+ 
+ 
+20.  Another  change has been made to the DIO package: the "getchar"  function,
+     when used  without  input redirection to read characters directly from the
+     console, had not allowed for line editing in previous versions. I.e., each
+     character was obtained  by a direct BDOS call and none of the special line
+     editing characters (delete,  ^R,  ^U,  etc.)  were recognized. For version
+     1.45, an optional line buffer mechanism has been  added to the DIO package
+     so lines of console input can be fetched at one time  by  using  the "read
+     console  buffer"  BDOS  call  and  all editing characters now function  as
+     expected.  Operation of the package  using buffered console input is still
+     the  same  as  before,  except  for one thing:  to  enter  an  end-of-file
+     character (control-Z), it is now  necessary to also type a carriage-return
+     after the control-Z.  
+ 
+     To  enable console input buffering when  using  the  DIO  library,  it  is
+     necessary to un-comment a line in the DIO.H file and re-compile DIO.C. See
+     the comments in DIO.C for more information.  
+ 
+ 
+21.  The special  case handler for the code generator has been improved to more
+     efficiently handle  relational  binary operations where exactly one of the
+     operands  is  a constant. The operators  affected  are:  "<",  ">",  "<=",
+     ">=","=="  and  "!=",  for  both  signed  and  unsigned  data  types.  The
+     improvement is mainly  in  the  speed  of  execution  of such comparisons;
+     statements such as:  
+     
+             if (i < 1234) ...
+ 
+     execute much faster. This results in speedier execution  of  programs such
+     as the Seive of Eratosthenes benchmark in the September '81 issue of BYTE:
+     the  current  version of BDS C, using the -e and -o compiler options  with
+     variables made  external,  does  it  in  15.2  seconds (see SIEVE.C on the
+     distribution disk.) 
+ 
+     Also, multiplication by a constant that is a low  power of 2 (2,4,8,16) is
+     now  done  by  DAD  H sequences instead of calls to the  run-time  package
+     multiply routine [so  that  expressions  such as (i * 8) and (i << 3) each
+     compile to the same code].  
+ 
+ 
+22.  Two new functions have been added to the standard library:  
+     
+     	int setjmp(buffer)
+     	char buffer[JBUFSIZE]; 
+     
+     	longjmp(buffer,val)
+     	char buffer[JBUFSIZE];
+ 
+     When "setjump" is called, the current processor  state  is  saved  in  the
+     JBUFSIZE-byte  buffer  area  whose  address  is  passed  as  the  argument
+     ("JBUFSIZE"  is  defined  in  BDSCIO.H),  and a value of zero is returned.
+     Whenever a subsequent "longjump" call is performed  (from  ANYWHERE in the
+     current  function  or  any  lower-level  function)  with  the same  buffer
+     argument,  the  CPU  state  is  restored  to that which it was during  the
+     "setjmp" call, and the program behaves as if  control  were just returning
+     from  the  "setjmp" function, except that the return value  this  time  is
+     "val" as passed  to "longjmp".  A typical use of setjmp/longjmp is to exit
+     up through several  levels  of  function  nesting without having to return
+     through  EACH  level  in sequence, to make sure  that  a  particular  exit
+     routine (e.g., the directed  I/O "dioflush" function) is always performed.
+     It is a nifty facility that should  have  been  available long ago.  THESE
+     FUNCTIONS ARE NOT DOCUMENTED IN THE BDS C USER'S  GUIDE;    PLEASE  MAKE A
+     NOTE OF THEM IN THE STANDARD LIBRARY SECTION OF THE GUIDE.  
+ 
+ 
+23.  A  new  linker  for  BDS C called "L2" (a substitute for CLINK.COM) is now
+     available from the BDS  C  User's  Group.  L2, written by Scott Layson (of
+     Mark of the Unicorn) in BDS C, has several interesting features:  
+ 
+          1.   L2 can link programs that are up to  about 8K larger than CLINK:
+               if there isn't enough room in memory to  hold the entire program
+               while building an image in memory, L2 performs  a disk-buffering
+               second pass.  This means that the resulting COM files  can be as
+               large as the entire available TPA on the target machine.  
+ 
+          2.   The number of functions per program is no longer limited to 255.
+ 
+          3.   While  CLINK  uses jump tables at the beginning of functions  to
+               resolve references to other functions, L2 totally eliminates the
+               jump tables and  instead  generates  direct external calls. This
+               shortens programs by anywhere from 3%  to  10%,  and also speeds
+               them up a little.  
+ 
+          4.   Since L2 is written in C, you can customize it yourself.  
+ 
+     The L2 package comes with source code, a special overlay generator program
+     and documentation. It is available to BDSCUG members for the  nominal cost
+     of media and shipping (currently $8). See the next note for information on
+     joining the BDSCUG.  
+ 
+ 
+24.  The  BDS C User's Group membership forms should now be included  with  the
+     BDS C package...this makes life easier for everyone, since it is no longer
+     necessary  to  write to the Group first just to ask for forms before being
+     able to order library  disks. BDS C User's Group members receive the Group
+     newsletter approximately  6  times  per year, and are entitled to compiler
+     updates and library disks for low prices (typically $8 per disk).  

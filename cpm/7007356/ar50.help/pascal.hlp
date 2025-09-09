@@ -1,0 +1,217 @@
+Compiler Operation
+Invoking Pascal
+Compilation Switches
+File Input/Output
+Special Functions and Procedures
+Pascal/MT Symbolic Debugger
+Pascal/MT Reserved Words
+Notes
+:Compiler Operation
+
+     The Pascal/MT compiler exists in two versions,  each consisting of two 
+8080  object  code files:  FLTCOMP.COM (renamed PASCAL.COM on ARIES-1)  and 
+P2/FLT.OVL  for  the  version  in which REAL  numbers  are  implemented  as 
+floating  point  values internally and BCDCOMP.COM and P2/BCD.OVL  for  the 
+version  in  which REAL numbers are implemented as BCD  values  internally.  
+These files are Pass 1 and Pass 2 of the Pascal/MT compiler,  respectively.  
+Also required by the compiler are the following files --
+
+          P1ERRORS.TXT   - Pass 1 Error Messages
+          P2ERRORS.TXT   - Pass 2 Error Messages
+          PASCAL/F.RTP   - Run-time Package (including debugger) for FLT
+          PASCAL/B.RTP   - Run-time Package (including debugger) for BCD
+
+     The  input  files to the Pascal/MT compiler must  have  the  extension 
+'.SRC'  or '.PAS' indicating that it is a source program file.   There must 
+be  a carriage return/line feed sequence at the end of each input line  and 
+an input line may not be longer than 80 characters.
+:Invoking Pascal
+
+     The  Pascal/MT  compiler is invoked on ARIES-1 by using the  following 
+command --
+
+          PASCAL filename.DL
+
+where  'filename'  is  the name of the file with the  extension  '.SRC'  or 
+'.PAS' containing the Pascal/MT source statements to be compiled, D is Y or 
+N  to indicate whether to include the debugger in the resultant .COM  file, 
+and  L  is  Y or N to indicate whether to produce a  .PRN  file  (listing).  
+PASCAL defaults to no debugger and no listing.  The four invocation options 
+are --
+
+          PASCAL filename     - no debugger, no listing
+          PASCAL filename.Y   - debugger, no listing
+          PASCAL filename.NY  - no debugger, listing
+          PASCAL filename.YY  - debugger, listing
+
+     For  usage  with the BCD version of the  compiler,  the  commands  are 
+similar except that 'PASCAL' is replaced by 'BCDCOMP'.
+:Compilation Switches
+     Compile-time  options may be specified to the compiler from within the 
+source file.   Such options take the form of special comments.  The form of 
+these comments is
+          (*$o info*) or {$o info}
+where  'o'  is  the  letter of the option and  'info'  is  information 
+particular to that option.  These options are --
+
+          $I<filename>   Include <filename>.SRC into source stream
+          $L+ or $L-     Turn listing on (default) or Turn listing off
+          $P             Insert form feed into .PRN file
+          $D+ or $D-     Turn debug code on (default) or Turn debug code off
+          $C+            Use CALL instructions for real operations
+          $Cn            Use RST n for real operations (n=0 ... 7)
+          $O $aaaa       ORG program (run-time) at $aaaa (default 100H)
+          $R $bbbb       ORG RAM data at $bbbb
+          $Z $cc00       Set run-time size to $cc 256-byte pages
+          $X $dddd       Set run-time stack space to $dddd (default $200)
+          $S+ or $S-     Turn recursion or or Turn recursion off (default)
+          $Q+ or $Q-     Enable verbose output (default) or Disable verbose
+:File Input/Output
+     The standard Pascal READ,  READLN,  WRITE, and WRITELN statements 
+are  implemented for the CP/M console device.   WRITE or WRITELN to  a 
+built-in  file called PRINTER is allowed to directly access  the  CP/M 
+list device (like, WRITE(PRINTER,'Hello')).
+     The following extensions are implemented to handle files --
+          OPEN(fcbname,title,result{,extent_number});
+               (extent_number defaults to 0)
+          CLOSE(fcbname,result);
+          CREATE(fcbname,title,result);
+          DELETE(fcbname);
+          BLOCKREAD(fcbname,buffer,result{,relativeblock});
+          BLOCKWRITE(fcbname,buffer,result{,relativeblock});
+where    fcbname : a variable of type TEXT (array 0..32 of CHAR)
+         title   : ARRAY [0..11] of CHAR with
+                    title[0]=disk   select  byte  (0=logged  in  disk, 
+                      1=A,...)
+                    title[1..8]=filename and title[9..11]=filetype
+         result  : integer to contain returned value
+         buffer  : ARRAY [0..127] of CHAR
+         relativeblock : optional integer 0..255
+:Special Functions and Procedures
+
+     Pascal/MT supports the following special routines --
+
+          PROC MOVE(source,dest,length-in-bytes);
+          PROC EXIT;
+          FUNC TSTBIT(16-bit-var,bit#):BOOLEAN;
+          PROC SETBIT(VAR 16-bit-var,bit#);
+          PROC CLRBIT(VAR 16-bit-var,bit#);
+          FUNC SHR(16-bit-var,#bits):16-bit-result; {Shift Right}
+          FUNC SHL(16-bit-var,#bits):16-bit-result; {Shift Left}
+          FUNC LO(16-bit-var):16-bit-result;
+          FUNC HI(16-bit-var):16-bit-result;
+          FUNC SWAP(16-bit-var):16-bit-result;
+          FUNC ADDR(variable reference):16-bit result;
+          PROC WAIT(portnum:constant; mask:constant; polarity:boolean);
+          FUNC SIZEOF(variable or type name):integer;
+     Please refer to pp 32-33 of "Pascal/MT 3.0 Guide" for further info.
+:Pascal/MT Symbolic Debugger
+
+     The  debugging  facilities available to the user when  using  the 
+debugger fall into two catagories -- program flow control and variable 
+display.
+
+     If  the user wishes to see the commands during the  execution  of 
+the debugger, type a '?' followed by a return.
+
+     The program flow commands provided in the symbolic debugger allow 
+the user to debug the Pascal/MT program at the Pascal source statement 
+level.   Included  are go/continue (with optional breakpoint),  trace, 
+set/clear/display  permanent breakpoint and a mode which will  display 
+the name of each procedure/function on the console as the procedure or 
+function is entered.
+
+     These commands are discussed briefly on the following displays --
+
+Debugger Command:  G - Go with optional breakpoint
+
+     Syntax:   G{,<linenumber>}
+               G{,<proc/func name>}
+
+     Go resumes execution where the program last stopped.   Breakpoint 
+may be optionally set at a specific line or function/procedure.
+
+Debugger Command:  T - Trace
+
+     Syntax:   T{<integer>}
+
+     Execute one or more lines of the program.
+
+Debugger Command:  E - Procedure/Function Display Toggle
+
+     Syntax:   {-}E
+
+     E  engages display of the names of procedures/functions  entered;   
+-E disengages it.
+
+Debugger Command:  S - Set/Clear Slow Execution Mode
+
+     Syntax:  {-}S
+
+     S  allows  the user to select Fast,  Medium,  or  Slow  execution 
+speed; -S causes the program to run at full speed.
+
+Debugger Command:  P - Set/Clear Permanent Breakpoint
+
+     Syntax:  -P     (* Clears breakpoint *)
+              P<linenumber>
+              P<proc/func name>
+
+     P sets the permanent breakpoint; -P clears it.
+
+Debugger Command:  B - Display Permanent Breakpoint
+
+     Syntax:  B
+
+     Displays line the permanent breakpoint is set for.
+
+Debugger Command:  D - Variable Display
+
+     Syntax:   D <global var>
+               D <proc/func name>:<local var>
+               D <func name>
+               D <pointer name>^
+
+     The D command is used as indicated.
+
+Debugger Commands:  +,-,* - Variable Display
+
+     Syntax:  *  -- display last value requested (using D or some other)
+              +n -- display variable n bytes forward from last
+              -n -- display variable n bytes backward from last
+:Pascal/MT Reserved Words
+
+     ABS            DO             LO             READ         TSTBIT
+     ADDR           DOWNTO         MAXINT         READLN       TYPE
+     AND            ELSE           MOD            REAL         UNTIL
+     ARRAY          ENABLE         MOVE           RECORD       VAR
+     BEGIN          END            NIL            REPEAT       WAIT
+     BLOCKREAD      EXIT           NOT            RIM85        WHILE
+     BLOCKWRITE     EXTERNAL       ODD            ROUND        WRITE
+     BOOLEAN        FALSE          OF             SETBIT       WRITELN
+     CASE           FILE           OPEN           SHL
+     CHAIN          FOR            OR             SHR
+     CHAR           FUNCTION       ORD            SIM85
+     CHR            GOTO           OUTPUT         SIZEOF
+     CLOSE          HI             PACKED         SQR
+     CLRBIT         IF             PRED           SQRT
+     CONST          INLINE         PRINTER        SUCC
+     CREATE         INPUT          PROCEDURE      SWAP
+     DELETE         INTEGER        PROGRAM        THEN
+     DISABLE        INTERRUPT      RANDOMREAD     TO
+     DIV            LABEL          RANDOMWRITE    TRUE
+:Notes
+     1. Hexadecimal values may be specified as $hhhh, like $1A = 1AH.
+     2.  All  standard Pascal type definitions except ARRAY are  supported.  
+The   standard   form   ARRAY...OF   ARRAY...    must   be   specified   as 
+ARRAY[...,...,...], and a maximum of three dimensions may be used.
+     3. Type TEXT is ARRAY [0..35] OF CHAR.
+     4.  Interrupt Procedures,  declared as "PROCEDURE INTERRUPT[i] proc;", 
+are supported, where i is the restart vector number (0..7).
+     5.  CP/M  V2  random  file  access  is  supported  by  RANDOMREAD  and 
+RANDOMWRITE.
+     6.  Machine  code,  constant data,  and assembly language code may  be 
+inserted using INLINE (see pp 37-39 of "Pascal/MT 3.0 User Guide").
+     7. Chaining is supported by CHAIN, whose usage is "CHAIN(filename)".
+     8. Redirected I/O is supported (see pp 42-43).
+

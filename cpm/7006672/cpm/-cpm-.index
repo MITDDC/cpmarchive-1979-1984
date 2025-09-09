@@ -1,0 +1,437 @@
+Most of the files in MC:CPM; have been moved to an "archive" device.
+The simplified expanation of this mechanism is to consider the archive
+devices as "subdirectories".  Normally, there is an implied device,
+DSK:, asssociated with each file.  With a file in an archive device,
+you must explicitly name the archive device, ARn:.  Other than that,
+you can reference the files as you normally do.
+
+These archive devices show up in the normal directory listing as:
+
+MC:CPM;
+  AR0    DOCFIL  - All doc and misc files
+  AR1    COMFIL  - All COM files
+  AR2    HLPFIL  - All HLP files
+  AR3    SQ/USQ  - All SQ/USQ/FLS files
+  AR4    APPLE   - All APPLE/Z80 files (mostly MODEM)
+  AR5    MODEM   - All MODEM files, except for APPLE
+  AR6    ASMFIL  - All source files not in other ARn:
+  AR7    RCPM    - All Remote CP/M files (BYE, etc.)
+
+Each of these, in turn have their own directory listings for the
+individual files.  (Use :FIND AR1:CPM;  to list all of the COM files.)
+
+For example, to reference the HELP COM file, use AR1:CPM;HELP COM .
+
+If you have any problems with this, please send a note to
+INFO-CPM-REQUEST.
+--------------------
+
+Some of these files have been migrated to tape.  See CPM;ONTAPE LIST
+for the list of which ones.  All files are alternately temporarily
+archived in [DARCOM-KA]<MICRO> under similar names and may be FTP'd
+from there using the ANONYMOUS Login convention.  (Sorry, no guest
+accounts are available on the DARCOM-KA machine.)
+
+
+22CP/M CRCLST	Cyclic Redundancy Checks for CP/M 2.2 utilities
+
+22CPM  DOC	CP/M 2.2 system calls + deblocking field patch
+
+APMBOT ASM	A version of MBOOT for Apple users.
+
+ASMPAT ASM	ASM PATCH OF 1/8/79 BY DIGITAL RESEARCH (Revised 4/20/80)
+		THIS PATCH FIXES CP/M 1.4 ASM.COM TO ALLOW LOWER CASE
+		CHARACTERS IN DB'S
+
+AUTOX  ASM	ROUTINE TO EXECUTE A COMMAND BY USING THE AUTO
+		START FACILITY IN THE CP/M (V1.4, 2.0-2.2) .  IT
+		ASSUMES THAT THE CCP IS STILL INTACT (HAS NOT BEEN
+		CRASHED OR OVERLAYED).
+
+BBSNOS BYAREA	Same as BBSNOS BYNAME, except sorted by phone number.
+
+BBSNOS BYNAME	Public access message systems (i.e.,  CBBS's).
+		Compliments of Peoples' Message System, Santee Ca.
+
+BDOS22 PATCH	BDOS patch for CP/M 2.2 to make USER 0 public.
+		5/15/80	 patch courtesy of Andy Johnson-Laird.
+
+		*********************CAUTION*************************
+		This patch is for grown-ups who know what they are doing.
+
+BYE    ASM	This is version 6.9 created 03/20/81. A program to operate
+		a remote CP/M system. The remote user has controlled use
+		of CP/M on the host machine. He/she can be limited to
+		low USER Nos. and disk drives. Generally used for systems
+		which allow down- and up-loading of programs. Change DIR,
+		SAVE ,ERA, etc. in your CCP. Use SD for DIR, MLIST for TYPE,
+		and USER8.8 for USER and make them invisible. Use CCPPAT to
+		make drive A the default drive for the *.COM files such as
+		DIR.COM. Use XMODEM for file transfer. These programs can be
+		found in this directory.
+
+CCPPAT ASM	Program to make system default to drive A if .COM file
+		not found on current drive.
+
+CMODEM C	MODEM2 protocols written in C.
+
+CP/M   AUTO	A BABYL-formatted file of responses on how to create
+		"turn-key" CP/M systems.
+
+CP/M   LIST	A BABYL-formatted file of requests to be added to INFO-CPM.
+		Why is this significant?
+
+CPM    ARCHIV	The archive file of INFO-CPM correspondence in reverse
+		chronological order.
+
+CPM    DOC	A write-up of one person's discoveries of the internals
+		of the CP/M system.
+
+CPMNET APR81
+CPMNET FEB81
+CPMNET JAN81
+CPMNET MAR81
+CPMNET MAY81	These are evidently some sort of newsletter.  Random topics.
+
+CPYFIL ASM	COPYFILE.ASM ver 1.5, by Keith Petersen (revised 10/18/80)
+CPYFIL HEX	The HEX-format COM file of COPYFILE.
+
+		This program will copy files of any length from one
+		drive to another, with up to 16k buffering.  It was
+		created for very long files (megabyte length), which
+		are not properly handled by CP/M 2.x PIP.  This
+		version offers selective copying of files - something
+		not available with PIP.  The destination files will
+		have NO attributes set, which is useful for copying
+		from CP/M 2.x to 1.4 disks.
+
+CRCK   ASM	CRCK.ASM version 4.2, by Keith Petersen (revised 10/6/80)
+CRCK   HEX	The HEX-format COM file of CRCK.
+
+		----> NOTE: MUST BE ASSEMBLED BY MAC <----
+
+		CRCK is a program to read any CP/M file and print a
+		CYCLIC-REDUNDANCY-CHECK number based on the CCITT
+		standard polynominal:
+
+		X^16 + X^15 + X^13 + X^7 + X^4 + X^2 + X + 1
+
+		Useful for checking accuracy of file transfers.  More
+		accurate than a simple checksum.
+
+D      DOC	DOCUMENTATION OF D PROGRAM, by Ward Christensen
+D      HEX	The HEX-format COM file of D.
+
+		D.COM is a directory list program, which writes 5
+		entries on a line, separated by commas.
+
+		The command contains an internal table of file names,
+		which are not to be shown when just "D" is typed.
+		(NOTE typing "D *.*" always shows all files)
+
+		Why is this useful: A typical CP/M disk contains many
+		utility files: ED.COM, ASM.COM, SUBMIT.COM, etc.  When
+		you do a directory listing, you typically aren't
+		interested in seeing all those files, but rather just
+		the "current" or "active" files.  This is what "D.COM"
+		can do.
+
+DBASE2 REVIEW 	Review of Dbase-II Relational Data Base Management package
+		for CP/M.
+
+DIRF   ASM     
+DIRF   MAC	DIRF.ASM ver 1.3, by Keith Petersen (revised 12/19/80)
+
+		DIRECTORY FUNCTION FOR CP/M 1.4 OR 2.x PROGRAMS
+
+		This file contains routines which can be included in
+		any CP/M program to allow listing the directory.  No
+		sorting is done because that would require use of more
+		memory above the program.  These routines use the 80h
+		default buffer for all operations so if you have data
+		there be sure to move it before running this directory
+		function.  Assume all registers destroyed when calling
+		'DIRF'.
+
+		This module may be assembled as a stand-alone program
+		for testing.  Execute program from CP/M, not DDT or
+		L80.  It will return to the CCP after finishing.
+
+DOWN   LOAD     See CPM;UPDOWN DOC
+
+DSK8   FASL	This is used when making a new version of LMODEM.  It
+		is a compiled LISP file that implements storage of 8-bit
+		files.
+
+DSKCMP DOC	A file of messages taken from CBBS systems in Oct &
+		Nov l980 relating to whether or not various S-100
+		floppy disk controllers are compatible with various
+		CPUs & other equipment.  While the names of senders
+		and addressees have been deleted, most are experienced
+		computer users with no obvious axes to grind--their
+		comments should be a good deal more trustworthy than
+		those of the average dealer, manufacturer or magazine
+		reviewer.  The emphasis on the Morrow DJ2D controller
+		only means that I have one, not that it is an
+		unusually or even averagely problematical piece of
+		hardware.  The file was maintained using Bill
+		Brogden's INFORMATION MASTER.
+			--Ben Bronson, Chicago, 11/28/80
+
+DU-V75 DOC
+DU-V75 HEX	Version 7.5; by Ward Christensen. A program to read and
+		modify disk sectors.
+
+DVRPAT ASM	If your console and/or list drives are too big to fit into the
+		system tracks, you may find this program of interest.  It
+		is a .COM file that patches alternate console and/or list
+		drives into high memory AFTER CP/M is booted.  The patch
+		remains intact until the next cold boot.
+
+FAST   DOC	How to install FAST.COM or SPEED.COM on your system.
+		These programs speed up disk accesses?
+
+FBAD52 ASM	This is the source code for the latest version of
+		"FINDBAD", a program which runs under CP/M 1.4 or 2.x.  It
+		attempts to read all sectors on your disk (non-destructive
+		test) and builds a table of group numbers to allocate to a
+		dummy file so that CP/M will not attempt to use those areas of
+		your disk.  It's great for "validating" new disks.  Sure saves
+		the grief of later finding out that there are a few bad
+		sectors on your disk and getting a BDOS ERROR message when you
+		end that two-hour edit session!  This program was originally
+		published in "Interface Age", but has undergone many
+		significant improvements since its publication. See also
+		FINDBD.ASM listed below.
+
+FILTER	ASM
+FILTER	HEX	This program copies any ASCII file and filters out
+		(ignores) all control characters except CR, LF, and
+		TAB.  It also sets the high order bit of all characters
+		to zero so that files created with WordStar or other
+		text processing programs can be read by MBASIC.  The
+		filtered copy of the of the file is created as
+		'FILTER.FIL' on the default drive.  The source file is
+		left intact.  If the original file's EOF (1AH) is not
+		at the physical end of the last sector, this program
+		will pad the last sector with EOF's.  This is useful
+		for 'cleaning up' a file which was originally created
+		by MBASIC or text editors which do not pad the last
+		sector with EOF's.
+
+		Command - FILTER [drive]<filename.filetype>
+
+FILTEX ASM
+FILTEX HEX	Version 1.0 by Keith Petersen, W8SDZ
+		This program is somewhat like FILTER (see above) but has
+		differences as noted below.
+		This program copies any ASCII file and filters out (ignores)
+		all control characters except CR and TAB.  When a CR is
+		encountered, a LF is automatically appended to make the file
+		compatible with CP/M editors.  If an "orphan" LF is encountered
+		a CR and LF are written to the output.  The program also sets
+		the high order bit of all characters to zero so that files
+		created with WordStar or other text processing programs can
+		be read by MBASIC.  The filtered copy of the of the file is
+		created as 'FILTEX.FIL' on the default drive.  The source
+		file is left intact.  If the original file's EOF (1AH) is
+		not at the physical end of the last sector, this program
+		will pad the last sector with EOF's.  This is useful for
+		'cleaning up' a file which was originally created by MBASIC
+		or text editors which do not pad the last sector with EOF's.
+		FILTEX is also useful for fixing files which contain only
+		CRs at the end of each line.
+		NOTE: FILTEX should not be used on MBASIC source code which
+		contains lines which are "continued on next line".  This is
+		because MBASIC uses a special end-of-line sequence (LF then CR)
+		which will be altered by this program.  Use FILTER.COM for
+		these kinds of files.
+
+FINDBD ASM	Older version of FINDBAD.ASM (see FBAD52 ASM listed
+		above). Has explicit sectoring for various disk
+		formats.
+
+FMAP   HEX	The HEX-format COM file of FMAP, updated for use with
+		CP/M 2.x, as part of the CATALOG package from CPMUG.
+
+MAIL   LIST	The INFO-CPM mailing list.  Send requests for
+		additions, changes, or deletions to INFO-CPM-REQUEST.
+
+MAKSUB ASM	(revised 4/28/80)
+		11/04/79 FIRST WRITTEN BY KEITH PETERSEN AND BOB MATHIAS.
+		04/28/80 UPDATED FOR MORE EFFICIENT CODING BY CLAYTON
+			 HIBBERT AND KEITH PETERSEN.
+
+		THIS PROGRAM DEMONSTRATES HOW ONE CP/M COM PROGRAM CAN
+		EXECUTE ANOTHER COM PROGRAM.  THE SECRET IS IN
+		CREATING A FILE CALLED "$$$.SUB" WHICH CONTAINS THE
+		COMMAND TO EXECUTE THE NEXT PROGRAM.  AFTER DOING
+		THAT, A JMP TO WARM BOOT (0000H) WILL CAUSE CP/M TO DO
+		A SUBMIT OF THAT COMMAND.
+
+MBOOT  ASM	MBOOT.ASM ver 3.0 (revised 5 Nov 80)
+
+		MODEM BOOT PROGRAM by Keith Petersen, W8SDZ.  Thanks
+		to John Taylor for idea of incorporating simple
+		terminal routine.  Based on MODEM.ASM V2.0, by Ward
+		Christensen with enhancements from MODEM527.
+
+		CP/M - CP/M file transfer program (receive-only)
+
+		This program is intended for use as a way to initially
+		transfer MODEM.COM or MODEM.ASM to a new user.	It may
+		be used with almost any modem (see equates).  If PMMI
+		or D.C. Hayes modem is used, then uses 'ORIGINATE'
+		mode, 300 baud.
+
+		A simple terminal routine at start of program allows
+		user to communicate with a remote system prior to
+		receiving a file to make it possible to down-load a
+		file without intervention on the part of the host
+		system's operator.
+
+MENU   MAC	Originally published in Creative Computing, December
+		1979 by James J. Frantz who wrote this on May 31,
+		1979.  Converted to Z80 code by Frank J. Wancho,
+		August, 1980, and removed the BASIC dependencies -
+		i.e. .COM files are the only file type examined and
+		displayed.
+
+		This program is designed to be automatically executed
+		by CP/M immediately after a cold (or warm) boot.  This
+		program then displays the contents of the disk in a
+		menu fashion.  All files of specified type are sorted
+		and displayed alphabetically in four columns.  The
+		user then selects the desired program by its menu
+		number.  The selected program is then run.
+
+MLIST  HEX	This is MLIST.HEX.  When loaded, the COM file CRC = 26 09.
+
+		MLIST.COM - V3.4 by Keith Petersen, W8SDZ (revised 9/21/80)
+
+		This program lists any size ASCII file by name,
+		reading up to 16k of the file into memory at one time,
+		in order to minimize disk activity during printout.
+
+		Allows listing of multiple files by using normal CP/M
+		ambiguous file names (i.e., MLIST *.ASM).  Before each
+		file is printed, the FILENAME.TYPE is displayed.
+
+		Use CTL-S to pause, CTL-C to abort.  Other characters
+		are ignored.
+
+		This program allows CP/M 1.4 users to have protected
+		ASCII files on a remote system, provided that the CCP
+		'REN' (rename) and 'TYPE' functions have been changed
+		to some other characters and MLIST.COM has been renamed
+		to TYPE.COM.  To protect a file, rename it so the last
+		character of the file type is #.  Example - MYFILE.AS#
+
+		CP/M 2.x users may use 'TAG.COM' to set the f1'
+		attribute of a file, which will prevent this program
+		from listing it.
+
+MODEM  527	MODEM2.ASM Version of 05/27/80 This version is recommened
+		by Keith Petersen as being "closer to Ward's original ver-
+		sion of MODEM2."
+MODEM  926	MODEM2.ASM Version of 09/26/80
+
+		By Ward Christensen, Keith Petersen, etal.
+
+		Down- and up-loading program for remote CP/M users.
+		See RCP/M NOS for remote CP/M systems. Does checksum
+		every sector on file transfer. Can transfer object code.
+		MBOOT is a short down-load version. XMODEM is generally
+		used by the remote CP/M system to control file types
+		which may be transferred.
+
+MODEM  DOC	Documentation file on MODEM.
+
+MODEM2  PROTO	Kelly Smith's explanation of MODEM/XMODEM protocols.
+
+MONEY  TALKS	Where you can get a lot of free software; listed by function.
+		Highly reccomended reading.
+
+MOVE   ASM	MOVE.ASM, V2.1 (revised 6/12/80)
+
+		USED TO TRANSFER FILES FROM ONE DISK TO ANOTHER ON A 1
+		DISK SYSTEM, BY READING THE FILE INTO MEMORY.  ISSUES
+		ERROR MSG IF FILE WON'T FIT. ALSO USEFUL FOR
+		TRANSFERRING ONE FILE TO MULTIPLE DISKS. WORKS WITH
+		ANY DRIVE - A, B, C, OR D.
+
+MTN    BUGS, INFO
+MTN21  DOC, HEX, ...
+		These are FJW's CP/M Telnet programs. See MTN INFO.
+		MTN21 HEX43 is for 4300H systems (H89 and TRS-80).
+
+NSSKEW ASM	The patch file for NorthStar users containing the skew
+		tables to be used on FAST.COM and SPEED.COM.
+
+RBBS   USEDOC	So you want to start your own BBS.  This file tells how.
+
+RCP/M  INFO	Info on starting your own remote CP/M and on existing RCP/Ms.
+
+RCP/M  NOS	A summary of all know remote CP/M system software exchange
+		systems using XMODEM for file transfers.
+
+RSPEED ASM	ASM source file of RSPEED.COM used to determine the
+		optimum skew table for use with FAST or SPEED.
+
+RSPEED HEX	The HEX-format COM file of RSPEED.
+
+SD     ASM	SUPER DIRECTORY PROGRAM, by Bruce R. Ratoff (revised 12/15/80)
+
+		Displays the directory of a CP/M disk, sorted
+		alphabetically, with the file size in K, rounded to
+		the nearest CP/M block size.
+
+		This latest variation on a common theme will
+		automatically adjusts itself for any block size and
+		directory length under CP/M 1.4 or 2.x or MP/M (any
+		version).  If the screen fills, program will pause
+		until a key is struck (see NPL and LPS equates below).
+		Total space used and number of files are printed at
+		end.
+
+SD     HEX     The HEX-format COM file of SD.
+
+SIG/M  APR81   SIG/M Newsletter for April 1981
+SIG/M  DEC80   SIG/M Newsletter for December 1980
+SIG/M  NOV80   SIG/M Newsletter for November 1980
+
+SKEW2  ASMPAT  Sample skew table patch files for use with FAST and SPEED
+SKEW3  ASMPAT  
+
+SPEED  DOC     Supplemental documentation to FAST for using SPEED.
+
+TELNET C	By Leor Zolman and Leo Kenen. A communications program
+		written in BDS C.
+
+UNLOAD ASM     UNLOAD ver 2.0 - Create HEX file from COM file (revised 11/7/80)
+
+		--->Needs MAC and SEQIO.LIB to assemble<---
+
+		Originally from CPMUG 29.23
+
+UNLOAD HEX	The HEX-format COM file of UNLOAD.
+
+UP     LOAD	See UPDOWN DOC.
+
+UPDOWN DOC	Documentation for CPM;DOWN LOAD and CPM;UP LOAD
+		Lisp programs by Gail Zacharias (GZ@MC) for clean UP-
+		and DOWN loading files at MIT-MC.
+
+USER88 ASM	Replaces USER. Change USER in CCP. Used on remote CP/M
+		systems	although there may be other applications. Allows
+		operator to determine the maximum USER No. accessible by
+		the remote user.
+
+XD     HEX	The HEX-format COM file of XD - generates a sorted,
+		vertical format directory listing with file sizes.
+
+XMODEM ASM	Version 4.1. This is a version of MODEM which is used by
+		remote CP/M systems to prevent the transfer of .COM files
+		etc.
+
+====================

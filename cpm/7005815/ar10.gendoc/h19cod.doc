@@ -1,0 +1,121 @@
+
+
+
+	H E A T H   E S C A P E   S E Q U E N C E S
+        - - - - -   - - - - - -   - - - - - - - - -
+  		typed by F.B.Ghofulpo
+		   1979 August 26
+
+
+C U R S O R   F U N C T I O N S
+
+Sequence	Mnemonic	Definition
+--------	--------	----------
+
+ESC H		HCUH		Cursor Home
+ESC C		HCUF		Cursor Forward
+ESC D		HCUB		Cursor Forward
+ESC B		HCUD		Cursor Down
+ESC A		HCUU		Cursor Up
+ESC I		HRI		Reverse Index
+ESC n		HCPR		Cursor Position Report
+ESC j		HSCP		Save Cursor Position
+ESC k		HRCP		Set Cursor to Previously Saved Position
+ESC Y		HDCA		Direct Cursor Addressing (VT52)
+
+
+
+E R A S I N G   A N D   E D I T I N G
+
+ESC E		HCD		Clear Display (Shift Erase)
+ESC b		HBD		Erase Beginning of Display
+ESC J		HEOP		Erase to End of Page (Erase Key)
+Esc l		HEL		Erase Entire Line
+ESC o		HEBL		Erase Beginning of Line
+ESC K		HEOL		Erase to End of Line
+ESC L		HIL		Insert Line
+ESC M		HDL		Delete Line
+ESC N		HDCH		Delete Character
+ESC @		HEIM		Enter Insert 
+ESC O		HERM		Exit Insert Character Mode
+
+
+
+C O N F I G U R A T I O N
+
+ESC z		HRAM		Reset to Power-Up Configuration
+ESC r Bn	HMBR		Modify Baud Rate (Bn=; A=110, B=150,
+				  C=300, D=600, E=1200, F=1800, G=2000,
+				  H=2400, I=3600, J=4800, K=7200, L=9600)
+				 (M=19200 Should for dumb terminal use.)
+
+ESC x Ps	HSM		Set Mode(s): Ps=
+				  1 = Enable 25th line
+				  2 = No key click
+				  3 = Hold screen mode
+				  4 = Block cursor
+				  5 = Cursor off
+				  6 = Keypad shifted
+				  7 = Alternate keypad mode
+				  8 = Auto line feed on CR
+				  9 = Auto CR on line feed
+
+ESC y Ps	HRM		Reset mode(s): Ps=
+				  1 = Disable 25th line
+				  2 = Enable key click
+				  3 = Exit hold screen mode
+				  4 = Underscore cursor
+				  5 = Cursor on
+				  6 = Keypad unshifted
+				  7 = Exit alternate keypad mode
+				  8 = No auto line feed
+				  9 = No auto CR
+
+ESC <		HEAM		Enter ANSI Mode
+
+
+
+M O D E S   O F   O P E R A T I O N
+
+ESC [		HEHS		Enter Hold Screen Mode
+ESC \		HXHS		Exit Hold Screen Mode
+
+ESC p		HERV		Enter Reverse Vidio Mode
+ESC q		HXRV		Exit Reverse Vidio Mode
+
+ESC F		HEGM		Enter Graphics Mode
+ESC G		HXGM		Exit Graphics Mode
+
+ESC t		HEKS		Enter Keypad Shifted Mode
+ESC u		HXKS		Exit Keypad Shifted Mode
+
+ESC =		HAKM		Enter Alternare Keypad Mode
+ESC >		HXAM		Exit Alternate Keypad Mode
+
+
+
+A D D I T I O N A L   F U N C T I O N S
+
+ESC }		HDK		Keyboard Disable
+ESC {		HEK		Keyboard Enable
+ESC v		HEWA		Wrap Around at End of Line
+ESC w		HXWA		Discard at End of Line
+ESC Z		HID		Identify as VT52 (ESC / K)
+ESC ]		HX25		Transmit 25th Line
+ESC #		HXMP		Transmit Page
+
+Note: The Terminal will transmit the following sequences, but 
+it will not respond to them if they are received by the Terminal.
+
+ESC S		HF1		Function Key #1 (f1)
+ESC T		HF2		Function Key #2 (f2)
+ESC U		HF3		Function Key #3 (f3)
+ESC V		HF4		Function Key #4 (f4)
+ESC W		HF5		Function Key #5 (f5)
+ESC P		HF7		Function Key #7 (BLUE)
+ESC Q		HF8		Function Key #8 (RED)
+ESC R		HF9		Function Key #9 (GRAY)
+
+
+---------
+E N D

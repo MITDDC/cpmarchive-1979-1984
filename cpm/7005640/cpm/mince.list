@@ -1,0 +1,142 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; AMETHYST-USERS  ;; People who use Amethyst, a software package of
+;; programs: MINCE (an ersatz EMACS) and SCRIBBLE (an ersatz SCRIBE).
+;;
+;; This list is provided for the sole purpose of promoting the
+;; exchange of information concerning the use of these programs.
+;;
+;; Please - do NOT add yourself to this list.
+;; Send a request to AMETHYST-USERS-REQUEST@MIT-MC
+;; for any additions/deletions/changes.
+;;
+(FILE [MC:JCAF;AUG ARCH])	;; The archives
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(BEAN   MC)
+(BLUE   MC)
+(DEVON  MC)
+(EJS    MC)
+(FJW    MC)
+(EGBERT MC)
+(JEFFC  MC)
+(JERRYB MC)
+(JURGEN MC)
+(LEOR   MC)
+(LIN    MC)
+(PLK    MC)
+(SK     MC)
+;;
+(BANDY  AI)
+(CAL    AI)
+(CSTACY AI)
+(DANIEL AI)
+(DANNY  AI)
+(GAI    AI)
+(GAVAN  AI)
+(GEOFFM AI)
+;(GERBER AI) INQUIR forwards to non-existent address at DM
+(GUMBY  AI)
+(GYRO   AI)
+(KAWALA AI)
+(MEADER AI)
+(MITCHW AI)
+(MINSKY AI)
+(PNH    AI)
+(SWAIN  AI)
+;;
+(RG.JMTURN   OZ)
+(RMS.G.HNIJ  OZ)
+;;
+(BNH    ML)
+(DAN    ML)
+(LEO    ML)
+(MADLER ML)
+(PGA    ML)
+;;
+(EBM    XX)
+(RI     XX)
+;;
+(Salz   OZ)              ;was (TEN  MIT-VAX)
+;;
+(Nemnich-junk      MIT-MULTICS)
+(Pool.Datanet      MIT-MULTICS)
+(JPAnderson.DODCSC MIT-MULTICS)
+(Schauble.Multics  MIT-MULTICS)
+;;
+(BHUBER      USC-ECL)
+(NMAX        USC-ECL)
+(STERNLIGHT  USC-ECL)
+;;
+(BRACKENRIDGE USC-ISIB)
+(MOORE        USC-ISIB)
+(RIZZI        USC-ISIB)
+;;
+(Fenchel  USC-ISIF)
+;;
+(ATHEY       LLL-MFE)
+;(DWS         LLL-MFE)
+;;
+(CLEMENTS    BBNA)
+(MBARNES     BBNA)
+;;
+(MALIS       BBNE)		;;interested non-user
+;;
+(BROBERTS    BBNG)
+(TAPPAN      BBNG)
+;;
+(CSL.JLH.Celoni SU-SCORE)
+(CSL.LANTZ.GMO  SU-SCORE)          ;;interested non-user
+;;
+(david    UTEXAS-11)
+(kedem    UTEXAS-11)
+;;
+(CC.BOYD  UTEXAS-20)
+;;
+(Ed.DeHart   CMU-10B)
+(ZSARNAY     CMU-20C)
+;;
+(SHOLAR      CMUA)
+;;
+(KENNER      NYU)
+;;
+(JP          SU-AI)
+(MMD         SU-AI)
+;;
+(vortex!lauren LBL-UNIX)
+;;
+(gray        UCLA-SECURITY)
+;;
+(chesley.tsca SRI-UNIX)
+;;
+(SCHWARTZ    SRI-CSL)
+;;
+(AUTREY-HUNLEY SRI-KL)
+(ROODE         SRI-KL)
+;;
+(PEARSON     SUMEX-AIM)
+(WHITE       SUMEX-AIM)
+;;
+(Heiby.APSE       HI-Multics)
+;;
+(bridger     RAND-UNIX)
+;;
+(decvax!duke!uok!mwm    BERKELEY)
+(decvax!watmath!idallen BERKELEY)
+(menlo70!sytek!msm      BERKELEY)
+;;
+(Bresnan     PARC-MAXC)
+;;
+(AMETHYST-USERS.Rice UDEL-RELAY)
+(twc.hp-labs         UDEL-RELAY)
+;;
+(as.oneil    AFSC-SD)
+;;
+(greg        BRL-BMD)
+;;
+(MCCLUSKEY   JPL-VAX)
+;;
+(goldfarb.ucf-cs  RAND-RELAY)
+;;
+;; End of list
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

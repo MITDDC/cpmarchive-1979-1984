@@ -1,0 +1,405 @@
+;
+; Runtime library for Small C V2
+;
+; Bill Danielson, Mar 1983
+;
+
+BDOS	EQU	5	; Entry point to BDOS
+CONIN	EQU	1	; CPM console input routine 
+CONOUT	EQU	2	; CPM console output routine
+CPMARG	EQU	0080H	; CPM command line
+MAXARG	EQU	32	; Maximum of 32 arguments
+
+	EXTRN	FO0$OPEN, FO0$CLOSE, F0$PUT
+	EXTRN	FI0$OPEN, FI0$CLOSE, F0$GET
+	EXTRN	FI1$OPEN, FI1$CLOSE, F1$GET
+	EXTRN	FNAME, BBLINE
+	EXTRN   MAIN, CCDSGI, CCARGC
+
+
+
+; First thing, we run through the CPM input line and
+; modify it so that we can pass the C program the
+; command line in the argc, argv form that it expects
+
+; HL = pointer to next argv entry
+; DE = pointer to next character in command line
+; B = number of characters left in line
+; C = argument count
+
+START:	LXI	H,0	; Get CPM's stack pointer
+	DAD	SP
+	SHLD	STACK	; Save it for later
+	LDA	BDOS+2	; Get base of BDOS
+	MOV	H,A	; Save page in HL
+	MVI	L,0
+	SPHL		; Set stack pointer
+	MVI	C,0	; Init argc
+	LXI	H,ARGV	; Pointer to first entry of argv array
+
+; Unfortunately, CPM does not tell us what the first word of
+; the command line was (the name of pgm), so we fake
+; it by pointing it to a asciz string with 'pgmname' in it
+
+	LXI	D,PGM	; Pointer to 'pgmname' string
+	CALL	SVARG	; Save next argument
+
+; Ok, now for the real stuff.  Set DE pair to point to
+; CPM command line and start searching for arguments
+
+	LXI	D,CPMARG ; Pointer to CPM arg line
+	LDAX	D	; Load # character in line
+	MOV	B,A	; Save it in B
+NXTSP:	INX	D	; Point to next character
+	DCR	B	; Decrement character count
+	JM	ENDCMD	; End of cmd line
+	LDAX	D	; Load next character in line
+	CPI	' '	; Space?
+	JZ	NXTSP	; Yes...continue searching
+	CALL	SVARG	; Nope, save starting point of this arg
+
+; Loop looking for either end of line of a space
+
+NXTCH:	INX	D	; Point to next character
+	DCR	B	; Decrement character count
+	JM	ENDWRD	; End of cmd line, but need to end arg
+	LDAX	D	; Load next character in line
+	CPI	' '	; Space?
+	JNZ	NXTCH	; Nope...keep looking
+	MVI	A,0	; Yes, replace it with a zero byte
+	STAX	D
+	JMP	NXTSP	; Look for start of next arg
+ENDWRD:	MVI	A,0
+	STAX	D
+ENDCMD:	MVI	B,0	; Zero B (BC now is 16 bit argc)
+	PUSH	B	; First arg to main procedure
+	LXI	H,ARGV	; Point to argv array
+	PUSH	H	; Second argument to main procedure
+	MVI	A,2	; Load up the argument count
+	CALL	MAIN	; Transfer to the C world....
+	JMP	00H	; Return to CPM
+SVARG:	MOV	M,E	; Save pointer to start of string
+	INX	H
+	MOV	M,D
+	INX	H
+	INR	C	; Increment argc
+	RET
+ARGV:	DS	MAXARG*2
+PGM:	DB	'PGMNAME',0
+
+
+; lddr(source, dest, n)
+
+DOLDDR::
+	INX	SP	; Skip over return address
+	INX	SP
+	POP	B	; Load n
+	POP	D	; Load destination
+	POP	H	; Load source
+	DB	0EDH, 0B8H ; Do LDDR instruction
+	PUSH	H	; Restore stack
+	PUSH	D
+	PUSH	B
+	DCX	SP
+	DCX	SP
+	RET
+
+; doldir(source, dest, n)
+
+DOLDIR::
+	INX	SP	; Skip over return address
+	INX	SP
+	POP	B	; Load n
+	POP	D	; Load destination
+	POP	H	; Load source
+	DB	0EDH, 0B0H ; Do LDIR instruction
+	PUSH	H	; Restore stack
+	PUSH	D
+	PUSH	B
+	DCX	SP
+	DCX	SP
+	RET
+
+; End of memory function
+; Returns top memory location in HL
+
+TOPOFMEM::
+	LDA	BDOS+2	; Get base of BDOS
+	MOV	H,A	; Save page in HL
+	MVI	L,0
+	RET
+
+; Return the first free location
+
+FIRSTFREE::
+	LHLD	$MEMRY
+	RET
+$MEMRY::DW	0
+
+; This assembly routine allows CPM calls from Small C.
+;
+;     cpm(cpmfunction#, inputparameter)
+;
+; Since this function returns whatever is returned in register
+; it cannot be used to call ReturnVersionNumber, ReturnLoginVector,
+; WriteProtectDisk, or GetAddr.
+
+CPM::	POP	H	; Pop rtn address
+	POP	D	; Pop input parameter in DE register pair
+        POP	B	; Pop function code into C register
+	PUSH	B	; Restore stack
+	PUSH	D
+	PUSH	H
+	CALL	BDOS	; Call CPM
+        MOV     L,A	; Sign extend A into HL register pair
+        RLC
+        SBB     A
+        MOV     H,A
+        RET
+
+EXIT::	LHLD	STACK	; Load stack pointer
+	SPHL
+	JMP	0
+
+STACK:	DW	0
+
+; abort(reason)
+
+ABORT::	LXI	H,WFCBS	; Point to write FCB
+	MOV	A,M	; Get in use byte
+	CPI	0	; See if open
+	JZ	NOCLS	; Not open, don:t close it
+	PUSH	H	; Open...close output file
+	CALL	FCLOSE
+	POP	B
+NOCLS:	LXI	H,ABTMSG ; Load abort message
+	PUSH	H
+	LXI	H,2
+	PUSH	H
+	CALL	FPUTS
+	POP	B
+	POP	B
+	LXI	H,2
+	CALL	CCDSGI
+	PUSH	H
+; Someday this should write out the correct error code
+;	CALL	OUTDEC##	; Inside C compiler
+	POP	B
+	JMP	EXIT
+
+ABTMSG:	DB	0DH, 0DH, "Aborted, reason = ",0
+
+
+;dev = fopen(str, type)
+
+FOPEN::	LXI	H,2	; Get type
+	CALL	CCDSGI
+	MOV	A,M
+	CPI	'r'	; Read?
+	JZ	FOPENR
+	CPI	'R'
+	JZ	FOPENR
+FOPENW:	LXI	H,WFCBS	; No...write
+	JMP	FOPEN1
+FOPENR:	LXI	H,RFCBS
+FOPEN1:	MOV	A,M	; See if FCB in use
+	CPI	0FFH	; -1 means end of list
+	JZ	FOPENE	; So, signal error
+	CPI	0	; 0 means free
+	JZ	FOPEN2	; If free, open it
+	LXI	D,FCBSZ	; Size of each entry
+	DAD	D	; Skip to next entry
+	JMP	FOPEN1	; Continue searching for FCB
+FOPEN2:	SHLD	DEVICE	; Save device for later
+	INX	H	; Point to FCB
+	XCHG		; FCB -> DE reg
+	LXI	H,4	; Get filename string
+	CALL	CCDSGI
+	MOV	A,M	; See if null file name
+	CPI	0
+	JZ	FOPENE	; Yes...treat this as an error
+	CALL	FNAME	; Initialize FCB
+	JZ	FOPENE	; Tell user if error
+	LHLD	DEVICE	; Restore device
+	LXI	B,OPNOFF ; Point to open routine
+	DAD	B
+	CALL	CALLIT
+	JNZ	FOPENE	; Tell user if error
+	LHLD	DEVICE	; Restore device
+	MVI	A,1	; Mark FCB in use
+	MOV	M,A
+	RET		; Return with FCB entry in H
+FOPENE:	LXI	H,0	; Return error to user
+	RET
+
+; fputc(char, dev)
+
+FPUTC::	LXI	H,4	; Get character to output
+	CALL	CCDSGI
+	XCHG		; Save it in DE pair
+FPUTC3:	PUSH	D	; Save it on stack also 
+	LXI	H,4	; Get device
+	CALL	CCDSGI
+	MOV	A,H	; Look at MSByte
+	CPI	0	; If zero, must be console
+	JNZ	FPUTC1	; Otherwise, it's output file
+	MVI	C,CONOUT ; CPM function to write
+	CALL	BDOS	; Output character to console
+	JMP	FPUTC4	; Continue
+FPUTC1:	LXI	B,PUTOFF ; Get put/get routine address
+	DAD	B	; H now points to routine JMP instruction
+FPUTC2:	MOV	A,E	; Load character to output
+	CALL	CALLIT	; Call the routine
+FPUTC4:	POP	D	; Get the character we just sent
+	MOV	A,E	; See if it is a CR
+	CPI	0DH	; CR ?
+	RNZ		; No...return
+	MVI	E,0AH	; Yes...output a LF
+	JMP	FPUTC3
+
+; getc(dev)
+
+FGETC::	LXI	H,2	; Get device
+	CALL	CCDSGI
+	MOV	A,H	; Look at MSByte
+	CPI	0	; If zero, must be console
+	JNZ	FGETC1	; Otherwise, its input from file
+	MVI	C,CONIN	; CPM console input routine
+	CALL	BDOS
+	JMP	FGETC3
+FGETC1:	LXI	B,GETOFF ; Get offset to get jmp
+	DAD	B
+FGETC2:	CALL	CALLIT	; Call the routine
+FGETC3:	CALL	CCARGC	; Fix up results
+	RET
+
+FCLOSE::LXI	H,2	; Get device to close
+	CALL	CCDSGI
+	MVI	A,0	; Indicate closed
+	MOV	M,A
+	LXI	D,CLSOFF
+	DAD	D
+	CALL	CALLIT
+	LXI	H,0
+	RET
+
+CALLIT:	PCHL		; Call procedure pointed to by HL
+
+; puts(str, dev)
+
+FPUTS::	LXI	H,2	; Get device
+	CALL	CCDSGI
+	XCHG		; Save in DE
+	LXI	H,4	; Get string ptr
+	CALL	CCDSGI
+FPUTSL:	MOV	A,M	; Get next character in string
+	CPI	0	; End of string?
+	RZ		; Yes..return
+	INX	H	; No...increment string ptr
+	PUSH	H	; Save it on stack
+	PUSH	D	; Save device on stack
+	CALL	CCARGC	; Extend char into integer
+	PUSH	H	; Save on stack
+	PUSH	D	; Save device on stack
+	CALL	FPUTC
+	POP	B	; Restore stack
+	POP	B
+	POP	D	; Restore device
+	POP	H	; Restore string ptr
+	JMP	FPUTSL	; Loop outputting characters
+
+FGETS::	LXI	H,6	; Get input buffer
+	CALL	CCDSGI
+	PUSH	HL	; Save pointer on stack
+FGETSL:	LXI	H,4	; Get device
+	CALL	CCDSGI
+	LXI	B,GETOFF
+	DAD	B
+	CALL	CALLIT	; Get next character
+	CPI	0DH	; CR?
+	JZ	FGETSL	; Yes...skip this character
+	CPI	0AH	; LF?
+	JZ	FGETSE	; Yes...end of line
+	CPI	26	; Control Z
+	JZ	FGETSF	; Yes...end of file
+	POP	HL	; Get buffer pointer
+	MOV	M,A	; Save character
+	INX	H	; Increment pointer
+	PUSH	HL	; Save pointer
+	JMP	FGETSL	; Continue getting
+FGETSE:	MVI	A,0	; End the string
+	POP	HL	; Get buffer pointr
+	MOV	M,A	; Save null byte
+	RET		; Return to caller
+FGETSF:	POP	HL	; Pop buffer pointer off stack
+	LXI	H,0	; Signal end of file
+	RET
+
+; RIndex and Index currently are nops...they never find the string.
+
+RINDEX::
+INDEX::	LXI	H,0	; Can:t find the string!
+	RET
+
+GETS::	MVI	A,1	; Capitialize
+	CALL	BBLINE	; Get next line of input text
+	PUSH	H	; Save it for later
+	LXI	H,00AH;	; Output a LF to screen
+	PUSH	H
+	LXI	H,2	; Console output (?)
+	PUSH	H	
+	CALL	FPUTC
+	POP	B	; Restore stack
+	POP	B
+	POP	D	; Get input line
+	LXI	H,2	; Get users buffer
+	CALL	CCDSGI
+	LDAX	D	; Get first byte of buffer
+	CPI	0	; Null line?
+	JNZ	GETSL	; No...process line
+	MOV	M,A	; Store in users buffer
+	LXI	H,0	; Indicate end of file?
+	RET
+GETSL:	LDAX	D	; Get next byte of buffer
+	MOV	M,A	; Store in users buffer
+	CPI	0	; If zero, all done
+	RZ
+	DCX	B	; Decrement counter
+	RZ		; If buffer full, return
+	INX	H
+	INX	D	; Update pointers
+	JMP	GETSL	; Continue copying
+
+DEVICE:	DW	0	; Save area for device
+
+; The input FCBS
+
+RFCBS	EQU	$
+	DB	0	; Use byte
+	DS	36	; The FCB
+OPNOFF	EQU	$-RFCBS
+	JMP	FI0$OPEN	; Open routine
+CLSOFF	EQU	$-RFCBS
+	JMP	FI0$CLOSE ; Close routine
+GETOFF	EQU	$-RFCBS
+PUTOFF	EQU	$-RFCBS
+	JMP	F0$GET	; Get routine
+FCBSZ	EQU	$-RFCBS
+	DB	0
+	DS	36
+	JMP	FI1$OPEN
+	JMP	FI1$CLOSE
+	JMP	F1$GET
+	DB	0FFH	; End of list
+
+WFCBS	EQU	$
+	DB	0
+	DS	36
+	JMP	FO0$OPEN
+	JMP	FO0$CLOSE
+	JMP	F0$PUT
+	DB	0FFH	; End of list
+
+
+	END
+

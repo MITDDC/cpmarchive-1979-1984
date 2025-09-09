@@ -1,0 +1,111 @@
+Date: 23 Jul 1982 1117-PDT
+From: SIM at SU-AI
+To:   info-vax at SANDIA, h19-people
+cc:   SIM at SU-AI
+Re:   Reading Escape Sequences with VAX/VMS  
+
+    The following FORTRAN-77 subroutine allows VAX/VMS users to read escape
+sequences.  This is useful for reading keypad and special function keys on
+terminals, reported cursor positions, etc.  The subroutine sets then unsets
+(using an exit handler) the terminal characteristic ESCAPE so that you don't
+have too.
+    To call ReadEscape from Pascal, declare it as follows:
+
+	type StringTyp = packed array[1..?] of char;
+	procedure ReadEscape( %STDESCR string : StringTyp;
+				var StrLen,EscLen : integer); FORTRAN;
+
+    For those of you interested, I have also written routines for single
+character input (using QIO reads in PASSALL mode with buffer length equal to
+one), and several Heathkit H19 dependent routines:  one to display process
+status, priority, terminal name, cpu time, image name, data and time, and
+current default directory on the 25th line dynamically while running other
+things; another to save everything you see on your screen, including graphics
+characters, into a file which can then be edited, printed or typed out (VERY
+HANDY!).						-Stuart McDonald
+
+C	Subroutine ReadEscape
+C	returns an input string terminated by a <CR> or any valid escape
+C	sequence; StrLen is the number of characters before the terminator and
+C	EscLen is the number of characters in the terminator.  The total 
+C	length of the inputed string is StrLen + EscLen.  	-S.McD. 6/6/82
+
+	function ReadEscape( string,StrLen,EscLen )
+	implicit integer (a-z)
+	character*(*) string
+	integer ReadEscape,StrLen,EscLen
+
+	character	sys$input*9/'SYS$INPUT'/,terminal*63
+	external	io$_readvblk,io$_setmode,tt$m_escape,ToggleEsc
+	logical		first/.true./
+	integer		iosb*2(4)
+	common		/stu_escape/cchan	! common used by ToggleEsc
+  	save		first,func_code,chan
+
+	if (first) then
+			! Define ToggleEsc as an exit handler (see Users Guide)
+	    call userex(ToggleEsc)
+
+			! Find lowest logical name translation of SYS$INPUT
+	    call trnlog(sys$input,terminal,name_len)		! lowest log
+	    status = sys$assign( terminal, chan,, )		! open terminal
+		if (.not.status) call lib$stop( %VAL(status) )	! check status
+	    cchan = chan					! load common
+	    call ToggleEsc					! allow esc seq
+
+			! Ready function code for read of escape sequence
+	    func_code = %LOC(io$_readvblk)			! ordinary read
+	    first = .false.
+	endif
+			! Read in line and/or escape sequence
+	status = sys$qiow( ,%VAL(chan),%VAL(func_code),iosb,,,
+	1	%REF(string),%VAL(len(string)),,,,)	! read esc seq
+	if (.not.status) call lib$stop( %VAL(status) )	! check status
+	ReadEscape = iosb(1)				! rtn i/o stat
+	StrLen = iosb(2)			! # chars before terminator
+	EscLen = iosb(4)			! # chars in terminator
+	return
+	end
+				! This came from "Prog. VMS in FORT/MAC",p.83
+ 	subroutine trnlog( old_log,new_log,new_len )
+	implicit	integer (a-z)
+	byte		esc_null_int(2) /'1B'X,0/
+	character*2	esc_null
+	character*(*)	old_log,new_log
+	external	ss$_notran
+	equivalence	(esc_null,esc_null_int)
+				! Translate name once
+	status = sys$trnlog( old_log,new_len,new_log,,, )
+	if (status.eq. %LOC(ss$_notran)) stop 'Logical name has no translation'
+				! Repeat translation until unsuccessful
+	do while (status.ne.%LOC(ss$_notran))
+	    old_log(1:new_len) = new_log
+	    status = sys$trnlog( old_log(1:new_len),new_len,new_log,,, )
+	enddo
+				! Check if process permanent file
+	if (new_log(1:2).eq.esc_null) then
+	    new_log(1:new_len) = new_log(5:new_len)
+	    new_len = new_len - 4
+	endif
+	return
+	end
+
+	subroutine ToggleEsc	! Toggles Escape Recognition for Terminals
+	implicit	integer (a-z)
+	integer		mode_buf(2)
+	external	tt$m_escape,io$_setmode,io$_sensemode
+	common		/stu_escape/chan	! Channel passed in my common
+
+	func_code = %LOC(io$_sensemode)		! Get terminal characteristics
+	status = sys$qiow( ,%VAL(chan),%VAL(func_code),,,,mode_buf,,,,,)
+	    if (.not.status) call lib$stop( %VAL(status) )	! check status
+
+	mode_buf(2) = mode_buf(2) .xor. %LOC(tt$m_escape)	! toggle bits
+
+	func_code = %LOC(io$_setmode)		! Set terminal characteristics
+	status = sys$qiow( ,%VAL(chan),%VAL(func_code),,,,mode_buf,,,,,)
+	    if (.not.status) call lib$stop( %VAL(status) )	! check status
+
+	return
+	end
+

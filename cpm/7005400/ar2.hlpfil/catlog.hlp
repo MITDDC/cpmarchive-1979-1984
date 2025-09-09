@@ -1,0 +1,163 @@
+General Information on Cataloging system
+Format of MAST.CAT file
+Volume Identifiers
+Updating Process
+Retreiving data from catalog
+Special Features of FMAP
+:CATALOG:General Information on Cataloging system
+
+This document describes a system for cataloging all of a users
+CP/M diskettes.  Written by Ward Christensen.
+
+The master cataloging system consists of the following:
+ 
+	MAST.CAT	The catalog itself 
+ 
+	FMAP.COM	Used to create NAMES.SUB, the 
+			"transaction file" for catalog update 
+ 
+	CAT.COM		Like DIR, i.e. the lookup program 
+
+	CAT2.COM	Quick kludge program, lists entire
+			catalog, printing each filename only
+			once, & stringing disk names out after.
+ 
+	UCAT.COM	The update program, merges NAMES.SUB 
+			into MAST.CAT 
+ 
+	UCAT.COM        It  now  catalogs the "volume  serial" 
+                        (-name.nnn).
+:CATALOG:Format of MAST.CAT file
+
+	The format of MAST.CAT is:
+
+	First, a list of names of files not to be cataloged, in
+parentheses.  The list supplied with the sample is:
+
+	(ASM.COM
+	DDT.COM
+	LOAD.COM
+	PIP.COM
+	SID.COM
+	STAT.COM
+	SUB.COM		<-- I renamed SUBMIT on most disks
+	SUBMIT.COM)
+
+	Then a list of all cataloged files, in the form:
+
+	filename.type diskname.serial
+
+For example: ALLOC.COM SYSRES.802
+
+:CATALOG:Volume identifiers
+	A disk must have a special filename on it, which is the
+volume indentifier: -diskname.serial,  such  as  "-SYSRES.801".
+This may be done via:
+
+	save 0 b:-sysres.801    (FOR CP/M SYSTEMS)
+        save b:-sysres.801 1    (FOR CDOS SYSTEMS)
+
+	NOTE  that  the  SAP  (sort and pack directory) program
+previously  distributed  by  the CP/M U.G. deletes all 0-length
+file entries, so  if  you  use this utility, do a save 1, not a
+save 0.
+:CATALOG:Updating Process
+
+	To  update  the  catalog for a disk, use FMAP to create
+the NAMES.SUB file (which  contains  a  sorted  listing  of the
+files   on   the   particular   disk).    Filename   $$$.SUB is
+automatically skipped, as I recall.
+
+	FMAP B: Q
+
+	will write NAMES.SUB to the logged in disk.  Then  type
+UCAT  which  will  merge  NAMES.SUB  with  MAST.CAT,  and erase
+NAMES.SUB.
+	Note  that  UCAT  is  a  "belts  and  suspenders"  type
+program,  i. e.  it  creates NEW.CAT, and merges NAMES.SUB with
+MAST.CAT and puts it there.  It then does:
+
+	era mast.bak
+	ren mast.bak=mast.cat
+	ren mast.cat=new.cat
+
+	This means that unless you era mast.bak, there will  be
+3  copies  of  the  master  catalog on the disk during the ucat
+execution. If you  don't  have  sufficient  space  for  it, era
+mast.bak first.
+:CATALOG:Retreving data from catalog
+	CAT works just like DIR, i.e.  "*" and "?" are allowed.
+However,  it  takes  a second operand (after the filename/type)
+which is  the  disk  information,  in  the  form  NAME.SERIAL -
+without the dash.  Sample queries:
+
+	CAT		<-- ALL FILES
+	CAT *.* WORK.*	<-- ALL FILES ON ANY "WORK" DISK
+	CAT *.ASM	<-- ALL .ASM FILES
+	CAT *.* *.8*	<-- ALL FILES ON DISKS WITH SERIAL
+			    NUMBERS 8xx
+
+	Note that the "-diskname.serial" file is written to the
+disk  (it  wasn't  under  the  earlier  UCAT  in the CP/M users
+group). Thus you can get a list of all disk serials via:
+
+	CAT -*.*
+
+	but other than this one file entry, the "-"  characters
+are  eliminated  from  the  directory, i.e.  the disk names are
+stored as 7 characters (or less).
+:CATALOG:Special Features of FMAP
+	FMAP has some additional options:
+
+			FMAP 
+displays a sorted listing on the console 
+			FMAP specs 
+displays a selective listing.  Specs mean *.asm, etc just 
+like DIR. 
+			FMAP specs D 
+writes the names to NAMES.SUB with $1 $2 before the name, 
+and $3 after: 
+ 
+	$1 $2FOO.COM $3 
+ 
+Thus $1 may be substituted with a command name, $2 with 
+a disk name, and $3 if the program takes options (only 
+my programs do, as far as I know) 
+			FMAP specs Q 
+writes the sorted names, without any "$", to NAMES.SUB. 
+			FMAP specs M 
+writes the names to NAMES.SUB with $1 $2 $3  before the name, 
+and $4 after: 
+
+	$1 $2 $3FOO.COM $4 
+
+This is specifically for use with the modem program.  For 
+example, to send all .ASM files from the B: disk to another 
+person: 
+
+	FMAP B: M		<-- MAKE NAMES.SUB 
+        MODEM SO.600 NAMES.SUB  <-- SEND THEM NAMES.SUB 
+        SUBMIT NAMES MODEM SO.600 B: <-- SUBMIT THE SEND 
+
+MODEM gets substituted for $1, SO.600 for $2, and B: for $3.
+			FMAP specs UNN
+creates CP/M users group catalog volume "nn".  Not generally
+useful, but thought you might like to know how it was done.
+
+	NOTE  that  I  have  found  the  FIND   program   (also
+distributed  on  this  users group disk) to be very useful when
+used  with  MAST.CAT  -  suppose  you  have  the   following in
+MAST.CAT:
+ 
+	BIOS1.ASM 
+	BVIOS.ASM 
+	CBIOS.ASM 
+	M2BIOS.ASM 
+ 
+It's ovbious that CAT cannot find all your BIOS related files -
+but if you type:
+ 
+	FIND MAST.CAT IOS 
+ 
+You will find them all
+

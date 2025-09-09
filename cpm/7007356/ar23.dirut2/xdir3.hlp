@@ -1,0 +1,482 @@
+Overview of XDIR3
+Basic Use of XDIR3 under ZCPR2
+XDIR3 Output Control Options
+XDIR3 File Selection Options
+XDIR3 File Name Buffer Facility
+Use of XDIR3 on Secure Systems
+Installation and Sample XDIR3INS Session
+:Overview of XDIR3
+
+     XDIR3  is an extended directory display utility designed  to 
+run  under CP/M 2.2 and support some of the extended features  of 
+ZCPR2 as well.  Any conventional CP/M 2.2 user may use XDIR3, but 
+he  should make sure he turns off the ZCPR2-specific features  by 
+running  the XDIR3 Installation Program,  XDIR3INS,  and manually 
+turning them off before using XDIR3.
+
+     XDIR3  automatically  adapts to any Org-0 CP/M  2.2  system, 
+regardless of the size of its disks.  It reads the disk parameter 
+block information from the operating system to determine what the 
+attributes  of  the  disk it is working with  are,  and  it  then 
+presents its display information accordingly.
+
+     XDIR3 runs in two basic modes:
+          . as a directory display utility
+          . as a file scanner utility (File Name Buffer Facility)
+
+     XDIR3  is a ZCPR2 utility which supports the extended  ZCPR2 
+features, particularly named directories.
+
+     As   a  directory  display  utility,   it  displays  to  you 
+information  about  the files on a particular disk in  all  or  a 
+particular user area.  It gives you the following information:
+          . Name of File
+          . Size of File (in K bytes)
+          . Attributes of File (R/O or System)
+          . Sum of Sizes of All Files Displayed
+          . Total Number of Files on Disk
+          . Amount of Space Remaining on Disk
+          . What Disk and What User Area you are looking at
+
+     As a file scanner utility, it does the following:
+          . Logs a group of selected files to disk for later scan
+          . Prints the contents of such a log file
+          . Scans a log file and compares it with the files
+               selected by you, telling you what files are
+               missing and what files are additional
+
+     XDIR3 is quite human-oriented,  with many built-in  features 
+which  provide  a  human-interface type of service to  the  user.  
+Some of these include:
+
+          . Named Directories may be specified
+          . The file listing is alphabetized by file name and
+               type or file type and name, depending on user
+               preference
+          . The file listing is organized vertically or
+               horizontally, depending on user preference
+          . Output may also be send to disk or printer
+          . XDIR3 is designed to run quickly, having an optimum
+               design in its directory load and sort modules
+
+:Basic Use of XDIR3 under ZCPR2
+
+     XDIR3 is invoked by one of the following command lines:
+
+          XDIR afn oooo... or XDIR afn /oooo...
+and
+          XDIR /oooo...
+
+where all elements after the XDIR command are optional.
+
+     'afn'  is an ambiguous file reference,  as described on  the 
+following frames.   'o' is an option letter, which is one or more 
+of  the options described on the next frame.   Note that since  a 
+slash denotes that an option follows, an afn may not begin with a 
+slash.   This  can be changed by an equate in the source code  of 
+XDIR3 if desired.
+
+
+          Aa - Set the attributes of the files to be displayed
+               a=S for System Files, a=N for Non-System Files
+               a=A for All Files (Non-System and System)
+          D  - Send Output to Disk
+          Ff - Engage File Name Buffer Facility
+               f=L to Log File Names to Disk
+               f=P to Print Names Logged to Disk
+               f=S to Scan Disk for File Names and Compare to
+                    Log
+          G  - Toggle Grouping (group files by name and type or
+                    type and name)
+          H  - Toggle Horizontal or Vertical display format
+          I  - Inspect files selected by FL option
+          N  - Negate Selection; select those files which do NOT
+                    match the ambiguous file name
+          P  - Send Output to Printer
+
+
+     'afn' is an ambiguous file reference, of the general form:
+
+          dir:filename.typ
+
+where
+     filename.typ   is a conventional CP/M ambiguous file name
+                         (wild card characters of ? and * are OK,
+                         but file name must NOT start with /)
+     dir:           is a ZCPR2 directory specification, which may
+                         be one of the following forms:
+          d:        where 'd' is a disk letter (A-P) to indicate
+                         the current user area on that disk
+          u:        where 'u' is a user number (0-31) to indicate
+                         that user on the current disk; 'u' may
+                         be a '?', in which case all user areas
+                         are selected
+          du:       where 'du' specifies both disk and user
+          name:     where 'name' is the name of a directory
+                         (disk/user area)
+
+     Examples of an ambiguous file reference are:
+
+          A:FILE.TXT          A4:FILE.TXT
+          ROOT:FILE.TXT       A?:*.COM
+          12:*.*              A12:SYSLIB*.*
+
+     Examples of an XDIR3 command are:
+
+          XDIR ROOT:*.COM AAN
+               -- Select All Files in directory ROOT which do
+                  NOT match *.COM
+          XDIR B10: ASD
+               -- Select the System Files in B10, and send
+                  output to disk as well as console
+          XDIR /AADP
+               -- Select All Files in current directory, and
+                  send output to disk and printer as well as
+                  console
+:XDIR3 Output Control Options
+
+     These options are:
+
+          D  - Send Output to Disk
+          G  - Toggle Grouping (group files by name and type or
+                    type and name)
+          H  - Toggle Horizontal or Vertical display format
+          P  - Send Output to Printer
+
+     D and P are fairly obvious.   If P is specified,  the output 
+goes to your printer (CP/M LST:  device) as well as your console.  
+If  D is specified,  the output goes to your current directory as 
+the file XDIR.DIR.  If XDIR.DIR already exists, it is replaced.
+
+
+     G  and  H  are  toggled  options.    If,   via  XDIR3INS  at 
+installation time,  you selected alphabetization by file name and 
+type, the G option will flip this to alphabetize by file type and 
+name,  and vice-versa.  The same with the H option.
+
+     G  allows you to select your display to be  alphabetized  by 
+file  name and type or type and name.   If by file name and type, 
+then AA.TXT comes before BB.COM.   If by file type and name, then 
+BB.COM  comes before AA.TXT.   Alphabetization by file  name  and 
+type groups files of the same name together (FN fields,  like all 
+XDIR3  files),  while  by file type and name groups files of  the 
+same type together (FT fields, like all *.TXT files).
+
+     H allows you to select your alphabetized files to be  listed 
+down  the  screen (vertical) or across the  screen  (horizontal).  
+The screen is divided into three columns,  and a vertical listing 
+alphabetizes down the first column, then the second, and then the 
+third, while a horizontal listing alphabetizes first, second, and 
+third columns on the first line, and so on with each line.
+:XDIR3 File Selection Options
+
+     The  following  options (and the DIR:  field)  control  file 
+selection:
+
+          Aa - Set the attributes of the files to be displayed
+               a=S for System Files, a=N for Non-System Files
+               a=A for All Files (Non-System and System)
+          N  - Negate Selection; select those files which do NOT
+                    match the ambiguous file name
+
+     The N option negates your ambiguous file name reference, but 
+it  stays  in the SAME set of system or  non-system  files.   For 
+instance,  XDIR  *.COM /NAS selects all SYSTEM files which do NOT 
+match *.COM.  If you have installed XDIR3 to automatically select 
+both SYSTEM and NON-SYSTEM files,  then XDIR *.COM /N will select 
+all non-COM files in your current directory.
+
+
+     The  A  option  sets  the attributes  of  the  files  to  be 
+displayed.   If AA is presented,  then both Non-System and System 
+files will be displayed.   If AS,  then just System files, and if 
+AN, then just Non-System.
+
+     You  can  set  the  default file  attribute  display  to  be 
+whatever  you  desire.    Using  XDIR3INS,  you  can  have  XDIR3 
+automatically  select just the System files,  just the Non-System 
+files,  or  both Non-System and System files whenever you run  it 
+without using the A option.
+
+
+:XDIR3 File Name Buffer Facility
+
+     The  options of XDIR3 which deal with the File  Name  Buffer 
+Facility are:
+
+          Ff - Engage File Name Buffer Facility
+               f=L to Log File Names to Disk
+               f=P to Print Names Logged to Disk
+               f=S to Scan Disk for File Names and Compare to
+                    Log
+          I  - Inspect files selected by FL option
+
+     The  file selection options come into play as well with  the 
+FL  option  to select the files to be placed into the  log  file, 
+FNAMES.DIR.
+
+
+     The  FL option writes the user numbers and file names of the 
+selected  files  to  disk into the  file  named  FNAMES.DIR.   If 
+FNAMES.DIR already exists,  then it is rewritten.  The FNAMES.DIR 
+files is used by the FP and FS options.
+
+     The  I  option  (for inspect) allows the  user  to  manually 
+approve each file before its name is placed into FNAMES.DIR.
+
+     The  FP option simply prints out the user numbers and  names 
+of all the files stored in FNAMES.DIR.   If FNAMES.DIR is not  in 
+the current directory,  FP will search along the ZCPR2 path until 
+it finds it or reaches the end of the path.
+
+     The FS option scans FNAMES.DIR and the files selected by the 
+user  (or implied if no specific file selection option is  given) 
+and compares them.  If a file exists in FNAMES.DIR but not in the 
+selected files, its name is printed as a missing file.  If a file 
+exists  on disk but not in the FNAMES.DIR file,  then its name is 
+printed as an additional file.
+
+     Note  that the user should keep in mind what he is  scanning 
+for when he uses the File Name Buffer Facility.  For instance, if 
+he  selects both Non-system and System files with the  FL  option 
+and then defaults to Non-System with the FS option,  then several 
+files will come up missing while this is not necessarily true.
+
+     Using XDIR3INS,  the Installation Program for XDIR3, you can 
+create  two  different  versions of XDIR3  -- one  for  Directory 
+Display   operations  and  one  for  File  Name  Buffer  Facility 
+functions.  If you do this, then you could also set the Directory 
+Display version to work with Non-System files by  default,  while 
+you  could set the File Name Buffer Facility version to work with 
+both Non-System and System files.
+
+:Use of XDIR3 on Secure Systems
+
+     On Secure Systems, such as Remote CP/M Systems, XDIR3 may be 
+configured,  via XDIR3INS, to provide a secure directory utility.  
+Some ideas along this line include:
+
+          . You can install XDIR3 so that it cannot look at any
+               directory other than the one it is in
+          . You can install XDIR3 so that you can look at the
+               current user area on any disk, but not in other
+               user areas
+          . You can install XDIR3 so that you can look at all
+               user areas on the current disk, but not on any
+               other disk
+          . You can install XDIR3 so that you cannot look at any
+               System files
+          . You can install XDIR3 so that none of the F options
+               are available
+          . You can install XDIR3 so that users may list the
+               files (FP) or scan the disk (FS), but not log
+               files to disk (FL)
+
+     These are just some of the ways I have designed XDIR3 to  be 
+flexible in these types of environments.   In a more conventional 
+environment,  such  as  a software development  environment,  you 
+would  probably  want  XDIR3  to  give  you  complete  access  to 
+everything.
+
+     See  the  next section on installation for more  details  on 
+setting XDIR3 capabilities and defaults.
+
+:Installation and Sample XDIR3INS Session
+
+     XDIR3INS is the installation program which comes along  with 
+XDIR3  and  allows the user to define the basic capabilities  and 
+default functions executed by a particular copy of XDIR3.
+
+     When XDIR3INS is executed,  it asks the user for the name of 
+the  XDIR3 file.   The user may specify this file in  the  normal 
+ZCPR2 format:
+
+          dir:filename.typ
+
+     XDIR3INS  will  read  the first block of  this  file,  which 
+contains the customization information,  and then allow you to do 
+one of three things (its basic command prompt):
+
+          . Display the Current Features
+          . Set the Features of XDIR3 to the user's liking
+          . Exit and optionally create a new XDIR3 COM file
+
+     The  features  which may be set by the system manager  under 
+XDIR3INS are:
+          . Whether the user may specify a directory (disk/user)
+          . If directory specification is allowed, whether the
+               user may specify just disk or just user (but not
+               necessarily both)
+          . Whether the user may employ any of the F options
+          . If the F options may be used, if the user may employ
+               the FL option specificially
+          . Whether the user may employ the AS option
+          . Whether XDIR3 will perform a Directory Display
+               of File Name Buffer Facility function by default
+          . Whether XDIR3 will display Non-System or System files
+               (or both) by default
+          . Whether the alphabetization will be by file name and
+               type or type and name by default
+          . Whether the listing will be vertical or horizontal by
+               default
+          . Whether ZCPR2 External Paths are available, and, if
+               so, what the base path address is
+
+     If  the  user is not running ZCPR2,  he should  be  sure  to 
+disable External Paths.
+
+     The prompting by XDIR3INS is quite self-explanatory,  so the 
+following  frames  show  you an  actual  XDIR3INS  session,  with 
+comments marked off by <-- to explain what is going on.
+
+
+                     Sample XDIR3INS Session
+
+B>xdir3ins          <-- Invocation Command
+
+XDIR3INS -- Installation Program for XDIR3
+Name of XDIR3 File (<CR>=Abort)? xdir.com    <-- I enter the name
+Ready to Set Default Values
+
+
+        XDIR3INS Command (D=Display Values, S=Set Values, X=Exit)? D
+                    <-- Type D to Display Current Values
+
+Enable Specification of User Number and Disk: Yes
+Specification of Disk Allowed: Yes
+Specification of User Allowed: Yes
+Alphabetize Listing by File Type and Name
+Vertical Listing
+Non-System  Files Are Selected
+Directory Display Default Function Selected
+Enable File Scanner Options: Yes
+Enable File Log Option: Yes
+Enable Attribute System Option: Yes
+Enable External Paths: Yes
+Address of External Path is 0040H
+
+
+        XDIR3INS Command (D=Display Values, S=Set Values, X=Exit)? S
+                    <-- Type S to Set New Values
+
+Enable Specification of User Number and Disk: Yes <-- See Current
+  Do you want to Enable this Flag (Y or N, <CR>=No Change)?
+               <-- Select Change or No Change
+
+Specification of Disk Allowed: Yes
+  Do you want to Enable this Flag (Y or N, <CR>=No Change)? 
+
+Specification of User Allowed: Yes
+  Do you want to Enable this Flag (Y or N, <CR>=No Change)? 
+
+Alphabetize Listing by File Type and Name
+  If the flag is enabled, Group by File Type and Name
+  If the flag is disabled, Group by Name and Type
+  Do you want to Enable this Flag (Y or N, <CR>=No Change)? N
+          <-- Change to Alphabetize by Name and Type
+
+
+Vertical Listing
+  If the flag is enabled, Format is Horizontal
+  If the flag is disabled, Format is Vertical
+  Do you want to Enable this Flag (Y or N, <CR>=No Change)? Y
+          <-- Change to Horizontal Listing
+
+Non-System  Files Are Selected
+  Enable Non-System File Display (Y or N, <CR>=No Change)? Y
+
+  Enable System File Display (Y or N, <CR>=No Change)? Y
+          <-- Select System Files as well
+
+Directory Display Default Function Selected
+  If the flag is enabled, File Scan is Selected
+  If the flag is disabled, Directory Display is Selected
+  Do you want to Enable this Flag (Y or N, <CR>=No Change)? 
+
+
+Enable File Scanner Options: Yes
+  Do you want to Enable this Flag (Y or N, <CR>=No Change)? 
+
+Enable File Log Option: Yes
+  Do you want to Enable this Flag (Y or N, <CR>=No Change)? 
+
+Enable Attribute System Option: Yes
+  Do you want to Enable this Flag (Y or N, <CR>=No Change)? 
+
+Enable External Paths: Yes
+Address of External Path is 0040H
+  Do you want to Enable this Flag (Y or N, <CR>=No Change)? 
+
+
+        XDIR3INS Command (D=Display Values, S=Set Values, X=Exit)? X
+               <-- X to Exit
+
+Do you want to save changes (Y or N, <CR>=Y)? Y
+               <-- Yes, Save Changes
+
+Provide Name of Output File
+Name of XDIR3 File (<CR>=Abort)? xdir3.com   <-- I Specified
+                         <-- XDIR3.COM, but I could have
+                         <-- specified XDIR.COM as well
+
+Writing File to Disk --
+............................................................
+...................
+
+
+B>diff xdir.com xdir3.com     <-- Run difference pgm
+DIFF  Version 1.0             <-- to compare results
+Source 1 File Name -- B:XDIR    .COM
+Source 2 File Name -- B:XDIR3   .COM
+  Change Disks if Desired and Type ^C or A to Abort or <RETURN> to Continue -  
+ Rel Offset   B:XDIR    .COM      B:XDIR3   .COM   File Differences Listing
+ Hex    Dec    Hex  Dec Asc        Hex  Dec Asc
+0005      5     FF  255  .          00    0  .
+0006      6     00    0  .          FF  255  .
+0007      7     80  128  .          C0  192  .
+
+
+B>xdir    <-- Run old XDIR3
+
+XDIR III, Version 1.2    Vertical Listing by File Type and Name
+ Disk: B  User:   0, File Attributes:  Non-System
+
+Filename.Typ Size K RS   Filename.Typ Size K RS   Filename.Typ Size K RS
+-------- --- ------ --   -------- --- ------ --   -------- --- ------ --
+ DD0    .-40      0 R    XDIR3   .COM     10      MLONGINT.MAC     10      
+FNDFILE .ASM      4      XDIR3INS.COM      4      XDIR3   .MAC     36      
+MCHECK  .ASM     12      LU      .DOC     24      XDIR3INS.MAC     12      
+LU      .COM     18      MCOPY   .MAC     22      
+   11 Files Occupying   152K,    15 Files on Disk and   412K Free
+
+
+B>xdir3   <-- Run New XDIR3; not Horizontal and Non-Sys/Sys now
+
+XDIR III, Version 1.2    Horizontal Listing by File Name and Type
+ Disk: B  User:   0, File Attributes:  Non-System System
+
+Filename.Typ Size K RS   Filename.Typ Size K RS   Filename.Typ Size K RS
+-------- --- ------ --   -------- --- ------ --   -------- --- ------ --
+ DD0    .-40      0 R    FNDFILE .ASM      4      GETSYS  .COM     10 RS   
+LU      .COM     18      LU      .DOC     24      MCHECK  .ASM     12      
+MCOPY   .COM      4 RS   MCOPY   .MAC     22      MLONGINT.MAC     10      
+PIP     .COM      8 RS   XDIR    .COM     10 RS   XDIR3   .COM     10      
+XDIR3   .MAC     36      XDIR3INS.COM      4      XDIR3INS.MAC     12      
+   15 Files Occupying   184K,    15 Files on Disk and   412K Free
+
+
+B>xdir3 /h          <-- Use new XDIR3, but toggle Horiz to Vert
+
+XDIR III, Version 1.2    Vertical Listing by File Name and Type
+ Disk: B  User:   0, File Attributes:  Non-System System
+
+Filename.Typ Size K RS   Filename.Typ Size K RS   Filename.Typ Size K RS
+-------- --- ------ --   -------- --- ------ --   -------- --- ------ --
+ DD0    .-40      0 R    MCHECK  .ASM     12      XDIR    .COM     10 RS   
+FNDFILE .ASM      4      MCOPY   .COM      4 RS   XDIR3   .COM     10      
+GETSYS  .COM     10 RS   MCOPY   .MAC     22      XDIR3   .MAC     36      
+LU      .COM     18      MLONGINT.MAC     10      XDIR3INS.COM      4      
+LU      .DOC     24      PIP     .COM      8 RS   XDIR3INS.MAC     12      
+   15 Files Occupying   184K,    15 Files on Disk and   412K Free
+
+

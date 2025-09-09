@@ -1,0 +1,200 @@
+program printer_set;
+
+{******************************************************************************
+
+     Program  : PRINTER_SET - Printer option configuration program
+     Version  : 1.0
+     Author   : Eliot Ramey
+     Language : Pascal/MT+ V5.5
+
+******************************************************************************}
+
+const
+
+     { Version number }
+
+     vers = 10;   printer = 'Okidata';
+
+     { Ascii equates }
+
+     lf = 10;     vt = 11;     ff = 12;     cr = 13;
+     so = 14;     si = 15;     dc1 = 17;    dc3 = 19;
+     dc4 = 20;    can = 24;    esc = 27;    gs = 29;
+     rs = 30;     us = 31;
+
+     { Printer control codes - used in escape sequences }
+
+     set_tof = 53;             six_lpi = 54;
+     eight_lpi = 56;           long_line = 65;
+     short_line = 66;
+
+     { Default printer set-up }
+
+     default = 'CAN LPI=6 CPI=16 LIN=S GRF=O';
+
+type
+
+    strptr = ^string;
+
+var
+    command : strptr;
+    options : string[80];
+    filename : string[14];
+    ofile : text;
+    optlen, result, lpi, cpi, cpipos : integer;
+    grf, lin : char;
+
+{******************************************************************************
+     Function @CMD : Special Pacal/MT+ function
+******************************************************************************}
+external function @cmd : command;
+
+{******************************************************************************
+    Procedure SET_LPI : Sets number of lines per inch - 6,8
+******************************************************************************}
+procedure set_lpi(lines_per_inch : integer);
+
+ begin
+      case lines_per_inch of
+           six_lpi : write(ofile,chr(esc),chr(six_lpi));
+           eight_lpi : write(ofile,chr(esc),chr(eight_lpi));
+      else
+           writeln('Argument error for LPI.')
+      end { case }
+ end;
+
+{******************************************************************************
+    Procedure SET_CPI : Sets number of characters per inch - 5,8,10,16
+******************************************************************************}
+procedure set_cpi(chars_per_inch : integer);
+ begin
+      case chars_per_inch of
+            5 : write(ofile,chr(rs),chr(us));
+            8 : write(ofile,chr(gs),chr(us));
+           10 : write(ofile,chr(rs));
+           16 : write(ofile,chr(gs));
+      else
+          writeln('Argument error for CPI.')
+      end { case }
+ end;
+
+{******************************************************************************
+     Procedure SET_LIN : Set line length - Short or Long
+******************************************************************************}
+procedure set_lin(line_length : char);
+ begin
+      case line_length of
+           'S' : write(ofile,chr(esc),chr(short_line));
+           'L' : write(ofile,chr(esc),chr(long_line));
+      else
+           writeln('Argument error for LIN.')
+      end { case }
+ end;
+
+{******************************************************************************
+     Procedure SET_GRF : Sets graphics mode - In or Out
+******************************************************************************}
+procedure set_grf(graphics : char);
+ begin
+      case graphics of
+           'I' : write(ofile,chr(si));
+           'O' : write(ofile,chr(so));
+      else
+           writeln('Argument error for GRF.')
+      end { case }
+ end;
+
+{******************************************************************************
+     Procedure CAN_BUF : Cancels printer buffer - no arguments
+******************************************************************************}
+procedure can_buf;
+ begin
+      write(ofile,chr(can));
+ end;
+
+{******************************************************************************
+     Procedure TOP_OF_FORM : Form feed - no arguments
+******************************************************************************}
+procedure top_of_form;
+ begin
+      write(ofile,chr(ff)); 
+ end;
+
+{******************************************************************************
+     Procedure CLINE : Print commands - no arguments
+******************************************************************************}
+procedure cline;
+ begin
+          writeln('Enter options on command line:');
+          writeln;
+          writeln('LPI=n                        n=6 or 8');
+          writeln('CPI=n                     n=5,8,10,16');
+          writeln('LIN=c             c="S"hort or "L"ong');
+          writeln('GRF=c               c="I"nto or "O"ut');
+          writeln('CAN                      no arguments');
+          writeln('TOF                      no arguments');
+          writeln('DEF',default : 34);
+ end;
+
+{******************************************************************************
+     Program PRINTER_SET : Set printer options - from command line
+******************************************************************************}
+begin { printer_set }
+     command := @cmd;
+     options := command^;
+     assign(ofile,'LST:');
+     rewrite(ofile);
+     if length(options) > 1
+          then begin
+               if pos('LPI',options) <> 0
+                    then begin
+                    lpi := ord(options[pos('LPI=',options) + 4]);
+                    set_lpi(lpi)
+               end;
+
+               if pos('DEF',options) <> 0
+                   then begin
+                        if pos('DEF',options) > 2
+                             then
+                                  writeln('DEF must be only option.')
+                             else
+                                  options := default;
+                        end;
+
+               if pos('CPI',options) <> 0
+                    then begin
+                         cpipos := pos('CPI=',options) + 4;
+                         if options[cpipos + 1] in ['0'..'9']
+                              then
+                                   cpi := ((ord(options[cpipos])
+                                          - ord('0')) * 10) 
+                                          + (ord(options[cpipos+1])
+                                          - ord('0'))
+                              else
+                                   cpi := ord(options[cpipos]) - ord('0');
+                                   set_cpi(cpi)
+                         end;
+
+               if pos('LIN',options) <> 0
+                    then begin
+                         lin := options[pos('LIN=',options) + 4];
+                         set_lin(lin)
+                    end;
+
+               if pos('GRF',options) <> 0
+                    then begin
+                         grf := options[pos('GRF=',options) + 4];
+                         set_grf(grf)
+                    end;
+
+               if pos('CAN',options) <> 0 then can_buf;
+
+               if pos('TOF',options) <> 0 then top_of_form;
+
+               close(ofile,result)
+          end
+     else begin
+          writeln(printer,' set program ',(vers div 10),'.',(vers mod 10));
+          cline;
+     end;
+end. { pset }

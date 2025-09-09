@@ -1,0 +1,22 @@
+BABYL OPTIONS:
+Version:5
+Append
+
+1, recent,,
+*** EOOH ***
+Date: 07 Apr 1982 1710-PST
+From: Max Diaz <MMD at Su-Ai>
+To:   info-cpm
+Re:   TENEX/WAITS XMODEM    
+Via:  Mit-Mc; 7 Apr 82 20:15-EST
+
+I've just FTP'ed a new version to  CPM;XMODEM 1  (it should be really in
+AR60:CPM XMODEM SAI).
+
+This version has send/receive for either binary or asccii files.
+
+As far as I can see, the JSYS used are the same in TOPS20; but haven't
+tried it.  If someone does, pls let me know.
+
+Comments/suggestions welcome.
+

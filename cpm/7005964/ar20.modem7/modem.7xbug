@@ -1,0 +1,25 @@
+			MODEM7X.BUG
+
+
+The following bug was found in MODEM73 and MODEM74.  It may
+be in previous versions also, but I didn't look.  Make the
+change, upgrade to MODEM731 and MODEM741 - and add the follow-
+ing change notice to the prologue. The added code is in lower
+case.
+
+	
+;12/16/81 Removed stack imbalance bug at COLONB by adding
+;	  a JMP BRK1. Change is marked by ;@   R. L. Plouffe
+
+
+
+
+COLONB:	CPI	LF		;IF NO FRONT PANEL, THEN..
+	JNZ	BRK1	;..TYPE ":" AFTER EACH LINE FEED..
+	MVI	A,':'	;..WHEN MEMORY SAVE ACTIVE.
+	CALL	TYPE
+	jmp	brk1	;@
+	;
+NOSAVEB:POP	PSW	;RESTORE IT
+	JMP	BRK1
+

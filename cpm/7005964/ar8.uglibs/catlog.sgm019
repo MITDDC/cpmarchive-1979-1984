@@ -1,0 +1,43 @@
+Sig/M volume 19		miscellaneous Pascal Z programs
+
+	(original materials from Pascal Z User Group volume 1)
+
+	-CATALOG.019		contents of Sig/M volume 19
+	-CATALOG.ACK		acknowledgement file
+	ABSTRACT.019		comments file
+	CRCKFILE.019		CRC of volume 19
+
+19.1	AUTOBOOT.ASM	 5K	autoboot on CP/M cold start
+19.2	AUTOBOOT.COM	 1K	/
+19.3	LINEARP.PAS	11K	simplex algorithm to minimize
+19.4	LINEARP.COM	21K		a cost function to constraints
+19.5	VARIANT.PAS	 1K	demo for variant records
+19.6	VARIANT.COM	 5K	/
+19.7	REVERSE.PAS	 2K	demo for linked lists
+19.8	REVERSE.COM	 6K	/
+19.9	EDITFILE.PAS	 9K	adapted from S-100 Microsystems
+19.10	EDITFILE.COM	13K	/
+19.11	RT.PAS		 4K	demo program for non-text files
+19.12	RT.COM		 8K	/
+19.13	STARS.PAS	 6K	game
+19.14	STARS.COM	 7K	/
+19.15	ADDN.PAS	 1K	simple demo to add two numbers
+19.16	ADDN.COM	 6K	/
+19.17	ZMNEMONS.DOC	13K	programming aid
+19.18	TRIAN.PAS	 1K	demo on FOR loops
+19.19	TRIAN.COM	 4K	/
+19.20	CONCHAR.PAS	 6K	utility for command line input
+19.21	SCAN2X.PAS	 5K	file READ evaluation
+19.22	SCAN2X.COM	 8K	/
+19.23	STRDEMO.PAS	14K	demo on string functions
+19.24	STRLIB.DOC	 4K	part of STRDEMO.PAS
+19.25	LONG.PAS	 3K	demo to string words together
+19.26	LONG.COM	 7K	/
+19.27	MAKEREL.DOC	 8K	convert REL. files from function blks
+19.28	LIOS.ASM	 7K	novice utility
+19.29	CONVERT.PAS	 1K	convert gas in liters
+19.30	CONVERT.COM	 6K	/
+19.31	COMPARE.!!!	11K	compare source code files from UCSD
+19.32	DUMP.ASM	23K	expanded CP/M DUMP program
+19.33	LSTR.PAS	 2K	generates a line of various length 
+

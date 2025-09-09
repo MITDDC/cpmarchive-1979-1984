@@ -1,0 +1,69 @@
+
+VOLUME 50
+
+DESCRIPTION:	Bob Van Valzah's "Pascal Pascal Compiler"
+		and SPEED for CP/M 2.2 & a few miscellaneous
+		programs for printing via UNIX.
+
+NUMBER	SIZE	NAME		COMMENTS
+
+		-CATALOG.050	CONTENTS OF CP/M VOL. 50
+50.1	1K	A.OCO		Sample program, eight queens
+				problem, ready to be
+				linked to RTP.COM (OCO=obj code)
+50.2	1K	A.PCO		Sample program P-code, ready
+				for PFET.COM		
+50.3	5K	ABSTRACT.050	Abstracts for this volume.
+50.4	2K	COMPARE.COM	Vital program for
+				compiler writers.
+50.5	2K	CPMDIR.C	Prints CP/M DIR on UNIX.
+50.6	2K	CRCK.COM	CRC program for validating
+				files on this disk.
+50.7	2K	CRCKLIST.CRC	CRC list of files on this disk.
+50.8	3K	DISK.DOC	Bob's comments.
+50.9	1K	DMSPATCH.ASM	For use with SPEED.
+50.10	1K	DSCUSPAT.ASM	For use with SPEED.
+50.11	3K	EQ.COM		Prints all solutions to the
+50.12	2K	EQ.PAS		   eight queens problem.
+50.13	18K	FMAN.PRN	FAST users manual (for SPEED).
+50.14	5K	FROMCPM.C	Print CP/M file via UNIX stdout.
+50.15	1K	FWD.PAS		Forward Procedure Declarations.
+50.16	6K	HW5.COM		Builds optimal binary search
+50.17	15K	HW5.PAS		   tree & decodes a message.
+50.18	1K	HW5DATA.	Sample data for above program.
+50.19	1K	MICROPAT.ASM	For use with SPEED.
+50.20	6K	PASYNTAX.DOC	Syntax graphs for PPC compiler.
+50.21	1K	PC.SUB		Submit file to compile a PPC
+				   program.
+50.22	7K	PFET.COM	Object code of Pcode to 8080
+				   translator.
+50.23	11K	PFET.PAS	Source of above.
+50.24	1K	PHONE.C		C program to print words you
+				   can spell with your phone #.
+50.25	1K	PLAYDATA.	Sample data for above program.
+50.26	13K	PLAYKAL.PAS	PPC program to determine best
+				   moves in game of Kalah.
+50.27	2K	POPS.DOC	DOC for Pcodes used by PPC.
+50.28	1K	POWTWO.PAS	PPC Program to print negative
+				   powers of two.
+50.29	16K	PPC.COM		Pascal Pascal Compiler.
+50.30	10K	PPC.DOC		DOC for above file.
+50.31	26K	PPC.PAS		Pascal source for above file.
+50.32	2K	PSTACK.DOC	DOC on run-time P-machine stack.
+50.33	3K	REGEN.DOC	Notes on how to modify & compile
+				   PPC.PAS.
+50.34	3K	RSPEED.ASM	For use with SPEED.
+50.35	1K	RSPEED.COM	For use with SPEED.
+50.36	11K	RTP.ASM		Source for run-time package.
+50.37	2K	RTP.COM		Object of above.
+50.38	1K	SKEW2PAT.ASM	For use with SPEED.
+50.39	1K	SKEW3PAT.ASM	For use with SPEED.
+50.40	2K	SMAN.PRN	SPEED users manual.
+50.41	5K	SPEED.COM	SPEED for CP/M 1.4
+50.42	5K	SPEED2.COM	SPEED for CP/M 2.2
+50.43	1K	STIRLING.PAS	Prints a table of Stirling
+				   Numbers.
+50.44	4K	TESTER.PAS	Tests functionality of PPC.
+50.45	1K	VALIDATE.SUB	Submit file to make sure you
+				   have a "fertile" computer.
+

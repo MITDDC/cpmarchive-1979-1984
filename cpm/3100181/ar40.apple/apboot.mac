@@ -1,0 +1,38 @@
+;*****  This program allows you to boot from Apple CP/M to any other
+;*****  slot, with the default slot being 6.  You just type:
+;*****  BOOT x, where x is the slot you wish to boot to.  If x
+;*****  is omitted, the default value of 6 will apply.  The program
+;*****  will pause for a keypress before performing the actual boot.
+
+;*****  Written by Bill Blue, April 1981
+
+
+	aseg			;only for M80
+	.8080			; likewise
+	org 100h
+
+bdos	equ	5
+fcb	equ	5ch
+doit	equ	3000h
+
+enter:	mvi	c,01		;select input mode
+	call	bdos		;wait for keypress
+	lxi	h,0c777h	;set up RST 0
+	shld	doit		;install in intermediate loc
+	lxi	h,fcb+1		;check command line for alternative slot
+	mov	a,m		;get the chracter pointed to by hl
+	lxi	h,0C600h	;default boot address
+	cpi	' '		;anything there?
+	jz	piksix		;no, assume slot six and skip next
+	cpi	'8'		;slot spec'd in the right range?
+	jnc	piksix		;nope, assume default
+	cpi	'1'		;another check
+	jc	piksix		;out of range
+	adi	90h		;else create msb of boot byte
+	mov	h,a		;move to h reg (l already established)
+piksix:	shld	0F3D0h		;save boot address
+	lhld	0F3DEh		;get Z80 card address
+	jmp	doit		;and execute
+
+	end
+

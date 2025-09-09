@@ -1,0 +1,45 @@
+DIGITAL RESEARCH CP/M [R] 2.2 FIELD SOFTWARE CHANGE
+         Copyright (c) 1980   Digital Research
+
+ID# CPM22-0001    PROGRAM: BDOS     ISSUE DATE: 02/19/80
+
+
+ERROR DESCRIPTION:  The following change affects only those CP/M
+systems which are using the optional blocking and deblocking al-
+gorithms listed in Appendix G of the CP/M Alteration Guide.  If
+you are in doubt as to the applicability of this field change,
+please contact Digital Research or your CP/M distributor.
+
+PATCH PROCEDURE:  Ensure you have an archive copy of the distri-
+buted MOVCPM.COM file.  Make changes to a version of MOVCPM>COM
+by carefully following the steps shown below:  MOVCPM.COM is
+loaded into memory using DDT and the changes are made using the
+Assemble (A) and Set (S) commands.  After making the changes,
+return to the console command processor using the Go (G) command,
+and SAVE the altered memory image on disk.  The memory image on
+tracks 0 and 1 must also be updated.  This can be accomplished
+by executing the new MOVCPM program, as described in the CP/M
+Alteration Guide, and integrating your customized I/O system.
+
+
+                     ddt movcpm.com
+                     DDT VERS 2.0
+                     NEXT PC 
+                     2700 0100
+                     -a1cd2
+                     1CD2 nop
+                     1CD3 nop
+                     1CD4 lxi h,0
+                     1CD7
+
+
+                     G0
+  
+                     save 38 movcpm.com
+
+
+NOTE:  This Field Software change is not installed in the CP/M
+version 2.2.  It must be installed in all systems which use the
+deblocking algorithms listed in Appendix G of the CP/M Alteration
+Guide.
+

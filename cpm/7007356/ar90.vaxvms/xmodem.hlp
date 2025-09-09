@@ -1,0 +1,80 @@
+
+2 CPM
+	Utilities for 8080 etc. Microcomputers running the CP/M
+operating system.  Note especially RCPMLIST.032 is a list of public
+CP/M systems available over the phone.
+See also HELP USERLIB Z80 for a cross assembler.
+To define the file transfer commands, @ULIB:[CPM]CPM .
+
+XMODEM will then allow MODEM7 compatable programs to transfer
+binary or ASCII files to or from your CP/M system with CRC or checksums.
+MODEM7 is available from BELONIS on 8" single sided single density disk.
+If you have another kind of disk drive:
+   If you have no version of MODEM7 working, use MBOOT to get MODEM7.
+   If you have no terminal emulator, use PIPMODEM to make PIP into
+   a simple one, use PIPMODEM to get MBOOT, then get MODEM7.
+
+FROMXMOD converts CP/M ASCII files as received to VAX editable form
+                  (1 line per record, no CRLF at ends of records).
+TOXMOD   converts normal VAX text files to CP/M format (128 character
+                  records, CRLF at ends of lines) ready for transfer.
+3 XMODEM
+     Format:
+            XMODEM  option  file
+
+The current options are
+  "s" to send from the VAX (your receiver selects checksum or CRC)
+  "r" to recieve at the VAX with checksums
+  "rc"   receive at the VAX with CRC (Cyclic Redundancy Checking)
+
+Assuming you have MODEM7 runnable on your system,
+and a direct or modem connection to the VAX,
+then to perform a transfer using MODEM7 or its successors
+you would on your CP/M system:
+
+A>modem7                     you run MODEM7 on your CP/M system
+Command: T                   you tell it to emulate a VAX terminal
+                             press return to get VAX prompt
+Username:JIMMY               log in to VAX via MODEM7
+Password:                    just as if you were on a direct terminal
+          Welcome...
+
+$ @ulib:[cpm]cpm                  define the XMODEM commands
+$ xmodem  s  ulib:[cpm]help.com   run XMODEM telling it to send the named
+                                  file from the VAX
+CTRL-E                            gets attention of your MODEM7 program
+Command: r  help.com              tell MODEM7 to recieve the file on
+                                  your CP/M system
+
+To send a file to the VAX:
+$ xmodem  r  spec34a.dat          tell XMODEM to receive file
+CTRL-E                            get attention of MODEM7
+Command: s  spec34a.dat           tell MODEM7 to send file to VAX
+3 FROMXMOD
+Converts from CP/M file (continuous stream of bytes in 128 character
+records with embedded CR LF) to VAX editable file (one line per
+record carriagecontrol='LIST').
+     Format:
+             FROMXMOD  infile  outfile
+
+Example, assuming you have accessed the VAX via your CP/M system's
+MODEM7 program:
+$ XMODEM  R  thesis.cpm               tell XMODEM to receive the file
+CTRL-E                                get MODEM7 attention
+Command: R  thesis.cpm                tell MODEM7 to send the file.
+$ FROMXMOD  thesis.cpm thesis.doc     convert to VAX text form
+3 TOXMOD
+Converts from VAX text file (one line per record, no CR LF)
+to CP/M form (one line per record, CR LF added at end of line)
+ready for transfer to CP/M system using XMODEM.
+     Format:
+             TOXMOD  infile  outfile
+
+Example, assuming you have accessed the VAX via your CP/M system's
+MODEM7 program:
+$ TOXMOD  thesis.doc thesis.cpm       convert to CP/M form
+$ XMODEM  S  thesis.cpm               tell XMODEM to send the file
+                                      CTRL-E to get MODEM7 attention
+Command: R  thesis.cpm                tell MODEM7 to receive the file.
+
+

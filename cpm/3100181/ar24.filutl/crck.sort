@@ -1,0 +1,81 @@
+CRCKSORT.DOC   Documentation file.   04/22/82	T McCormick.
+
+It would be helpful to have the CRCKLIST.CRC file in
+alphabetical order by filename. It would also be helpful
+to add information helpful to the user to this file and
+thus eliminate the need for separate doc files for small
+amounts of information.
+
+The instructions below explain how to edit a file
+output from the CRCK.COM program so that it can be
+alphabetically sorted on filename by SUPERSORT.
+This involves stripping out:
+	a. the blank lines (SUPERSORT drops them automatically)
+	b. the leading "--> FILE:  "  before each filename thus
+	   moving the file name to positions 1 through 12 of the records.
+	c. six of the eight blanks between the filename and the CRC.
+Items b. and c., above, are done with an editor using global search/replace.
+
+The example below assumed Magic Wand was used, but
+it is applicable to other word processors with the
+search/replace global function.
+
+When CRCK *.* F    (note the F) is entered, the
+CRCK program creates a disk file of the Cyclic
+Redundancy Checksum values, and this file is
+named CRCKLIST.CRC.
+
+Here is how to edit that file so that it can be
+sorted alphabetically. Optionally, it can then
+have additional information inserted for each
+file by using an editor.  The result is a very
+nice documentation file containing the filenames
+in alphabetical order, the CRCK checksum for
+validating legitimate copies, and descriptive
+information about the file and how to use it.
+
+For example, the finished product might appear as:
+
+ASM	.COM  CRC = CB A8  Digital Research's standard CP/M assembler.
+			   A>ASM FILENAME.ABZ  where:
+					    Z indicates no printed listing.
+					   B  indicates .HEX file goes to B:.
+					  A   indicates .ASM source is on A:.
+CRCK	.COM  CRC = 2D 47  Public domain file integrity control program.
+			   Creates a hex control sum of one or more files;
+			   this value would vary if ANY change to program
+			   is made. Useful also to detect old versions of
+			   program having same name, etc.  Wildcards OK.
+			   Trailing F parameter causes disk file written
+			   in same format as CRT display.  For example:
+			   A>CRCK *.* F
+
+------------------------------------------------------------------------
+
+After running CRCK to create CRCKLIST.CRC disk file, edit it as follows:
+
+	1. EDIT CRCKLIST.CRC	<to bring file into Magic Wand.
+
+	2. Do two global search replaces:
+
+		old = '--> FILE:  '	new = nothing (delete from each line.)
+
+		old = '      CRC'	new = 'CRC'    ..delete leading spaces.
+
+	3. Save edited file.  It will be input file to SUPERSORT command
+	   saved in CRCKSORT.SUB.
+
+--------------------------------------------------------------------------
+
+The final step is to run SUPERSORT:    A>SUBMIT CRCKSORT    
+
+Here is what that CRCKSORT.SUB file looks like:
+
+SORT INP=80,CR; SO=CRCKLIST.CRC; OUT=CRCKSORT.CRC; KEY=#1,12; GO
+
+It is then useful to rename the sorted file to indicate the date or
+something else useful, for example: REN CRCK0422.CRC=CRCKSORT.CRC
+might be used to indicate the CRC file is as of April 22nd.
+
+---------------------------------------------------------------------------
+

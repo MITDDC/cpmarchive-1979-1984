@@ -1,0 +1,79 @@
+;
+;  SCIO.MAC --
+;	CP/M I/O Routine through BIOS Jump Table
+;	This routine is called with register A containing the index
+;	  offset and registers B&C containing any required arguments.
+;	HL, DE, and BC are preserved.
+;
+;	The following table summarizes the BIOS Jump Table entries --
+;
+;	Offset	Function
+;	   0	Warm Start
+;	   1	Console Status; A=0FFH if char ready, A=0 if char not ready
+;	   2	Console Input; Char in A
+;	   3	Console Output; Char passed in C
+;	   4	List Output; Char passed in C
+;	   5	Punch Output; Char passed in C
+;	   6	Reader Input; Char in A
+;
+;	   7	Home Disk Head; No parameters
+;	   8	Select Disk; Disk Number (A=0, B=1, etc) passed in C
+;	   9	Set Track Number; Track Number passed in C
+;	  10	Set Sector Number; Sector Number passed in C
+;	  11	Set DMA Address; DMA Address passed in BC
+;	  12	Read Disk; A=0 if ok, A=1 if error occurs
+;	  13	Write Disk; A=0 if ok, A=1 if error occurs
+;
+;	If any other offset is supplied in register A, a Cold Start occurs.
+;
+
+;  Equates --
+WBADR	EQU	1	; WARM BOOT ADDRESS (BASE OF BIOS)
+
+CIO::
+;  SAVE REGISTERS
+	PUSH	H	; SAVE HL, DE, BC
+	PUSH	D
+	PUSH	B
+;  PT TO BIOS IN HL
+	LHLD	WBADR	; GET ADDRESS OF BIOS
+;  CHECK FOR OFFSET NOT IN 0-13 RANGE
+	CPI	14	; OUT OF RANGE?
+	JNC	COLD	; IF SO, COLD START
+;  MULTIPLY OFFSET BY 3
+	MOV	C,A	; C=OFFSET
+	MVI	B,3
+	MVI	A,0	; A=0
+MULT:
+	ADD	C	; ADD IN OFFSET
+	DCR	B	; COUNT DOWN
+	JNZ	MULT
+;  POINT TO JUMP ENTRY
+	ADD	L	; HL=HL+A
+	MOV	L,A
+	MOV	A,H
+	ACI	0
+	MOV	H,A
+;  RESTORE INPUT ARGUMENTS IF REQUIRED
+	POP	B
+	PUSH	B
+;  SET UP RETURN ADDRESS
+	LXI	D,RETADR
+	PUSH	D	; RETURN ADDRESS ON STACK
+	PCHL		; "CALL" INTO BIOS
+;  RETURN HERE
+RETADR:
+;  RESTORE REGISTER
+	POP	B	; RESTORE BC, DE, HL
+	POP	D
+	POP	H
+	RET
+;  COLD START CP/M
+COLD:
+	DCX	H	; BACK UP BY 3
+	DCX	H
+	DCX	H
+	PCHL		; COLD START
+
+	END
+

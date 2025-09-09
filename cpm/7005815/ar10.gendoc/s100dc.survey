@@ -1,0 +1,73 @@
+                    S-100 Floppy Disk Controller Survey
+
+                               August 1982
+                       (Last Revision:  4 Sept 82)
+
+
+Manufacturer:  SD Systems   SD Systems   NorthStar     CCS     InterSystems
+Board:          Versa I      Versa II     MDS SD      2422A       FDC II
+Controller:    WD 1771B-1    WD 1791-1   (obsolete)  WD 1793   NEC uPD 765A
+Max # Drives:      4             4           3          4           4
+8" Drives:        Yes           Yes         No         Yes         Yes
+5.25" Drives:     Yes           Yes         Yes        Yes         Yes
+Simultaneously:   No            Yes         No         Yes         Yes
+Single Density:   Yes           Yes         Yes        Yes         Yes
+Double Density:   No            Yes         No         Yes         Yes
+Double Sided:     Yes           Yes         No         Yes         Yes
+DMA Data Xfer:    No            No          No         No          ???
+Interrupts:       Yes           Yes         ???        Yes         Yes
+Serial Port:      No            No          No         No          No
+Power On Jump:    No            No          No         No          ???
+CP/M Included:    No            No          No         Yes         No
+BIOS Included:    Yes           Yes         No         Yes         Yes
+Reliability:      Fair          Good        Good       Good        Good
+Integration:      Fair          Fair        Fair       Easy        Fair
+BIOS Quality:     Fair          Fair        Poor       Good        Good
+Board Docs:       Fair          Fair        Good       Good        Good
+
+
+Manufacturer:  Morrow Des.  Morrow Des.  Morrow Des.  Godbout      Jade
+Board:           DJ 1D       DJ 2D/B       DJ DMA     Disk 1     Double D
+Controller:     bipolar      WD 1791-1   Z80/bipolar  uPD 765A   WD 1791-1
+Max # Drives:      4             4           8           4           4
+8" Drives:        Yes           Yes      Yes (4 max)    Yes         Yes
+5.25" Drives:     No            No       Yes (4 max)    Yes         Yes
+Simultaneously:   ---           ---         Yes         No          No
+Single Density:   Yes           Yes         Yes         Yes         Yes
+Double Density:   No            Yes         Yes         Yes         Yes
+Double Sided:     No            Yes         Yes         Yes         Yes
+DMA Data Xfer:    No            No          Yes         Yes         No
+Interrupts:       No            Yes         Yes         Yes         Yes
+Serial Port:      Yes           Yes      Diagnostic  Diagnostic     Yes
+Power On Jump:    Yes           Yes         Yes         No          No
+CP/M Included:    Yes           Yes         Yes         Yes         No
+BIOS Included:    Yes           Yes         Yes         Yes         Yes
+Reliability:      Fair          Good        Good        Good        Fair
+Integration:      Easy          Easy        Fair        Easy     Difficult
+BIOS Quality:     Good          Good        Good        Good        Fair
+Board Docs:       Fair          Good        Good        Good        Fair
+
+
+Manufacturer:   Tarbell       Tarbell    Micropolis    MS & C
+Board:          FDI-SD        FDI-DD     MacroFloppy   DD-FDC
+Controller:     WD 1771      WD 1791-1    bipolar     uPD 765A
+Max # Drives:      4             4           4            4
+8" Drives:        Yes           Yes         No           Yes
+5.25" Drives:     No            No          Yes          Yes
+Simultaneously:   ---           ---         ---          No
+Single Density:   Yes           Yes         Yes          Yes
+Double Density:   No            Yes         No           Yes
+Double Sided:     No            Yes         No           Yes
+DMA Data Xfer:    No            Yes         No           Yes
+Interrupts:       No            Yes         No           Yes
+Serial Port:      No            No          No           No
+Power On Jump:    No            Yes         No           Yes
+CP/M Included:    No            No          No           No
+BIOS Included:    Yes           Yes         No           Yes
+Reliability:      Good          Good        Fair         Good
+Integration:      Fair          Easy        Fair         Fair
+BIOS Quality:     Fair          Good        Fair         Good
+Board Docs:       Poor          Poor        Fair         Good
+
+
+

@@ -1,0 +1,418 @@
+#define VERSION "ssed.c 2.0 11-4-81\n"
+/*
+ * (small/stupid) Stream Editor
+ * Accepts a,c,d,i commands only
+ * commands are on standard input
+ * old file is specified
+ * edited result on standard output
+ * directed i/o package accepts redirection and pseudopipes
+ * Line numbers are decimal, . and $
+ *
+ *	cc1 ssed.c -o
+ *	clink ssed yam8 -f dio -s
+ *
+ *	Chuck Forsberg
+ *		Computer Development Inc
+ *		6700 S. W. 105th
+ *		Beaverton OR 97005
+ *		503/646-1599    RCP/M 503/621-3193 300,450,1200 baud
+ *
+ *	2.0 added -u Unsqueeze option 11-17-81 -CAF
+ *	1.10 added consistiency check for antecedent file 11-4-81
+ *	1.01 added a lgets which gets rid of cr's & changed fputs to puts
+ *	to get rid of the spurious free cr's on output.  This lf vs. cp/m
+ *	cr/lf business is a bloody mess. -CAF
+ */
+
+/* system dependent stuff */
+#include "a:bdscio.h"
+#include "a:dio.h"
+#define MAXINT 32000
+
+
+
+struct _buf fin;
+struct _buf *in;
+#define stdin 0
+#define stdout 1
+#define stderr 4
+
+char *aname;		/* name of antecedent file */
+int linno;		/* number of lines that have been output */
+int op1,op2;		/* first and (possibly same) last line of cmd */
+char crcseen;		/* TRUE if crc given in command line */
+unsigned cmdcrc;	/* crc value encountered (decimal) in command line */
+unsigned crc;		/* accumulated crc(k) of copied lines from old file */
+char cmd, cmdline[MAXLINE],insline[MAXLINE], *axin;
+
+char Verbose,Unsqueeze;
+char cmdeof;		/* EOF (cpmeof) seen on command input */
+char ineof;		/* EOF (cpmeof) seen on file input */
+
+int getchar();
+int getcr();
+int getcin();
+int (*getthis)();	/* getchar function for current file */
+
+/* Definitions and externals for unsqueezer function */
+#define RECOGNIZE 0xFF76	/* unlikely pattern */
+/* External declarations for USQ feature */
+#define NUMVALS 257	/* 256 data values plus SPEOF*/
+/* Decoding tree */
+struct {
+	int children[2];	/* left, right */
+} dnode[NUMVALS - 1];
+int bpos;	/* last bit position read */
+int curin;	/* last byte value read */
+/* Variables associated with repetition decoding */
+int repct;	/*Number of times to return value*/
+int value;	/*current byte value or EOF */
+int inch;
+
+getcin()
+{
+	return getc(in);
+}
+
+main(argc, argv)
+char **argv;
+{
+	char *cp;
+
+	dioinit(&argc, argv);
+
+	getthis=getcin;
+
+	Verbose=Unsqueeze=FALSE;
+	while (--argc && *(cp = *++argv)=='-') {
+
+		while( *++cp) {
+			switch(tolower(*cp)) {
+			case 'u':
+				Unsqueeze++; break;
+			case 'v':
+				Verbose++; break;
+			default:	
+				goto usage;
+			}
+		}
+	}
+
+	if(argc != 1) {
+usage:
+		fprintf(stderr,VERSION);
+		fprintf(stderr,"Usage: ssed [-v] infile [<cmdfile] [>outfile]\n");
+		fprintf(stderr,"\tEditing commands on stdin\n");
+		fprintf(stderr,"\tEdited output on stdout\n");
+		fprintf(stderr,"\t-u Unsqueeze infile\n");
+		fprintf(stderr,"\t-v Verbose\n");
+		exit(1);
+	}
+
+	if(fopen( aname=argv[0], fin) == ERROR)
+	{
+		fprintf(stderr, "Can't open %s", aname);
+		exit(128);
+	}
+	else
+		in=fin;
+
+	if(Unsqueeze) {
+		getthis=getcr;		/* switch getchar function */
+		init_usq();		/* initialize unpacking */
+	}
+
+	linno=1; crc=0;
+	cmdeof=ineof=FALSE;
+
+	while(getcmd()==FALSE) {
+
+		if(cmd == 'a') {
+			cmd= 'i'; ++op1;
+		}
+		if(linno>op1) {
+			fprintf(stderr,"At line %d: Can't back up to %d\n",
+			  linno, op1);
+			goto fubar;
+		}
+		while(linno < op1 && ineof==FALSE)
+			copyin();
+		if(crcseen && cmdcrc != crc) {
+			fprintf(stderr,
+			  "CRC error on Antecedent File %u should be %u\n",
+			  crc, cmdcrc);
+			fprintf(stderr,
+			  "'%s' is not the correct Antecedent\n", aname);
+			exit(1);
+		}
+		if(cmd != 'i')
+			while(op2-- >= linno && ineof==FALSE)
+				chuckline();
+		if(cmd=='c' || cmd=='i')
+			insert();
+		else if(cmd != 'd') {
+			fprintf(stderr,"Illegal command %s", cmdline);
+fubar:
+			fprintf(stderr,
+			  "Difference file garbled or not made by dif -e\n");
+			exit(1);
+		}
+	}
+	while(ineof == FALSE)
+		copyin();
+	fprintf(stderr,"Ssed finished\n");
+	dioflush();
+	exit(0);
+}
+
+getcmd()
+{
+
+
+	crcseen=FALSE;
+	if(Verbose) {
+		cmdcrc=0;
+		fprintf(stderr,"%d:", linno);
+	}
+	if(cmdeof || lgets(cmdline,getchar)==0) {
+		if(Verbose)
+			fprintf(stderr,"EOF on stdin\n");
+		return TRUE;
+	}
+	axin=cmdline;
+	op1=op2=getnum();
+	if(*axin==',') {
+		++axin, op2=getnum();
+	}
+	cmd=tolower(*axin++);
+	if(*axin++ == ' ') {
+		crcseen=TRUE;
+		cmdcrc=atoi(axin);
+	}
+	if(Verbose)
+		fprintf(stderr,"%sop1=%d op2=%d cmd=0%o linno=%d cmdcrc=%u\n",
+		  cmdline, op1, op2, cmd, linno, cmdcrc);
+	return FALSE;
+}
+
+getnum()
+{
+	int m;
+
+	m=0;
+	if(*axin=='.') {
+		++axin; return linno;
+	}
+	if(*axin=='$') {
+		++axin; return MAXINT;
+	}
+	while(isdigit(*axin))
+		m= (m * 10) + (*axin++ - '0');
+	return m;
+}
+
+copyin()
+{
+	unsigned crck();
+	int len;
+
+	if((len=lgets(insline,getthis))==0) {
+		ineof=TRUE;
+		if(Verbose)
+			fprintf(stderr,"EOF on old file\n");
+		return;
+	}
+	if(puts(insline)==ERROR) {
+		fprintf(stderr,"Write Error");
+		exit(128);
+	}
+	++linno;
+
+	if(--len>0)
+		crc += crck(insline, len, 0);
+}
+
+chuckline()
+{
+	if(lgets(insline,getthis)==0) {
+		if(Verbose)
+			fprintf(stderr,"EOF on old file\n");
+		ineof=TRUE;
+		return;
+	}
+}
+
+insert()
+{
+	for(;;) {
+		if(lgets(insline,getchar)==0) {
+			fprintf(stderr,"Unexpected EOF on stdin\n");
+			cmdeof=TRUE;
+			return;
+		}
+		if(insline[0]=='.' && insline[1]<=015)
+			return;
+		if(puts(insline)==ERROR) {
+			fprintf(stderr,"Write Error");
+			exit(128);
+		}
+		++linno;
+	}
+}
+
+/* lgets returns length of line read or 0 if eof, gets rid of CR's on input! */
+lgets(s, getfnx)
+char *s;
+int (*getfnx)();
+{
+	int c;
+	char *p;
+	p=s;
+	for(;;) {
+		switch(c= (*getfnx)()) {
+		case 015:
+			continue;
+		case EOF:
+		case CPMEOF:
+			return 0;
+		case 012:
+			*p++ = c;
+			*p++ = 0;
+			return p-s;
+		default:
+			*p++ = c; continue;
+		}
+	}
+}
+
+
+
+/* *** Stuff for first translation module *** */
+#define DLE 0x90
+/* *** Stuff for second translation module *** */
+#define SPEOF 256	/* special endfile token */
+#define LARGE 30000
+
+init_usq()
+{
+	int i, c;
+	char cc;
+
+	char *p;
+	int numnodes;		/* size of decoding tree */
+	char origname[14];	/* Original file name without drive */
+
+	/* Initialization */
+	init_cr();
+	init_huff();
+
+	if(getw(in)!=RECOGNIZE) {
+		fprintf(stderr,"%s Not Squeezed\n", aname);
+		exit(1);
+	}
+	/* Process rest of header */
+	getw(in);	/* ignore checksum ... */
+
+	/* Get original file name */
+	p = origname;	/* send it to array */
+	do {
+		*p = getc(in);
+	} while(*p++ != '\0');
+
+	numnodes = getw(in);
+	if(numnodes < 0 || numnodes >= NUMVALS) {
+		fprintf(stderr, "%s has invalid decode tree size\n", aname);
+		exit(1);
+	}
+
+	/* Initialize for possible empty tree (SPEOF only) */
+	dnode[0].children[0] = -(SPEOF + 1);
+	dnode[0].children[1] = -(SPEOF + 1);
+
+	/* Get decoding tree from file */
+	for(i = 0; i < numnodes; ++i) {
+		dnode[i].children[0] = getw(in);
+		dnode[i].children[1] = getw(in);
+	}
+}
+
+
+/* initialize decoding functions */
+
+init_cr()
+{
+	repct = 0;
+}
+
+init_huff()
+{
+	bpos = 99;	/* force initial read */
+}
+
+/* Get bytes with decoding - this decodes repetition,
+ * calls getuhuff to decode file stream into byte
+ * level code with only repetition encoding.
+ *
+ * The code is simple passing through of bytes except
+ * that DLE is encoded as DLE-zero and other values
+ * repeated more than twice are encoded as value-DLE-count.
+ */
+
+int
+getcr()
+{
+	int c;
+
+	if(repct > 0) {
+		/* Expanding a repeated char */
+		--repct;
+		return value;
+	} else {
+		/* Nothing unusual */
+		if((c = getuhuff()) != DLE) {
+			/* It's not the special delimiter */
+			value = c;
+			if(value == EOF)
+				repct = LARGE;
+			return value;
+		} else {
+			/* Special token */
+			if((repct = getuhuff()) == 0)
+				/* DLE, zero represents DLE */
+				return DLE;
+			else {
+				/* Begin expanding repetition */
+				repct -= 2;	/* 2nd time */
+				return value;
+			}
+		}
+	}
+}
+
+/* Decode file stream into a byte level code with only
+ * repetition encoding remaining.
+ */
+
+int
+getuhuff()
+{
+	/* Follow bit stream in tree to a leaf*/
+	inch = 0;	/* Start at root of tree */
+	do {
+		if(++bpos > 7) {
+			if((curin = getc(in)) == ERROR)
+				return ERROR;
+			bpos = 0;
+			/* move a level deeper in tree */
+			inch = dnode[inch].children[1 & curin];
+		} else
+			inch = dnode[inch].children[1 & (curin >>= 1)];
+	} while(inch >= 0);
+
+	/* Decode fake node index to original data value */
+	inch = -(inch + 1);
+	/* Decode special endfile token to normal EOF */
+	return (inch == SPEOF) ? EOF : inch;
+
+}
+

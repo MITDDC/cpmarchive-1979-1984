@@ -1,0 +1,163 @@
+/********************************************************************
+     SWEEP version 2.6, December 15, 1981
+			by Robert Fisher
+			   DePaul University
+			   64 E. Jackson
+			   Chicago, Illinois 60604
+
+Released to the Public Domain by the author.
+***********************************************************************
+SWEEP is a utility program for maintaining file directories, and 
+transferring files between drives and CP/M user areas.  It is best used
+with CP/M2.2, but I have tried to make it compatible with CP/M1.4.
+
+Invoking SWEEP and moving about the directory.
+----------------------------------------------
+When SWEEP is invoked, you will see a menu of 'options' and the first
+entry in the directory.  You will also be given the total space (in k)
+occupied by the files and the remaining space on the disk.  SWEEP also
+reports the current user area in the prompt.  
+
+Typing 'space' or 'return' moves you forward in the directory, typing 
+B (or b) moves you backward.  The directory is circular, so typing space
+at the end of the directory moves you to the beginning. (A line is skipped.)
+
+When you first invoke SWEEP, you can specify a drive and a starting place
+in the directory.  (The current user area is always used.)
+
+SWEEP B:FOO
+
+will begin with drive B: logged in, and the cursor on the first entry
+in the directory which is >= FOO in alphabetical order.  (Only 8
+characters are recognized, and only the file name, not the type.)
+
+At any time, you can recover the menu of 'options' by typing a
+question mark (?).
+
+Simply typing 'x' exits the program.
+
+Note that all characters can be entered in upper or lower case.
+
+
+Functions that act on one file.
+_______________________________
+
+C   This allows you to copy the file to the drive and user area of your
+    choice.  You will be prompted for the drive and user area.  Just
+    enter 'b3', say, to transfer the file to drive B: user area 3.
+    If you omit the user area, the current user area is used.
+    Any file of the same name in the target area is first erased, an
+    exception being when you are transferring to the current drive and
+    user area.  In the latter case, the transferred file is copied with
+    its named changed by putting a $ in the last letter of the file type.
+
+    BUG:  CP/M does not allow two files of the same name to be open on
+    the same drive, even in different user areas.  Thus when transferring
+    between user areas on the same drive, the target file is first named
+    with the $ convention and then renamed.  This can result in an
+    extra file being erased.
+
+    If there is too little room on the target drive, the transfer is 
+    aborted and the directory entry is erased.  Any previous file of
+    the same name in the target area is also erased.(Sorry.)
+
+D   The current file is deleted.  You will be asked if you really want
+    it erased.
+
+R   The current file is renamed to the name you specify.  Lower case
+    will be converted to upper case, but other 'illegal' characters are
+    not trapped.  It is quite possible to give names to files that
+    CP/M won't recognize.  (You can also change them back again later.)
+
+V   The current file is displayed at the terminal.  ^S will stop the display
+    until any other key is typed.  Otherwise, any keypress will abort.
+
+T   Tag a file for later transfer.  (See below.)
+    After being tagged, the file will be marked with and '*'.
+    The total of all tagged files is displayed both in units they
+    occupy on the current disk, and in units they would occupy on
+    a single-density disk with a 1k block size.
+
+U   Undo the effect of T (and take away the '*').
+
+
+Commands that act on many files.
+--------------------------------
+M   Mass transfer of all tagged files to a selected drive and user area.
+    This is the main reason for the program.  If the target drive fills,
+    the operation is aborted, with the untransferred files remaining 
+    tagged.  This function invokes the copy function used by C, so 
+    everything said above applies here.
+    If any key is typed while files are being transferred, the transfer
+    is aborted after the current file.
+    After transferring a tagged file, the tag is changed to '#' so 
+    you can tell what has been sent.  This is for display only, the 
+    file is otherwise considered untagged.
+
+E   The E command erases all untagged files.  There are two modes.
+    If you ask to be prompted, you will be asked for a Y or N on each
+    file.  Otherwise, the untagged files will be deleted.
+    You can abort this operation by responding A to the prompt, or typing
+    any key in the unprompted mode (if you are quick enough).
+
+
+Other commands.
+---------------
+
+B   Move to previous file.
+
+L   Login new drive and user area. If the user area is ommitted, the 
+    current user area is used.  You can specify a starting place in
+    the directory. Responding 'b3 foo' will put you in user area 3
+    of drive B:, beginning at the first file >= FOO in alphabetical
+    order.
+
+S   Calculates space remaining on a drive.
+
+X   Exit to CP/M.
+
+?   Redisplay menu of commands.
+
+
+Tags.
+-----
+*   Marks a tagged file.  See M and E commands.
+
+#   Marks a previously tagged file that has been transferred by the
+    M command.  It is logically untagged, and the # can be removed
+    with the U command if it bothers you.
+
+    Unmarked files are untagged.
+
+Remarks.
+--------
+
+There is no upper limit to directory size, nor to the size of a file
+that may be transferred.  (The directory size is limited by available
+memory though, as certain information must be kept on each entry.)
+
+File transfers make use of as much memory as possible to buffer 
+data.
+
+Whenever a drive is asked for (and on start-up), the disk system is
+reset.  This is to prevent a disk from being 'read only' under CP/M.
+It does mean that a system disk must be present in drive A:.
+
+Invalid or empty answers to any prompt will result in no action being
+taken.  Exceptions are specifying a drive you do not have, or an illegal
+file name under the R command.
+
+
+Patch points.
+-------------
+Two parameters should be set for your system.  If you do not have a
+PL/I compiler, they can be set with DDT.
+
+number_of_drives  should be set to the number of drives in your system.
+     This will eliminate SELECT errors.  Patch the byte at location 11BH.
+
+max_users   Set this if you want a number other than 16 (0-15). Patch the
+     byte at location 120H.
+
+************************************************************************/
+

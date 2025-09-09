@@ -1,0 +1,25 @@
+Date: 8 Jul 82 1:00:01-PDT (Thu)
+To: info-micro at mit-ai
+From: decvax!harpo!duke!ucf-cs!goldfarb at Berkeley
+Subject: H-8 Upgrades
+
+I have an H-8 with 128K of memory, a Z80A, an S-100 disk controller,
+and some other goodies.  It runs CP/M on normal, 8" floppies (Shugart
+851's).  D-G Electronic Developments Co., 1827 S. Armstrong St.,
+Garland, TX. 75020, supplied the CPU, replacement front-panel EPROM,
+and the dynamic RAM.  Their prices were quite reasonable, as were their
+designs, enabling the old H-8 to use the Z80A and all 64K of address
+space at 4Mhz.  The disk controller is an S-100 type, a Jade Double D
+purchased from Jade Computer Products in California for $60 for the
+bare board.  It has an on-board Z80A and uses a WD 179X FDC chip.  I
+made an adapter card to create an S-100 bus slot for the H-8.  This
+required only two bus buffers and five other IC's, plus a slight mod
+to the memory cards to handle the S-100 PHANTOM* signal.  Since the
+Jade controller does not use DMA, no fancy interfacing was necessary.
+With the above configuration plus a Heath 4-port serial card, the old
+H-8 is a reasonable CP/M machine.  But don't count on Heath (or anyone
+else's) support for too long:  the H-8 is dead!
+				Ben Goldfarb
+				USENET:   ...!duke!ucf-cs!goldfarb
+                                ARPANET:  Goldfarb.ucf-cs @ UDel-Relay
+

@@ -1,0 +1,633 @@
+CBASIC in General
+CBASIC2 Compile-Time Toggled Options
+XREF Cross Reference Facility
+Compiler Error Messages
+Run-Time Error Messages -- Warnings
+Run-Time Error Messages -- Error Codes
+CBASIC2 Reserved Words
+CBASIC2 Expression Hierarchy
+CBASIC2 Predefined Functions
+:CBASIC2:  CBASIC in General
+
+     CBASIC  is  a compiler BASIC which may be executed on any floppy  disk 
+based  CP/M system having at least 20K bytes of memory.   In order to  make 
+the  best use of the power and flexibility of CBASIC,  a dual  floppy  disk 
+system  and at least 32K of memory is recommended.   If CBASIC is  executed 
+in a system smaller than 20K, a CP/M LOAD ERROR may occur.
+
+     The CBASIC system consists of two programs -- CBASIC and CRUN.  CBASIC 
+is the compiler,  and CRUN is the run-time intepreter.  In a typical CBASIC 
+session,  the user will write the program using ED, compile it using CBASIC 
+(with the $B option to suppress listing), and run it using CRUN.
+
+     Refer to the 84-page CBASIC manual --
+
+                                C B A S I C
+                          A Commercially Oriented
+                        Compiler/Interpreter BASIC
+                           Language Facility for
+                               CP/M Systems
+
+                             February 17, 1978
+
+     CBASIC2 is an upward-compatable (in terms of source code) extension of 
+the  original CBASIC.   In addition to all of the features of the  original 
+CBASIC, CBASIC2 adds the following:
+          1.  Integer variables
+          2.  Chaining with common variables
+          3.  Additional pre-defined functions
+          4.  Cross Reference capability
+     Note  that  CBASIC2 is upward-compatable with CBASIC only in terms  of 
+the source code files.   An INT file created under CBASIC will not  execute 
+with the Version 2 Run-Time Monitor (CRUN2).
+     For further information, refer to the 100-page reference manual --
+
+                                C B A S I C
+                          A Commercially Oriented
+                        Compiler/Interpreter BASIC
+                           Language Facility for
+                               CP/M Systems
+                                 Version 2
+
+                                May 1, 1979
+:CBASIC2:  CBASIC2 Compile-Time Toggled Options
+
+     Compiler  toggles  are a series of switches that can be set  when  the 
+compiler  is  executed.   The toggles are set by typing a  dollar-sign  ($) 
+followed  by  the letter designations of the desired toggles  starting  one 
+space or more after the program name on the command line.  Toggles may only 
+be set for the compiler.
+
+     Examples of compiler toggles and invocation forms are --
+          CBAS2 INVENTRY $BGF
+          B:CBAS2 A:COMPARE $GEC
+          CBAS2 PAYROLL $B
+          CBAS2 B:VALIDATE $E
+
+                          CBASIC Compiler Toggles
+
+     TOGGLE B:  Suppresses the listing of the program on the console during 
+compilation.   If an error is detected,  the source line with the error and 
+the  error message will be printed even if Toggle B is set.   Toggle B does 
+not affect listing to the printer (Toggle F) or disk file (Toggle G).
+     Toggle B is initially off.
+
+     TOGGLE  C:   Suppresses the generation of an INT file.  Engaging  this 
+toggle  will  provide a syntax check without the overhead  of  writing  the 
+intermediate file.
+     Toggle C is initially off.
+
+     TOGGLE D:  Suppresses translation of lower-case letters to upper-case.  
+For example,  if Toggle D is on,  'AMT' will not refer to the same variable 
+as 'amt'.
+     Toggle D is initially off.
+
+
+     TOGGLE  E:  Causes the run-time program (CRUN2) to accompany any error 
+messages with the CBASIC line number in which the error occurred.  Toggle E 
+must be set in order for the TRACE option (see section 13.4 of the  manual) 
+to work.
+     Toggle E is initially off.
+
+     TOGGLE  F:   Causes the compiler output listing to be printed  on  the 
+LST: device in addition to the system console.  
+     Toggle F is initially off.
+
+     TOGGLE  G:   Causes  the  compiler output listing  to  be  written  to 
+diskette.   The  file containing the compiler listing has the same name  as 
+the .BAS file, but its type is .LST.
+     Normally  the disk listing will be placed on the same source drive  as 
+the  source file.   The operator may select another drive by specifying the 
+desired drive, enclosed in parens, following the G toggle; for example,
+                            CBAS2 B:TAX $G(A:)
+extracts the source from drive B: and sends the listing to drive A:.
+     Toggle G is initially off.
+:CBASIC2:  XREF Cross Reference Facility
+     The  XREF.COM  Cross Reference utility program produces a  file  which 
+contains an alphabetized list of all identifiers used in a CBASIC  program.  
+The usage of the identifier (function,  parameter,  or global) is provided, 
+as well as a list of each line in which that identifier is used.   The file 
+created  has  the same name as the CBASIC source file and is of  type  XRF.  
+The standard output is 132 columns wide.
+     The following command is used to invoke XREF --
+
+             XREF <filename> [disk ref] [$<toggles>] ['title']
+
+     If the disk reference is specified,  it instructs XREF as to what disk 
+to place the output on.
+     The toggles are described on the next display.
+     The  optional title field must be the last field in the command  line.  
+All characters following the first apostrophe on the command line up to the 
+second  apostrophe or until the end of the command line become  the  title.  
+The  title is truncated to 30 characters if the listing is 132 columns wide 
+and 20 characters if the D toggle (80 column listing) is specified.
+
+
+                               XREF Toggles
+
+     Toggle  A:  Causes the listing to be otput to the list device as  well 
+as the disk file.
+
+     Toggle  B:   Suppresses output to the disk.   If only the B toggle  is 
+specified, no output is produced.
+
+     Toggle  C:   Suppresses output to the disk and permits output  to  the 
+list device; same as A and B combined.
+
+     Toggle  D:  Causes output to be 80 columns wide instead of 132.
+
+     Toggle  E:  Produces output with only the identifiers and their usage.
+
+
+     For example,  the following command produces a cross reference listing 
+on the list device which is 80 columns wide --
+
+                               XREF PROG $CD
+:CBASIC:  Compiler Error Messages
+
+                               Text Messages
+
+NO SOURCE FILE:  <FILENAME>.BAS
+     The  compiler could not locate a source file used in either  a  CBASIC 
+command or an INCLUDE directive.
+
+PROGRAM CONTAINS n UNMATCHED FOR STATEMENT(S)
+     There are n FOR statements for which a NEXT could not be found.
+
+PROGRAM CONTAINS n UNMATCHED WHILE STATEMENT(S)
+     There are n WHILE statements for which a WEND could not be found.
+
+WARNING:  INVALID CHARACTER IGNORED
+     The previous line contains an invalid ASCII character;  this character 
+is ignored by the compiler, and a question mark is printed in its place.
+
+OUT OF DISK SPACE
+     The  compiler  has  run out of disk space while  attempting  to  write 
+either the INT or LST files.
+
+                           Text Messages (Con't)
+
+OUT OF DIRECTORY SPACE
+     The  compiler  has run out of directory entries  while  attempting  to 
+create or extend a file.
+
+DISK ERROR
+     A disk error occurred while trying to read or write to a disk file.
+
+INCLUDE NESTING TOO DEEP NEAR LINE n
+     An  include  statement near line n in the source program  exceeds  the 
+maximum level of nesting of source files.
+
+
+                           2-Letter Error Codes
+
+BF -- Branch into Function
+     A branch into a multiple line function from outside was attempted.
+
+BN -- Bad Number
+     An invalid numeric constant was encountered.
+
+CE -- Close Error
+     The intermediate (.INT) file could not be closed.
+
+CI -- Close Include
+     An invalid file name in an %INCLUDE statement.
+
+CS -- COMMON Statement error
+     A  COMMON statement which was not the first statement in  the  program 
+was detected.
+
+CV -- COMMON Variable error
+     An improper reference to a subscripte variable in a COMMON statement.
+
+DE -- Disk Error
+     A disk error occurred while trying to read the .BAS file.
+
+DF -- Disk Full
+     There  was no space on the disk or the disk directory was  full.   The 
+.INT file was not created.
+
+DL -- Duplicate Line number
+     The same line number was used on two different lines.   Other compiler 
+errors  may  cause a DL error message to be printed even if duplicate  line 
+numbers do not exist.
+
+DP -- Defined Previously
+     A variable in a DIM statement was previously defined.
+
+EF -- Exponential Format
+     A number in exponential format was input with no digits following  the 
+E.
+
+FA -- Function Attribute
+     A  function  name appears on the left side of an assignment  statement 
+but is not within that function.
+
+FD -- Function Definition
+     A function name that has been previously defined is being redefined in 
+a DEF statement.
+
+FE -- FOR Error
+     A  mixed mode expression exists in a FOR statement which the  compiler 
+cannot correct.
+
+FI -- FOR Index
+     An  expression which is not an unsubscripted numeric variable is being 
+used as a FOR loop index.
+
+FN -- Function parameter Number 
+     A function reference contains an incorrect number of parameters.
+
+FP -- Function Parameter type
+     A function reference parameter type does not match the parameter  type 
+used in the function's DEF statement.
+
+FU -- Function Undefined
+     A function has been referenced before it has been defined.
+
+IE -- IF Expression
+     An  expression  used  immediately following an IF  evaluates  to  type 
+string.  Only type numeric is permitted.
+
+IF -- In File
+     A  variable  used  in a FILE statement is of type numeric  where  type 
+string is required.
+
+IP -- Input Prompt
+     An input prompt string is not surrounded by quotes.
+
+
+IS -- Invalid Subscript
+     A subscripted variable was referenced before it was dimensioned.
+
+IT -- Invalid Toggle
+     An invalid compiler directive was encountered.
+
+IU -- Invalid Use
+     A variable defined as an array is used with no subscripts.
+
+MF -- Mixed Format
+     An expression evaluates to type string when type numeric is required.
+
+MM -- Mixed Mode
+     Variables  of  type string and type numeric are combined in  the  same 
+expression.
+
+MS -- Mixed String
+     A numeric expression was used where a string expression is required.
+
+ND -- No DEFFN
+     A FEND statement was encountered without a corresponding DEF.
+
+NI -- NEXT Index
+     A variable referenced by a NEXT statement does not match the  variable 
+referenced by the associated FOR statement.
+
+NU -- NEXT Unexpected
+     A NEXT statement occurs without an associated FOR statement.
+
+OF -- Out of Function
+     A branch out of a multiple line function from inside the function  was 
+attempted.
+
+OO -- ON Overflow
+     More than 25 ON statements were used in the program.
+
+
+PM -- ??
+     A  DEF statement appeared within a multiple line function.   Functions 
+may not be nested.
+
+SE -- Syntax Error
+     The source line contains a syntax error.
+
+SF -- SAVEMEM File
+     A SAVEMEM statement uses an expression of type numeric to specify  the 
+file  to  be  loaded.   This expression must be  a  string.   Possibly  the 
+quotation marks were left off a string constant.
+
+SN -- Subscript Number
+     A subscripted variable contains an incorrect number of subscripts.
+
+SO -- Syntax Overflow
+     The  expression is too complex and should be simplified and placed  on 
+more than one line.
+
+TO -- Table Overflow
+     The  program  is  too  large for the  system.   The  program  must  be 
+simplified or the system size increased.
+
+UL -- Undefined Line number
+     A line number that does not exist has been referenced.
+
+US -- Undefined String
+     A string has been terminated by a carriage return rather than quotes.
+
+VO -- Variable Overflow
+     Variable names are too long for one statement.
+     This should not occur.
+
+WE -- WHILE Error
+     The expression immediately following a WHILE statement is not numeric.
+
+WU -- WHILE Undefined
+     A WEND statement occurs without an associated WHILE statement.
+:CBASIC:  Run-Time Error Messages -- Warnings
+
+     Two textual run-time error messages are presented by CRUN:
+
+NO INTERMEDIATE FILE
+     A  file name was not specified with the CRUN command,  or no  file  of 
+type .INT and the specified file name was found on disk.
+
+IMPROPER INPUT - REENTER
+     This  message  occurs when the fields entered from the console do  not 
+match  the  field specified in the INPUT statement.   This can  occur  when 
+field types do not match or the number of fields entered is different  from 
+the  number  of  fields  specified.   All fields  specified  by  the  INPUT 
+statement must be reentered.
+
+                     2-Letter Warning Codes
+
+DZ -- Divide by Zero
+     A number was divided by zero.   The result is set to the largest valid 
+CBASIC number.
+
+FL -- Field Length
+     A  field  length greater than 255 bytes was encountered during a  READ 
+LINE.  Only the first 255 characters of the record are retained.
+
+LN -- Logarithm error
+     The  argument  given in the LOG function was zero  or  negative.   The 
+value of the argument is returned.
+
+NE -- NEgative number
+     A  negative  number  was  specified following the  raise  to  a  power 
+operator (^).  The absolute value is used in the calculation.
+
+
+OF -- OverFlow
+     A calculation produced a number too large.   The result is set ot  the 
+largest valid CBASIC number.
+
+SQ -- SQuare root error
+     A  negative  number was specified in the SQR function.   The  absolute 
+value is used.
+:CBASIC:  Run-Time Error Messages -- Error Codes
+
+AC -- AsCii error
+     The string used as the argument in an ASC function evaluated to a null 
+string.
+
+BN -- BUFF Number
+     The  value following the BUFF option in an OPEN or CREATE statement is 
+less than 1 or greater than 52.
+
+CC -- Chain Code
+     A  chained program's code area is larger than the main program's  code 
+area.
+
+CD -- Chain Data
+     A  chained program's data area is larger than the main program's  data 
+area.
+
+CE -- Close Error
+     An error occurred upon closing a file.
+
+CF -- Chain Function
+     A  chained program's constant area is larger than the  main  program's 
+constant area.
+
+CP -- Chain Var Storage
+     A  chained  program's  variable storage area is larger than  the  main 
+program's variable storage area.
+
+CS -- Chain SAVEMEM
+     A chained progra reserved a difference amount of memory with a SAVEMEM 
+statement than the main program.
+
+CU -- Close Undefined file 
+     A close statement specified a file number that was not active.
+
+DF -- Defined File
+     An  OPEN or CREATE was specified with a file number that  was  already 
+active.
+
+DU -- Delete Undefined file
+     A DELETE statement specified a file number that was not active.
+
+DW -- Disk Write error
+     An  error occurred while writing to a file.   This occurs when  either 
+the directory or the disk is full.
+
+EF -- End of File
+     A  read  past the end of file occurred on a file for which no  IF  END 
+statement has been executed.
+
+ER -- Error in Record
+     An  attempt  was  made to write a record of length  greater  than  the 
+maximum  record  size specified in the associated  OPEN,  CREATE,  or  FILE 
+statement.
+
+FR -- File Rename
+     An attempt was made to rename a file to an existing file name.
+
+FT -- File Toggle
+     A FILE statement was executed when 20 files were already active.
+
+FU -- File Undefined
+     An attempt was made to read or write to a file that was not active.
+
+IF -- Invalid File name
+     A file name was invalid.
+
+IR -- Invalid Record number
+     A record number less than one was specified.
+
+IV -- Invalid Version
+     An  attempt  was made to execute an INT file created by  a  Version  1 
+Compiler.
+
+IX -- ??
+     A   FEND  statement  was  encountered  prior  to  executing  a  RETURN 
+statement.
+
+LW -- Line Width
+     A  line  width  less than 1 or greater than 133 was  specified  in  an 
+LPRINTER WIDTH statement.
+
+ME -- MAKE Error
+     An  error occurred while creating or extending a file because the disk 
+directory was full.
+
+MP -- MATCH Parameter
+     The third parameter in a MATCH function was zero or negative.
+
+NF -- Number of FILE
+     The file number specified was less than 1 or greater than 20.
+
+NM -- No Memory
+     There was insufficient memory to load the program.
+
+NN -- No Number field
+     An attempt was made to print a number with a PRINT USING statement but 
+there was not a numeric data field in the USING string.
+
+NS -- No String field
+     An attempt was made to print a string with a PRINT USING statement but 
+there was not a string field in the USING string.
+
+OD -- Overflow Data
+     A  READ  statement was executed with no DATA available.
+
+OE -- OPEN Error
+     An attempt was made to OPEN a file that didn't exist and for which  no 
+IF END statement had been previously executed.
+
+OI -- ON Index
+     The  expression  specified  in  an ON ...  GOSUB or  an  ON  ...  GOTO 
+statement  evaluated to a number less than 1 or greater than the number  of 
+line numbers contained in the statement.
+
+OM -- Overflow Memory
+     The program ran out of memory during execution.
+
+QE -- Quote Error
+     An attempt was made to PRINT to a file a string containing a quotation 
+mark.
+
+RB -- Random BUFF
+     Random  access was attempted to a file activated with the BUFF  option 
+specifying more than 1 buffer.
+
+RE -- READ Error
+     An attempt was made to read past the end of a record in a fixed file.
+
+RG -- RETURN with no GOSUB
+     A RETURN occurred for which there was no GOSUB.
+
+RU -- Random Undefined
+     A random read or print was attempted to other than a fixed file.
+
+SB -- SuBscript
+     An  array subscript was used which exceeded the boundaries  for  which 
+the array was defined.
+
+SL -- String Length
+     A concatenation operation resulted in a string of more than 255 bytes.
+
+SO -- SAVEMEM
+     The file specified in a SAVEMEM statement could not be located on  the 
+referenced disk.
+
+SS -- SubString error
+     The second parameter of a MID$ function was zero or negative.
+
+TF -- Too many Files
+     An attempt was made to have more than 20 active files simultaneously.
+
+TL -- TAB Length
+     A  TAB statement contained a parameter less than 1 or greater than the 
+current line width.
+
+UN -- UNdefined edit string
+     A PRINT USING statement was executed with a null edit string.
+
+WR -- WRite error
+     An  attempt was made to write to a file after it had  been  read,  but 
+before it had been read to the end of the file.
+:CBASIC:  CBASIC Reserved Words
+
+     ABS       AND       AS        ASC       ATN
+     BUFF      CALL      CHAIN     CHR$      CLOSE
+     COMMAND$  COMMON    CONCHAR%  CONSOLE   CONSTAT%
+     COS       CREATE    DATA      DEF       DELETE
+     DIM       ELSE      END       EQ        EXP
+     FEND      FILE      FOR       FRE       GE
+     GO        GOSUB     GOTO      GT        IF
+     INITIALIZE INP      INPUT     INT       INT%
+     LE        LEFT$     LEN       LET       LINE
+     LOG       LPRINTER  LT        MATCH     MID$
+     NE        NEXT      NOT       ON        OPEN
+     OR        OUT       PEEK      POKE      POS
+     PRINT     RANDOMIZE READ      RECL      RECS
+     REM       REMARK    RENAME    RESTORE   RETURN
+     RIGHT$    RND       SADD      SGN       SIN
+     SIZE      SQR       STEP      STOP      STR$
+     SUB       TAB       TAN       THEN      TO
+     UCASE$    USING     VAL       WEND      WHILE
+     WIDTH     XOR
+:CBASIC2:  Expression Hierarchy
+
+     The Hierarchy for expression evaluation is a follows --
+
+          1.  nested parentheses ()
+          2.  power operator ^
+          3.  * /
+          4.  + - concatenation[+] unary[+ -]
+          5.  relational operators:
+               < <= > >= = <> LT LE GT GE EQ NE
+          6.  NOT
+          7.  AND
+          8.  OR XOR
+:CBASIC2:  Predefined Functions
+
+                               I/O Functions
+
+CONSTAT%  - Returns the console status as an integer.   If ready, a logical 
+          TRUE is returned.
+
+CONCHAR%  - Reads one character from the console device.
+
+
+
+                        Machine-Language Functions
+
+PEEK (<exp>)
+          - Returns  the  contents  of  the memory location  given  by  the 
+          expression.
+
+POKE <exp>, <exp>
+          - Low-order eight bits of second expression are stored in  memory 
+          location selected by first expression.
+
+CALL <exp>
+          - CALL a machine language program at address specified.
+
+SAVEMEM <constant>, <exp>
+          - Reserve  <constant> number of bytes and load the file specified 
+by the string <exp> into the reserved area.
+
+                             Numeric Functions
+
+     FRE            ABS(x)         INT(x)         INT%(x)
+     FLOAT(i%)      RND            SGN(x)         ATN(x)
+     COS(x)         EXP(x)         LOG(x) [e]     SIN(x)
+     SQR(x)         TAN(x)
+
+                             String Functions
+
+     ASC(a$)        CHR$(i%)       LEFT$(a$,i%)   LEN(a$)
+     UCASE$(a$)     MATCH(a$,b$,i%) MID$(a$,i%,j%) RIGHT$(a$,i%)
+     STR$(x)        VAL(a$)        COMMAND$       SADD(a$)
+
+
+                              Disk Functions
+
+     RENAME(a$,b$)  SIZE(a$)
+
+
+                          User-Defined Functions
+
+     The general forms are --
+
+   [<line number>] DEF <function name> [<dummy arg list>] = <expression>
+
+and
+
+          [<line number>] DEF <function name> [<dummy arg list>]
+                                     .
+                                     .
+                                     .
+          [<line number>] FEND
+

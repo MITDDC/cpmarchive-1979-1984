@@ -1,0 +1,103 @@
+; oterm405.sub
+;
+; upgrade oterm version 4.04 to version 4.05
+;
+; this upgrade may only be applied to oterm 
+; version 4.04.
+;
+; problems corrected:
+;
+;     1. under double density, the function keys
+;	 would not be left in their original
+;	 state after exiting from oterm.
+;
+;     2. if the default drive was not a, it would
+;	 be not be respected after the first file
+;	 was opened.
+;
+; to perform the upgrade, place a disk with ddt,
+; submit and xsub on drive a and a disk with
+; this submit file and oterm.com on drive b.
+; the old version of oterm.com will be renamed
+; otermold.com and a new version created.
+; therefore, the disk in drive b must contain
+; sufficient free space for a new copy of oterm.
+; use the command
+;
+;	submit b:oterm405.sub
+;
+; this patch assumes that the size of oterm has
+; not been changed by extended function keys.
+; if it is desired to apply the patch to oterm
+; with function keys, the save command must be
+; modified to use the proper size.  to determine
+; the proper size, use stat to determine the
+; number of records.  add 1 to the number of
+; records and divide by 2, ignoring any remainder.
+; for example, if oterm.com contains 251 records,
+; change  the save to
+;
+;	save 126 b:oterm.com
+;
+; thanks to Al Frazer, Wayne Hammerly,
+; Mark McGee, and Jay Siegal for reporting
+; these problems.
+;
+xsub
+ren b:otermold.com=oterm.com
+ddt b:otermold.com
+s188
+4a
+11
+.
+s113d
+ed
+5b
+01
+00
+1e
+6b
+21
+3b
+01
+01
+1e
+00
+c9
+.
+s1240
+cd
+3d
+11
+ed
+b0
+00
+.
+s43ae
+35
+20
+20
+20
+28
+34
+20
+44
+65
+63
+.
+s73ec
+3a
+04
+00
+e6
+0f
+00
+00
+00
+00
+00
+00
+.
+g0
+save 124 b:oterm.com
+

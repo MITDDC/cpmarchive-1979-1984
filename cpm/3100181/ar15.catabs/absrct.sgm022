@@ -1,0 +1,75 @@
+
+
+     Frankly,  I thought that this disk would take a little while 
+to get togeather.  But Ray Penley, Bob Harsch and a mild donation 
+by  me  brought  this  volume  togeather so  fast  I  almost  got 
+overloaded.   The  utility level is increasing also.   There  are 
+some  very  good programs on this disk that are  of  professional 
+quality.  It seems that we are a success.
+     
+1.   CFIO.LIB       Add this to your library.  It is a program
+                    to help you open files, really nice. By the
+                    way ,the CF means Connect Files.   
+
+2.   CONCORD.COM    This a program that builds an alphabetical
+            .PAS    listing of all the distinct words which
+            .CCD    appear in a text file.(Useful by a programer
+                    in locating garbage variables in a program)
+                    Makes heavy use of pointers and the data
+                    string. Some good ideas here.
+
+3.   COSINE.PAS     Before the bug got fixed, this was our
+           .REL     subsituted Cosine program. It is now new
+           .SRC     and improved.
+
+4.   GEN5.COM       A demo on accessing CP/M files and read-
+         .PAS       them back. Instructional for the noivce.
+
+5.   GRAPH1.COM     A demo on creating a graphic representation
+           .PAS     of a function.
+
+6.   ISORTV1.COM    A insertion sort with linked list.This
+            .PAS    program can be easily adapted to sort single
+                    characters, integer numbers, real numbers
+                    months or any item that can be ordered.
+
+7.   LINENOS.COM    Many times it is difficult to keep track
+            .PAS    of text lines. This program will number
+                    your lines for you so it will be easy to
+                    count or find.
+
+8.   POINT.COM      A demo on the use of pointers taken from
+          .PAS      page 49 of the Pascal/Z manual.
+
+9.   RANDOM.MAC     A professional random number generator
+                    for your library. Two years of testing
+                    went into this one, should be good.
+9A.  RANDOM.PAS     Something simple Bob threw in.       
+
+10.  SINCOS.SRC     A debugged sine/cosine that works.
+           .REL
+
+11.  STRLIB.DOC     Ray Penley's latest updated string lib.
+           .LIB
+
+12.  TRIG4.COM      A simple Demo program that builds a
+          .PAS      short Trig chart.
+
+13.  XREFG2.COM     This is a binary tree type cross-ref
+           .PAS     generator. Very useful and very in-
+                    structive.
+
+14.  ZPTEX.COM      A very simple text formatter intended
+          .PAS     for CAI. Lesson 4 is a sample.
+     LESSON4.
+
+15.  RECIPE.COM     Here is a good example of what can
+           .PAS     be done. RAY took a Basic program and
+           .MST     converted it to Pascal/Z. Your wifes
+     RCPDAT.YYY     will love this program because it is
+                    practical, useable AND its not your
+                    simple recipe program. Its for left
+                    overs also.
+
+16.  FCLOSE.COM     Three different ways to close a file
+	   .PAS	    in Pascal/Z.

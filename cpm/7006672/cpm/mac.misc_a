@@ -1,0 +1,790 @@
+!<arch>
+format.c        360921905   99    31    100644  580       `
+/*
+
+this program draws columns on standard output
+it performs this task quite well, but
+as to its purpose, i am completely
+mystified
+
+*/
+int	npage;
+int	ncols;
+
+main(argc, argv)
+char *argv[ ];
+{
+	register int i,j;
+
+	if (argc < 2 || argc > 3)  {
+		printf("%s npages ncols\n", argv[0]);
+		return;
+		}
+
+	if (argc == 2)  {
+		npage = 64;
+		ncols = atoi(argv[1]);
+		}
+
+	if (argc == 3)  {
+		npage = atoi(argv[1]) * 64;
+		ncols = atoi(argv[2]);
+		}
+
+	for (i=0; i<npage; i++)  {
+		printf("|        ||");
+		for (j=0; j<ncols; j++)
+			printf("    |    ||");
+		putchar('\n');
+		}
+
+	return;
+}
+
+imactab.c       360922096   99    31    100644  4830      `
+/*
+
+	* * * W A R N I N G * * *
+
+	This program is not up to date with the
+	current mactab/mac programs. You're probably
+	better off to use the editor to prepare
+	r-files anyway.
+
+*/
+struct	ht	{
+	int	h_formats;
+	int	h_ops;
+	struct	dc	{
+		char	d_type;
+		char	d_len;
+		}	dctype[4];
+	int	h_prepast;
+	int	h_bu_len;
+	int	h_w_len;
+	int	h_i_len;
+	int	h_i_flg;
+	int	h_addr;
+	};
+
+struct	ot	{
+	char	o_name[8];
+	int	o_value;
+	int	o_format;
+	};
+
+struct	fd	{
+	char	f_class;
+	char	f_len;
+	char	f_desc[32];
+	};
+
+struct	ht	head;
+struct	ot	opcode[256];
+struct	fd	format[16];
+
+
+int	compar();
+
+char	*p;
+char	c;
+int	n;
+char	buf[256];
+char	hex[ ]	"0123456789abcdef";
+
+char *warn = "\n\
+\n\
+	* * * W A R N I N G * * *\n\
+\n\
+	This program is not up to date with the\n\
+	current mactab/mac programs. You're probably\n\
+	better off to use the editor to prepare\n\
+	r-files anyway.\n\
+\n\
+";
+
+main(argc, argv)
+char *argv[ ];
+{
+	register unit,i,j;
+
+	printf("\07%s\07", warn);
+	if (argc != 2)  {
+		printf("Output code filename ?? ");
+		i = read(0, buf, 256);
+		buf[i-1] = '\0';
+		unit = creat(buf, 0600);
+		}
+	   else
+		unit = creat(argv[1], 0600);
+
+	if (unit < 0)  {
+		printf("can't create output file\n");
+		exit(1);
+		}
+
+	printf("\n\nMACTAB  MAC TABLE FORMATTING PROGRAM\n\n");
+	printf("\nIs the machine's PSW incremented before\n");
+	printf("or after an instruction is fetched (answer 'b' or 'a') ? ");
+	head.h_prepast = getans('b', 'a');
+	printf("\nHow many bits in a basic address unit (bu) ? ");
+	head.h_bu_len = getnum();
+	printf("\nHow many bu's in a word ? ");
+	head.h_w_len = getnum();
+	printf("\nHow many bu's in a short instruction ? ");
+	head.h_i_len = getnum();
+	head.h_i_flg = 0;
+	if (head.h_i_len < head.h_w_len)  {
+		printf("\nAre instructions constrained to end on an address\n");
+		printf("boundary or occupy full words (answer 'c' or 'f') ? ");
+		head.h_i_flg = getans('f','c');
+		}
+	printf("\nHow many bits in an address ? ");
+	head.h_addr = getnum();
+	printf("\n\nDescribe your define constant opcode (dc?)\n");
+	printf("Give an identifying character and the length\n");
+	printf("in bu's that the constant will occupy.\n\n");
+	for (i=0; i<4; i++)  {
+		printf("Will you need a dc%d ? ", i);
+		if (getans('n', 'y'))  {
+			printf("Identifier ? ");
+			head.dctype[i].d_type = c = getchar();
+			while (c != '\n')
+				c = getchar();
+			printf("Length of storage ? ");
+			head.dctype[i].d_len = getnum();
+			}
+		   else  {
+			head.dctype[i].d_type = head.dctype[i].d_len = 0;
+			}
+		}
+	printf("\n\nEnter the instruction format descriptors\n");
+	printf("Terminate entry with a zero length response.\n");
+	printf("Refer to the manual for detailed description.\n\n");
+	for (i=0; ; i++)  {
+		printf("Number of operands ? ");
+		format[i].f_class = getnum();
+		printf("Length in basic units ? ");
+		format[i].f_len = j = getnum();
+		if (!j)
+			break;
+		printf("Format descriptor: ");
+		j = read(0, format[i].f_desc, 32);
+		format[i].f_desc[j-1] = '\0';
+		}
+	head.h_formats = i;
+
+	printf("\n\nEnter the symbolic opcodes for your machine.\n");
+	printf("Terminate entry with an end-of-file when you are\n");
+	printf("prompted for opcode.\n\n");
+	for (i=0; ; i++)  {
+		printf("Opcode symbolic ? ");
+		j = read(0, opcode[i].o_name, 8);
+		if (!j)  {
+			putchar('\n');
+			qsort(&opcode[0], i, sizeof (struct ot), compar);
+			break;
+			}
+		opcode[i].o_name[j-1] = '\0';
+		printf("Value ? ");
+		opcode[i].o_value = getnum();
+		printf("Format descriptor ? ");
+		opcode[i].o_format = getnum();
+		}
+	head.h_ops = i;
+	write(unit, &head, sizeof (struct ht) );
+	i = head.h_formats;
+	j = 0;
+	while (i--)
+		write(unit, &format[j++], sizeof (struct fd) );
+	i = head.h_ops;
+	j = 0;
+	while (i--)
+		write(unit, &opcode[j++], sizeof (struct ot) );
+	printf("\n\n%5d formats\n", head.h_formats);
+	printf("%5d opcodes\n\n", head.h_ops);
+	return(0);
+}
+
+getans(a, b)
+char	a,b;
+{
+	register i;
+
+	c = getchar();
+	i = (c == a ? 0 : (c == b ? 1 : -1) );
+	while (c != '\n')
+		c = getchar();
+
+	return(i);
+}
+
+getnum()
+{
+	register i,j;
+
+	i = 0;
+	c = getchar();
+	switch (c)  {
+		case '0':
+			while ((c = getchar()) >= '0' && c <= '7')
+				i = (i<<3) | (c - '0');
+			return(i);
+
+		case 'x':
+			for (;;)  {
+				c = getchar();
+				if ((j = any(c, hex)) < 0)
+					return(i);
+				i = (i<<4) | j;
+				}
+
+		default:
+			i = c - '0';
+			while ((c = getchar()) >= '0' && c <= '9')
+				i = i * 10 + (c - '0');
+			return(i);
+
+		}
+}
+
+text(q)
+char	*q[ ];
+{
+	register i,j;
+
+	i = 0;
+	while (q[i])  {
+		printf(q[i]);
+		i++;
+		}
+
+	return;
+}
+
+compar(r, s)
+register char	*r, *s;
+{
+	register i;
+
+	if (*r < *s)
+		return(-1);
+	if (*s < *r)
+		return(1);
+	i = 0;
+	while (i < 8)  {
+		r++;
+		s++;
+		if (*r < *s)
+			return(-1);
+		if (*s < *r)
+			return(1);
+		}
+	return(0);
+}
+
+any(cc, tab)
+char	cc;
+char	tab[ ];
+{
+	register i;
+
+	i = 0;
+	while (tab[i])  {
+		if (tab[i] == cc)
+			return(i);
+		i++;
+		}
+	return(-1);
+}
+macdr.c         360922288   99    31    100644  4512      `
+#include	"../mac/mac.h"
+#include	"../mac/m.out.h"
+
+
+/*
+ *   MACDR:
+ *
+ *   Decode a pre-formatted MAC r-file, and symbolically
+ *   print it.  This program is useful for debugging the
+ *   MACTAB table formatter, and for inspecting a forgotten
+ *   r-file.
+ *
+ */
+
+
+
+extern char *malloc();
+char	fmtdesc[ ]	=	"\tdesc %8x  value %8x  width %d\n";
+char	buf[256];
+struct oc *opcode;
+int	fd;
+struct	ht	h;
+
+char	*symt[ ] =	{
+	"NUL",
+	"LBL",
+	"CON",
+	"SPA",
+	"DEL",
+	"EOL",
+	"EOF",
+	"COM",
+	"OPR",
+	"STR",
+	"MCH",
+	"LPL",
+	 0, 0, 0, 0, 0, 0, 0, 0,
+	"EXP",
+	"SKP",
+	"LIT",
+	"CHR"
+	};
+
+char	*actt[ ] =	{
+	"NOOP",
+	"ALBL",
+	"DOPV",
+	"OLBL",
+	"OOPR",
+	"ODEL",
+	"OCON",
+	"OCHR",
+	"OSTR",
+	"ENDP",
+	"SELC",
+	"EXPR",
+	"RETN",
+	"GOTO",
+	"OERR",
+	"OREC",
+	"LITP",
+	"CLBL"
+	};
+
+
+main(argc, argv)
+char *argv[ ];
+{
+	register struct st *s;
+	register char *p;
+	register int len;
+	register int i;
+	register int j;
+	struct oc *op;
+	struct os *os;
+
+	if (argc != 2)  {
+		printf("Usage: %s r-file-name\n", argv[0]);
+		exit(1);
+		}
+
+	if ((fd = open(argv[1], 0)) < 0)  {
+		printf("Can't open %s\n", argv[1]);
+		exit(1);
+		}
+
+	p = buf;
+	if(read(fd, &h, HT) != HT || h.h_mword != MWORDR) {
+		printf("%s not an r-file\n", argv[1]);
+		exit(1);
+	}
+	printf("m.out magic word is 0x%08x (0%011o)\n",
+		h.h_macmword, h.h_macmword);
+	printf("byte width is %d bits\n", h.h_bu_len);
+	printf("word width is %d bytes\n", h.h_w_len);
+	printf("basic instruction width is %d bytes\n", h.h_i_len);
+	printf("instructions are ");
+	if (!h.h_i_flg) printf("not ");
+	printf("constrained by address boundaries\n");
+	printf("machine %s\n", h.h_mac);
+	printf("parser starts at %d\n", h.h_p_start);
+	printf("page length %d lines\n", h.h_page);
+	printf("pc is ");
+	(h.h_pc_post ? printf("post") : printf("pre"));
+	printf("-incremented\n\n");
+	for (i=0; i<5; i++)
+		if (h.dctype[i].f_len)  {
+			printf("dc%c  ", h.dctype[i].f_class);
+			printf("%2d bytes\n", h.dctype[i].f_len);
+			for (j=0; h.dctype[i].f_desc[j]; j++)
+				printf(fmtdesc, h.dctype[i].f_desc[j],
+						h.dctype[i].f_value[j],
+						h.dctype[i].f_width[j]);
+			}
+	putchar('\n');
+
+	if (h.h_literals)
+		printf("%d literals\n", h.h_literals);
+	else
+		printf("no literals\n");
+
+	while (h.h_literals--)  {
+		read(fd, buf, 8);
+		printf("%8s  ", buf);
+		}
+	printf("\n\n");
+
+	printf("format descriptors\n");
+	for (i=0; h.h_formats--; i++)  {
+		read (fd, buf, FD);
+		printf("%3d: ", i);
+		printf("class %2d  ", ((struct fd *)p)->f_class);
+		printf("length %2d\n", ((struct fd *)p)->f_len);
+		for (j=0; ((struct fd *)p)->f_desc[j]; j++)
+			printf(fmtdesc, ((struct fd *)p)->f_desc[j],
+					((struct fd *)p)->f_value[j],
+					((struct fd *)p)->f_width[j]);
+		}
+	printf("\n\n");
+
+	printf("opcode table\n");
+	if((opcode = (struct oc *)malloc(h.h_o_len)) == NULL) {
+		printf("no room for opcode table\n");
+		exit(1);
+	}
+
+	read(fd, opcode, h.h_o_len);
+	relopcodes(opcode);
+	for(op = opcode; op < &opcode[h.h_ops]; op++) {
+		printf("%-8s  ", op->oc_name);
+		for(os = op->oc_list; os != NUL; os = os->os_next) {
+			printf("(%2d %2d 0x%02x)",	os->os_sel, os->os_fmt,
+				os->os_opc);
+		}
+		printf("\n");
+	}
+	printf("\n\n");
+
+	printf("parser table\n\n");
+	printf("Loc  Sym  Mem       Next    Act   Args\n");
+	for (i=0; h.h_p_len--; i++)  {
+		read(fd, buf, TBL);
+		printf("%3d: ", i);
+		printf("%3s  ", symt[abs(((struct tbl *)p)->tb_sym)]);
+		printf("%8x  ", ((struct tbl *)p)->tb_mem);
+		printf("(%4d)  ", ((struct tbl *)p)->tb_next);
+		printf("%4s  ", actt[((struct tbl *)p)->tb_act]);
+		for (j=0; j<4; j++)
+			printf("%2x ", ((struct tbl *)p)->tb_arg[j]);
+		putchar('\n');
+		}
+	printf("\n\n");
+
+	if (h.h_labels) {
+		printf("%d labels\n", h.h_labels);
+		printf("Name     val(dec)     val(hex)  class(hex)\n");
+	} else
+		printf("no pre-defined labels\n");
+
+	while (h.h_labels--)  {
+		read(fd, buf, ST);
+		printf("%-8s ", ((struct st *)p)->s_u.s_name);
+		printf("%11d  %8x %8x\n", ((struct st *)p)->s_value,
+					  ((struct st *)p)->s_value,
+					  ((struct st *)p)->s_class);
+		}
+
+	return;
+}
+
+
+abs(k)
+register int k;
+{
+	if (k < 0)
+		return(-k);
+	return(k);
+}
+
+relopcodes(op)
+struct oc *op;
+{
+	register char *p;
+	register struct os *q, *r;
+	register int offset, i;
+
+	offset = (char *)op - (char *)h.h_opstart;
+
+	for(i = 0; i < h.h_ops; i++) {
+		if(op->oc_list == NULL)
+			break;
+		p = ((char *)(op->oc_list)) + offset;
+		q = op->oc_list = (struct os *)p;
+		while(q != NULL) {
+			r = q->os_next;
+			if(r == NULL)
+				break;
+
+			p = ((char *) r) + offset;
+			q->os_next = (struct os *)p;
+			q = q->os_next;
+		}
+		op++;
+	}
+}
+macdt.c         360922344   99    31    100644  1136      `
+#include	"../mac/mac.h"
+
+
+/*
+ *   MACDT:
+ *
+ *   MAC temporary file decoder.  This routine is useful
+ *   for decoding and symbolically printing the contents
+ *   of MAC temp. files, left around by using the '-u'
+ *   option on the MAC control statement.
+ *
+ */
+
+
+				/* intercode struct */
+struct	it	i;
+char *head = "\
+line ilen  flags  tag lbl  op    locn     selc    operands\n\
+";
+
+
+main(argc, argv)
+char	*argv[ ];
+{
+	register int fd;
+	register int n;
+	int ilen;
+
+	n = 0;			/* line counter */
+
+	if (argc < 2)
+		fd = open("mactemp", 0);
+	else
+		fd = open(argv[1], 0);
+
+	if (fd < 0)  {
+		printf("can't open temp\n");
+		exit(1);
+		}
+
+	printf(head);
+	while (read(fd, &ilen, INT) == INT)  {
+
+		if(read(fd, &i, ilen) != ilen) {
+			printf("temp file corrupted\n");
+			exit(1);
+		}
+
+		printf("%3d:", ++n);
+		printf("(%3d)  ", ilen+INT);
+		printf("%8x  ", i.i_flags);
+		if (i.i_label == ERR)
+			printf("       ");
+		else
+			printf("$%-5d ", i.i_label);
+		printf("%5d ", i.i_op);
+		printf("(%6d) ", i.i_locn);
+		printf("%1x %2d %2d %2d ",
+			i.i_selc[0], i.i_selc[1],
+			i.i_selc[2], i.i_selc[3]);
+		printf(":%s\n", i.i_opr);
+		}
+
+	return;
+}
+Makefile        363228786   99    31    100644  165       `
+HEADS=  mac.h mac.x m.out.h
+
+CFILES= otos00.c otos01.c
+
+FILES= otos00.o otos01.o
+
+otos: ${FILES}
+	cc -N -o otos ${FILES}
+
+${FILES}:
+	cc -c $*.c
+
+otos00.o : m.out.h
+
+
+m.out.h         363225836   99    31    100644  1600      `
+#define INTERDATA
+/*
+ *   M.out structure generation.
+ */
+
+struct	out	{
+	int	ou_nseg;		/* segment no or SYMBOLS or RELOCATION */
+	int	ou_start;		/* start addr of segment */
+	int	ou_length;		/* seg len in bytes */
+	}	out;
+
+struct	aout	{
+	int	ao_mword;		/* header - magic word */
+	int	ao_bu_len;		/* byte width in bits */
+	int	ao_startad;		/* execution start addr */
+	}	aout;
+
+struct	g_sym	{			/* symbol & literal table */
+	char	gs_name[8];		/* symbol name */
+	int	gs_value;		/* actual value */
+	int	gs_mode;			/* symbol mode */
+	int	gs_lcntr;		/* segment containing sym */
+	};
+
+struct	relocate  { /* Relocation info for a location if relocatable or
+			relative to an undefined global */
+	int	rel_type;	/* relocation type */
+	int	rel_mask;	/* relocation bit mask */
+	int	rel_addr;	/* address of item to be relocated */
+	/* Other interesting info. which depends on the relocation type */
+	union {
+	 	int	rel_lcntr;	/* which locn cntr if not global ref */
+		int	rel_gln;		/* index of global label */
+	}rel_u;
+};
+
+#ifdef		PDP11
+
+#define	MWORD	(011223)
+#define MWORDR	(011222)
+
+#endif
+
+
+#ifdef		INTERDATA
+
+#define	MWORD	(0371242)
+#define MWORDR	(0371241)	/* magic wd for r-files */
+
+#endif
+
+#define	SYMBOLS		(-1)
+#define RELOCATION	(-2)
+
+#define	AOUT	(sizeof (struct aout))
+#define	OUT	(sizeof (struct out))
+
+/*
+	Relocation types
+*/
+#define	RSTOR	0x0000	/* block storage - not used at the moment */
+#define	RABS	0x4000	/* absolute - should never get into reloc info */
+#define	RREL	0x8000	/* relocatable */
+#define	RLBL	0xc000	/* relative to global label */
+#define RPMOD	0x2000	/* pc-relative modifier */
+otos00.c        363244926   99    31    100644  1498      `
+#include <stdio.h>
+#include "m.out.h"
+
+#define INT sizeof(int)
+#define maxrecord 50
+
+FILE  *bfp, *sfp;
+
+
+
+main(argc,argv)
+int argc;
+char *argv[];
+{
+	struct aout header;
+	struct out sym,code;
+	int entry, address, size;
+	unsigned char checksum;
+
+	openfiles(argc,argv);
+
+	/* Start processing the binary file */
+	if (fread(&header, AOUT, 1, bfp) == NULL)
+	{
+		fprintf(stderr,"otos: unable to read header block\n");
+		exit(1);
+	}
+	if (header.ao_mword != MWORD)
+	{
+		fprintf(stderr, "otos: %s not a binary file\n",argv[1]);
+		exit(1);
+	} 
+	
+
+	/* Handle global symbols */
+	if (fread(&sym, OUT, 1, bfp) == NULL)
+	{
+		fprintf(stderr,"otos: unable to read symbol table block\n");
+		exit(1);
+	}
+	if (sym.ou_nseg == SYMBOLS)
+	{	
+		while (sym.ou_length--)
+		{
+			/* for now just eat symbols */
+			fread(&entry, INT, 1, bfp);
+		}
+	}
+	while (fread(&code, OUT, 1, bfp))
+	{
+		printf("code block:\n\tseg %x\n\tstart %x\n\tlength %x\n",
+		code.ou_nseg,code.ou_start,code.ou_length);
+		address = code.ou_start;
+		while (code.ou_length)
+		{
+		    if (code.ou_length <= maxrecord) size = code.ou_length;
+ 		    else size = maxrecord;
+		    code.ou_length -= size;
+		    checksum = size+4;
+		    checksum += address>>8;
+		    checksum += address&0xff;
+
+		    fprintf(sfp,"S2%02x%06x",size+4,address);
+		    for (; size--; address++)
+		    {
+			fread(&entry, INT, 1, bfp);
+			fprintf(sfp,"%02x",entry);
+			checksum += entry;
+		    }
+		    fprintf(sfp,"%02x\n",(0xff-checksum));
+		}
+	}
+	fprintf(sfp,"S8040000fb\n");
+}	
+	
+	
+otos01.c        363226292   99    31    100644  555       `
+#include <stdio.h>
+
+FILE *fopen();
+extern FILE *bfp, *sfp;
+
+openfiles(argc,argv)
+int argc;
+char *argv[];
+{
+	if (argc < 2)
+	{
+		printf("usage: otos bfile [sfile]\n");
+		exit(1);
+	}
+	
+	if ((bfp = fopen(argv[1],"r")) == NULL)
+	{
+		printf("otos: unable to open binary file %s %s",argv[1],"\n");
+		exit(1);
+	}
+
+	if (argc < 3) 
+	{
+		if ((sfp=fopen("s.out","w")) == NULL)
+		{
+			printf("otos: unable to open s.out\n");
+			exit(1);
+		}
+	} 
+	else
+	{
+		if ((sfp=fopen(argv[2],"w")) == NULL)
+		{
+			printf("otos: unable to open %s \n",argv[2]);
+			exit(1);
+		}
+	}
+}
+

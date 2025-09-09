@@ -1,0 +1,195 @@
+ 
+ 
+            The CASM.C Assembly-language-to-CRL-Format Preprocessor
+                                For BDS C v1.46
+                                 March 3, 1982
+ 
+                                  Leor Zolman
+                                  BD Software
+                                33 Lothrop st.
+                        Brighton, Massachussetts 02135
+ 
+ 
+The files making up the CASM package are as follows:
+
+CASM.C         Source file for CASM program
+CASM.SUB       Submit file for performing entire conversion of CSM file to CRL
+CASM.DOC       This file
+USERCODE.C,    Library for taking user area prefixes on filenames
+USERCODE.CRL                          for input files (optional).
+
+Also needed:
+
+ASM.COM
+DDT.COM (or SID.COM)
+
+Description:
+------------
+ 
+     The only means previously provided to BDS C users for creating relocatable
+object  modules  (CRL  files)  from  assembly language programs was a painfully
+obscure  macro  package  (CMAC.LIB)  that  required  Digital  Research's  macro
+assembler (MAC.COM) in order to work.  This  was especially bad because MAC, if
+not already owned, cost almost as much as BDS  C  to  purchase.  This  document
+describes the program "CASM", which I am placing in the public domain. CASM  is
+a  preprocessor  that takes, as input, an assembly language source file of type
+".CSM" (mnemonic for  C aSseMbly language) in a format much closer to "vanilla"
+assembly language than  the  bizarre  craziness  of CMAC.LIB, and writes out an
+".ASM" file which may then be assembled by the standard,  FREE,  CP/M assembler
+(ASM.COM).  CASM  automatically recognizes which assembly language instructions
+require relocation parameters and inserts the appropriate pseudo-operations and
+extra opcodes into  the  output  file  to  cause that file to properly assemble
+directly  into  CRL  format. In addition, some  rudimentary  logic  checks  are
+performed; doubly-defined  and/or  undefined  labels are detected and reported,
+with  the  feature of allowing similarly-named labels  to  exist  in  different
+functions.  
+ 
+     The pseudo-operations  that  CASM  recognizes  as special control commands
+within a .CSM file are as follows:  
+ 
+ 
+ 
+ 
+FUNCTION <name>          There is no need to specify  a  directory  of included
+                         functions  at the start of a .CSM file. Each  function
+                         must begin with  "function" pseudo-op, where <name> is
+                         the name that will  be  used  for  the function in the
+                         .CRL  file  directory.  No  other  information  should
+                         appear on this line.  
+ 
+ 
+EXTERNAL <list>          If   a   function  calls  other  C  or  assembly-coded
+                         functions,  an "external" pseudo-op naming these other
+                         functions must follow immediately after the "function"
+                                        1
+î
+
+                         op.  One or more names may appear in the list, and the
+                         list may be spread  over  as  many "external" lines as
+                         necessary. Note that for the current version of BDS C,
+                         only function names may appear  in  "external"  lines;
+                         data  names (e.g. for external variables defined in  C
+                         programs)  cannot  be placed in "external" statements.
+ 
+ 
+ENDFUNC                          
+(or) ENDFUNCTION         This op (both forms  are equivalent) must appear after
+                         the end of the code for  a  particular  function.  The
+                         name  of the function need not be given as an operand.
+                         The  three   pseudo-ops   just  listed  are  the  ONLY
+                         pseudo-ops  that  need to appear  among  the  assembly
+                         language instructions of a ".CSM" file, and at no time
+                         do  the assembly instruction  themselves  need  to  be
+                         altered for relocation, as was the case with CMAC.LIB.
+ 
+ 
+INCLUDE <filename>                     
+(or) INCLUDE "filename"  This  op  causes  the named file to be inserted at the
+                         current line of the  output  file.  If the filename is
+                         enclosed in angle brackets (i.e., <filename>)  then  a
+                         default  user  area  and  logical drive are assumed to
+                         contain the named file (the specific defaults for your
+                         system may be custimzed by  changing  the  appropriate
+                          defines  in  CASM.C).  If  the  name  is enclosed  in
+                         quotes,  than  the  current  drive and user  area  are
+                         searched. Note that you'll usually want to include the
+                         file BDS.LIB at the start of your  .CSM  file, so that
+                         names   of  routines  in  the  run-time  package   are
+                         recognized  by  CASM  and not interpreted as undefined
+                         local forward references,  which  would  cause CASM to
+                         generate  relocation parameters for those instructions
+                         having run-time  package  routine  names  as operands.
+                         Note  that  the  pseudo-op  MACLIB  is  equivalent  to
+                         INCLUDE and may be used instead.  
+ 
+ 
+Additional notes and bugs:  
+ 
+0. If  a  label appears on an instruction, it MUST begin in column one  of  the
+   line. If a label does not begin in column one, CASM will not recognize it as
+   a label and relocation will not be handled correctly.  
+ 
+1. Forward  references  to  EQUated  symbols in executable instructions are not
+   allowed, although forward references  to  relocatable  symbols  are OK.  The
+   reason  for  this  is that CASM is a one-pass preprocessor, and any  time  a
+   previously unknown symbol  is  encountered  in  an instruction, CASM assumes
+   that  symbol  is relocatable and generates a relocation  parameter  for  the
+   instruction.  
+ 
+2. INCLUDE and MACLIB only work for one level of inclusion.  
+ 
+3. When a relocatable value needs to be specified in a "DW" op, then it must be
+   the ONLY value  given  in  that  particular DW statement, or else relocation
+   will not be properly handled.  
+ 
+4. Characters  used  in  symbol  names should  be  restricted  to  alphanumeric
+   characters; the dollar sign ($)  is  also  allowed,  but  might  lead  to  a
+   conflict with labels generated by CASM.  
+ 
+                                        2
+î
+
+5. The  .HEX file produced by ASM after assembling the output of CASM cannot be
+   converted  into a binary file by using the LOAD.COM command; instead, DDT or
+   SID must be  used  to  read  the  file into memory, and then the CP/M "SAVE"
+   command must be issued to save the  file as a .CRL file. CASM inserts a line
+   into the ASM file ending in the character  sequence  "!.",  specifically  so
+   that  the  line  will  be flagged as an error. The user may then look at the
+   value printed out at the left margin to see exactly how many 256-byte blocks
+   need to be saved; this is the value to be used with the "SAVE" command.  
+ 
+   The reason that "LOAD" cannot  be  used  is  that  CASM puts out the code to
+   generate the CRL File directory at the END of the ASM file, using ORG to set
+   the  location counter back to the base of the TPA, and  the  "LOAD"  command
+   aborts with the cryptic message "INVERTED LOAD ADDRESS" when out-of-sequence
+   data like  that  is  encountered.  Rather than require CASM to write out the
+   directory into a new file and append the entire previous output onto the end
+   of the directory, I require the user  to have to enter a SAVE command.  What
+   the heck; you'd have to rename the file anyway if it were LOADed, right?  
+ 
+6. The CASM.SUB submit file may be used to  perform  the  entire  procedure  of
+   converting a .CSM file to a .CRL file. For a file named "FOO.CSM", just say:
+   	submit casm foo
+ 
+   and enter the "SAVE" command just the way says when all is done.  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+                                        3
+î

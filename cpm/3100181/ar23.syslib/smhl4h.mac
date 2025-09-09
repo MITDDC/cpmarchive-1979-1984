@@ -1,0 +1,21 @@
+;
+;  MHL4HC -- Store HL as 4 Hex Characters in memory; on input, DE ptrs
+; to 4-byte buffer and HL=value; on return, DE pts to byte after buffer
+;	No Registers are to be affected.
+;
+
+	EXT	MA2HC	; STORE A AS 2 HEX CHARACTERS
+
+MHL4HC::
+	PUSH	PSW	; SAVE A
+	XCHG		; HL=PTR, DE=VALUE
+	MOV	A,D	; PRINT H
+	CALL	MA2HC
+	MOV	A,E	; PRINT L
+	CALL	MA2HC
+	XCHG
+	POP	PSW	; RESTORE A
+	RET
+
+	END
+

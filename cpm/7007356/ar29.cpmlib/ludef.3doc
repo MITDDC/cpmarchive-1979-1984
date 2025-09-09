@@ -1,0 +1,189 @@
+ File:	LUDEF3.DOC		Date:	83-08-16
+ Replaces: LUDEF1.DOC		Dated:	82-11-04
+
+ From:	Gary P. Novosielski
+ To:	All LU users
+
+ Subj:	.LBR format definition
+
+	This file is a revision of and obsoletes the previous
+	version.  Revised material is indicated by a vertical
+	bar (|) to the left of the text.
+
+ 0. Introduction
+    There have been several requests for a formal definition of
+ the format of library (.LBR) files as used by the LU Library
+ Utility program and the LRUN command-file load-and-go utility.
+
+    I hope that this definition will allow other programmers to
+ make effective use of .LBR files in their programming without
+ the need for detective work or guesswork about the library
+ format.  Enjoy.
+
+ 
+ 1. Library Overview
+    A library is a disk file which is assumed to be logically
+ divided into one or more subparts called members.  The library
+ may have any filename and filetype, except that ".LBR" is
+ considered to be the default filetype.  Programs must assume
+ and may optionally require the .LBR extension on any file
+ which is to be treated as a library.
+
+ 2. Access Method
+    Libraries are usually treated as Random Record files by
+ programs, but must never contain unallocated "holes" which
+ are normally allowed in Random Record files.  A library can
+ therefore be safely treated as a sequential file if desired.
+    This allows copy programs, compacting programs, and remote
+ transfer programs to process the library sequentially, and to
+ safely make the assumption that the first occurrence of a
+ no-record-found condition truly indicates the physical end of
+ the library.
+
+ 3. Internal Organization
+    A library must contain at least one member, the directory,
+ and may contain an arbitrary number of other members, up to
+ the limits of file size imposed by the operating system.  The
+ library may also contain unused sectors which are not assigned
+ to any member.  These sectors may occur as a result of the
+ deletion of members, or of an unsuccessful add operation.
+    There are no constraints on the contents of members, except
+ for the directory, which is always the first member in the
+ library, and has a specific format defined later.  However,
+ each member must comprise a whole number of 128 byte sectors;
+ i.e. each sector of the file belongs to at most one library
+ member, and no member has a fractional number of sectors.  A
+ member may have 0 sectors.
+    Members may be referred to by a name of up to 8 characters,
+ and an extension of up to 3 characters.  The naming rules
+ are identical to those for the naming of disk files.
+    The start and end points of each member are defined by the
+ pointers in the directory entry for the member.  There are no
+ embedded start or end marks separating the members.  All
+ sectors between the start and end sectors of a member belong
+ to that member.
+
+ 4. Directory Format
+    The directory is the first member of a library, and must
+ begin in sector 0 of the file.  It must contain at least one
+ sector, and may contain an arbitrary number of sectors.
+    The directory is composed of entries.  Each entry is 32
+ bytes in length, so that the number of entries is equal to
+ four times the number of sectors in the directory.  The
+ number of entries determines the maximum number of members in
+ the library, one entry per member.
+    Each entry is initialized to one of three possible states:
+ Active, Deleted, or Unused.  The first entry is always active,
+ and is the entry corresponding to the directory itself.
+    Unused entries always occur after all active and deleted
+ entries.  If the directory is scanned beginning with the
+ first entry, and an unused entry is found, then all remaining
+ entries from there through the end of the directory must also
+ be tagged as unused.
+    However, active and deleted entries may be mixed in any
+ order.  Finding a deleted entry does not guarantee that all
+ active entries have been scanned.
+
+ 5. Directory Entry Format
+    The 32 bytes of each entry have the following significance:
+		
+	Byte			Meaning
+	----	------------------------------------------
+	0	STATUS  Possible values (in hexadecimal) are:
+		00	Active Entry
+  		FE	Deleted Entry
+		FF	Unused Entry
+			Any other value should be treated as
+			a deleted entry.
+
+	1-8	NAME	Rules are identical with those which
+			govern the naming of disk files.  Names
+		shorter than the maximum are padded with
+		spaces.  No two members may have the same name.
+		The name of the directory member (first entry)
+		is all spaces.
+
+	9-11	EXTENSION	(same rules as Name)
+
+	12-13	INDEX	Pointer to the first sector of this
+			member within the library.  Stored as
+		a two-byte binary value, least significant byte
+		first.  To begin reading at the start of a
+		member, this value is loaded into the Random
+		Record field of the File Control Block.  The
+		index of the directory itself is zero.
+
+	14-15	LENGTH	The length of the member in sectors.
+			Stored as a two-byte binary value,
+		least significant byte first.  If this value is
+		zero, then the member is null, and the Index
+		field (above) is meaningless.
+
+|	16-17	CRC	The Cyclic Redundancy Check value for
+|			the member.  Stored as a two-byte
+|		binary value, least significant byte first.
+|		This value is calculated using the same
+|		algorithm as the widely distributed XMODEM
+|		program using CRC protocol.  If each byte of
+|		the member file is processed by this algorithm,
+|		followed by the two bytes of the CRC itself
+|		(high order first), the resulting value will be
+|		zero.
+|		   The directory member is a special case. Its
+|		own CRC value is embedded within it, which
+|		would affect the outcome of the next CRC check.
+|		For this reason, The CRC value for the
+|		directory's own entry is calculated as if the
+|		two bytes of its own CRC word were 00.  The
+|		actual value is plugged in just before writing 
+|		to disk.  When checking the directory CRC, the 
+|		value is moved 	to a hold area, and these two
+|		bytes are zeroed before the calculation.
+|
+|	18-31	FILLER 	Reserved for future use.  In unused
+|  			and deleted entries, these bytes are
+| 	garbage.  In all active entries, including the first
+|	(directory) entry, they are explicitly set to binary
+|	zero.  This is a difference from previously published
+|	definitions, which did not define the contents of these
+|	bytes in the directory control entry.
+	   Any future enhancements to the .LBR format which
+	make use of these bytes will recognize this zero
+	value as a non-error condition to allow a library
+	created with an old version of LU to be processed by
+	future versions.
+
+ Notes:
+	In unused and deleted entries all bytes except the
+	Status byte are undefined.
+
+	   The contents of any data sectors which are not
+	assigned to an active member are not defined.
+	They remain allocated to the .LBR file, to provide
+	for sequential processing, as noted above, but no
+	assumptions should be made as to their contents.
+	These sectors are eliminated from the library when
+	it is reorganized.
+
+|	For systems which do not implement the CRC validation
+|	functions, the crc value of member entries should
+|	be set to 0000.  The last 16 bytes of the directory
+|	control (first) entry should all be set to a non-zero
+|	value.  This will prevent CRC-capable versions of
+|	the program from issuing CRC error messages when
+|	opening or extracting from an old-style library
+
+ 6. Conclusion
+    If there are any further questions, comments, or requests
+ regarding library format, or if you note any ambiguities or
+ contradictions in these specifications, please feel free to
+ contact me.
+
+	Gary P. Novosielski
+
+	Voice phone: (201) 935-4087  Evenings and weekends
+	CompuServe:  [70160,120]     EMAIL or CP-MIG
+
+ 
+
+ End of file.

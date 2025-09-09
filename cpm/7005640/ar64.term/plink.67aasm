@@ -1,0 +1,1287 @@
+;                    PLINK.ASM  VER 6.7
+;                     (REVISED 5/6/82)
+;
+;PLINK IS A CP/M TRANSIENT COMMAND WHICH ALLOWS THE USER TO
+;ESTABLISH A COMMUNICATIONS LINK WITH A REMOTE COMPUTER.
+;
+;THIS PROGRAM CURRENTLY SUPPORTS THE FOLLOWING MODEMS OR COMPUTERS
+;VIA CONDITIONAL ASSEMBLY:
+;
+; 1. PMMI MODEM
+; 2. ANY SERIAL I/O BOARD (TUART INCLUDED)
+; 3. TRS-80 MODEL 1
+; 4. TRS-80 MODEL 2
+; 5. HEATH H8/H89 WITH 8250 UART AT PORT 330Q
+; 6. D.C.HAYES 80-103A OR MICROMODEM 100
+; 7. MITS 2SI/O BOARD, PORTS 10H &11H = CONSOLE, 12H & 13H = MODEM
+; 8. INTEL SBC OR NATIONAL BLC MULTI-BUS BOARDS USING 8251 USART
+; 9. APPLE II WITH Z-80 CARD AND SUPER SERIAL IN SLOT 2
+;
+;ORIGINALLY WRITTEN BY L.E. HUGHES (EDCAM) IN JULY, 1977.  MANY
+;MODIFICATIONS HAVE BEEN MADE SINCE THIS TIME, AS SHOWN IN THE
+;FOLLOWING SUMMARY.
+;
+;FIXES/UPDATES (IN REVERSE ORDER TO MINIMIZE READING TIME):
+;
+; NOV 8, 1982. APPLE EQUATES CHANGED FOR SUPER SERIAL CARD (MIKE COHEN)
+;
+; JUNE 15, 1982.  ADDED FEATURE TO AUTOMATICALLY SEND
+; X-OFF TO REMOTE WHEN BUFFER FILLS AND DISK SAVE BEGINS (CHRIS HAYS)
+; JUNE 15, 1982.  FIXED DELETE/BACKSPACE PROBLEM
+; WHEN USED WITH APPLE CP/M (CHRIS HAYS)
+; MAY 6, 1982.  ADDED APPLE II EQUATES (CHRIS HAYS)
+; MAY 6, 1982.  ADDED ERROR TRAP AND RECOVERY ROUTINE
+; IN CASE THE DISK GETS FULL WHEN SAVING BUFFER.  CHRIS HAYS
+; MAY 6, 1982.  ADDED CONDITIONAL ASSEMBLY SWITCH TO ALLOW
+; MICRONET UPLOAD TO WORK CORRECTLY.  OPTION IS ACTIVATED
+; WHEN THE 'U' (UPLOAD) TRIGGER OPTION IS SELECTED. CHRIS HAYS.
+; JUNE 26, 1981. ADDED MESSAGE WHEN EXITING IF LAST BUFFER WAS
+; NOT SAVED.  TED SHAPIN.
+;
+;JUNE 14, 1981, BY KEITH PETERSEN, W8SDZ.  CHANGED PORT
+;EQUATE TO 'EQU' INSTEAD OF 'SET'.  ASM DOESN'T LIKE 'SET'
+;WHEN LATER CONDITIONALS ARE BASED ON A LABEL DEFINED THAT
+;WAY.
+;
+;JUNE 7, 1981, BY TOM JORGENSON (CP-MIG).  CHANGED CP/M 
+;ORIGIN FROM BEING VIA SETS TO REFERENCED TO BASE, ADDED
+;TRUE/FALSE RATHER THAN NUMERIC VALUES (FOR READABILITY),
+;CHANGED ^Q FUNCTION TO ^W (WRITE) BECAUSE SOME SYSTEMS
+;(NOTABLY MICRONET) USE ^S/^Q TO SUSPEND/RESUME OUTPUT,
+;CHANGED PAGE 0 REFERENCES IN TRS ROUTINES TO USE
+;BASE EQUATE PROPERLY, CHANGED PORT EQUATES TO DEFAULT
+;TO TRUE, REINSERTED HEATH EQUATES, AND CLEANED UP CODE
+;IN SEVERAL PLACES.
+;
+;JUNE 7, 1981, BY KEITH PETERSEN, W8SDZ.  FIXED PROBLEM WITH
+;EQUATES WHICH PREVENTED ASSEMBLY BY 'ASM' WHEN TUART OPTION
+;WAS SELECTED.
+;
+;JUNE 6, 1981, BY KEITH PETERSEN, W8SDZ.  ADDED VERSION NUMBER,
+;CLEANED UP FILE.
+;
+;MAY 12, 1981, BY T. SHAPIN.  ADDED CODE FOR 8251 USART ON INTEL 
+;SBC OR NATIONAL BLC MULTIBUS BOARD WITH MODIFIED CP/M ORIGIN.  
+;ADDED PROMPT TO SIGNON. ADDED TOGGLE TO ^Y TO SAVE OR IGNORE 
+;INCOMING TEXT. ADDED ^C ABORT ON FILE NAME RESPONSE.
+;
+;NOVEMBER 10, 1980, BY KELLY SMITH.  ADDED CONDITIONAL ASSEMBLY 
+;SWITCH FOR MITS 2SI/O BOARD, USING "STANDARD" MITS PORTS 10 AND
+;11 HEX FOR THE CONSOLE, AND 12 AND 13 HEX FOR THE MODEM.
+;
+;OCTOBER 18, 1980, BY KEITH PETERSEN, W8SDZ.
+;
+;HEATH EQUATES ADDED BY TOM JORGENSON.
+;
+;TRS-80 MODEL 1 MODS BY STEVE VINOKUROFF, VANCOUVER CBBS.
+;
+;OPTIONAL TRIGGER CHARACTERS BY STEVE VINOKUROFF.
+;
+;TRS-80 MODS BY DENNIS BRECKENRIDGE, BURNABY CBBS.
+;
+;D.C.HAYES MODS BY BRUCE RATOFF, ISELIN NEW JERSEY REMOTE CP/M.
+;
+;NOTE: IF YOU ADD IMPROVEMENTS OR OTHERWISE UPDATE
+;THIS PROGRAM, PLEASE MODEM A COPY OF THE NEW FILE
+;TO "TECHNICAL CBBS" IN DEARBORN, MICHIGAN - PHONE
+;313-759-6569>>RINGBACK.
+;(110, 300, 450 OR 600 BAUD).
+;FILENAME PLINKXX.NEW.
+;
+;PLINK CURRENTLY SUPPORTS TWO WAY TRANSFER OF TEXT FILES BETWEEN
+;THE CP/M DISK AND THE REMOTE COMPUTER. THE FOLLOWING CONTROL
+;CODES MAY BE INITIATED FROM THE CONSOLE KEYBOARD:
+;
+;CONTROL-E      EXIT PLINK TO CP/M "WARM-BOOT".
+;
+;CONTROL-T      TRANSMIT ASCII FILE TO REMOTE SYSTEM, ASKS FOR
+;               DRIVE (A, B, ETC.) AND FILENAME.TYP.
+;
+;CONTROL-C      ABORTS TRANSMISSION OF FILE TO REMOTE SYSTEM.
+;
+;CONTROL-Y      SWITCHES BETWEEN SAVING AND IGNORING
+;               INCOMING ASCII DATA IN RAM BUFFER,
+;               FOR LATER TRANSFER TO DISK.
+;
+;CONTROL-W      WRITES RAM BUFFER TO DISK, AND ASKS FOR DRIVE
+;               AND FILENAME.TYP.
+;
+;DEL (DELETE)   BACKSPACE WHEN IN COMMAND MODE (E.G. ^T OR ^W).
+;
+;CONTROL-U      ABORTS CURRENT LINE WHEN IN COMMAND MODE.
+;
+;(NOTE: ALL OTHER CONTROL CODES ARE PASSED TO MODEM OUTPUT, AND
+;MAY BE INTERPRETED BY THE REMOTE SYSTEM AS VARIOUS CONTROL
+;FUNCTIONS.)
+;
+;TRUE/FALSE DEFINITIONS
+;
+FALSE   EQU     0
+TRUE    EQU     NOT FALSE
+;
+;CONDITIONAL ASSEMBLY SWITCHES <<-- SET FOR YOUR SYSTEM
+;(SELECT ONLY ONE AS TRUE) - (NOTE: USE TUART FOR OTHER
+;SERIAL PORTS NOT DEFINED).
+;
+MITSIO  EQU     FALSE   ;TRUE, IF MITS 2SI/O BOARD
+H84     EQU     FALSE   ;TRUE, IF YOU HAVE H8/H8-4 OR H89
+TUART   EQU     FALSE   ;TRUE, IF CROMENCO TUART OR OTHER SERIAL
+PMMI    EQU     FALSE   ;TRUE, IF PMMI (SET INITREQ TRUE ONLY
+                        ;IF ORIG MODE AND PARITY IS REQUIRED)
+DCH     EQU     FALSE   ;TRUE, IF D.C.HAYES
+TRS1    EQU     FALSE   ;TRUE, IF TRS-80 MODEL 1
+TRSPT   EQU     FALSE   ;TRUE, IF TRS-80 MODEL 2
+                        ;USING PICKLES & TROUT CP/M 2.X
+MULTI   EQU     FALSE   ;TRUE, IF SBC OR BLC 8251 USART
+APPLE   EQU     TRUE    ;TRUE, IF APPLE CP/M
+;
+MNET    EQU     TRUE    ;TRUE, IF MICRONET UPLOAD FEATURE WANTED
+;
+INITREQ EQU     FALSE   ;TRUE, IF PORT INITIALIZATION REQUIRED
+;
+        IF      NOT (TRSPT OR APPLE)
+PORT    EQU     TRUE    ;TRUE, ON MOST SYSTEMS
+        ENDIF
+;
+        IF      TRSPT OR APPLE
+PORT    EQU     FALSE   ;THIS IS THE ODDBALL
+        ENDIF
+;
+;BDOS ENTRY POINT AND FUNCTION CODES
+;
+BASE    EQU     0       ;<<-- SET TO OFFSET OF CP/M FOR YOUR
+                        ;SYSTEM, STANDARD SYSTEMS ARE 0, SOME
+                        ;'ALTERNATE' SYSTEMS ARE 4200H
+;
+BDOS    EQU     BASE+5
+RESDSK  EQU     13      ;RESET DISK SYSTEM
+OFFC    EQU     15      ;OPEN FILE
+CFFC    EQU     16      ;CLOSE FILE
+DFFC    EQU     19      ;DELETE FILE
+RRFC    EQU     20      ;READ RECORD
+WRFC    EQU     21      ;WRITE RECORD
+MFFC    EQU     22      ;MAKE FILE
+;
+;TRS80 PICKLES AND TROUT SIO CALLS
+;OFFSET BY -3 THAT IS ADD 3 TO ALL CALLS
+;
+SETSIO  EQU     30H     ;SET UP Z80 SIO
+SIOTST  EQU     33H     ;READ SIO STATUS
+SIOINP  EQU     36H     ;INPUT A CHAR
+SIOOUT  EQU     39H     ;OUTPUT A CHAR
+;
+        IF      MULTI
+MODS    EQU     0DDH    ;MODEM CONTROL
+MTBE    EQU     1       ;BIT TO TEST FOR SEND
+MRDA    EQU     2       ;BIT TO TEST FOR RECEIVE
+MXOR    EQU     3       ;MASK TO MAKE MTBE AND MRDA 'LOW TRUE'
+MODD    EQU     0DCH    ;MODEM DATA PORT
+        ENDIF
+;
+;DEFAULT FCB AND FIELD DEFINITIONS
+;
+FCB     EQU     BASE+5CH
+FN      EQU     1       ;FILE NAME FIELD (REL)
+FT      EQU     9       ;FILE TYPE FIELD (REL)
+EX      EQU     12      ;FILE EXTENT FIELD (REL)
+NR      EQU     32      ;NEXT RECORD FIELD (REL)
+DBUF    EQU     BASE+80H ;DEFAULT DISK BUFFER ADDRESS
+;
+;ASCII CONTROL CHARACTERS
+;
+CR      EQU     0DH     ;CARRIAGE RETURN
+LF      EQU     0AH     ;LINE FEED
+        IF      NOT APPLE
+DEL     EQU     7FH     ;DELETE (RUBOUT)
+        ENDIF
+;
+        IF APPLE
+DEL     EQU     08H     ;APPLE USES BS INSTEAD
+        ENDIF
+;
+BELL    EQU     07H     ;BELL SIGNAL
+TAB     EQU     09H     ;HORIZONTAL TAB
+XOFF    EQU     13H     ;X-OFF CHARACTER
+XON     EQU     11H     ;X-ON CHARACTER
+NULL    EQU     00H     ;NULL CHAR
+;
+;THE FOLLOWING "TRIGGER" EQUATE IS SET TO "LF" (LINEFEED)
+;BY DEFAULT. AN OPTIONAL TRIGGER CHAR MAY BE PASSED VIA FCB1
+;
+; IE:  PLINK B          WILL SET TRIGGER TO "BELL"
+;
+;THE FOLLOWING OPTIONS ARE ALLOWED
+;
+;       1. B = BELL  07H
+;       2. X = XON   11H
+;       3. U = UPLOAD NO TRIGGER CHECK AT ALL
+;
+;ANY OTHER ASCII CHARACTER MAY BE PASSED THROUGH FCB1
+;
+;
+TRIGGER EQU     LF      ;DEFAULT VALUE
+;
+;
+;WARNING CHARACTER FOR LOW MEMORY
+;
+        IF      NOT APPLE
+WRNSIG  EQU     BELL    ;IF YOU HAVE ONE, PUT 'BELL' HERE
+                        ;...ELSE PUT '*' HERE.
+         ENDIF
+;
+         IF      APPLE
+WRNSIG   EQU     '*'    ;APPLE BELL LOSES 100MS
+         ENDIF          ;SO USE '*' INSTEAD
+;
+;MODEM I/O PORT ADDRESSES
+;
+        IF      MITSIO
+MODD    EQU     13H     ;MODEM DATA PORT
+MODS    EQU     12H     ;MODEM STATUS PORT
+MODRSET EQU     03H     ;6850 ACIA RESET
+MODINIT EQU     11H     ;8 DATA, NO PARITY, 2 STOP
+        ENDIF
+;
+        IF      H84
+MODD    EQU     330Q    ;MODEM DATA PORT
+MODS    EQU     335Q    ;MODEM STATUS PORT
+        ENDIF
+;
+        IF      PMMI
+MODD    EQU     0C1H    ;MODEM DATA PORT
+MODS    EQU     0C0H    ;MODEM STATUS PORT
+MODINIT EQU     29H     ;INITIALIZE BYTE ORIGINATE,
+                        ;7 DATA, EVEN PARITY, 1 STOP
+        ENDIF
+;
+        IF      DCH
+MODD    EQU     90H     ;MODEM DATA PORT
+MODS    EQU     91H     ;MODEM STATUS PORT
+MODINIT EQU     05H     ;7 DATA, EVEN PARITY, 1 STOP
+        ENDIF
+;
+        IF      TRS1
+MODD    EQU     0EBH    ;TRS80 MOD 1 RS232 DATA PORT
+MODS    EQU     0EAH    ; AND THE RS232 STATUS PORT
+        ENDIF
+;
+        IF      TUART
+MODD    EQU     0D6H    ;<<--MODIFY FOR YOURS
+MODS    EQU     0D7H    ;<<--MODIFY FOR YOURS
+        ENDIF
+;
+        IF      APPLE   ;THESE ARE FOR SUPER SERIAL CARD
+MODD    EQU     0E0A8H  ;INSTALLED IN SLOT 2
+MODS    EQU     0E0A9H  ;CHANGE IF NECESSARY
+        ENDIF
+;
+;MODEM STATUS PORT BIT DEFINITIONS
+;
+        IF      H84
+MTBE    EQU     40Q     ;MODEM THRE TRANSMIT READY BIT
+MRDA    EQU     01Q     ;MODEM RDA REC'D DATA BIT
+MXOR    EQU     41Q     ;MASK TO MAKE MTBE AND MRDA 'NEGATIVE LOGIC'
+        ENDIF
+;
+        IF      PMMI
+MTBE    EQU     01H     ;MODEM TRANS. BUFFER READY FLAG
+MRDA    EQU     02H     ;MODEM RECEIVE DATA AVAIL. FLAG
+MXOR    EQU     03H     ;MASK TO MAKE MTBE AND MRDA "LOW TRUE"
+        ENDIF
+;
+        IF      DCH OR MITSIO
+MTBE    EQU     02H     ;MODEM TRANS. BUFFER READY FLAG
+MRDA    EQU     01H     ;MODEM RECEIVE DATA AVAIL. FLAG
+MXOR    EQU     03H
+        ENDIF
+;
+        IF      TRS1
+MTBE    EQU     40H     ;TRS80 MOD1 RS232 BUFFER READY
+MRDA    EQU     80H     ;MODEM RECEIVE DATA AVAIL.
+MXOR    EQU     0C0H
+        ENDIF
+;
+        IF      TUART   ;<<--OR ANY OTHER SERIAL I/O
+MTBE    EQU     1       ;<<--MODIFY FOR YOURS
+MRDA    EQU     2       ;<<--MODIFY FOR YOURS
+MXOR    EQU     3       ;<<--MODIFY FOR YOURS
+        ENDIF
+;
+        IF      APPLE
+MTBE    EQU     10H     ;TRANSMIT BUFFER READY FLAG
+MRDA    EQU     08H     ;RECEIVE DATA AVAIL FLAG
+        ENDIF
+;
+;       **MAIN PROGRAM**
+;
+        ORG     BASE+100H
+;
+LINK:   LXI     SP,STACK+64 ;CREATE LOCAL STACK
+        LHLD    BASE+1  ;POINT TO CP/M JMP TABLE
+        LXI     D,3     ;GET READY TO ADD 3
+        DAD     D       ;POINT TO CON STATUS JMP
+        SHLD    CITCAL+1 ;MODIFY CALL ADRS
+        DAD     D       ;POINT TO CON IN JMP
+        SHLD    RCCAL+1 ;MODIFY CALL ADRS
+        DAD     D       ;POINT TO CON OUT JMP
+        SHLD    WCCAL+1 ;MODIFY CALL ADRS
+        LDA     FCB+1   ;SEE IF OPTIONAL TRIGGER CHAR
+        CPI     20H     ;BLANK.. ?
+        JZ      SKP     ;..BLANK SO USE DEFAULT "LF"
+        CPI     'B'     ;BELL WANTED
+        JZ      TRGBEL
+        CPI     'X'     ;XON WANTED
+        JZ      TRGXON
+        CPI     'U'     ;UPLOADING NO CHECKING FOR TRIGGER
+        JZ      TRGUPL
+;
+SETTRG  STA     OVERLY+1 ;STORE THE CHARACTER AS IS THEN
+        JMP     SKP
+;
+TRGBEL  MVI     A,BELL
+        JMP     SETTRG
+;
+TRGXON  MVI     A,XON
+        JMP     SETTRG
+;
+TRGUPL  XRA     A        ;ZERO OUT JUMP
+        STA     OVERL1+1 ;CHANGE CHECK FOR C/R TO NULL
+        STA     OVERL2+1 ;AND SEND LINEFEEDS AS WELL
+        JMP     SKP
+;
+SKP:    EQU     $
+;
+        IF      MITSIO
+        MVI     A,MODRSET
+        OUT     MODS
+        MVI     A,MODINIT
+        OUT     MODS
+        ENDIF
+;
+        IF      H84
+        MVI     A,80H   ;SET DLAB BIT IN 8250 UART
+        OUT     0DBH    ;8250 AT PORT D8H (330Q)
+        NOP ! NOP ! NOP
+        NOP ! NOP
+        MVI     A,01H   ;MSB OF BAUD RATE DIVISOR
+        OUT     0D9H    ;...TO UART
+        NOP ! NOP ! NOP
+        NOP ! NOP
+        MVI     A,80H   ;LSB OF BAUD RATE DIVISOR
+        OUT     0D8H    ;...TO UART
+        NOP ! NOP ! NOP
+        NOP ! NOP
+        MVI     A,03H   ;8 BITS, 1 STOP BIT, NO PARITY, DLAB RESET
+        OUT     0DBH    ;...TO UART
+        NOP ! NOP ! NOP
+        NOP ! NOP
+        MVI     A,0     ;RESET CONTROL REGISTER
+        OUT     0DCH    ;...TO UART
+        JMP     CONT
+        ENDIF
+;
+        IF      INITREQ AND (NOT H84) AND (NOT MITSIO)
+        MVI     A,MODINIT
+        OUT     MODS    ;INITIALIZE MODEM PORT
+        ENDIF
+;
+        IF      INITREQ AND TUART
+        MVI     A,80H   ;DSR ON BIT 7 PARL PORT B
+        OUT     54H
+        ENDIF
+;
+        IF      TRSPT   ;MUST SET UP SERIAL CHANNEL
+RESET:  LXI     H,INITR ;STORE RETURN ADDRESS
+        PUSH    H
+        LHLD    1
+        LXI     D,SETSIO ;SIO SETUP ROUTINE
+        DAD     D
+        PUSH    H       ;STORE ON STACK
+        MVI     C,00H   ;NO PARITY CHAN-A
+        MVI     D,0E6H  ;8 BITS ,1 STOP
+        MVI     E,3     ;300 BAUD
+        MVI     L,00H   ;DISABLE EXT/ACK SIO FUNCTIONS
+        MVI     H,'S'-40H ;CONTROL S (X-ON)
+        RET             ;TROUGH SETUP PROG
+;
+INITR   NOP             ;DO IT TO IT
+        ENDIF
+;
+        IF      TRS1    ;INIT FOR TRS80 MOD1 RS232
+        OUT     0E8H    ;RESET RS232
+        IN      0E9H    ;READ THE SWITCHES
+        ANI     0F8H
+        ORI     5
+        OUT     0EAH    ;SET DSR AND CTS
+        MVI     A,55H   ;300 BAUD
+        OUT     0E9H
+        ENDIF
+;
+        IF      PORT
+        IN      MODD    ;CLEAR MODEM UART READ BUFFERS
+        IN      MODD
+        ENDIF
+;
+        IF      MULTI   ;INITIALIZE 8251
+        XRA     A
+        OUT     MODS
+        OUT     MODS
+        OUT     MODS
+        MVI     A,40H
+        OUT     MODS
+        MVI     A,0CFH  ;300 BAUD (THIS DEPENDS ON STRAPPING)
+        OUT     MODS
+        MVI     A,37H
+        OUT     MODS
+        ENDIF
+;
+;
+CONT:   XRA     A       ;CLEAR CHAR BUFFERS
+        STA     INCH
+        STA     OUTCH
+        STA     FLAG    ;CLEAR TEXT SAVE FLAG
+        LXI     H,TBUF  ;SET PTR TO TBUF
+        SHLD    PTR
+        LXI     H,0     ;SIZE = 0
+        SHLD    SIZE
+        LXI     H,LINKMS  ;PRINT SIGN-ON MESSAGE
+        CALL    WCS
+;
+;MAIN LOOP
+;
+LINK3:  CALL    CITEST  ;JUMP IF NO DATA FROM CONSOLE
+        JZ      LINK4
+        CALL    RCC     ;ELSE READ CONSOLE DATA
+        CPI     20H
+        CC      PCC     ;CALL PCC IF CONTROL CHAR
+        JC      LINK4   ;JUMP IF PCC HANDLED CHAR
+        ORI     80H     ;ELSE SET VALID DATA BIT
+        STA     INCH    ;AND STORE IN INPUT CHAR BUFFER
+;
+LINK4:  LDA     OUTCH   ;JUMP IF NO DATA FOR CONSOLE
+        ORA     A
+        JP      LINK5
+        ANI     7FH     ;ELSE DISCARD VALID DATA BIT
+        CALL    WCC     ;SEND CHAR TO CONSOLE
+        XRA     A       ;THEN CLEAR OUTPUT CHAR BUFFER
+        STA     OUTCH
+;
+LINK5:  CALL    MITEST  ;JUMP IF NO DATA FROM MODEM
+        JZ      LINK6
+        CALL    RMC2    ;ELSE READ MODEM DATA
+        CALL    SAVE    ;SAVE CHAR IN TEXT BUFFER IF FLAG ON
+        ORI     80H     ;SET DATA VALID BIT
+        STA     OUTCH   ;STORE IN OUTPUT CHAR BUFFER
+;
+LINK6:  CALL    MOTEST  ;JUMP IF MODEM XMIT BUFFER BUSY
+        JZ      LINK7
+        LDA     INCH    ;JUMP IF NO DATA FOR MODEM
+        ORA     A
+        JP      LINK7
+        ANI     7FH     ;DISCARD VALID DATA BIT
+;
+        IF      PORT
+        OUT     MODD    ;OUTPUT CHAR TO MODEM
+        ENDIF
+;
+        IF      APPLE
+        STA     MODD    ;OUTPUT CHAR TO MODEM
+        ENDIF
+;
+        IF      TRSPT
+        PUSH    B       ;STORE REGISTERS
+        PUSH    H
+        PUSH    D
+        CALL    WMC     ;SEND CHAR
+        POP     D
+        POP     H
+        POP     B
+        ENDIF
+;
+        XRA     A       ;...THEN CLEAR INPUT CHAR BUFFER
+        STA     INCH
+;
+LINK7:  JMP     LINK3   ;END OF MAIN LOOP
+;
+LINKMS: DB      CR,LF,'PLINK VER 6.7'
+        DB      CR,LF,CR,LF
+        DB      '[^T]RANSMIT, [^Y]ANK, [^W]RITE, [^E]XIT, [^C]ANCEL'
+        DB      CR,LF,'READY',CR,LF,LF,0
+;
+;PCC - PROCESS CONTROL CHARACTER
+;
+PCC:    CPI     'E'-40H ;JUMP OUT IF CTRL E
+        JNZ     PCC1
+        PUSH    H
+        LHLD    SIZE    ; CHECK FOR SOMETHING IN TEXT BUFFER
+        MOV     A,L     ; AND GIVE WARNING
+        ORA     H
+        JZ      PCCEX   ; BEFORE EXIT
+        LXI     H,AYS   ;PRINT 'DO YOU WANT TO SAVE...
+        CALL    WCS
+        POP     H
+        CALL    RCC     ;GET ANSWER
+        CALL    WCC     ;ECHO IT
+        ANI     5FH     ;MAKE UPPER CASE
+        CPI     'Y'     ;YES?
+        CZ      WTB     ; WRITE OUT BUFFER
+        JMP     PCCEX   ;EXIT
+;       CALL    WCCR    ;CRLF
+;       STC             ;TELL PLINK TO IGNORE THIS CHARACTER
+;
+        IF      TRSPT
+        POP     PSW     ;GOBBLE UP CALL ADDRESS
+        JMP     RESET   ;RE-INITIALIZE SIO
+        ENDIF
+;
+        IF      PORT
+        RET
+        ENDIF
+;
+PCC1:   CPI     'T'-40H ;JUMP IF NOT CONTROL-T
+        JNZ     PCC2
+        CALL    STF     ;TRANSMIT TEXT FILE TO MODEM
+        STC             ;TELL PLINK TO IGNORE THIS CHARACTER
+        RET
+;
+PCC2:   CPI     'Y'-40H ;JUMP IF NOT CONTROL-Y
+        JNZ     PCC3
+        LDA     FLAG
+        DCR     A       ;WAS IT ZERO?
+        JNZ     PCC2A   ;YES
+        STA     FLAG    ;NO, WAS 1, NOW 0
+        LXI     H,PCMNIX ;PRINT IGNORE INCOMING STUFF
+        JMP     PCC2B
+;
+PCC2A:  MVI     A,1     ;TURN ON TEXT SAVE FLAG
+        STA     FLAG
+        LXI     H,PCCMR ;PRINT 'SAVING INCOMING TEXT IN MEMORY'
+;
+PCC2B:  CALL    WCS
+        STC             ;TELL PLINK TO IGNORE THIS CHARACTER
+        RET
+;
+PCC3:   CPI     'W'-40H ;JUMP IF NOT CONTROL-W
+        JNZ     PCC4
+        XRA     A       ;TURN OFF TEXT SAVE FLAG
+        STA     FLAG
+        CALL    WTB     ;WRITE TEXT BUFFER TO DISK
+        STC
+        RET
+;
+PCC4:   STC             ;LET PLINK HANDLE ALL OTHER CONT. CODES
+        CMC
+        RET
+;
+PCCEX:  LXI     H,DISMS ;PRINT 'MODEM NOT DISCONNECTED'
+        CALL    WCS
+        JMP     BASE    ;EXIT TO WARM BOOT
+;
+AYS:    DB      CR,LF,'DO YOU WANT TO SAVE THE STUFF IN'
+        DB      CR,LF,'THE BUFFER BEFORE EXIT TO CP/M (Y OR N)? ',0
+;
+        IF      PMMI OR DCH
+DISMS:  DB      CR,LF,'DON''T FORGET - THE MODEM '
+        DB      'IS NOT DISCONNECTED',CR,LF
+        DB      'USE "MODEM D" TO DISCONNECT',0
+        ENDIF
+;
+        IF      (NOT PMMI) AND (NOT DCH)
+DISMS:  DB      CR,LF,'+++ EXIT TO CP/M +++',CR,LF,0
+        ENDIF
+;
+PCCMR:  DB      CR,LF,'SAVING INCOMING TEXT IN MEMORY',CR,LF,0
+PCMNIX: DB      CR,LF,'IGNORING INCOMING TEXT',CR,LF,0
+;
+;STF - SEND TEXT FILE (TO MODEM)
+;
+STF:    CALL    GFN     ;GET NAME OF DISK FILE TO SEND
+        JC      STF6    ;JUMP IF FILE NAME ERROR
+        CALL    OPEN    ;TRY TO OPEN SPECIFIED FILE
+        CPI     255     ;JUMP IF FILE NOT FOUND
+        JZ      STF7
+;
+STF1:   CALL    READ    ;READ NEXT RECORD INTO DBUF
+        CPI     1       ;JUMP IF END-OF-FILE
+        JZ      STF5
+        LXI     H,DBUF  ;POINT TO DISK BUFFER
+        MVI     C,128
+;
+STF2:   MOV     A,M     ;FETCH NEXT CHAR FROM DBUF
+        INX     H
+        CPI     'Z'-40H ;JUMP IF END-OF-FILE CHARACTER
+        JZ      STF5
+;
+OVERL2  CPI     LF      ;IGNORE LINE FEEDS
+        JZ      STF4
+        CALL    WMC     ;WRITE CHARACTER TO MODEM
+        CALL    WCC     ;WRITE CHARACTER TO CONSOLE
+;
+OVERL1  CPI     CR      ;JUMP IF NOT CARRIAGE RETURN
+        JNZ     STF4
+;
+STF3:   CALL    CITEST  ;CHECK CONSOLE DATA READY
+        JZ      STF3A   ;NO DATA THERE
+        CALL    RCC     ;GET CONSOLE CHARACTER
+        CPI     'C'-40H ;CONTROL C ABORTS IT
+        JZ      STF8
+;
+STF3A:  CALL    MITEST  ;WAIT FOR NEXT MODEM CHARACTER
+        JZ      STF3
+        CALL    RMC2    ;CHECK MODEM FOR TRIGGER CHAR.
+;
+OVERLY  CPI     TRIGGER
+        JNZ     STF3
+        CALL    WCCR    ;SEND CRLF TO CONSOLE
+;
+STF4:   DCR     C       ;LOOP THRU REST OF DBUF
+        JNZ     STF2
+        JMP     STF1    ;GO GET NEXT RECORD FROM DISK
+;
+STF5:   LXI     H,STFSM ;PRINT 'FILE SEND COMPLETE'
+        CALL    WCS
+        RET
+;
+STF6:   LXI     H,STFS1 ;PRINT 'FILE NAME ERROR'
+        CALL    WCS
+        RET
+;
+STF7:   LXI     H,STFS2 ;PRINT 'FILE NOT FOUND'
+        CALL    WCS
+        RET
+;
+STF8:   LXI     H,STFSA ;PRINT 'FILE SEND ABORTED'
+        CALL    WCS
+        RET
+;
+STFSM:  DB      'FILE SEND COMPLETE',CR,LF,0
+STFS1:  DB      'FILE NAME ERROR OR ABORT',CR,LF,0
+STFS2:  DB      'FILE NOT FOUND',CR,LF,0
+STFSA:  DB      CR,LF,'FILE SEND ABORTED',CR,LF,0
+;
+;SAVE - SAVE CHAR IN TEXT BUFFER IF FLAG ON
+;
+;  ENTRY CONDITIONS
+;     A - CHARACTER TO SAVE
+;
+SAVE:   PUSH    PSW
+        LDA     FLAG
+        ORA     A
+        JNZ     SAVE1
+        POP     PSW
+        RET
+;
+SAVE1:  POP     PSW
+        CPI     DEL     ;RUBOUT (DEL) ?
+        RZ              ;YES, IGNORE IT
+        CPI     20H     ;TEST FOR CONTROL CHARACTERS
+        JNC     SAVE2   ;JUMP IF NOT CONTROL CHAR.
+        CPI     CR      ;ALLOW CR TO BE SAVED
+        JZ      SAVE2
+        CPI     LF      ;ALLOW LF TO BE SAVED
+        JZ      SAVE2
+        CPI     TAB     ;ALLOW TAB TO BE SAVED
+        JZ      SAVE2
+        RET             ;IGNORE ALL OTHER CONTROL CHARS.
+;
+SAVE2:  PUSH    H
+        LHLD    SIZE    ;SIZE = SIZE + 1
+        INX     H
+        SHLD    SIZE
+        LHLD    PTR
+        MOV     M,A
+        INX     H
+        SHLD    PTR
+        PUSH    PSW
+        LDA     BASE+7  ;GET SYSTEM SIZE
+        SUI     1       ;SO WE DONT CRASH CP/M
+        CMP     H       ;ARE WE OUT OF ROOM?
+        JZ      SAVEAB  ;YES, ABORT
+        SUI     4       ;LEAVE SOME ROOM (1K)
+        CMP     H
+        MVI     A,WRNSIG  ;SIGNAL CONSOLE RUNNING OUT OF SPACE
+        CC      WCC
+        POP     PSW
+        POP     H
+        RET
+;
+;SAVEAB - RAN OUT OF ROOM, ISSUE MESSAGE AND FLOW
+;         THROUGH TO DISK SAVE ROUTINE
+;
+SAVEND: DB      BELL,CR,LF,'ABORTING - NO ROOM LEFT',0
+;
+SAVEAB: MVI     A,XOFF       ;TELL REMOTE
+        CALL    WMC          ;TO STOP SENDING
+        LXI     SP,STACK+64  ;REINITIALIZE STACK
+        LXI     H,SAVEND  ;PRINT 'ABORTING - NO ROOM LEFT'
+        CALL    WCS
+        LXI     H,LINK  ;SET UP RETURN ADDRESS
+        PUSH    H       ;LEAVE IT ON THE STACK
+;
+;WTB - WRITE TEXT BUFFER TO DISK
+;
+WTB:    LHLD    SIZE    ;JUMP IF TEXT BUFFER EMPTY
+        MOV     A,L
+        ORA     H
+        JZ      WTB5
+        CALL    GFN     ;GET FILE NAME
+        JC      WTB6    ;JUMP IF FILE NAME ERROR
+        MVI     C,RESDSK ;RESET IN CASE READ-ONLY
+        CALL    BDOS    ;OR ERROR RECOVERY
+        CALL    DELT    ;DELETE OLD FILE, IF ANY
+        CALL    MAKE    ;MAKE NEW FILE
+        LHLD    SIZE    ;DE = TBUF SIZE
+        XCHG
+        LXI     H,DBUF  ;TOP OF STACK POINTS TO DBUF
+        PUSH    H
+        LXI     H,TBUF  ;HL POINTS TO TBUF
+;
+WTB1:   MVI     C,128   ;DISK BUFFER SIZE
+;
+WTB2:   MOV     A,M     ;FETCH NEXT BYTE OF TBUF
+        INX     H
+        XTHL
+        MOV     M,A     ;STORE IN DBUF
+        INX     H
+        XTHL
+        DCX     D       ;SIZE = SIZE - 1
+        MOV     A,D     ;EXIT LOOP IF SIZE = 0
+        ORA     E
+        JZ      WTB3
+        DCR     C       ;LOOP UNTIL DBUF FULL
+        JNZ     WTB2
+        CALL    WRITE   ;WRITE FULL DBUF TO DISK
+        CPI     00H     ;DID WE HAVE AN ERROR?
+        JNZ     WRER    ;IF SO, BAIL OUT
+        XTHL            ;TOP OF STACK POINTS TO DBUF
+        LXI     H,DBUF
+        XTHL
+        JMP     WTB1    ;LOOP UNTIL END OF TBUF
+;
+WTB3:   POP     H       ;HL POINTS TO CURRENT PLACE IN DBUF
+;
+WTB4:   MVI     M,'Z'-40H ;STORE EOF CODE
+        INX     H
+        DCR     C       ;LOOP THRU REST OF DBUF
+        JNZ     WTB4
+        CALL    WRITE   ;WRITE LAST SECTOR TO DISK
+        CPI     00H     ;ERROR?
+        JNZ     WRER    ;IF SO HANDLE IT, ELSE
+        CALL    CLOSE   ;CLEAN UP ACT AND GO HOME
+        LXI     H,TBUF  ;CLEAR TEXT BUFFER
+        SHLD    PTR
+        LXI     H,0
+        SHLD    SIZE
+        LXI     H,WTBSM ;PRINT 'BUFFER SAVED ON DISK'
+        CALL    WCS
+        RET
+;
+WRER:   LXI     H,WRERMS
+        CALL    WCS     ;PRINT ERROR MESSAGE
+        JMP     WTB     ;AND START OVER
+;
+WTB5:   LXI     H,WTBS1 ;PRINT 'TEXT BUFFER EMPTY'
+        CALL    WCS
+        RET
+;
+WTB6:   LXI     H,WTBS2 ;PRINT 'FILE NAME ERROR'
+        CALL    WCS
+        RET
+;
+WTBSM:  DB      CR,LF,'BUFFER SAVED ON DISK',CR,LF
+        DB      'MEMORY SAVE CANCELLED',CR,LF,0
+WTBS1:  DB      'TEXT BUFFER EMPTY',CR,LF,0
+WTBS2:  DB      'FILE NAME ERROR OR ABORT',CR,LF,0
+WRERMS: DB      'ERROR WRITING DATA',CR,LF,'(DISK FULL)',CR,LF
+        DB      'PLEASE CHANGE DISK OR USE ANOTHER DRIVE',CR,LF
+        DB      'AND REENTER:',CR,LF,0
+;
+;WCS - WRITE CONSOLE STRING
+;
+;  ENTRY CONDITIONS
+;     HL - POINTS TO STRING (TERM BY ZERO BYTE)
+;
+WCS:    MOV     A,M
+        INX     H
+        ORA     A
+        RZ
+        CALL    WCC
+        JMP     WCS
+;
+;WCCR - WRITE CONSOLE CARRIAGE RETURN (AND LINE FEED)
+;
+WCCR:   MVI     A,CR
+        CALL    WCC
+        MVI     A,LF
+;
+;WCC - WRITE CONSOLE CHARACTER
+;
+;  ENTRY CONDITIONS:
+;     A - CHARACTER TO WRITE
+;
+WCC:    PUSH    PSW
+        PUSH    B
+        PUSH    D
+        PUSH    H
+        MOV     C,A     ;GET CHARACTER FOR CBIOS
+WCCAL:  CALL    $-$     ;MODIFIED BY INIT.
+        POP     H
+        POP     D
+        POP     B
+        POP     PSW
+        RET
+;
+;RCS - READ CONSOLE STRING (WITH ECHO)
+;
+;  EXIT CONDITIONS
+;     B - NUMBER OF CHARACTERS READ (<255)
+;    HL - POINTS TO LAST CHAR STORED (CR)
+;
+RCS:    LXI     H,IBUF
+        MVI     B,0
+;
+RCS1:   CALL    RCC     ;READ NEXT CHAR FROM CONSOLE
+        CPI     DEL     ;JUMP IF NOT DEL
+        JNZ     RCS2
+        INR     B       ;IGNORE DEL IF IBUF ALREADY EMPTY
+        DCR     B
+        JZ      RCS1
+        DCX     H       ;ELSE DISCARD LAST CHAR
+;
+        IF  NOT APPLE   ;FOR APPLE SKIP NEXT AND
+                        ;SEND DEL TO CONSOLE
+        MOV     A,M     ;ECHO DISCARDED CHAR TO CONSOLE
+        ENDIF
+        CALL    WCC
+        DCR     B       ;DECREMENT COUNT
+        JMP     RCS1    ;       AND LOOP
+;
+RCS2:   CPI     'U'-40H ;JUMP IF NOT CONTROL U
+        JNZ     RCS3
+        CALL    WCCR    ;ELSE ABORT CURRENT LINE
+        JMP     RCS     ;       AND START OVER
+;
+RCS3:   CALL    WCC     ;ECHO CHAR TO CONSOLE
+        MOV     M,A     ;STORE CHAR IN IBUF
+        INR     B       ;INCREMENT COUNT
+        CPI     CR      ;JUMP IF CARRIAGE RETURN
+        JZ      RCS4
+        INX     H       ;ELSE ADVANCE POINTER
+        JMP     RCS1    ;       AND LOOP
+;
+RCS4:   MVI     A,LF    ;ISSUE LINE FEED AND RETURN
+        CALL    WCC
+        RET
+;
+;RCC - READ CONSOLE CHARACTER
+;
+;  EXIT CONDITIONS
+;     A - CHARACTER READ
+;
+RCC:    PUSH    B
+        PUSH    D
+        PUSH    H
+RCCAL:  CALL    $-$     ;MODIFIED BY INIT.
+        POP     H
+        POP     D
+        POP     B
+        RET
+;
+;WMC - WRITE MODEM CHARACTER
+;
+;  ENTRY CONDITIONS
+;     A - CHARACTER TO WRITE
+;
+;
+        IF      PORT
+WMC:    PUSH    PSW
+;
+WMCL:   IN      MODS
+        XRI     MXOR
+        ANI     MTBE
+        JNZ     WMCL
+        POP     PSW
+        ANI     7FH     ;STRIP PARITY BIT
+        OUT     MODD
+        RET
+        ENDIF
+;
+        IF      TRSPT
+WMC:    PUSH    H
+        PUSH    D
+        PUSH    PSW
+;
+WMCL:   CALL    MOTEST  ;TEST STATUS
+        JZ      WMCL    ;LOOP TILL TX EMPTY
+        POP     PSW     ;RESTORE CHAR
+        ANI     7FH     ;STRIP PARITY
+        PUSH    B       ;STORE B
+        MOV     C,A     ;PUT CHAR INTO C
+        MVI     B,00H   ;CHANNEL A
+        LXI     H,WMCRE ;STORE RETURN ADDRESS
+        PUSH    H
+        LHLD    BASE+1  ;GET BASE ADDRESS
+        LXI     D,SIOOUT
+        DAD     D
+        PCHL            ;JUMP TO IT
+;
+WMCRE:  POP     B       ;RESTORE IT
+        POP     D
+        POP     H
+        RET
+        ENDIF
+;
+        IF      APPLE
+WMC     PUSH    PSW
+WMCL    LDA     MODS
+        ANI     MTBE
+        JZ      WMCL
+        POP     PSW
+        ANI     07FH
+        STA     MODD
+        RET
+        ENDIF
+;
+;RMC - READ MODEM CHARACTER
+;
+;  EXIT CONDITIONS:
+;     A - CHARACTER READ
+;
+;
+        IF      PORT
+RMC:    IN      MODS
+        XRI     MXOR
+        ANI     MRDA
+        JNZ     RMC
+;
+RMC2:   IN      MODD
+        ANI     7FH
+        RET
+        ENDIF
+;
+        IF      TRSPT
+RMC:    CALL    MITEST  ;CHAR AVAILABLE
+        JZ      RMC     ;LOOP IF NOT READY
+;
+RMC2:   PUSH    B       ;STORE B
+        PUSH    D
+        PUSH    H
+        MVI     B,00H   ;CHANNEL A
+        LXI     H,RMCRE ;RETURN ADDRESS
+        PUSH    H
+        LHLD    1
+        LXI     D,SIOINP
+        DAD     D
+        PCHL
+;
+RMCRE:  POP     H
+        POP     D
+        POP     B
+        ANI     7FH     ;STRIP PARITY
+        RET
+        ENDIF
+;
+        IF      APPLE
+RMC:    LDA     MODS
+        ANI     MRDA
+        JZ      RMC
+RMC2:   LDA     MODD
+        ANI     07FH
+        RET
+        ENDIF
+;
+;GFN - GET FILE NAME
+;
+GFN:    LXI     H,GFNSD ;PRINT 'WHICH DRIVE?'
+        CALL    WCS
+        CALL    RCC     ;GET ANSWER FROM CONSOLE
+        CALL    WCC     ;ECHO IT TO CONSOLE
+        ANI     5FH     ;MAKE UPPER CASE
+        CPI     'C'-40H ;^C MEANS ABORT
+        JZ      GFN6
+        SUI     'A'-1
+        JC      GFN     ;REQUIRE ALPHABETIC
+        JZ      GFN
+        CPI     17      ;ALLOW 16 DRIVES (AS IN CP/M 2.X)
+        JNC     GFN
+        STA     FCB
+;
+GFNB:   LXI     H,GFNS1 ;PRINT 'FILENAME? '
+        CALL    WCS
+        CALL    RCS     ;READ RESPONSE INTO IBUF
+        LXI     H,FCB+FN  ;BLANK FILL FN AND FT FIELDS
+        MVI     C,11
+;
+GFN1:   MVI     M,' '
+        INX     H
+        DCR     C
+        JNZ     GFN1
+        LXI     H,IBUF  ;POINT TO INPUT BUFFER
+        LXI     D,FCB+FN  ;SCAN OFF FN FIELD
+        MVI     C,9
+;
+GFN2:   MOV     A,M     ;FETCH NEXT CHAR FROM IBUF
+        INX     H
+        CPI     61H     ;IF LC, CONVERT TO UC
+        JC      GFN2A
+        SUI     20H
+;
+GFN2A:  CPI     CR      ;JUMP IF END OF LINE
+        JZ      GFN5
+        CPI     '.'     ;JUMP IF END OF NAME
+        JZ      GFN3
+        STAX    D       ;ELSE STORE CHAR IN FN FIELD
+        INX     D
+        DCR     C       ;LOOP IF 8 OR LESS CHARS SO FAR
+        JNZ     GFN2
+        JMP     GFN6    ;ELSE TAKE ERROR EXIT
+;
+GFN3:   LXI     D,FCB+FT  ;SCAN OFF FT FIELD
+        MVI     C,4
+;
+GFN4:   MOV     A,M     ;FETCH NEXT CHAR FROM IBUF
+        INX     H
+        CPI     61H     ;IF LC, CONVERT TO UC
+        JC      GFN4A
+        SUI     20H
+;
+GFN4A:  CPI     CR      ;JUMP IF END OF LINE
+        JZ      GFN5
+        STAX    D       ;ELSE STORE CHAR IN FT FIELD
+        INX     D
+        DCR     C       ;LOOP IF 3 OR LESS CHARS SO FAR
+        JNZ     GFN4
+        JMP     GFN6    ;ELSE TAKE ERROR EXIT
+;
+GFN5:   XRA     A
+        STA     FCB+EX  ;SET EXTENT NUMBER TO ZERO
+        STA     FCB+NR  ;SET RECORD NUMBER TO ZERO
+        STC             ;CLEAR ERROR FLAG AND RETURN
+        CMC
+        RET
+;
+GFN6:   STC             ;SET ERROR FLAG AND RETURN
+        RET
+;
+GFNSD:  DB      CR,LF,'WHICH DRIVE? ',0
+GFNS1:  DB      CR,LF,'FILENAME? ',0
+;
+;OPEN - OPEN DISK FILE
+;
+OPEN:   PUSH    H
+        PUSH    D
+        PUSH    B
+        LXI     D,FCB
+        MVI     C,OFFC
+        CALL    BDOS
+        POP     B
+        POP     D
+        POP     H
+        RET
+;
+;READ - READ RECORD FROM DISK FILE
+;
+READ:   PUSH    H
+        PUSH    D
+        PUSH    B
+        LXI     D,FCB
+        MVI     C,RRFC
+        CALL    BDOS
+        POP     B
+        POP     D
+        POP     H
+        RET
+;
+;CLOSE - CLOSE DISK FILE
+;
+CLOSE:  PUSH    H
+        PUSH    D
+        PUSH    B
+        LXI     D,FCB
+        MVI     C,CFFC
+        CALL    BDOS
+        POP     B
+        POP     D
+        POP     H
+        RET
+;
+;DELT - DELETE DISK FILE
+;
+DELT:   PUSH    H
+        PUSH    D
+        PUSH    B
+        LXI     D,FCB
+        MVI     C,DFFC
+        CALL    BDOS
+        POP     B
+        POP     D
+        POP     H
+        RET
+;
+;WRITE - WRITE RECORD TO DISK
+;
+WRITE:  PUSH    H
+        PUSH    D
+        PUSH    B
+        LXI     D,FCB
+        MVI     C,WRFC
+        CALL    BDOS
+        POP     B
+        POP     D
+        POP     H
+        RET
+;
+;MAKE - MAKE NEW DISK FILE
+;
+MAKE:   PUSH    H
+        PUSH    D
+        PUSH    B
+        LXI     D,FCB
+        MVI     C,MFFC
+        CALL    BDOS
+        POP     B
+        POP     D
+        POP     H
+        RET
+;
+;CITEST - CHECK CONSOLE INPUT STATUS
+;
+CITEST: PUSH    B
+        PUSH    D
+        PUSH    H
+CITCAL: CALL    $-$     ;MODIFIED BY INIT.
+        ORA     A       ;SET ZERO FLAG
+        POP     H
+        POP     D
+        POP     B
+        RET             ;ZERO FLAG CARRIES ANSWER
+;
+;MITEST - CHECK MODEM INPUT STATUS
+;
+        IF      PORT
+MITEST: IN      MODS    ;GET MODEM UART STATUS
+        XRI     MXOR    ;INVERT HIGH-TRUE BITS
+        ANI     MRDA    ;ANY DATA AVAILABLE?
+        MVI     A,0
+        JNZ     MITST1
+        CMA
+;
+MITST1: ORA     A
+        RET             ;ZERO FLAG CARRIES ANSWER
+        ENDIF
+;
+        IF      TRSPT
+;
+MITEST: PUSH    B
+        PUSH    H
+        PUSH    D
+        MVI     B,00    ;CHANNEL A
+        LXI     H,MITSTR
+        PUSH    H
+        LHLD    BASE+1
+        LXI     D,SIOTST
+        DAD     D
+        PCHL
+;
+MITSTR: POP     D
+        POP     H
+        ANI     01      ;TX EMPTY
+        POP     B
+        RET             ;ZERO FLAG HOLDS THE ANSWER
+        ENDIF
+;
+        IF      APPLE
+MITEST  LDA     MODS
+        ANI     MRDA
+        RET
+        ENDIF
+;
+;MOTEST - CHECK MODEM OUTPUT STATUS
+;
+        IF      PORT
+MOTEST: IN      MODS    ;GET MODEM UART STATUS
+        XRI     MXOR    ;INVERT HIGH-TRUE BITS
+        ANI     MTBE    ;UART READY FOR CHARACTER?
+        MVI     A,0
+        JNZ     MOTST1  ;ZERO FLAG CARRIES ANSWER
+        CMA
+;
+MOTST1: ORA     A       ;SET ZERO FLAG IF READY
+        RET
+        ENDIF
+;
+        IF      TRSPT
+MOTEST: PUSH    B
+        PUSH    H
+        PUSH    D
+        MVI     B,00    ;CHANNEL A
+        LXI     H,MOTSTR
+        PUSH    H
+        LHLD    1
+        LXI     D,SIOTST
+        DAD     D
+        PCHL
+;
+MOTSTR: ANI     02      ;BUFFER EMPTY
+        POP     D
+        POP     H
+        POP     B
+        RET
+        ENDIF
+;
+        IF      APPLE
+MOTEST  LDA     MODS
+        ANI     MTBE
+        RET
+        ENDIF
+;
+        IF      MNET
+        LDA     OVERL1+1
+        CPI     00H     ;IF NOT UPLOAD THEN SKIP IT
+        RNZ
+                        ;THIS ROUTINE ALLOWS
+CKXOFF: PUSH    H       ;MICRONET X-OFF/XON
+        LXI     H,2751  ;TO WORK CORRECTLY
+MS8:    DCX     H       ;33 MSEC DELAY
+        MOV     A,L
+        ORA     H
+        JNZ     MS8
+        POP     H
+        CALL    MITEST
+        RZ
+        CALL    RMC2
+        CPI     XOFF    ;IF NOT X-OFF
+        RNZ             ;THEN CONTINUE
+WAITON: CALL    MITEST  ;ELSE WAIT FOR X-ON
+        JZ      WAITON
+        CALL    RMC2    ;GOT SOMETHING
+        CPI     XON     ;IS IT X-ON?
+        RZ              ;IF SO, WE'RE THROUGH WAITING
+        CPI     01H     ;CTL-A SAME AS X-ON
+        RZ
+        CALL    WCC     ;IF IT WAS NOT AN X-ON
+        JP      WAITON  ;THEN WRITE TO CONSOLE
+        ENDIF           ;AND WAIT SOME MORE
+;
+;
+;DATA AREA
+;
+INCH:   DS      1       ;INPUT CHAR BUFFER (TO CYBER)
+OUTCH:  DS      1       ;OUTPUT CHAR BUFFER (FROM CIBER)
+STACK:  DS      80      ;LOCAL STACK
+IBUF:   DS      256     ;INPUT BUFFER
+;
+;TEXT BUFFER
+;
+FLAG:   DS      1       ;TEXT SAVE FLAG
+PTR:    DS      2       ;TEXT BUFFER POINTER
+SIZE:   DS      2       ;TEXT BUFFER SIZE
+TBUF:   EQU     $       ;START OF TEXT BUFFER
+;
+        END
+L
+        ORA     H
+        JNZ     MS8
+        POP     H
+        CALL    MITEST
+         

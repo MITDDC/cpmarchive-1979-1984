@@ -1,0 +1,58 @@
+
+
+Date: 08/30/82
+From: Bob Mathias
+To:   All
+Re:   TYPE.C version 1.5 
+
+TYPE15 is a  program for listing a  normal  or squeezed file  to 
+the console.  TYPE15  uses  WILDEX15.C  which permits  ambiguous
+file names to  appear  on the  command line. Thus the  following 
+example would list all .AQM  and .ASM files on drive b:
+
+	A>TYPE15 B:*.AQM B:*.ASM
+
+An afn preceded by a "!" causes all names matching the given afn
+to be excluded from being  listed.   Thus,  to  list  all  files    
+except .MAC files, one enters:
+
+	A>TYPE15 !*.MAC			
+
+Another example: to get all files on D: except .C files, type:
+
+	A>TYPE15 D:*.* !D:*.C      
+
+
+TYPE15 will not list files with the follow extentions:
+
+	.COM, .OBJ, .BAD, .LOG, .OV?, .REL, .CRL, .IRL
+
+Also system files will not be listed.  TYPE15 can be  recompiled
+to permit system files.  Just comment out the #define NOSYS.
+
+TYPE15 should be linked with WILDEX15  (or any  version  greater
+than version 1.5 of WILDEX).
+
+TYPE15  uses direct  CBIOS console I/O to get around the problem
+of echoing line noise garbage on remote CP/M systems.   Also,  a
+special version, XTYPE   does  not  expand TABs.  This is useful
+for those  systems which would like to allow non-CP/M callers to
+"TYPE"  files without taking up an undo amount of time expanding
+tabs.
+
+Since TYPE15 performs all the functions of TYPESQ, plus it lists
+non-squeezed  files and handles  wildcard options, TYPESQ should	
+now be considered retired.
+
+The new files are:
+
+--> FILE:  CPM;AR51: TYPE   15COM       CRC = E8 6D
+
+--> FILE:  CPM;AR51: TYPE   15C	 	CRC = 81 CC
+
+--> FILE:  CPM;AR51: XTYPE  15COM	CRC = A0 4E  <--no tab expansion
+
+--> FILE:  CPM;AR51: TYPE80 15COM	CRC = 4C F8  <--80 lines maximum
+
+--> FILE:  CPM;AR51: TYPE40 15COM	CRC = 91 F4  <--40 lines maximum
+

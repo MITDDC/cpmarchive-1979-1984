@@ -1,0 +1,191 @@
+ 
+                          BDS C User's Guide Addenda
+                         v1.43 Edition --  March, 1981
+ 
+                                  Leor Zolman
+                          BD Software  (New Address!)
+                                33 Lothrop st.
+                              Brighton, Ma. 02135
+                                (617) 782-0836
+ 
+ 
+ 
+     Here are the bugs found and fixed for v1.43, and some additional notes:  
+ 
+ 
+0.   Another   logical-expression-related  bug  caused  incorrect  code  to  be
+     generated when  a  subexpression  of  a binary operation used the && or ||
+     operators. For example, 
+     
+             if (x > (i==5 && j<7)) printf("Foobar\n");
+ 
+     might have caused a crash when executed.  
+ 
+0.5  A bitwise or arithmetic binary operation  in which the left argument was a
+     logical  expression  of  any  kind and the right  argument  was  a  binary
+     expression of higher precedence failed to evaluate correctly. For example,
+     
+     	if (!kbhit() & a<5) printf("foo\n");
+ 
+     didn't work.  
+ 
+1.   A missing comma, such as in the statement:  
+     
+             sprintf(dest "x = %d\n", x);
+ 
+     went undiagnosed and caused wierd  code to be generated. (The bug fixed in
+     the last release had only corrected  the  case  of a missing comma AFTER a
+     format string specification, not BEFORE it...) 
+ 
+2.   If  a  comment  was  begun  on  a  line  which  contained   an  "#include"
+     preprocessor  directive, and not terminated until a later line,  then  CC1
+     became confused.   2a.  Several users have complained about not being able
+     to put the character  sequence  `/*'  into  a  quoted  string.  This  is a
+     justifiable gripe, but I'm afraid you'll have to say things like "/\*"  to
+     get  the  same  effect.  The  reason  comment delimiters are not tolerated
+     within quotes 
+ 
+3.   Mismatched  curly-braces  in a source file  now  draw  a  more  meaningful
+     diagnostic  than the previous  "Unexpected  EOF  encountered"  message:  a
+     pointer is now  provided  to the line at which the badly-balanced function
+     begins.  
+ 
+4.   When an illegal constant was  encountered  by  CC1  at  any  place where a
+     constant is required, an incorrect "Unmatched left parenthesis" diagnostic
+     was displayed with an impossibly large line number. (Actually, the correct
+     line number was obtainable by subtracting the exact size of the  text file
+     from  the  given  line  number.  Guess what I forgot to initialize between
+     passes...) 
+ 
+5.   When using the "-w" option with CLINK, a terminating control-Z was NOT put
+     out to the SYM file when the length  of  the  SYM file worked out to be an
+     exact multiple of 128 bytes. This gave CLINK a headache when "-y" was used
+     to read the SYM file back in.  
+ 
+6.   There  was  another bug in the "getc" library function  that  caused  some
+     trouble when  the  "fgets"  function was used to read in lines from a text
+     file that wasn't terminated with  control-Z  (CPMEOF).  This  was fixed by
+     changing the line:  
+     
+             return ERROR;
+ 
+     to:  
+     
+             return iobuf->_nleft++;
+ 
+7.   Mismatched  square brackets in an expression had drawn an "Unexpected  EOF
+     encoutered" error instead of something more meaningful.  
+ 
+8.   The word "main"  is  NO  LONGER  A KEYWORD. In previous versions, the fact
+     that "main" was treated as a keyword  made  its use in any situation other
+     than as the first line of a "main" function impossible.  I.e,  attempts to
+     call "main" recursively were not accepted by the compiler. There is now no
+     longer  anything  special  about  the  word  "main". In addition, previous
+     versions had substituted an undocumented one byte  code  (9D  hex) for the
+     name  "main"  in CRL file directories, thereby probably causing a  lot  of
+     confusion. This bizarre scheme is no longer used, although the linker will
+     still recognize  the special 9D code as meaning "main" when encountered in
+     a CRL file (of course, "MAIN" will now also be recognized...) 
+ 
+9.   A bug in the "-y" option handler in CLINK caused CLINK to crash when there
+     wasn't enough room  in  the  reference table to hold all the symbols being
+     read in from a SYM file. Sorry  about  that, chief. Note, by the way, that
+     the POSITION of "-y" on the command line  IS VERY SIGNIFICANT. If the "-y"
+     option appears to the right of names of CRL  files to search, then the SYM
+     file specified will not be used until AFTER the  previous  CRL  files have
+     already been scanned and loaded from. I.e., the "-y" option should  appear
+     BEFORE  the  names  of any CRL files that contain functions that might not
+     need to be loaded (due to their definition in the SYM file). A new feature
+     of CLINK is that whenever  a  previously  defined symbol is encountered in
+     the process of loading the symbols from a SYM  file,  a  message  to  that
+     effect  will be printed, allowing the user an opportunity to rearrange the
+     command line  so  that the SYM file is read in earlier and some redundancy
+     possibly eliminated.  
+ 
+10.  An obscure feature  of  the  "printf",  "sprintf"  and  "fprintf"  library
+     functions,  as  described  in  the  Kernighan  &  Ritchie  book, is that a
+     field-width specification value preceded by a '0' caused 0-fill instead of
+     space-fill. I'd never NOTICED that before, until a user brought  it  to my
+     attention  (and  conveniently  provided  a  fix.)  Note that this solves a
+     problem  often encountered when printing hex values.  Now,  the  following
+     "printf" call:  
+     
+             printf("%4x; %04x\n",8,8);
+ 
+     will produce the output:  
+     
+                8; 0008
+ 
+11.  The body of  a  function  definition now MUST be enclosed in curly-braces.
+     Formerly,  the  following sort  of  thing  was  tolerated  as  a  function
+     definition, but no more:  
+     
+             putchar(c) bdos(4,c);
+ 
+12.  A bug in the CMAC.LIB macro package had NOT allowed lines such as:  
+     
+             exrel <lxi h,>,putchar
+ 
+     while the following kind of lines were properly handled:  
+     
+             exrel call,putchar
+ 
+14.  Quoted strings containing an open-comment  delimiter  sequence  (`/*') had
+     caused CC1 to think an actual comment was intended. I.e, the statement 
+     
+     	printf("this is an open-comment sequence: /* \n");
+ 
+     would have drawn a "string too long..." error. Not any more.  
+ 
+15.  The  handling of string constants by the code generator has been improved.
+     Now, instead  of  putting the text right where it is used and generating a
+     jump around it, the  compiler  accumulates  up  to  50  text  strings in a
+     function and places them all at the end of the function. If more  than  50
+     strings  appear,  then after the 50th it goes back to doing it the old way
+     for the remainder of  the function (there's only so much table space worth
+     allocating to hacks like this.) 
+ 
+16.  Speaking of hacks, here's one that'll get you either excited or sick:  You
+     say you need some "static"  variables?  Consider  the  following method of
+     simulating a "static array of characters":  
+     
+             char *static;
+             ...
+             static = "0123456789";
+             ...
+ 
+     The result is that the variable "static" may be used just  like  a  static
+     array  of ten characters. If declared as an "int" instead of a "char",  it
+     could be  used  as an array of five integer variables (or ten, if you make
+     the quoted string  twice  as  long...).  Steve  Ward  makes  use  of  this
+     technique in his CIO.C library. Kludgey, yes, but it gets the job done and
+     it's even portable...  
+ 
+17.  The  default  CC1  symbol table size for modified versions of the compiler
+     (v1.43T) has been upped  from  6K  to  7K.  The "-r" option still lets you
+     explicitly set the table allocation, if you want to.  
+ 
+ 
+19.  The BDS C User Group has moved. John Nall  down  in  Florida  is no longer
+     coordinating  it;  please  don't send anything more his way. The new  User
+     Group address is:  
+     
+             Robert Ward
+	     BDS C User's Group
+     	     PO Box 287
+             Yates Center, Kansas 66783
+             (316) 625-3554
+ 
+     Many thanks are due John Nall  for  starting the Group and putting much of
+     his effort into getting it going; also  to  thank  are  all  you users out
+     there  who've  contributed  original software to the Group and offered  to
+     help  in  distribution and paperwork,  and  of  course  everyone  who  has
+     expressed enough interest in the Group to at least get on the mailing list
+     has also helped  boost  interest. Contributions and requests should now be
+     sent to Robert Ward;  The  disks  he'll  be  distributing may be charged a
+     little for, but I'm sure it'll be worth it in terms of providing the Group
+     an incentive to keep on going. Note that the BDS  C  User  Group routinely
+     provides  updates of BDS C to bona fide owners at rates considerably  more
+     economical (i.e., a heck of a lot CHEAPER) than anywhere else.  
+ 
+[END V143.DOC]

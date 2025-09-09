@@ -1,0 +1,37 @@
+S. Kluger              El Paso RCPM (915) 598-1668 
+
+El Paso, TX, 08-27-82
+
+The following is a modification to the GODBOUT Z-80 CPU board to enhance
+it's reliability and is applicable for all boards REV J or earlier. I was
+given this mod by CompuPro today, did the changes and it works great.....
+
+The Z-80 CPU may have a problem addressing the on-board sockets if they
+hold HM6116-compatible RAMs. The problem I encountered and fixed with this
+mod was the following:
+
+I am using an old Hayes 80-103A modem card with a hardware modification 
+to decode the lower 8 address bits. The port is 90H. When addressing the
+board using Z-80 I/O instructions (LXI B,9090H, COUT A), everything worked
+fine. Using 8080 I/O, it did the following: It deposited (read closely)
+the RAM page number (F8 or above) at PAGE+PORT. Example: at F890H it wrote
+a F8, at F990H it wrote a F9, at FA90H it wrote a FA, and so on. It did that
+only on RAM chips plugged into the CPU board socket.
+
+This is what you'll have to do to make your board work:
+1. Connect a jumper wire from U15 pin 1 to U14 pin 1. U14-1 may be connected
+   to Vcc. If so, remove the short to Vcc.
+2. Connect a jumper wire from U14 pin 2 to "A" of J2.
+3. Break trace going TO "A" of J2.
+
+Please note that "A" of J2 is wrong in the schematic but right on the board.
+In the schematic, "A" is "B" and "B" is "A". 
+
+This mod removes "pwr" as write strobe for the 6116 and replaces it
+with "mwrite".
+
+I was also told that REV J and earlier boards MAY not work right when converted
+to 6MHz operation.
+
+
+

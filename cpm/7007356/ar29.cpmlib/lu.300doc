@@ -1,0 +1,925 @@
+
+
+   Documentation for LU.COM and LRUN.COM
+
+   
+|  This  document applies to version 3.00 of LU.COM and version
+   2.0 of LRUN.COM.
+
+   Copyright (c) 1982, 1983 by Gary P. Novosielski
+   All rights reserved.
+
+   Permission  is  hereby  granted  to copy and distribute this
+   document  for  any  non-commercial  purpose. Any use of this
+   material  for  commercial  advantage  without  prior written
+   consent of the author is prohibited.
+
+   
+
+                           INTRODUCTION
+
+   Library  Utility  (LU)  is  a  program to allow combining of
+   multilple  files  into  one  larger  file.  It requires CP/M
+   version 2.0 or higher to run.
+
+|  Version 3.00 replaces  version 2.11. The major revisions are
+|  the  addition  of the -b, and -n operators, and the addition
+|  of  CRC  calculation  and  checking  to improve reliability.
+|  Error  reporting has also been improved. Major revisions are
+|  marked with a vertical bar (|) in the left margin.
+
+        The  directory  information  in  an LU style library is
+   contained  in  the  same file as the data files, or members.
+   The amount of space to be allocated to the directory must be
+   specified by the user when a new library is created, but can
+   be  changed  when  the file is reorganized. The size of each
+   directory entry is 32 bytes, which means each four directory
+   entries  take  up  one sector of the library file. Currently
+|  only  18  bytes  of each entry are used, with 14 bytes being
+   reserved  for  use  with  possible  future enhancements. The
+   directory  itself uses one entry for control information, so
+   the  number  of  directory sectors needed for a library of m
+   members is (m + 1) / 4, rounded up to the next whole number.
+        The user need not be concerned with this discussion, as
+   directory  size  is calculated by the program. All directory
+   sizes  are  input and output in terms of entries, each entry
+   being a potential member file. The program adjusts directory
+   size to an integral number of sectors.
+
+        LRUN.COM is a small program which allows running a .COM
+   (object code) file member directly from any library, without
+   having to extract it to a separate disk file.
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+   Page 1 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+                        WHY USE LIBRARIES?
+
+        First,  a library file usually takes up less space than
+   the total of the individual member files which went into it.
+   The  reason  for  this  is that CP/M allocates disk space in
+   fixed  blocks  or groups, typically 2k bytes each. Any space
+   after  the  last  sector  of  a file up to the next 2k block
+   boundary is wasted. The same files in a library use only the
+   number of sectors they actually need, and though the library
+   itself  may  have  a  partially wasted block at the end, and
+   requires   some  space  for  directory  information  at  the
+   beginning,  the  net  effect  is  usually  a saving of total
+   space.  The  best results are seen when many small files are
+   combined into one library.
+        Second,  a library file makes most efficient use of the
+   CP/M disk directory, since it is treated as only one file by
+   CP/M regardless of how many members it contains.
+        Third,  libraries  can  aid in transferring packages of
+   software  from  one system to another using XMODEM. Only one
+   file  is transferred, eliminating the need to run the XMODEM
+   transfer  program several times, the chance of overlooking a
+   needed  file, and the problems of naming conflicts, (such as
+   READ.ME files) among unrelated packages.
+
+   
+
+                      WHY NOT USE LIBRARIES?
+
+        There   are  some  very  good  reasons  for  not  using
+   libraries.
+        For one thing, files within a library are not available
+   to  most "normal" programs. If a frequently accessed file is
+   placed  in  a library, it will have to be extracted from the
+   library  to  its  free-standing counterpart before it can be
+   used  by  most programs. (.COM files are a notable exception
+   to  this,  because  of the availability of the LRUN command,
+   covered later.)
+        Libraries  can  actually  waste disk space. When a disk
+   file  is erased, CP/M returns the space formerly used by the
+   file  to  the  free  space pool for use by new files. When a
+   member  file  is  deleted  from a library however, the space
+   previously  occupied by the file is not useable. The library
+   must  be  reorganized  to make this space available to CP/M.
+   While  this  is  easy  to  do with the LU program, it is not
+   automatic,  and  if the situation is ignored, large areas of
+   disk can be tied up as unproductive "dead space".
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+   Page 2 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+                  HOW TO USE THE LIBRARY UTILITY
+
+        LU  has two main methods of operation: interactive, and
+   parameter  driven.  In  parameter  driven  mode, the program
+   takes  its  command  inputs from the command line when it is
+   first  invoked, and when the entire line has been processed,
+   execution ends.
+        In  interactive  mode,  the  program  takes its command
+   inputs  from one or more input lines from the standard input
+   device  (typically the console). When all the command inputs
+   have  been  processed,  the program reads another line. This
+   process can be repeated as long as necessary.
+        Input  from disk files, C program "pipes", and the XSUB
+   facility are also supported for more advanced applications.
+        Interactive  mode  is  probably  the best way to get to
+   know  the  program, because the effect of each action can be
+   immediatley seen.
+        To  start  an  interactive library maintenance session,
+   just  type  LU  on the command line with no parameters after
+   it.
+        All the methods make use of similar syntax:
+        Each  input  line, regardless of its source, is scanned
+   left  to  right.  All alphabetic characters are converted to
+   upper  case. If the line contains any blanks it is separated
+   into multiple individual input strings.
+        These  input  strings  are  divided  into  two classes:
+   operators (sometimes called tags, or options) and operands.
+        An  operator  is  defined  as  any two character string
+   where  the  first  character is a minus sign. Operators tell
+   the  program what to do. Valid operators are -a, -b, -c, -d,
+   -e,  -l  -n,  -o, -r, -u and -x. Anything else with the same
+   form is an operator too, but an invalid one.
+        Operands are any other input string.
+|       The  most  common  operand  strings  are names of files
+|  which  are  to  be  acted upon by the previous operator, for
+|  instance,  added  to or extracted from a library file. These
+|  are called filespec operands, and have the following general
+|  form:
+
+        [u/][d:][filename][.[ext]]
+
+        where  u   is  an  optional  user  area prefix. It is a
+   decimal  number  from  0  to  31,  and  if  present, must be
+   followed  by  a slash (/) character. User areas greater than
+   15  should  be used with care, as they cannot be accessed by
+   any of the resident CCP (Console Command Processor) commands
+   of CP/M, such as USER, TYPE or ERA.
+
+               d   is  an  optional  drive  designator. It is a
+   single  character  in  the  range of A to P, and if present,
+   must be followed by a colon (:).
+
+               filename  is  a  string  of  0  to 8 characters,
+   following the standard CP/M conventions for filenames
+
+               ext   is   a   string  of  0  to  3  characters,
+
+   
+   Page 3 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+   following  the standard CP/M naming conventions for filetype
+   extensions.
+
+   The  period  (.)  after  filename  is  manditory  if  ext is
+   specified,  and  optional  otherwise.  The  names  "xyz" and
+   "xyz." are equivalent.
+
+   Ambiguous  operands  are  those which contain the characters
+   "*"  or "?" in the filename or extension fields. Examples of
+|  valid filespec operands are:
+
+    foo.bar
+    3/b:test.fil
+    3/test.fil
+    b:test.*
+    test.fil
+    test.
+    test
+    z
+    -z.
+    comm?nd
+    0/
+    b:
+    5/a:
+
+   Note in the example "-z." the period, though not required by
+   the  syntax  of  a  filename,  is  essential  to prevent the
+   operand from being mistaken as the invalid operator "-z".
+        What  action  is  taken  upon  the operand depends upon
+   which operator most recently preceded it. If no operator was
+   entered, or an invalid one, or one that expects no operands,
+   the  operand  will draw an error message, but will otherwise
+   be ignored.
+        When   running   interactively,   LU  prompts  for  the
+   operators  and operands. You can type as many inputs as will
+   fit  on the line, separating them with spaces. The end of an
+   input  line  has  no  special  significance. The most recent
+   operator remains in effect, and the next line can begin with
+   additional operands for it.
+
+        The prompt displayed for each input line has this form:
+
+        -m u/d:>
+
+        where  m  is the current operator in effect
+               u  is the current user number in effect
+               d  is the current default drive
+
+        For  example  the  prompt  might  be  "-E  0/A:>". This
+   indicates  that the -e operator is in still in effect; if an
+   operand  is  entered it will be interpreted as the name of a
+   member  file to be Extracted from the library. It also shows
+   that  the current user number is 0, and the current drive is
+   A:.  Any operands which are entered without an explicit user
+   or  drive  will  use  these  defaults.  The  defaults can be
+   changed at any time with the -u operator, discussed below.
+
+   
+   Page 4 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+        When  the  program  first  starts up, the prompt begins
+   with  "-?",  which means no operator is currently in effect.
+   In  this  case,  the  only  valid  input is an operator. Any
+   operand will be rejected.
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+   Page 5 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+                       SUMMARY OF OPERATORS
+   In this discussion, the "open library" refers to the library
+   name  specified  as  the  current  library  by  using the -o
+   operator  discussed  below.  The default name LIBRARY.LBR is
+   used whenever an operator needs an open library, but none is
+   currently open.
+
+        -a   add   files   to  library.  -a  causes  subsequent
+   operands  to be treated as the names of files to be added to
+   the  open  library.  Ambiguous operands match all disk files
+   which   qualify   according   to   normal   CP/M   wild-card
+   conventions,  except those with a filetype of .LBR. Explicit
+   user  or  drive specification on an operand causes that area
+   to be searched for the file(s) instead of the defaults.
+
+|       -b   Buffer  size set. -b reads the subsequent operator
+|  as the size (in sectors) to allocate  for a disk I/O buffer.
+|  Normally,  this  operator  need  never  be  used, since a 64
+|  sector buffer is assumed if not specified. A full discussion
+|  of  buffer  size  considerations, and their relation to disk
+|  access   speed   is  beyond  the  scope  of  this  document.
+|  Generally,  a  larger  buffer  will  increase  the  speed of
+|  adding,   extracting   and  reorganizing,  but  this  widely
+|  variable with different hardware.
+|       Bear  in mind that a large I/O buffer will decrease the
+|  size of the largest library directory which can be processed
+|  by  the  program,  since  the  directory buffer competes for
+|  system  memory  with the I/O buffer. Conversely, setting the
+|  buffer  to  a  value  less than 64 will increase the maximum
+|  directory  size.  This  operator can only be used at program
+|  startup,  before the first library is open. Its operands are
+|  not  filespec  operands,  but  simple integer numbers in the
+|  range 1...255.
+
+        -c   close  the  open  library.  If  a library has been
+   opened  with  the  -o  operator,  or  if the default library
+   LIBRARY.LBR  has  been  opened  by  some  other operator, -c
+   causes  it  to  be  closed.  Otherwise,  it  has  no effect.
+   Normally this operator need never be entered, since any open
+   library is automatically closed at the end of the session or
+   when  another  one  is opened. It is provided for situations
+   where  it  is  desired to change disk volumes without ending
+   the  LU  program.  Before  removing  the disk containing the
+   library  file,  it  must  be  closed.  After  mounting a new
+   volume,  the  -U operator (see below) should be used. The -c
+   operator expects no operands.
+
+        -d   delete  files  from  library. -d causes subsequent
+   operands to be treated as the names of members to be deleted
+   from  the  open  library.  Ambiguous names match all members
+   which qualify. User and drive specifications on operands are
+   ignored,   since   the  library  members  are  obviously  in
+   whichever area contains the open library.
+
+        -e   extract  files  from library. -e causes subsequent
+   operands  to  be treated as the names of members in the open
+
+   
+   Page 6 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+   library  to be extracted to normal free-standing CP/M files.
+   The  original  copy  is  not  deleted,  and  remains  in the
+   library.
+
+   Ambiguous  operands  extract all members which qualify. User
+   or  drive  specifications  on  member names cause the output
+   file(s)  to  be placed in the specified area rather than the
+   default.  Any  existing  file  with  the  same  name will be
+   overwritten  unless  it is protected by having its Read/Only
+   attribute set on.
+
+        -l   list  current library map. -l causes the directory
+   of  the open library to be listed on the console. The member
+   names are displayed, along with their index (starting record
+   within   the   library)  their  size  in  sectors,  and  the
+|  internally calculated CRC value.
+     Also, information is displayed about the number of sectors
+   in  the  library,  and  how  much  space is used and  unused
+   (wasted).  The  number  of  active  entries (members) in the
+   directory  is  also  displayed,  as well the number deleted,
+   free  for  future  use,  and  the  total  number. This helps
+   determine  whether  the  library needs to be re-organized to
+   free  unused  space  and  deleted  entries.  The operator -l
+   expects  no  operands,  so  the next input should be another
+   operator.
+
+|       -n   Name  a  member. -n causes each subsequent operand
+|  to be treated as a request to change the name of a member in
+|  the  open  library.  Since both the new and old names of the
+|  member  must  be  given,  a special double operand format is
+|  used.   It  is  essentially  two  filespec  operands  "glued
+|  together" with an equals sign. For example:
+|                      newname.typ=oldname.typ
+|  would  cause the member OLDNAME.TYP to have its name changed
+|  to  NEWNAME.TYP.  If  the  old name is not found in the open
+|  library,  or  if the new name is that of an existing member,
+|  no  rename  takes  place,  and  an  appropriate  message  is
+|  displayed.  Operands  which  do  not  conform to the special
+|  <new>=<old> syntax will also draw an error message.
+
+   
+
+        -o   open a library. -o causes the following operand to
+   be  treated  as  the name of a library file to be opened for
+   use  with  subsequent operators. If there is already an open
+   library,  it is first closed, and the new one opened. If the
+   new  library  does not exist, it is created with no members.
+   Ambiguous   names   are   not   allowed.   User   and  drive
+   specification can be used to override the current area.
+        The  file  type  may  be specified, but if not entered,
+   defaults  to  .LBR  which  is strongly suggested as the file
+   type  for  all  library files. You will recall that files of
+   type  .LBR  are  ignored  by the wildcard matching of the -a
+   (add)   operator.   This   prevents   libraries  from  being
+   accidentally  added  to other libraries, or to themselves; a
+   situation  not  unlike  trying  to  drive a truck up its own
+
+   
+   Page 7 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+   tailpipe.
+        If  for  some  reason  you  want  to add one library to
+   another,  be my guest, but you will have to specify the name
+   without * or ? characters when adding it.
+
+        -r   reorganize  library.  -r causes the currently open
+   library  to  be  reorganized. First, the directory is sorted
+   into  alphabetical  order,  and  then all active members are
+   copied  to  a  work  library  which is opened on the default
+   user/drive. The size of the directory may be changed at this
+   point  by  specifying a greater or smaller number of entries
+   than were present the old library. The directory will always
+   be  made  large  enough to contain all the active members of
+   the  old  library,  so  it is safe to enter a size of "1" to
+   make  the  directory  as  small as possible. (See Specifying
+   Directory Sizes below.)
+        When  reorganization  is  complete,  the old library is
+   deleted  from  its  user/drive area, and the work library in
+   the  default area is renamed to the name of the old library.
+   No  backup  copy  is retained. The newly reorganized library
+   remains open for use with subsequent operations.
+|       Note that although the newly reorganized library always
+|  ends up in the default area, the default area can be changed
+|  with  the  -u  operator.  (Do  this first, before using -o.)
+|  Also,  the  old  library can be opened in any area, by using
+|  explicit  user/drive  specifications. The net result is that
+|  it is possible to reorganize a library from any desired area
+|  to  any  other  area.  Reorganizing a library to a different
+|  drive  is  usually a much faster operation, and is manditory
+|  if  the  current disk does not contain enough free space for
+|  the old and work libraries at the same time.
+
+   
+        -u   Use new default area. The -u can be used to change
+   the  default  value  for user number or drive. It causes the
+   user  prefix  and  drive spec of the following operand to be
+   used  as  the new default area. If the following operand has
+   no  user prefix, or no drive spec, the corresponding default
+   is  not  changed.  (The  filename  and  ext  sections of the
+   operand  must  be  absent.)  If  a  change is made, any open
+   library  is first closed, and the disk system is reset. Thus
+   feature allows newly mounted disk volumes to be accessed for
+   writing;  CP/M  causes new volumes to be Read Only until the
+   program  performs  a disk system reset. The -u operator also
+   affects  which area will be used for the work library during
+   reorganization. See the -r operator above.
+        Note:  If directed I/O is active (See advanced features
+   below)  the  -u  operator is treated as invalid. Due to some
+   unfortunate  assumptions  in  the  C  run-time  package, the
+   default  drive  cannot  be safely changed while directed I/O
+   files are open, and the BDOS gets confused by the disk reset
+   under these conditions.
+
+        -x   eXit program. -x causes the interactive mode to be
+   turned  off,  which  means that the input line containing it
+   will  be  the  last line scanned by the program. It does not
+
+   
+   Page 8 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+   cause   immediate  program  termination,  and  if  any  more
+   operators follow it on the same line, they will be processed
+   normally. The program terminates only after the current line
+   is fully processed. Any open library is then closed, and the
+   user  number  and default drive are reset to the values they
+   had  when  the  program  was originally invoked. To preserve
+   compatability  with  earlier versions, the program will also
+   end if an empty input line (carriage return alone) is typed.
+
+                    SPECIFYING DIRECTORY SIZE
+
+        Whenever  an  old library is opened, the directory size
+   is displayed as follows:
+
+    Old library LIBRARY.LBR has 32 entries, 5 free.
+
+        This  means that 5 more members may be added before the
+   directory  becomes  full.  When  the  directory  is full, -a
+   becomes  an  invalid  operator,  and  the  library  must  be
+   reorganized to add any more members.
+        When  a library is created for the first time, the user
+   is prompted like this:
+
+    New library COMMAND.LBR. Allow how many entries?_
+
+        Any number from 1 to 65535 is valid. The actual maximum
+   is  determined by the amount of free memory available on the
+   system in use. Directory size will be rounded up to the next
+   whole  sector  necessary  to  contain  the number of entries
+   requested.  This  number  will  remain  in  effect until the
+   library is reorganized. Since the directory itself counts as
+   an  entry,  one  entry  is added to your response before the
+   size  is calculated. Therefore just enter the maximum number
+   of  member  files  you  want  the  library  to be capable of
+   holding.
+        The  maximum number of member files is also constrained
+   by  the  amount  of  available disk space. If the disk space
+   runs  out  during  an  add,  the  name  is  not added to the
+   directory.  If  a  multiple  add  is  in progress, due to an
+   ambiguous  operand, the remaining qualifying files are still
+   added  if possible. If any of them is small enough to fit in
+   the  remaining  disk space, it will be added. If any sectors
+   were  written  by  a  failed  add  attempt,  and  then never
+   utilized,  they  remain  as  unused sectors, and the library
+   should be reorganized.
+
+   
+
+                     PARAMETER DRIVEN METHOD
+
+        All of the information needed for a maintenance run may
+   be specified on the command line. The operators and operands
+   are  entered, separated by spaces, after the LU command, and
+   the operations will take place without console intervention,
+   except  in  the  case  where  the  directory  size for a new
+   library is requested. The syntax is:
+
+   
+   Page 9 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+
+    LU <opr> [<opd> [<opd> ...]] [<opr> [<opd> ...]...
+
+    where square brackets indicate optional parameters, and:
+        <opr> is any operator.
+        <opd> is any operand.
+        ...   indicates  that the preceding parameter may occur
+   multiple times.
+        Any  names  occurring  prior  to the first operator, or
+   following  an  operator  which does not expect operands, are
+   ignored.
+
+|                          CRC CHECKING
+|
+|       Whenever  a  new  member is added to a library, a value
+|  called  the CRC (Cyclic Redundancy Check) word is calculated
+|  and  stored in the member's directory entry. When the member
+|  is  extracted  from  the  library,  the  calculation is done
+|  again,  and compared with the saved value. If the two values
+|  do  not  match,  it  is  an  indication  that the member was
+|  damaged in some way while it was in the library. The extract
+|  will  still  be  performed,  but  a message warning that the
+|  extracted copy is questionable will be displayed.
+|       This feature is especially valuable for libraries which
+|  have been created on another system and transmitted by phone
+|  (possibly  several  times) before you receive them. It helps
+|  insure  that  the extracted files are faithful reproductions
+|  of   the  files  originally  inserted  before  transmission.
+|  Members  added  by LU versions prior to 2.20 do not have CRC
+|  words.  The  CRC check will be bypassed when one of these is
+|  extracted.
+|       The  CRC  word  of the directory itself is checked when
+|  the library is opened. A message warning of a CRC error will
+|  be displayed at that time. Libraries modified by LU versions
+|  prior  to 2.20 have no directory CRC word, and the CRC check
+|  will  usually  be bypassed. If a warning does occur, it will
+|  not adversely affect operation.
+|       When  a library is reorganized, CRC words will be added
+|  to  all  members,  if  not  present.  CRC errors which occur
+|  during  reorganization  will cause the program to abort. The
+|  damaged  member  must  be  deleted before the library can be
+|  reorganized.
+|       Libraries  created by this version of LU can be read by
+|  all  previous  versions. The CRC values inserted will simply
+|  be ignored by early versions of the program.
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   Page 10 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+                        ADVANCED FEATURES
+
+        Input  from  BDS C "pipes" or ordinary sequential files
+   is  also  possible. The filename is specified on the command
+   line  preceded  by a "<" character and no intervening blank.
+   Example:
+
+    LU <CONSOL.DUP
+        reads the contents of the file CONSOL.DUP and uses each
+   line  of  the  file  as  if  it had been typed at the normal
+   console   by  the  interactive  method.  In  this  case,  no
+   operators  or  operands  may  be present. Console output may
+   also  be  redirected  by  specifying  an  output file on the
+   command  line  after  the  character  ">".  This  applies to
+   parameter  driven as well as interactive (including "piped")
+   input. Examples:
+
+    LU -O 3/SPECIAL -A B:ZOT.COM >20/C:LOGFILE.OUT
+        would  add  the file zot.com from drive b, current user
+   area,  to  the  library  special.lbr,  in user area 3 on the
+   default  drive.  Console  output  would be written to a file
+   called logfile.out in user area 20 on drive c. The placement
+   of  the  output  name on the line does not matter and except
+   for  turning  on  redirected  output,  it  is ignored by all
+   operators.
+
+    LU <BATCH.IN >B:RECORD.DOC
+        would  take interactive commands from the file batch.in
+   and  write  console  output  to  a file called record.doc on
+   drive B.
+
+        Normally,  console  file  output  is also echoed on the
+   real  console,  except  when input is also redirected, as in
+   the  last example. To force visible console output when both
+   an  input  and  output  file  are  used,  the  ">" character
+   preceding  the output file name may be changed to a "+" like
+   this:
+
+   LU +RECORD.DOC <BATCH.IN
+        This  would  have  the  same  effect  as  the  previous
+   example, except that message output would also be visible on
+   the console.
+
+   
+
+   
+                             CAUTIONS
+
+       The  importance  of  keeping  backup  copies of all disk
+   files,  and  especially libraries, cannot be overemphasized.
+   By  using  library files, the user is exposed to the dreaded
+   all-the-eggs-in-one-basket  syndrome.  That is, if something
+   happens  to the library file, particularly the directory, it
+   may  be  beyond  the  capabilities  of even a CP/M wizard to
+   restore the member files. The situation is made particularly
+   sticky by the fact that the the directory must be updated in
+
+   
+   Page 11 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+   place as members are added or deleted.
+        Precautions  have been taken to minimize this risk. For
+   one  thing,  the  directory  is  read  into  memory when the
+   library  is  first  opened,  and  is only written back if it
+   differs  from  the copy on the disk. Operations which change
+   the  directory  are:  adds,  deletes, and the sort operation
+   which  is  done  before reorganization. If only extracts (or
+   LRUN executions) are done, the directory is never rewritten,
+   and  the  .LBR  file  may  be write protected if desired, by
+   using  the  CP/M  STAT  command. When a read-only library is
+|  open, all LU operators except -l, -b, and -e become invalid.
+        As  another  precaution, the entire empty directory  is
+   allocated  and  written  to disk when a new library is first
+   created. This insures that there will always be enough space
+   on disk for the number of directory entries requested at the
+   time  of  creation.  The disk space may run out while adding
+   member  files,  but there will always be enough room on disk
+   to update the directory once it is successfully created.
+        The  fact that only the memory copy of the directory is
+   modified  until the file is closed may come in very handy if
+   you  mistakenly  delete a member file and recognize it right
+   away.
+        For example, suppose you make the mistake of typing "-d
+   *.*". Briefly, your heart sinks, as the "Deleting:" messages
+   are  displayed  and  all the member names zip into oblivion.
+   Don't  panic. Only the memory copy of the directory has been
+   modified.  When  the  -D  0/A:>  prompt  returns, do not hit
+   RETURN. Instead, abort the program with Control-C. This will
+   cancel  the  program without updating the directory, and the
+   original members will still be present.
+        Here  is  another  caution.  Since the entire directory
+   must  fit in memory for a library to be successfully opened,
+   it  is  possible  that  a  huge  directory created on a your
+   system will be too large to fit in memory if read on another
+   system will less memory. This should not be a problem with a
+   library of under a hundred entries.
+        To  give  you an idea of how much elbowroom you have to
+   work with, LU displays the highest memory location used each
+|  time  it terminates. This will vary depending on the size of
+|  the  disk  I/O buffer, as well as the largest directory used
+|  during operation, and will be slightly higher if interactive
+   operation   was   used,  since  a  console  buffer  must  be
+   allocated.
+     It  does not include the stack, which grows down from high
+   memory,  and  is allowed about a thousand bytes of space for
+   subroutine parameters and temporary work areas.
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+   Page 12 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+                         THE LRUN COMMAND
+
+        The  LRUN  command was created for those of us who have
+   lots  of command files we like to keep on line all the time.
+   We  all  have some favorite little .COM files are very small
+   programs,  but  having  a  lot  of them on disk eats up file
+   space  at an alarming rate due to the fixed CP/M block size.
+   Put them all into a library called COMMAND.LBR using LU. You
+   can  then  run  any  .COM  file directly from the library by
+   saying:
+    LRUN <followed by normal command line just like always>
+       The full syntax of LRUN is:
+
+    LRUN [-<lbrfile>] <commember> [<parameters>]
+
+   Where:
+
+        <lbrfile>  is  the  library  to be searched. The square
+   brackets  around  -<lbrfile>  indicate it is optional. The -
+   character tells LRUN that what follows is a library name. It
+   is not an actual part of the name. Don't leave a space after
+   the  -. If the first parameter doesn't begin with - then the
+   default  library  COMMAND.LBR  is  used.  If a drive spec is
+   given,  such as B:, then only that drive is searched for the
+   library.  If  no  drive  spec  is given, the current area is
+   searched first, and if no library of that name is found, the
+   default  area is searched before giving up. The default area
+   is set to 0/A: in the distribution object code, but this can
+   be  changed to something more appropriate for your system by
+   changing two equates in the source program and reassembling.
+   LRUN  does  not otherwise support user numbers, and will not
+   recognize the "u/" syntax on its parameters.
+        If a name, but no type is entered, .LBR is assumed.
+
+        <commember>  is  the  name of the command to be run. No
+   drive  spec is used here. The type defaults to .COM and need
+   not be entered.
+
+        <parameters>  is  a the normal (possibly empty) list of
+   parameters  which  the  .COM  file  expects  to  find on the
+   command  line  when  it  is  run. This list is parsed to the
+   required  file  control  blocks and command line area before
+   execution  begins,  so  the  program  will not be aware that
+   anything  cute  is  going  on.  (Thanks  to  Ron  Fowler for
+   supplying the code which makes this possible.)
+
+   
+
+                          LRUN EXAMPLES
+
+    LRUN ED FOO.BAR
+        the  file  ED.COM is searched for in COMMAND.LBR on the
+   current  drive,  or the A: drive. If found, ED.COM is loaded
+   from  the  library,  and  FOO.BAR  is  passed  to  it  as  a
+   parameter.
+
+   
+
+   Page 13 of 14   83-08-16
+
+   
+
+   
+   Documentation for LU.COM and LRUN.COM
+
+   
+    LRUN -C:SPECIAL LU -O COMMAND -A A:*.COM
+        the file LU.COM is searched for in SPECIAL.LBR on the C
+   drive.  If  found,  LU.COM  is  loaded,  and the strings -O,
+   COMMAND, -A, and *.COM are passed to it as parameters.
+
+    LRUN - -ZIP
+        the file -ZIP.COM is searched for in COMMAND.LBR on the
+   current drive, or the A: drive. If found, -ZIP.COM is loaded
+   and  executed  with  a  blank parameter list. Since -ZIP.COM
+   begins  with a -, the extra - followed by a space was needed
+   to act as a place-holder for the library name. Compare with:
+
+    LRUN -ZIP
+        the  library  -ZIP.LBR  is looked for, but nothing else
+   happens, because no command was specified.
+
+    LRUN
+        with  no  parameters  at  all,  causes a screen of help
+   information to be displayed as a memory refresher.
+
+   
+
+        Please   report   any   problems   or  suggestions  for
+   enhancement  to  me  via  CompuServe  CP-MIG  or EMAIL, user
+   number  70160,120;  or  by  phone  at (201) 935-4087, voice,
+   evenings (eastern time) or weekends.
+
+                       Gary P. Novosielski
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+   Page 14 of 14   83-08-16
+
+
+

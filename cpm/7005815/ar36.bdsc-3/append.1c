@@ -1,0 +1,78 @@
+/*
+	APPEND.C
+	Written by Leor Zolman, BD Software, 9/82
+
+	Usage:
+		A>append  <new_text>  <dest_file> 
+
+	Appends the given new text onto the existing dest file,
+	using CP/M 2.2x random-record I/O to keep from having to
+	read through the entire destination file.
+
+	The new-text file is loaded into memory before appending,
+	so it has to be short enough to fit into memory.
+
+	If the dest-file doesn't exist, it is created anew.
+*/
+
+#include "bdscio.h"
+
+char *tbuffer;
+
+main(argc, argv)
+char **argv;
+{
+	int lastsec, esize, i, j;
+	int fdcurr, fdentry;
+	char *eptr;
+	unsigned tbufsize;
+
+	tbuffer = endext();
+	tbufsize = topofmem() - endext() - 500;
+
+	if (argc != 3)
+		exit(puts("Usage: append <new_text> <dest_file>\n"));
+
+
+	if ((fdcurr = open(argv[2],2)) == ERROR) {
+		printf("Creating a new current workfile: %s...\n",argv[2]);
+		fdcurr = creat(argv[2]);
+		tbuffer[0] = CPMEOF;
+		lastsec = 0;
+	 } else {
+		lastsec = rcfsiz(fdcurr) - 1;
+		seek (fdcurr, lastsec, 0);
+		if (read(fdcurr, tbuffer, 1) < 0) {
+			printf("Can't read %s\n",argv[2]);
+			exit();
+		 }
+	 }
+
+	for (i = 0; tbuffer[i] != CPMEOF; i++);	/* find EOF */
+
+	if ((fdentry = open(argv[1],0)) == ERROR) {
+		printf("Can't open %s to append\n",argv[1]);
+		fabort(fdcurr);
+		exit();
+	 }
+
+	esize = read(fdentry, tbuffer + i, (tbufsize - SECSIZ)) * SECSIZ;
+	close(fdentry);
+
+	for (eptr = tbuffer + i + esize - SECSIZ; *eptr != CPMEOF; eptr++)
+		if (eptr == tbuffer + i + esize) {
+			*eptr++ = CPMEOF;
+			break;
+		 }
+
+	seek(fdcurr, lastsec, 0);
+	if (write(fdcurr, tbuffer, (j = (eptr - tbuffer)/128 + 1)) != j) {
+		printf("Write error; disk probably full\n");
+		fabort(fdcurr);
+		exit();
+	 }
+
+	close(fdcurr);
+	printf("%s successfully updated.\n",argv[2]);
+}
+

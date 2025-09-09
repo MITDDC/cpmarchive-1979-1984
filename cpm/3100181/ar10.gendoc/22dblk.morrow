@@ -1,0 +1,27 @@
+BABYL OPTIONS:
+Version:5
+Append:1
+
+1, recent,,
+*** EOOH ***
+Date: 28 Apr 1982 (Wednesday) 1836-EDT
+From: HUNEYCUTT at Wpafb-Afwal
+To:   Info-CPM
+Re:   2.2 Patch for deblocked systems...
+Via:  Mit-Mc; 28 Apr 82 18:39-EDT
+
+Hi,
+
+  For those of you with Morrow DJ controllers and CP/M, the patch in
+AR10:CPM; is logically right but physically wrong.  The Morrow-type
+MOVCPM is much larger, and the patches occur as follows:
+
+                  23D2  nop
+                  23D3  nop
+                  23D4  lxi h,0
+                  23D7  <CR>
+
+Also, remember to SAVE a larger chunk due to the larger .COM size.
+
+Doug Huneycutt
+

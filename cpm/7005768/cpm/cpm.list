@@ -1,0 +1,135 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; This is the INFO-CPM Mailing List
+;;; Send mail to INFO-CPM-REQUEST to be added
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; The Archive File:
+;;;
+(FILE [CPM;CPM ARCHIV])
+;;;
+;;; At MIT-MC:
+;;;
+(AGM MC)
+(AUTHOR MC)
+(BEAN MC)
+(BLUE MC)
+(BYTE MC)
+(CLJ MC)
+(CONN MC)
+(DEVON MC)
+(EGK MC)
+(ELIOT MC)
+(ELMO MC)
+(ES MC)
+(FJW MC)
+(HAA MC)
+(HARV MC)
+(JLM MC)
+(JWP MC)
+(LAUREN MC)
+(LEOR MC)
+(MADLER MC)
+(MAZE MC)
+(MCTESQ MC)
+(MMB MC)
+(PHOTOG MC)
+(PLK MC)
+(POURNE MC)
+(RGF MC)
+(RJM MC)
+(SK MC)
+(STOUTE MC)
+(SLIBES MC)
+(W8SDZ MC)
+(WLG MC)
+;;;
+;;; At MIT-ML:
+;;;
+(DAN ML)
+(LEO ML)
+(Pinto ML)
+;;;
+;;; At MIT-AI:
+;;;
+(BADOB AI)
+(BIGMAC AI)
+(BLOTTO AI)
+(BYTES AI)
+(CSTACY AI)
+(DAG AI)
+(DERWAY AI)
+(EB AI)
+(FONER AI)
+(GEOFFM AI)
+(GYRO AI)
+(JERRYB AI)
+(LIN AI)
+(MEADER AI)
+(MITCHW AI)
+(MITTON AI)
+(ONTEL AI)
+(SAM AI)
+(SPAM AI)
+(ZEMON AI)
+;;;
+;;; At MIT-MULTICS:
+;;;
+(HGBaker.Symbolics MULTICS)
+(SALawrence.SoftArts MULTICS)
+(Schauble.Multics MULTICS)
+;;;
+;;; Other:
+;;;
+(david UTEXAS)
+(mccallum UTEXAS)
+(MKNOX UTEXAS)
+(RICK UTEXAS)
+;;;
+(BREITF WHARTON)
+(PLATTS WHARTON)
+;;;
+(BHUBER USC-ECL)
+(NMAX USC-ECL)
+;
+(CLEMENTS BBNA)
+(EHAHN BBNE)
+(JSWAIN BBNA)
+(MBARNES BBNA)
+(TAPPAN BBNG)
+(TICSL BBNA)
+;
+(csvax.info-cpm BERKELEY)
+(csvax.mjs BERKELEY)
+;(ucbvax!ucscvax!dan BERKELEY) ; not deliverable lately
+;
+(Aaron.Wohl CMUA)
+(David.Nichols CMUA)
+(KEVIN.WEILER CMUD)
+(BLACKWELL CMU-20C)
+(James.Gosling CMUA)
+;
+;(BILLW SRI-KL)
+(CSL.SUN.GMO SU-SCORE)
+(DAY RAND-UNIX)
+(DWS LLL-MFE)
+(EBM XX)
+(fylstra.tsca SRI-UNIX)
+(GRAY UCLA-SECURITY)
+(HATHAWAY AMES-67)
+(JGilbert DARCOM-HQ)
+(JP SU-AI)
+(KENNER NYU)
+(Llayten DARCOM-HQ)
+(LUCAS USC-ISIB)
+(McLure SRI-KL)
+(MICRO DARCOM-KA)
+(MMD SU-AI)
+(MOORE USC-ISIB)
+(SECO OFFICE-1)
+(WALT RAND-UNIX)
+(WHITE SUMEX-AIM)
+;;;
+;;; End of List
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

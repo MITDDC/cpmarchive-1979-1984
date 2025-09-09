@@ -1,0 +1,1556 @@
+Date: 25 January 1982 03:33-EST
+From: Jerry E. Pournelle <POURNE at MIT-MC>
+Subject: Re: P & T CPM
+To: William.Sholar at CMU-10A
+cc: INFO-CPM at MIT-MC, Schauble.Multics at MIT-MULTICS
+
+DU is all right, but SPAT will let you see all the tracks on a
+disk; get the bios out and disassemble it, and you'll be better
+off.
+
+To get SPAT, and a good disassembler, you can root through the
+CPMUG disks, or send about $30 a disk to Workman and Associates
+for their Utilities One and Two (One has copy routines, fast,
+speed, spat, klean and some other stuff; two has disassemblers
+and lots of notes on how to use them).
+	But for heaven's sake one should not be stuck with a
+bios whose source you don't have....
+
+Date: 25 January 1982 03:28-EST
+From: Jerry E. Pournelle <POURNE at MIT-MC>
+Subject: Re: P & T CPM
+To: William.Sholar at CMU-10A
+cc: INFO-CPM at MIT-MC, Schauble.Multics at MIT-MULTICS
+
+	I have been protected by my engineers from the true
+horrors I am now reading about.  "Proprietary" BIOS!  No SYSGEN!
+Ye gods and great hairy apes, this is horrifyingly
+unprofessional.  We've always had the complete source to our
+BIOS, so that we can add subtract, change ports, patchin things
+in, change stop bit seting, and otherwise; after which you
+simply make a new SYSGEN, which of course always works (and wil
+get the sys off a disk, or has it in itself as one desires).
+The notion that a supposedly professional company will sell you
+a system that lets you sysgen disks ONLY with the ORIGINAL DISK
+makes me want to reach for my disassembler and publish their
+idiotic system to the world.  They deserve no customers and
+damned little consideration from those unfortunate enough to
+have bought from them.
+	Fortunatley Bill Godbout is a bit more professional;
+while my original BIOS was written by the local Brotherhood of
+St. Dismas which puts such things out as favors to the abbotry...
+
+Date: 25 January 1982 00:03-EST
+From: Marc J. Widennley <MJW at MIT-MC>
+Subject: RELCPM
+To: INFO-CPM at MIT-MC
+
+Could someone tell me who left up ar9:cpm;relcpm *   ??
+			Thanx,
+			  Marc
+
+Date:      24 Jan 82 22:42:13-EST (Sun)
+From:      Rconn at BRL
+To:        info-cpm at Mit-Mc
+Subject:   CALENDAR
+
+Hi, Everyone,
+
+        I've  been  experimenting  with  the   5.5   Release   of
+PASCAL/MT+,  and  I ended up writing a Calendar generator.  It is
+stored under CPM as CAL PAS and CAL COM, and feel free to copy it
+as you desire.  CALENDAR.PAS exercises a number of the PASCAL/MT+
+5.5 extensions and illustrates some capabilities of the language.
+
+        CALENDAR is executed by the command line
+                CALENDAR [month] year [/o]
+where
+        month is optional and is one of JAN to DEC (3 sig chars)
+        year is required (help message is printed if omitted)
+        /o is one of /P to send to LST: device or /D to send to disk
+
+        Enjoy!
+
+                                        Rick
+
+
+Date: 24 January 1982 22:22-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Appending to CP/M Files
+To: INFO-CPM at MIT-MC
+
+There is an alternate solution: In the source for MODEM 216ASM, there
+is a plainly marked and commented section of code which is used to
+determine the total number of sectors (records) occupied by a
+*sequential* file across all of its extents.  It uses the Search First
+and subsequent Search Next to find all of the extents.
+
+You can use a trivial modification of that code to then Open the file
+using the information found in that last extent and open directly to
+the last record of the file.
+
+Read in that record, and if it is an ASCII file, search for the first
+1AH (^Z).  Start filling in text starting at the location of the ^Z.
+Decrement the record count in the FCB and write that record out.
+Subsequent writes will automatically take care up updating things as
+if you were writing a fresh file.  Of course, be sure to Close the
+file, or everything you do to it will be for naught...
+
+--Frank
+
+Date: 24 Jan 1982 1817-PST
+Sender: BILLW at SRI-KL
+Subject: Disk drives and controllers...
+From: William "Chops" Westfield <BillW @ SRI-KL>
+To: info-cpm at MC
+Message-ID: <[SRI-KL]24-Jan-82 18:17:09.BILLW>
+
+Well, according to my bank account, the time has come to buy
+disks for my computer,  and I want to know which ones I should
+get or avoid.
+
+DMA is a must -- I plan to hack up some kind of look-ahead
+Cache to improve apparent speed, and all my memory is/will be
+static anyway.
+
+The controller should conform to IEEE 696 S100 style specs.
+All the boards in my system so far are from Godbout, so I
+am of course very interested in their DISK-1 controller,
+but it seems quite expensive, especially since I recall that
+it inst available in "Un-Kit" form.  Anybody have and love/hate
+this board ?
+
+I am primarilly interested in single sided-double density 8 inch
+floppies, so the controller has to handle these.  Which of the
+drive that I see widely advertized (Qume, Shugart 801R, Siemens, etc)
+are to be avoided? Which are fastest? Which will require external
+power supplies?
+
+Finally, there should be a version of CPM available that will run
+WELL with the controler/disk combination, as I dont consider myself
+enough of a CPM expert to go around writing or fixing a BIOS (yet).
+
+Thanks
+Bill W
+
+Date:  24 January 1982 16:55 est
+From:  Schauble.Multics at MIT-Multics
+Subject:  P&T CP/M
+To:  info-cpm at MIT-MC
+
+It seems that the only major problem is the track zero lockout in the
+BIOS.  It shouldn't be too terribly hard to find that and patch it out
+of existance.  Has anyone done this?
+
+Also, since that version seems to be the one to get, does anyone know
+any good reason why I shouldn't get it.
+
+And, for comparison, anyone have any words about the TRS-80 version of
+OASIS??
+
+Date: 24 Jan 1982 01:49:46-PST
+From: decvax!duke!ucf-cs!goldfarb at Berkeley
+To: duke!decvax!ucbvax!INFO-CPM@MIT-ML
+
+This is a test.
+
+
+
+
+
+Date: 24 Jan 1982 0841-PST
+From: STERNLIGHT <STERNLIGHT at USC-ECL>
+Subject: P&T CP/M
+To: William.Sholar at CMU-10A
+cc: INFO-CPM at MIT-MC
+
+I have been using P&T CP/M for over a year and it works just
+fine with the TRS-80 ModII.  I have recently used DUU to 
+overlay the CCP on Track I with the new ZCPR, and that
+also works just fine.  I threw out money for Lifeboat
+CP/M because of the terminal emulation, which I hoped
+to use with EMACS, which does not know about the P&T
+screen driver codes, but only used it once.  Lifeboat
+won't tell you about terminal ports or the code
+in their setup program, which is "proprietary".
+
+I intend to order both an upgrade kit and a new copy
+of the TRS-16.  It looks like Tandy may have done it
+right again--a machine that will run all my existing
+software, and 68000 as well.  I hope so.  No word from
+Pickles and Trout on their plans to support it, although
+they did promise a terminal emulator in the current CP/M for
+some time this quarter.
+-------
+
+Date: 23 Jan 1982 (Saturday) 1819-EDT
+From: PLATTS at WHARTON-10 (Steve Platt)
+Subject: Appending to CP/M files
+To:   CAL at MIT-AI
+cc:   info-cpm at MIT-AI
+
+  Your initial scheme is in the right direction, but with a few
+problems:
+   1)  Multiple extents of a file... the OPEN just open's the 1'st
+extent; if the file is > 16K long, the seek to the last record may
+stick you at the beginning of the second extent.  To circumvent
+this (rough draft), check the length of the current extent; if it is
+80h, then chances are, the file has another extent, so set the next
+record to 81h, and do a READ... this will automatically put you in
+the second extent.  (EOF returned means the file was *exactly* 16k
+long, and you will have to write the 81h'st record yourself).  Repeat
+the above until you've found the *real* last record.  Then and only
+then are you at the end-of-file...
+   2)  The above assumes the file has no holes in it.  Woe is s/he who
+tries to find the end of a hole-filled file...
+   3)  Also, it assumes you are dealing with a binary file.  If you
+want to append to an ASCII file, you have to find the last record,
+and search for a 1ah (^Z), and start appending text *at* this point
+(overwriting the EOF marker, the ^Z).  So you will have to rewrite the
+last record, and create new ones after that.  Don't forget to put a new
+^Z at the end!
+ 
+  I hope this isn't TOO confusing, it is in the right direction...
+     -Steve
+
+
+
+Date: 23 January 1982 0850-EST (Saturday)
+From: Bill Sholar <William.Sholar at CMU-10A> 
+To: Schauble.Multics at MIT-Multics
+Subject:  Re: P & T CPM
+CC: info-cpm at MIT-MC
+Sender: William.Sholar at CMU-10A
+In-Reply-To:  Schauble.Multics@MIT-Multics's message of 23 Jan 82 03:00-EST
+Message-Id: <23Jan82 085028 WS70@CMU-10A>
+
+For those who have asked, the following is one user's opinions about the
+P&T CP/M versus Lifeboat's version for the TRS-80 Model II:
+
+P&T:  The system itself and the accompanying utilities are clearly better than
+those provided by Lifeboat.  (If nothing else, all of the utilities distributed
+with P&T WORK, and reasonably well.  Afraid I can't say the same about Life-
+boat's CP/M.)  The documentation is more thorough, and takes pains to explain
+how to use the more useful CP/M utilities without requiring one to burrow into
+the Digital Research manuals too often.  They also distribute patches for Magic
+Wand and Word Star which will make those editors understand your machine.
+
+Lifeboat:  The comparisons above say much about my feelings toward the bucks
+spent on Lifeboat's CP/M.  So what keeps it in the running?  P&T CP/M is non-
+modifiable.  There's no SYSGEN on P&T, so you can only use their idea of what
+a system should be.  Further, since their most recent release, P&T system disks
+can only be GENed by the distribution disk -- the program crashes if run by 
+a copy of the original.  (Apparently a bit is tested in the system track which
+is inaccessible due to a trap in the bios.)  So not only can one not modify
+the system image using sysgen, one cannot even modify the original image very
+well, except through the use of a DU - like utility.  Even then, only the stuff
+on track 1, not track 0, can be accessed.
+Lifeboat, on the other hand, distributes a more "standard" CP/M, with sysgen and
+so forth.  For an extra $75 one can buy a 'user area' source code with the 
+screen drivers, etc.  I bought, and changed the ADM-3A terminal characteristics
+(WHY, for pete's sake!, an ADM-3A?!) to something closer to a H-19.  Catch -- 
+they made a few typos in their source code, so apparently they never tried it
+themselves.  But except for ORGs, the typos will leap out at you on assembly,
+so they can be caught.  
+
+The verdict?  Beats me.  I use P&T most of the time, simply because their system
+understands their clock/bell board which provides real time plus a beep on ^G.
+Also their printer driver works.  Also because my occasional customers (few and
+far between) are steered toward P&T, if only because I don't want to subject tem
+to the random bugs in Lifeboat's version.
+
+Date:  23 January 1982 03:00 est
+From:  Schauble.Multics at MIT-Multics
+Subject:  Radio Shack announces new machine
+To:  WorkS at USC-ECLB, info-cpm at MIT-AI
+
+Since I haven't yet seen this on the net...
+
+On Tuesday Radio Shack announced a new top-of-the-line computer. This
+is an upgrade to their Model II.
+
+The computer contains both a Motorola 68000 and a Z-80. It will run
+all existing Model II software written for the Z-80 without change.
+The announcement said nothing about software for the 68000.
+
+The basic configuration is 24X80 screen, keyboard, Z-80, 68000, one
+DSDD 8" floppy offering 1.2 Mbyte storage, 128Kb main memory, two
+serial interfaces and one Centronics style parallel. This sells for
+$4900.
+
+An extra floppy is $700. Extra memory is $450 for another 128K, then
+~$1000 for another 256, making a maximum of 512k. This full-blown
+machine will sell for ~$7100.
+
+A hard disk is available for ~$5000 for 8 Mb.
+
+Add a graphic board to this and I think you have a very nice personal
+computer.
+			Paul
+
+
+Date: 22 January 1982 18:57-EST
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: BYE76B.ASM
+To: INFO-CPM at MIT-MC
+
+BYE, the remote-console program for CP/M, is now revision 7.6B and
+is available from MC as AR7:CPM;BYE 76BASM.  This includes the
+excellent update by Paul Kelley (PLK@MC) which for the first time
+makes it possible to use this program with an external modem on
+a serial port.  It also includes Paul Traina's OXGATE conditionals.
+
+Date: 22 Jan 1982 1116-PST
+From: MOORE at USC-ISIB
+Subject: N*/Osborne interface help wanted
+To:   info-cpm at MC
+cc:   moore
+
+Help!
+
+I have a Northstar (Quad) and an Osborne (Single, soone to be double).  In 
+their joint and individual wisdom, these two systems are hopelessly
+incompatible.  I have a high-priority (read: desperate) need to be able to
+create files on the O-1 then schlep the disk over to the N*, to be read &
+further massaged.  How can this be done?  Is there any possibility that  a
+"reconfiguration" program -- line Data Disk's DSTAT, can be written to
+permit the N* to read these disks, or is the hard/soft sector difference
+insurmountable?  Alternatively, can I augment the N* with a drive or two which
+are compatible w/ O-1, and look to the N* like c: & d:?  If the latter is
+feasible, where do I start & what sort of bucks am I in for?
+
+I know I can MODEM the files back & forth, but this is not a satisfactory
+solution for my application.
+
+Any bright ideas (for example, all of you who have already solved this problem?)
+
+Thanks a bunch,
+
+Jim
+(MOORE @ ISIB)
+
+p.s. I still have been unable to find the port & bit #'s to bring up MODEM on
+the O-1 -- anyone have them?
+-------
+
+Date: 22 January 1982 0957-EST (Friday)
+From: Ed DeHart at CMU-10B
+To: William Sholar at CMU-10a
+Subject:  Disk Utility for model II
+CC: Info-CPM at MIT-MC
+Message-Id: <22Jan82 095726 ED80@CMU-10B>
+
+Most of the disk utilities will not work with Pickles and Trout's CP/M for the
+model II.  P&T have a trap in the bios that will not let you access the first
+track.  It will return a BDOS error.  Their reason: this will keep people from
+giving away copies of their CP/M since most of the system lives on the 1st
+track.
+
+Date: 20 Jan 1982 06:38:41-PST
+From: decvax!duke!unc!bch at Berkeley
+To: duke!decvax!ucbvax!C70:info-cpm@Berkeley
+Subject: Re:  MP/M help <long message>
+
+My remembrances of the Godbout board are that the baud rates on the serial
+ports are not software switchable...a definite bummer for certain 
+configurations.
+
+
+
+
+
+Date: 20 Jan 1982 03:14:12-PST
+From: menlo70!sytek!zehntel!ed at Berkeley
+
+The Godbout Interfacer I is a nice board. I have it running and
+its been working great. The documentation is even correct. The
+interrupts also work very nicely. Got those running smoothly
+in about 1 hour (after I made some stupid assembly language
+programming errors). It gets my vote for a serial board.
+
+Ed Hirgelt
+
+
+
+
+
+Date: 21 January 1982 1401-EST (Thursday)
+From: Bill Sholar <William.Sholar at CMU-10A> 
+To: info-cpm at MIT-MC
+Subject:  Disk Utility for TRS-II
+Sender: William.Sholar at CMU-10A
+Message-Id: <21Jan82 140152 WS70@CMU-10A>
+
+I'd appreciate hearing from anyone who has pointers to a public domain disk
+utility (such as DU) that will work on Pickles & Trout CP/M for the TRS-80
+Model II.  
+Alternately, any suggestions for installing ZCPR on the P&T system would
+be useful.
+	Thanks,
+		Bill
+
+Date: 21 Jan 1982 1133-EST
+From: G.PALEVICH at MIT-EECS
+Subject: extension to MODEM protocol
+To: info-cpm at MIT-MC
+
+I have implemented the MODEM protocol
+for a non-CP/M Operating system, and
+I noticed that MODEM has no provisions
+for binary (.COM) files that don't end
+on 128 byte boundries.  I realize this is
+a reflection of the CP/M OS, but I wanted to
+be able to transfer my own OS's binary
+files.  My solution was fairly simple:
+the last byte of the last block of the
+recieved file has its high bit set,
+just to ensure it's not a text file, and
+the low 7-bits (0-127) tell how many
+bytes in the last block are actually
+part of the original file.
+
+For text files, I use CR/LF for
+end-of-line, and pad the end with
+^Zs, just like CP/M.  Neat, huh?
+-------
+
+Date: 18 Jan 1982 13:46:09-PST
+From: decvax!ittvax!sii!drd at Berkeley
+
+I have been hearing rumors about MARC from lots of places. Could
+you give me some real data, and a contact? Thanks -David Dick
+
+
+
+
+
+CAL@MIT-AI 01/18/82 17:03:52 Re: Appending to CPM files
+To: INFO-CPM at MIT-AI
+   Before figuring out (the hard way) how to it, I was
+wondering whether someone could give me a little bit of
+advice on how to append to the end of an already existing
+file. 
+
+  Would the following work?
+   1) Open the file.
+   2) Do a seek for the last record in the file and read it.
+       or
+   2) Do a seek for the record after the last one in the file.
+   3) Write out a new record.  Any records written
+      now will be appended to the end of the file.
+
+			Thanx,
+			Cliff
+
+Date: 20 Jan 1982 2347-PST
+Sender: BILLW at SRI-CSL
+Subject: anouncing the Forth mailing list....
+From: William "Chops" Westfield <BillW@SRI-CSL>
+To: info-cpm at MC
+Message-ID: <[SRI-CSL]20-Jan-82 23:47:06.BILLW>
+
+There is now a Forth mailing list for discussion of the Forth
+lkanguage and its implementation(s).  If you wish to be added
+to the list, send a message to FORTH-REQUEST@SRI-CSL.
+
+the mailing list itself is called Forth@SRI-CSL.
+
+Enjoy
+BillW
+
+PNH@MIT-AI 01/21/82 00:06:58
+To: INFO-CPM at MIT-AI
+This note is probably a reiteration but I have not noticed the
+BDS C Users Group mentioned on info-cpm .. I have not heard from
+them for awhile but I am assuming that they are still out there
+in the badlands of Kansas .. the group has a very respectable
+library of utilities, games, extensions to the floating point
+package, and an enhanced version of Small-C (source included)
+which is supported by an assembler and linker.  The last
+address which I have (per Volume I, Number 2 of the groups
+newsletter - dated September 15, 1981) is:
+
+		BDS C Users Group
+		Box 287
+		Yates Center, Kansas 66783
+
+Given the intrinsic usefulness and value of BDS C as a tool this
+group deserves good support !!
+
+					.. Phil
+
+
+Date: 20 January 1982 2350-EST (Wednesday)
+From: Wayne.Book at CMU-10A
+To: sdcsvax!robert at NPRDC
+Subject:  Re: modem on the IBM P.C.
+CC: info-cpm at mit-mc
+In-Reply-To:  sdcsvax!robert@NPRDC's message of 20 Jan 82 23:46-EST
+Message-Id: <20Jan82 235033 WB80@CMU-10A>
+
+
+I have a lot of interest in the Pascal modem program.  I am not happy with 
+what I can do in BASIC.
+
+From: sdcsvax!robert at NPRDC
+To: info-cpm@mit-mc
+Subject: modem on the IBM P.C.
+
+
+This weekend I'm planning on writing a version of modem in IBM pascal
+that will run on their new Personal Computer.  If there is an interest
+I'll put copies of the source on MC
+
+					sdcsvax!robert@NPRDC
+
+
+KAWALA@MIT-AI 01/18/82 02:15:43
+To: PST at MIT-AI, VANDAL at MIT-AI, INFO-CPM at MIT-AI
+Cc: KAWALA@MIT-AI
+
+	Paul: I want to assure you that neither  VANDAL nor myself
+have any knowledge of the letter allegedly sent by you. VANDAL and
+I discussed that letter and concluded that it was the work of a
+jerk, but we assumed that the jerk was you in light of your former
+mail to INFO-CPM. We feel that this is not of interest to the CP/M
+user community on these machines. If you wish to continue discussion
+on this subject, please do it through LARKSPUR RCP/M at (415)461-7726.
+
+
+PST@MIT-AI (Sent by ___065@MIT-AI) 01/17/82 20:24:46
+To: VANDAL at MIT-AI, KAWALA at MIT-AI
+CC: INFO-CPM at MIT-AI
+That was a nice effort that someone put into that "Anonymous"
+letter,  unfortunately,  that person mistaked the obvious,
+I am not so dumb as to extol my own programs in a letter.
+My bet is that you know who wrote it,  and I just want to
+thank you for clearing my name,  because enough of the CP/M
+community does know how I act.
+			Paul
+
+
+
+Date: 17 January 1982 16:15-EST
+From: Paul L. Kelley <PLK at MIT-MC>
+Subject: BYE renamed on MC
+To: INFO-CPM at MIT-MC
+
+
+	To avoid confusion with a prior version having the
+same number,
+
+	AR7:CPM;BYE75 ASM
+
+has been renamed to
+
+	AR7:CPM;BYE 76ASM
+
+The version numbers have been changed inside the file.
+
+	Also, it was pointed out to me that I should have put
+the version number in the second file name; this perserves
+consistency with those files which have longer descriptive
+first names.
+
+Date:      17 Jan 82 15:24:13-EST (Sun)
+From:      John Gilbert <jgilbert@UDel>
+To:        INFO-CPM at MIT-MC at Darcom-HQ
+Subject:   LPRINT Routine for C
+Via:  Darcom-HQ; 17 Jan 82 15:28-EST
+
+	I am debugging a B-tree routine and sending a lot of diagnostics to the
+console. Occasionally, I would like to be able to activate the line printer and
+send the same diagnostics to it (from within the program).
+
+	Does anyone know of a line printer function that I can include in a 
+BDSC program?
+
+	John
+
+
+Date: 17 Jan 1982 1139-EST
+From: G.PALEVICH at MIT-EECS
+Subject: Re: MP/M help <long message>
+To: BADOB at MIT-AI
+cc: info-cpm at MIT-MC
+In-Reply-To: Your message of 16-Jan-82 2323-EST
+
+	When we put together a MP/M
+system, we used six IMS 32K RAM cards,
+two Godbout Interfacer Boards, a Ithica
+Audio Z80 CPU, and some random disk
+controller.  We had three users
+running wordstar at once and two
+segments for other random jobs.  The
+whole system was quite nice untill
+the 30 Apm power supply burned out.
+
+	We even had CP/Net running
+to an Apple II equiped with a Softcard.
+
+	Anyway, I woudn't suggest the
+Goubbout Interfacer board because
+too many things (like baud rate) are
+hard wired.  We also couldn't get it
+to generate interrupts on character
+in or out.
+
+	Oh yes, we used the Mountain
+Hardware 100,000 day clock board, with
+battery back up, and were able to
+maintain a time-of-day over power
+shut downs and week ends.
+
+	By the way, CP/NET really
+doesn't work at speeds below 9600
+baud -- we had the Apple II tied in
+as a remote consol at 2400 baud and
+were getting an effective 5 baud!
+
+		Jack Palevich
+-------
+
+Date: 17 January 1982 0327-PST (Sunday)
+From: lauren at UCLA-Security (Lauren Weinstein)
+Subject: interrupts and the PIC-8
+To: INFO-CPM at AI
+
+For several years, I've had an IMSAI PIC-8 interrupt/realtime clock
+board sitting around collecting dust.  Up until now I've never really
+had any use for it -- but now that I have MARC setup for dialup access
+(for demos/mail/etc.) it seemed reasonable to get a realtime clock
+going to take advantage of the facilities available.
+
+All attempts at using (or debugging) the PIC-8 have failed.  Any attempt
+at turning on the ol' interrupts results in el bombo.  Can anybody
+suggest any strangenesses regarding the PIC-8 that I might have missed?
+Thanks much.
+
+--Lauren--
+
+P.S.  I'm running an old Ithaca Audio Z80 CPU.
+
+--LW--
+
+
+Date: 17 January 1982 02:48-EST
+From: Ronald G. Fowler <RGF at MIT-MC>
+Subject: MP/M help
+To: badob at MIT-AI
+cc: INFO-CPM at MIT-MC
+
+  First, let me start off with a warning about the Godbout SS1; at
+work I recently had occasion to bring up TURBODOS (more about that
+in a minute), a multi-tasking O/S which requires interrupts.  The
+SS1 looked like the answer to all my problems: interrupts, I/O,
+real-time clock, etc.  What Godbout doesn't tell you is that the
+thing uses the infamous 8259 interrupt controller.  This controller
+requires an INTA signal on each of the three memory cycles as it
+generates the CALL instruction (the 8259 generates a call instr.
+rather than a RST).  Now the 8085 does this as a matter of course,
+the 8080 does this only with the help of the 8228 controller (a
+device I've rarely seen used on S-100 CPU boards) and the Z80 does
+it not at all.  Godbout, realizing this, built in a fantastic kludge
+of hardware to circumvent the problem.  The gotcha is this: your
+memory (all 64K, EPROM, any memory-mapped disk controllers, etc)
+MUST respond to the phantom signal!  
+  The memory in my system at home does this (except for one board,
+which I removed for testing), yet I could never get it to work...whenever
+an interrupt came along, bye-bye went the system.  I did MANY tests
+to trap the interrupts, but it apparently get a totally random CALL
+instruction.  At work, we had no such capability in the memory, so
+we ended up using Z80 interrupt mode 1, which ignores the data bus
+instruction, and does a fixed call to location 38H.  The result is
+that the entire card is dedicated to generating a 60 hz interrupt 
+signal, and can generate no other interrupts.  (we do take advantage
+of the real-time clock; it works quite well).
+  A friend of mine in Wisconsin has PHANTOM-deselectable memory, yet
+could never get the SS1 interrupt controller working either, and he
+is much more hardware-oriented than I.
+  I've always used Godbout memory and have always had excellant support
+from Godbout (7-day turnaround on kits that didn't work, for no charge,
+when the failure of the board was in MY construction).  But the
+problem with the board is one of design (although I hear it works very
+well with a Godbout CPU).
+  Re Turbodos: this is a (mostly) CP/M compatible O/S that does a
+very capable job in networking applications.  It allows only a single
+console per CPU (this will be changed in a future rev), but allows all
+kinds of background processing, network servers, etc.  The spooler/de-
+spooler is miles beyond what is available with MP/M (I or II) ... 
+printers can be dynamically allocated and de-allocated.  Many
+communications channells are supported..the command line processor
+allows a "default" disk/user area a la ZCPR, multiple commands per
+line, and a very flexible SUBMIT-like facility.  It also supports
+record/file locking (from ANY language that can access files; this is
+unlike MP/M II, which will require new versions of languages to open
+files in non-default (locked) mode), archiving (MPM II has this
+also, MPM I does not).  There are more features than I can describe
+here.  The best bet is to buy a set of manuals for $35 and see for your-
+self.  Incidently, the system generation program is really a a slick
+linkage editor; the O/S is distributed as a set of relocatable modules.
+   The version we bought is called MuDos (TURBODOS is the generic) and
+you can get more information from them (they advertise in BYTE).
+				--Ron Fowler
+
+Date: 16 January 1982 22:53-EST
+From: Barry A. Dobyns <BADOB at MIT-AI>
+Subject: CP/M emulator for CP/M-86 pointers needed
+To: INFO-CPM at MIT-AI
+cc: BADOB at MIT-AI
+
+	Some time ago there was a note about an CP/M (8080) emulator
+for CP/M-86 by a company in washington state. @g(a)something or other.
+Does anyone remember, and can anyone give me the name and address of these
+people please? A Review of the item would be very much  appreciated.
+-thanks in advance
+	badob
+
+
+
+
+Date: 16 January 1982 22:49-EST
+From: Barry A. Dobyns <BADOB at MIT-AI>
+Subject: MP/M help <long message>
+To: INFO-CPM at MIT-AI
+cc: BADOB at MIT-AI
+
+
+	I am mustering the proper hardware to go to MP/M (and CP/NET)
+and would like reccommendations on some items that i will need to be getting...
+
+	1. I need interrupts generated someplace. I am leanung to a Godbout
+	   System Support I board. At the prices i can get an UnKit (tm)
+	   it's virtually free. Are there better for less? Are there 
+	   worse for more (to be avoided)?
+
+	2. Additional serial ports. Godbout Interfacer I loks good and 
+	   cheap. I have a morrow Switchboard and don't like it...
+	   I hear the SSM I/O 4 is good. The Cromemco TuArt is too
+	   expensive. I will need several serial cards to go into a number
+	   of systems, so a $40 difference here will get multiplied.
+
+	3. Cheap Memory. I have been using  Central Data 64K boards for
+	   some time now, and have hacks that let me bank switch them,
+	   sort of. Is there more for less? is there less for more? Again,
+	   since i will be getting a number of them, small price differentials
+	   will get multiplied quickly. 
+
+	4. I remember something about somebody who had a better MP/M or 
+	   CP/NET. Any pointers? Reviews?
+
+Thanks for your aid in this endeavor...
+	-badob
+
+
+Date: 16 January 1982 21:13-EST
+From: Barry A. Dobyns <BADOB at MIT-AI>
+To: jgilbert at UDEL
+cc: INFO-CPM at MIT-AI, BADOB at MIT-AI
+
+	The nicest implementation i have ever seen of the i/o byte
+completely avioded the problems with speed that FJW mentioned:
+	1. The I/O byte was only checked at cold or warm boot.
+	2. When it was checked the jump table at the head of the bios was 
+	   altered to contain jumps to the appropriate routines.
+	3. While non-standard (so to speak) this was consistent with 
+	   usage that involved STAT & similar programs.
+	4. This method fails when used with a program that likes
+	   to dynamically change the i/o byte; but i have never seen one
+	   that did other than PIP.
+
+	-toodles!
+	-badob
+
+
+
+Date:      16 Jan 82 20:28:10-EST (Sat)
+From:      Rick Conn <rconn@brl>
+To:        info-cpm at Mit-Mc
+Subject:   I/O Byte
+
+        The I/O Byte offers some nice additional capabilities for
+the  CP/M  system.  For instance, the following is an implementa-
+tion I frequently use:
+
+LDev    Binit 00        Binit 01        Binit 10        Binit 11
+----    --------        --------        --------        --------
+
+CON:    TTY 1           CRT             CRT and         CRT Input,
+        (key/print)                     Modem in        CRT and Modem
+                                        Parallel        Output
+
+RDR:    TTY 2           Modem           CRT and         CRT and
+                                        Modem with      Modem Input Only
+                                        CRT Output
+
+PUN:    TTY 2           Modem           CRT and Modem   CRT and Modem
+
+LST:    TTY 1           CRT             TTY 2           CRT and Modem
+
+        Note that CON: is an I/O device, RDR: is Input Only, PUN:
+is Output Only, and LST: is Output Only.
+
+        With this configuration, if the Binit 10 CON:  device  is
+chosen,  the CRT and Modem are tied together as one.  Whatever is
+output to the CON: device is output to both at the same time, and
+either  may input as the CON: device.  This allows two users, one
+of them remote, to see exactly the same display and interact with
+each other.  Note that Binit 11 of CON: allows input from the CRT
+only but output to BOTH the CRT and Modem  so  the  remove  modem
+user can see what is going on but not interfere.
+
+        Also note that Binit 10 of RDR: allows the CRT to display
+whatever is coming in from either the CRT or the Modem.
+
+        Interesting capability, isn't it?
+
+                                        Rick
+
+
+Date:      16 Jan 82 20:05:50-EST (Sat)
+From:      Rick Conn <rconn@brl>
+To:        info-cpm at Mit-Mc
+Subject:   MAC and MACROs
+
+        ASM.COM is the CP/M "standard" assembler, altho ASM under
+CP/M  1.4  and  ASM under CP/M 2.2 are not exactly the same.  ASM
+2.2 supports upper-case and lower-case in the DB pseudo-op, while
+ASM 1.4 converts all lower-case to upper.
+
+        MAC is upward-compatable with both ASMs.  Its outstanding
+extension  is its ability to support MACROs as well.  Both upper-
+case and lower-case are permitted in the DBs.
+
+        The concept of the MACRO, for those  who  are  unfamiliar
+with  it, involves the ability to specify code segments which can
+be referred to by a MACRO name.  Hence, if you have a common seg-
+ment  of code which you use often in one program, you can declare
+this to be a MACRO and reference it, no matter how many lines  it
+contains  (to my knowledge), by a single name.  For instance, the
+following is a simple illustration:
+
+        ;; Macro to save all registers
+        SAVER   MACRO
+                PUSH    PSW
+                PUSH    B
+                PUSH    D
+                PUSH    H
+                ENDM
+
+        ;; Macro to restore all regs
+        GETR    MACRO
+                POP     H       ; NOTE REVERSE ORDER
+                POP     D
+                POP     B
+                POP     PSW
+                ENDM
+
+                ...
+
+        ; Example of usage
+        <Do something 1>
+                SAVER
+        <Do something 2>
+                GETR
+        <Do something 3>
+                SAVER
+        <Do something 4>
+                GETR
+
+        Every time SAVER appears, the four PUSHs are  substituted
+for  it;  every time GETR appears, the four POPs are substituted.
+MAC also allows parameter passings, duplication loops, and condi-
+tional  processing.   This  is  really a powerful concept, and it
+opens up whole new worlds of possiblities.
+
+        A patch is available under CPM on MIT-MC which takes  the
+8080  assembly  language  op  codes  out of MAC but leaves in the
+operand evaluation.  By doing this,  you  can  create  MACRO  Li-
+braries  which define whole new languages not necessarily related
+to Intel 8080 Assembly Language at all.  Cross Assemblers for the
+6800,  6502,  Z80, and almost processor you desire can readily be
+written as libraries.  Also, customized languages for things such
+as  graphics,  process control, and many such applications can be
+readily developed.  For example, a distinct possibility could be:
+
+        ;  Graphics Language Example
+                AT      10,25   ; LOCATION OF CENTER OF CIRCLE
+                DRAW    CIRCLE,5        ; DRAW CIRCLE OF RADIUS 5 UNITS
+                DRAW    LINE,10,20,20,20        ; DRAW LINE FROM (10,20) TO
+                                                ;  (20,20)
+
+        ;  Process Control Language Example
+                LIGHT   1,ON    ; TURN ON LIGHT 1
+                IFBAD   REPAIR,L1       ; IF IT FAILED, CALL REPAIR ROUTINE
+                ROBOT   1,INIT  ; INITIALIZE ROBOT 1
+                ROBOT   1,CONTROL,PROBE ; SET ROBOT 1 CONTROLS FROM FILE
+                                        ;  'PROBE'
+
+        As the reader can see, the  possibilities  are  enormous,
+and  quite  often fun to play with.  MAC comes with a nice manual
+giving many examples and a fairly good tutorial on how to  create
+and use MACROs.
+
+        Sorry if I got carried away with this, but I  bought  MAC
+some  time ago, and have really enjoyed using it.  People haven't
+mentioned it much, so I thought I'd give a  brief  pitch  on  its
+value.  In the same line as MACROs, SMAL/80 (Structured Macro As-
+sembly Language) is kind of nice also, and it additionally offers
+a rather nice expansion preprocessor.  M80 by Microsoft is also a
+very good Macro Assembler I'm familiar with (it supports both Zi-
+log  Z80  and Intel 8080 Mnemonics).  MAC offers something extra,
+however, because of that  patch  I  mentioned  (called  XMAC.ASM)
+which  takes  out  the opcode processing and allows you to create
+whatever you want without having to  avoid  the  8080  mnemonics.
+MAC  and  M80 are my two favorite assemblers right now, with SMAL
+taking up third place.  I know of no such patch for the other as-
+semblers I'm familiar with.
+
+                                        Rick
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Date:      16 Jan 82 20:04:38-EST (Sat)
+From:      Rick Conn <rconn@brl>
+To:        John Gilbert <jgilbert@udel>
+cc:        INFO-CPM at MIT-MC at Darcom-HQ
+Subject:   Re:  I/O Status Byte
+Via:  Brl; 16 Jan 82 20:06-EST
+
+Hi, John,
+
+        The I/O Status byte  is not used to turn  peripherals  on
+or  off,  but rather to select one of four "physical" devices for
+each of the four logical devices of CP/M.  Redirection of I/O, in
+other words.
+
+        For instance, if you had a CRT and a keyboard/printer  on
+your  system,  thru the BIOS (BIOS MUST support the I/O Byte) and
+the I/O  Byte,  you  can  readily  switch  between  the  CRT  and
+keyboard/printer  as  your CON: (console, or primary I/O) device.
+Let's say that the printer was given the physical name  TTY:  and
+the CRT the physical name CRT: (these physical names are known to
+STAT).  By issuing the command
+
+                STAT CON:=TTY:
+
+your printer will come alive and you can use it as tho  you  were
+sitting at your CRT.  When finished, typing
+
+                STAT CON:=CRT:
+
+you can easily switch back to using the CRT.
+
+        This is briefly the concept of the I/O Byte.   With  this
+in  mind,  I  recommend  rereading the CP/M manuals on it and the
+STAT command.
+
+                                        Rick
+
+
+
+Date: 16 January 1982 19:22-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  I/O Status Byte
+To: jgilbert at UDEL
+cc: INFO-CPM at MIT-MC
+
+The I/O Byte (at location BASE+3, where BASE=0 on most CP/M's and
+4200H on certain others) is a purely a figment of imagination - UNLESS
+- your CBIOS has been implemented to honor the settings of the bits in
+that byte as described in the DRC manuals (under the STAT Command).
+It is not directly implemented in either CP/M 1.4 or 2.x, except to
+reserve that byte for that purpose - and the STAT commands to set the
+values of that byte.
+
+If you wish to implement this capability of redirecting your standard
+I/O from one peripheral device to another, you must first either have
+the source to your CBIOS, or have been provided with a "user area"
+usually at the end of the CBIOS which consists of a secondary jump
+table and the code that goes with it.  Then you need to select from a
+number of sample implementations and merge the code into your existing
+user area code.
+
+But, rather than go into more detail at this point, let me offer a few
+points to consider:
+
+1.  It does not turn devices like printers on and off - it merely
+selects one or the other device for input or output, which or both
+depends on the device type.
+
+2.  Every implementation I have tried considerably and noticably slows
+the output to that device, particularly those capable of high speed
+output, such as the console.
+
+3.  If you have more than one printer to select for output, then there
+is no other reasonable alternative, although I am sure there is some
+clever hacker who has managed to circumvent the problems...
+
+--Frank
+
+Date: 16 January 1982 19:17-EST
+From: Ronald G. Fowler <RGF at MIT-MC>
+Subject: I/O BYTE
+To: jgilbert at UDEL
+cc: INFO-CPM at MIT-MC
+
+  John, the IOBYTE is a special location in memory (at location 4
+absolute) that is reserved for use by the BIOS for performing dynamic
+I/O device reassignment.  This location is not used by CP/M or any
+CP/M programs, except in support of this function.  You may use STAT.COM
+to modify this assignment using the symbols defined in the system
+manual "An introduction to CP/M Features and Facilities".
+  In order to make use of this feature, it must be implemented within
+the CBIOS.  If it is not, you can implement it yourself, providing you
+have access to your CBIOS source, using instructions provided in the
+System Alteration Guide.
+			--Ron
+
+Date: 16 January 1982 19:09-EST
+From: Ronald G. Fowler <RGF at MIT-MC>
+Subject: ASM/MAC
+To: r.s.m. at MIT-AI
+cc: INFO-CPM at MIT-MC
+
+  MAC differs from ASM mainly in the support of macros.  MAC implements
+most of the INTEL macro set, including REPT, IRPC, IRP, EXITM and
+LOCAL.  A file include facility is alsp provided by the MACLIB statement
+(limited to pass 1 of the assembler, so good only for macro definitions,
+equates and such).
+  MAC also offers the SET pseudo-op, which is like EQU, except no error
+is generated if a variable is SET more than once.  MAC's expression
+analyzer is much more complete than that of ASM.
+  Nested conditionals are supported by MAC; ASM will allow conditionals,
+but they may not be nested.
+  Mac will generate a paged listing either on disk or directly on the
+list device, complete with a symbol table.
+  A key feature is that the symbol table may be directed to the disk,
+and subsequently loaded by the companion debugger, SID, to allow accessing
+program variables by name when debugging.
+				--Ron Fowler
+ps. MAC and SID are sold seperately.   RGF
+
+Date:      16 Jan 82 17:33:25-EST (Sat)
+From:      John Gilbert <jgilbert@UDel>
+To:        INFO-CPM at MIT-MC at Darcom-HQ
+Subject:   I/O Status Byte
+Via:  Darcom-HQ; 16 Jan 82 17:41-EST
+
+	Some of the CP/M literature alludes to the existence of an I/O 
+status byte. I get the impression that by bit fiddling with it, I can
+turn peripherals like the line printer off and on.
+
+	Would someone please tell me if I am correct and if so how to locate
+it in Version 1.4?
+
+	John Gilbert
+
+
+Anonymous@MIT-AI (Sent by ___042@MIT-AI) 01/16/82 13:44:01
+To: INFO-CPM at MIT-AI
+CSTACY is guilty of several disgracing crimes against
+the CPM community. He has:
+
+Used slurrous remarks and seditious libel against the
+writers of CP/M
+Has allowed Jim Couch to have a account (Jim C is accused
+of computer crimes such as breaking in R CP/M's and BBS)
+He has sponsered Jim Couch (thus he might even become
+couch's accomplice in fruther computer-breaking crimes)
+He has deleted the account of BELLS,a well-known
+CP/M person and collegea of Paul Traina,developer of the EXCELLENT
+Ox Gate R CP/M System . BELLS is also Paul's only way
+of trasferring msgs between INFO-CPm and Ox Gate-1
+(Paul's system)
+
+[Also,Jim C has been suspected of breaking
+into the Ox Gate system]
+
+Think about that? DO we want such a heinous criminal like
+Jim C. ? (VANDAL@MIT-AI)
+
+		Anonymous
+
+
+R.S.M.@MIT-ML 01/16/82 13:38:32
+To: info-cpm at MIT-MC
+What is the difference in ASM.COM and MAC.COM?
+
+
+Anonymous@MIT-AI (Sent by ___002@MIT-AI) 01/16/82 12:15:04
+To: INFO-CPM at MIT-AI
+Don't look now, but the infamous Jim Couch, aka Jim C. of Larkspur is
+now residing on MIT-AI as VANDAL@AI.
+				Anonymous
+
+
+PNH@MIT-AI 01/16/82 10:26:42
+To: INFO-CPM at MIT-AI
+Re : 'C' Cross-reference Utility
+
+I have just added a 'C' crosss-refernce utility to AR14: on MIT-MC.
+It is written in BDS C and supports nested file inclusion, nested
+comments, redirection of output to disk, listing-only option for the
+generation of paginated listings, and cross-referencing of reserved
+words.  I have found this utility useful and hope that others will
+also. I welcome any comments/bugs/fixes/enhancements concerning this
+program. Oops ! Forgot .. the name of the program is XC.C! With
+minimal effort the program can be modified to cross-reference just
+about anything .. the exercise is left to the student
+
+				... Phil
+				    PNH%MIT-AI
+
+
+
+Date: 14 January 1982 20:09-EST
+From: Communications Satellite <COMSAT at MIT-MC>
+Subject: Msg of Thursday, 14 January 1982 20:09-EST
+To: G.PALEVICH at MIT-EECS
+Remailed-date: 16 Jan 1982 1015-EST
+Remailed-from: G.PALEVICH at MIT-EECS
+Remailed-to: info-cpm at MIT-MC
+
+A copy of your message is being returned, because:
+"INFO-CMP" at MIT-MC is an unknown recipient.
+	Message not sent.
+ Failed message follows:
+-------
+Date: 14 Jan 1982 2005-EST
+From: G.PALEVICH at MIT-EECS
+Subject: Xerox 820 Wordstar
+To: info-cmp at MIT-MC
+
+	There are two very bad
+problems with the Xerox 820 wordstar
+implementation:
+
+	1)  The control sequences
+were changed from the standard semi-
+rational layout to an insane alphabetical one
+because the arrow keys were hardwired
+to produce ^A thru ^D.  The new
+layout is neither based upon mnemonics
+(like emacs is) nor on the position
+of the keys (like the regular
+wordstar is).
+
+	2) Even though Wordstar is
+quite capable of handling the
+memory mapped Xerox 820 screen the
+'right' way (treating it as a
+block of memory & fiddling with it
+directly) Xerox has decided to write
+a ADM-3A (called the dumb terminal
+because of its minimal control codes)
+emulator for CONOUT & have Wordstar
+believe it was talking to a serial
+terminal.
+
+	And the 820 video circuitry
+is preempted by the Z80, causing
+black snow to appear whenever the
+screen is changed. (and the ADM-3A
+abstraction rewrites the screen
+most every keystroke.)
+
+	The Xerox 820 leaves a taste
+in the mouth much like the OSI
+machines -- I think they cut way
+too many corners on the thing.
+-------
+
+Date: 15 January 1982 23:32-EST
+From: Paul L. Kelley <PLK at MIT-MC>
+Subject: INDEX
+To: INFO-CPM at MIT-MC
+
+
+	The source for Tom Jennings' INDEX program is now available as:
+
+		AR14:CPM;INDEX C
+
+	The file:
+
+		AR14:CPM;INDEX DOC
+
+	has been updated.
+
+
+Date: 15 Jan 1982 1029-PST
+From: Jim Moore <MOORE at USC-ISIB>
+Subject: Visaccount bookkeeping package.
+To: athey at LLL-MFE, mjw at MIT-MC, daniel at MIT-AI
+cc: info-cpm at MIT-AI
+
+
+We have one and I find myself in general agreement -- basically a good system.
+However, the documentation is quite limited and it is fairly often that we have
+to resort to the source code (included, hoorah!) to get definitive answers.  
+Also, there are a few known (and others) bugs -- not at all hard to find and/or
+fix -- but not a system that you would just hand to a secretary/bookkeeper and
+expect them to be able to work together.
+
+I was told by the author (but have not yet checked) that the a/r update 
+sections DO NOT refigure the aged balances, based on latest invoices & 
+payments.  If this is so, this is a serious defficiency, but one which I am 
+sure we can deal with by just writing the neccessary programs.
+
+Suggest that Visaccount users keep in contact to share fixes, extensions, etc.
+
+My first input:
+
+The system has two ways to determine the number of active records in a file
+(say, b:cr):  a) it computes them with a formula using the "size" frunction,
+#bytes/block and #bytes/record.  b) it looks in a size file (e.g, "b:crsize")
+for this info (kept updated by routines that change the size).  On my Northstar
+the first of these (a) does not work! but the second does!  The author says
+that they are in the state of transitioning from (a) to (b), and that I could
+finish that transition myself safely.  
+
+For an example of the problem, see the aged a/r report -- stops short of all
+accounts (for me, at 42 out of 108).  For an example of the process done right,
+look at the place where the customer records are listed (all of them!).
+
+So, who out there has an active Visaccount?  How have you dealt with the 
+apparent misfeature that the only items that can be invoiced are finished goods
+(not services, late charges, outside services, even discounts)?  Do I really 
+have to go to the kludge of putting "services" into the inventory as "finished
+goods", with some appropriate price -- so it all works?  Doesn' this screw up 
+your inventory evaluation?
+
+If ther is enough interest, perhaps we will spare the rest of this readership
+and setup an INFO-VISACCOUNT mailing list.
+
+Jim
+-------
+
+Date: 14 January 1982 22:59-EST
+From: Daniel Weise <DANIEL at MIT-AI>
+Subject:  gl-ar-ap packages
+To: athey at LLL-MFE
+cc: INFO-CPM at MIT-AI, MJW at MIT-MC
+
+    From: Marc J. Widennley <MJW at MIT-MC>
+    To:   athey at LLL-MFE
+    Re:   gl-ar-ap packages
+    ... You might take a look at Visaccount ...
+    I'm sorry but I don't know who distributes it,  but I do know that
+    Rick loves it.  He has tried many,  and he said he liked Visaccount the best.
+There is an ad for this on page 187 of the nov 81 byte.  The people
+who sell this stuff seem rather winning.  They specialize in software
+which runs under CP/M.
+
+Date: 14 January 1982 22:21-EST
+From: Marc J. Widennley <MJW at MIT-MC>
+Subject: gl-ar-ap packages
+To: athey at LLL-MFE
+cc: INFO-CPM at MIT-MC
+
+You might take a look at Visaccount,  a friend of mine has an apple
+version but the only difference between that and a normal version would
+probably be the fact that the apple version keeps asking you to swap disks.
+	I'm sorry but I don't know who distributes it,  but I do know that
+Rick loves it.  He has tried many,  and he said he liked Visaccount the best.
+
+Date: 14 January 1982 13:46-EST
+From: Robert M. Gerber <GERBER at MIT-AI>
+Subject:  IBM Personal Computer
+To: INFO-MICRO at MIT-AI, INFO-CPM at MIT-AI
+cc: GERBER at MIT-AI
+
+
+The IBM PC has an interesting bug in the basic interp. (its Microsoft)
+
+When ever you do a PRINT #1, CHR$(7); to the communications port
+the terminal beeps and the character never makes it to the computer
+at the end of the comm port.  Presumably if you try this to a file
+the terminal will beep and the file will not have the ^G in it.
+
+				Robert M. Gerber
+
+
+Date: 14 Jan 1982 0547-PST
+From: BHUBER at USC-ECL
+Subject: Re: Apple CP/M disk formatter problems
+To:   chesley.tsca at SRI-UNIX, INFO-CPM at MIT-MC
+cc:   BHUBER, JMcHugh, AWalden
+
+In response to the message sent  13 Jan 1982 at 0919-PST from chesley.tsca@SRI-UNIX
+
+Your disk formatting problem also existed on my system until I took two
+actions:  (a) installed a small power filter on my Apple, and (b) started
+using only Dysan and Scotch diskettes.  I have not had a single diskette
+failure in excess of a year and the system is quite heavily used.  Sure these
+brands cost more, but the data on them is worth quite a bit more to me.  No
+I don't own any stock in either company, and no let's not start comparing
+brands of diskettes on INFO-CPM.  The power thing is a model ISO-3 by
+Electronic Specialists in Natick, Massachusetts.
+Ciao,
+Bud Huber
+-------
+
+Date: 14 January 1982 07:25-EST
+From: Christopher C. Stacy <CStacy at MIT-AI>
+To: INFO-CPM at MIT-MC
+
+    Date: 11 January 1982 21:14-EST
+    From: Marc J. Widennley <MJW at MIT-MC>
+
+    Is this list for the discussion of CPM related topics
+    or to talk about the problems of some warped hacker?
+
+I dunno; the last time someone neglected to spend the time to talk to
+some warped hacker about his problems, he wrote CP/M.
+
+
+MADLER@MIT-ML 01/13/82 22:28:55 Re: H89 SPEEDUP
+To: JMSK at MIT-ML, INFO-CPM at MIT-ML
+What operating system does your colleague run?  The new version of CP/M
+has the H19 interface interrupt driven.  I suspect that it will not lose
+function keys in this mode.  If HDOS, I don't know its structure, but
+designing an interrupt routine is simple (console input jumps to location
+18H.)  I don't use 19.2K on my unmodified H89 because of all the ^Sing
+that it does.
+-Michael
+
+P.S.  I think that the address is right, don't kill me if it isn't.
+
+
+Date: 13 Jan 1982 2145-EST
+From: G.MIKES at MIT-EECS
+Subject: Re:  MTN Suggestions
+To: FJW at MIT-MC, BELLS at MIT-AI
+cc: INFO-CPM at MIT-MC
+In-Reply-To: Your message of 5-Jan-82 1254-EST
+
+
+-------
+
+Date: 12 Jan 1982 09:45:44-PST
+From: ARPAVAX.comay at Berkeley
+To: C70.info-cpm@Berkeley
+Subject: information on the Vedit text editor
+
+Has anyone had experience with the "Vedit" visual editor now on the
+market for CP/M systems?  For example, how does it compare with the
+MINCE editor or other visual editors for source code writing?  Any and
+all comments are welcome, and if there is interest, I will post a
+summary of the information received on info-cpm.  Thanks.
+
+					David Comay
+
+					ucbvax!comay (UUCP)
+
+					comay@Berkeley (ARPANET)
+
+
+Date: 13 Jan 1982 (Wednesday) 1554-PST
+From: ATHEY at LLL-MFE
+Subject: accounting packages
+To:   info-cpm at MIT-MC
+
+I am currently looking for a GOOD accounting package. One that is upgradeable
+to multi-user and would allow me to get away with only General/Ledger initially
+but which I could later expand to the whole gambit of Payables/Receivables/
+Inventory, etc.  The only one I've been able to really get any info on is
+PeachTree but I know there must be many many more.  Please reply to 
+ATHEY@LLL-MFE.  
+
+
+[Editor: If you think there would be enough interest I will package up the
+responses and send them back to info-cpm]
+
+
+Date: 13 Jan 1982 at 0919-PST
+To: INFO-CPM at MIT-MC
+Subject: Apple CP/M disk formatter problems
+From: chesley.tsca at SRI-UNIX
+Via:  tsca.MicomNet; 13 Jan 82 9:24-PDT
+
+	Has anyone else with an Apple CP/M system had this problem?
+
+	I format a new disk, copy CP/M and some files to it.  Everything
+looks fine (I can run programs from the disk, etc.).  But when I warm boot
+from the new disk, it can't load CP/M, and destroys the other data on the
+disk.  And if I do exactly the same thing again, it works fine, and the
+disk works forever after.
+	I had thought it was a problem with my drives, but a friend says
+he has exactly the same problem.
+	--Harry...
+
+
+Date: 11 Jan 1982 18:03:57-PST
+From: decvax!duke!dukgeri!ccw at Berkeley
+
+I've heard rumors that somebody at MIT has been developing a
+statistical package for the IBM "Personal Computer."  Does
+anybody know whether there is a grain of truth to this and, if
+so, who I might get in contact with about it??
+
+					Chris Woodbury
+					Duke University Med. Center
+
+
+
+
+
+Date: 12 Jan 1982 0849-PST
+From: William T. Overman <OVERMAN at USC-ISIF>
+Subject: Xerox & Wordstar
+To: info-cpm at MIT-MC
+cc: overman at USC-ISIF
+
+An attorney friend recently purchased a Xerox 820 and the modified version
+of Wordstar Xerox sells with it.  His secretaries (having a tiny amount of
+word processing experience) claim that this word processor (call it Wordstar')
+is very difficult to use.  My understanding is that Wordstar' is identical to
+Wordstar except that some of the characters in some of the command sequences
+have been changed, but that they are functionally identical and all command
+sequences are the same length, etc.  He thinks a possible solution is to
+scrap Wordstar' and get CPM and the real Wordstar.
+
+Does anyone have any experience with both of these.  (There was a prior note
+on Wordstar' which gave me the impression that if a person had never seen
+Wordstar he/she would have little or no preference for either version).
+Is the documentation better for one or the other?  Has anyone ever had great
+difficulty teaching an intelligent, computer novice to use Wordstar-like
+software.
+-------
+
+Date: 12 Jan 1982 0142-EST
+From: Bob Clements <CLEMENTS@BBNA>
+Sender: CLEMENTS at BBNA
+Subject: 8085, 8080, and Z80s
+To:   BillW at SRI-KL
+Cc:   info-cpm at MC
+
+In response to your message of 11 Jan 1982 2325-EST
+
+An addendum to BillW's comparison of those CPU's:
+There was one incompatibility between the 8080 and Z80,
+IN SOME 8080 INSTRUCTIONS. Namely, after logical operations,
+both 8080 and Z80 compute the parity of the result and store it
+in the P flag. But Zilog decided, probably correctly, that it would
+be more useful to have a real overflow (not carry) flag after
+8-bit arithmetic instructions. So after ADD and SUB (and their
+variants), the Z80 puts the overflow condition, not parity, into
+the P flag (which they call the P/V flag).
+
+Sounds like an insignificant change, but at least one commercially
+sold prgram failed because of it, namely an early version of
+Altair BASIC which did an ADD and expected to get the parity
+of the result.
+
+Sorry to nit-pick, Bill, but you did say you were trying to be
+definitive.
+/Rcc
+-------
+
+Date: 11 Jan 1982 2025-PST
+Sender: BILLW at SRI-KL
+Subject: 8085, 8080, and Z80s
+From: William "Chops" Westfield <BillW @ SRI-KL>
+To: info-cpm at MC
+Message-ID: <[SRI-KL]11-Jan-82 20:25:01.BILLW>
+
+I hope to be definitive here.
+
+All three processors will execute 8080 object code -- This is the only
+form of object code compatability (Z80s will not execute the new 8085
+instructions, or vis versa)
+
+The 8085 has a completely reworked hardware interface designed to be
+easier to use than the 8080.  This includes a multiplexed address/data
+bus, an internal oscillator/clock generator, 4 types of interupts
+(vanilla 8080 style INTR; maskable RST 5.5, 6.5, and 7.5; and non-maskable
+ TRAP), and a one bit I/O port (for doing serial I/O. The pinout is
+supposed to be optimized for easy PC board layout.  The 8085 has a
+wider memory window than the Z80 or 8080, allowing faster clock speeds
+with slower memories.  There are exactly 2 additional instructions,
+RIM and SIM for reading and setting the interupt masks (RST5.5, 6.5,
+7.5) and the I/O pin.  I doubt that these have any use in typical CPM
+programs.  There are supposedly usefull undocumented instructions on
+the INTEL 8085, but these do NOT work on the NEC 8085 (according to an
+article in Kilobaud), Which would make them very dangerous to use.
+
+The Z80, on the other hand, extends the 8080 instruction set
+consideralbly, The most useful additions being an indexed addressing
+mode, PC relative branching (allowing dynamically relocatable code) ,
+and block operations.  There is an extra set of registers that can be
+used for things like speeding up interupt operations.  New hardware
+features include: refresh generation for 16K dynamic RAMs and 3
+different modes of interupts, including a vectored interupt mode.  It
+is unfortunate that many programs are never written in "native" Z80
+code in order to maintain compatability with 8080 CPM systems.
+
+"typical" speeds for the processors are 8080: 2MHz, Z80: 4 MHz,
+and 8085: 5 Mhz.  faster versions are available for each chip.
+
+One final note:  National semiconductor has a NSC80 (I think) processor
+that executes Z80 code but has an 8085 style pinout.  Additionally,
+It is fabricated in CMOS and is thus low power.  It is still very expensive
+though.
+
+Bill Westfield
+
+Date: 11 Jan 1982 12:54:01-PST
+From: menlo70!sytek!intelqa!murray at Berkeley
+
+I don't know about their usefullness in CPM, but the 8080, 8085, and Z80
+are all object code compatable. The Z80 has a few additional instructions
+that the 8080/8085 do not have, so you need to be careful when buying Z80
+software to run on the 8080/8085. Many software publishers do not use those
+extra instructions when producing Z80 code in order to maintain compatability
+with the 8080/8085. In addition, the 8085 has some 'unpublished' instructions
+(available from most hobby groups), I don't know whether or not they are 
+implemented on the Z80.
+							Murray at intelqa
+
+
+
+
+
+Date: 11 January 1982 21:14-EST
+From: Marc J. Widennley <MJW at MIT-MC>
+To: INFO-CPM at MIT-MC
+
+Is this list for the discussion of CPM related topics
+or to talk about the problems of some warped hacker?
+

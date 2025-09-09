@@ -1,0 +1,785 @@
+		      COPYFAST.ASM Version 4.3
+            			 for
+		 IBM 3741 Compatible Diskettes
+
+		(Originally written by: Chuck Weingart	)
+
+------------------------------------------------------------
+CPYFST43.ASM
+CPYFST43.DOC
+CPYFST4F.COM	FOR FAST CONTROLLERS	(53 SEC.)
+CPYFST4M.COM	FOR MEDIUM CONTROLLERS	(67 SEC.)
+CPYFST4S.COM	FOR SLOW CONTROLLERS	(89 SEC.)
+CPYFST4V.COM	FOR VERY SLOW CONTROLLERS (100 SEC.)
+
+CPYFST43  IS  VERSION 4.3 OF COPYFAST (CPMUG VOL.  52), A CON-
+TROLLER INDEPENDENT DISK COPY PROGRAM FOR CP/M.   COPYFAST  IS
+AN  ADAPTATION  OF THE TARBELL DISK COPY PROGRAM, BUT DOES NOT
+REQUIRE TARBELL HARDWARE.  VERSION 4.3 CONTAINS SEVERAL  MINOR
+IMPROVEMENTS  MAKING IT POSSIBLE TO USE IT UNDER MORE CP/M AND
+MP/M SYSTEMS WITH DEBLOCKING BIOSES.   ALSO  INCLUDED  IS  THE
+ABILITY  TO SPECIFY ANY RANGE OF TRACKS TO BE COPIED.  THE 4.X
+VERSIONS OF COPYFAST ALL  INCLUDE  SEVERAL  SMALL  BUG  FIXES,
+FASTER COPY SPEEDS, AND THREE NEW FEATURES: IT IS NOW POSSIBLE
+TO  CTRL-C  OUT  OF  THE PROGRAM AT ANY TIME, THE RANGE OF THE
+COPY CAN BE CHANGED BY A PARAMETER GIVEN ON THE  COMMAND  LINE
+WHEN THE PROGRAM IS STARTED, AND THE PROGRAM CAN NOW DETERMINE
+THE  SIZE OF THE CP/M IT IS RUNNING IN AND ADJUST ACCORDINGLY.
+VERSION 4.3 ALSO INCLUDES HARDWARE-SPECIFIC CODE  FOR  COPYING
+THRU  THE  EPROMS  ON  THE  DJ2D (SSSD, SSDD, DSSD, AND DSDD),
+CALIFORNIA COMPUTER SYSTEMS 2422A, AND MICROMATION DOUBLER (SS
+AND DS) 2D CONTROLLER BOARDS.  THE .DOC FILE CONTAINS  ALL  OF
+THE  INSTALLATION INSTRUCTIONS AND A GREAT DEAL MORE ABOUT THE
+PROGRAM AND OPTIONS THAN COPYFAST  DID.   THE  SOURCE  CAN  BE
+ASSEMBLED  WITH ASM OR MAC, AND IS EXTENSIVELY COMMENTED.  THE
+FRONT OF THE SOURCE HAS ALL OF THE ASSEMBLY  OPTIONS,  AND  IT
+SHOULD  BE  NO  PROBLEM FOR ANYONE TO MODIFY THESE OPTIONS AND
+TAILOR IT TO THE PARTICULAR NEEDS OF THE USER.   AS  SUPPLIED,
+THE  PROGRAM  COPIES  ALL  OF TRACKS 2-76 OF A STANDARD 8 INCH
+DISK AS FAST AS A CONTROLLER CAN  GO.   ASSEMBLY  OPTIONS  ARE
+PRESENT  TO  ACCOMODATE SLOWER CONTROLLERS OR SINGLE DISK CP/M
+SYSTEMS.  THE FOUR .COM FILES ARE ASSEMBLED VERSIONS FOR  FOUR
+DIFFERENT READ AND WRITE INTERLEAVE COMBINATIONS, TRY ALL FOUR
+TO SEE HOW FAST YOUR CONTROLLER IS.
+
+------------------------------------------------------------
+
+This program is placed in the public domain. Selling or
+licensing of this program is prohibited. (You are encour-
+aged to give it away to all of your friends). If you make
+changes that may benefit others, please send the new
+version to the CPM Users Group, so all may have it.
+
+------------------------------------------------------------
+
+ To run, just type: CPYFST4n<cr>.   The  program  will  then
+request the source and destination disks, (drives A - F) and
+give  you a chance to put in the correct disks in the drives
+before continuing (or quit by entering CTRL-C).  When  done,
+the  program  will  ask  if  another  pair of disks is to be
+copied, and the process repeated.
+
+ The  range  of  tracks  copied  can  also be specified in a
+parameter after the program name.  That is: CPYFST4n X<cr>
+where X is one of the following values:
+
+A	All	0-76	   ***	Entire disk
+D	Data	2-76		CP/M data area
+F	First	2		CP/M directory track 
+L	Last	76		Last track on disk
+O	One	1		Track one, UCSD directory
+P	Pascal	1-76		UCSD Pascal data area
+S	System	0-1	   ***	CP/M bootstrap
+Z	Zero	0	   ***	Track zero, UCSD bootstrap
+n		n		A track number, generally
+				0 to 76, decimal.
+n1-n2		n1-n2		Two track numbers in
+				decimal, separated by
+				a minus.
+
+   ***	NOTE: many double-density disk formats will have
+	the first track in single density, 128-byte sector
+	format. So, if you are running with a disk that
+	is not absoultely standard, single-density format,
+	copying track zero may not work, since only SDLAST
+	sectors will be copied, or the controller may en-
+	counter errors on track 0. So, these options are
+	accepted only if CPM is TRUE.
+
+ Only  the  first character is checked, so the full word may
+be spelled out, if desired.  Invalid letters will  cause  an
+error  message,  and  the program will not run.  The default
+range, currently 2  to  76,  is  given  in  the  program  at
+locations 133H and 134H.  If the specified  options are  not
+satisfactory,  the specific track or tracks to be copied can
+be given, such as 25 or 49-62.  The track range can be chan-
+ged only by restarting the program.
+
+(Note: only complete tracks are copied)
+
+
+ The console is checked often to see if the operator has en-
+tered a CTRL-C, so it is possible to abort the program  even
+during the actual copy.
+
+ If the number of buffers specified during the assembly is
+too large, that is, if the CBIOS would be overlaid during
+the copy, then a message will be issued and the program will
+reduce the number of buffers to fit the system.
+
+------------------------------------------------------------
+
+Modified:	(now in reverse order, for convenience)
+
+	Version 4.3: C.W.
+		April 4, 1982; Added SLOW and NOCOMP swit-
+		ches. Put in SETDMA buffer flush for MP/M.
+		Added numeric range specification. Put in
+		code to test for CP/M 2.2 and call the
+		SECTRAN routine with HL=0 for certain de-
+		blocking BIOSes.
+	Version 4.2: Ted Shapin and C.W.
+		March 1, 1982; Added memory test at VECT0
+		to check for EPROM below the BIOS. Deleted
+		OTHER switch entirely. Changed some code by
+		SBB and CS to make apply only to CPM.
+	Version 4.1: S.B.Bogolub
+		February, 1982; Fixed bug in IF statement
+		that prevented skewed reads and writes.
+		Made OTHER a form of CP/M copy.
+	Version 4.0: C.W.
+		August 13, 1981; Allow range parameter on
+		non-CP/M copies, except for the All and
+		Zero options. Add SDZERO for CP/M copies
+		to support double-density boards.
+		Correct bug in CERR routine: it was giving
+		incorrect sector numbers when SECSIZ was
+		greater than 128.
+	Version 3.9; C.W.
+		August 10, 1981: Add DJ2D support for
+		128, 256, and 512 byte sectors double-
+		sided. Correct ambiguity in the prompts.
+		Put back my Micromation skew table as
+		comments - the version 3.7 table is not
+		as fast on my equipment.
+	Version 3.8; C.W. &  B.B.
+		August 3, 1981: Add double-side support
+		to DJ2D routines (1024 byte only). Fix
+		loop at VECT0 if big buffers (debugging
+		done with considerable help from Ben
+		Bronson, Sysop of HPRCPM). Add pseudo-
+		code to figure TRSKW from TSKEW.
+	Version 3.7; Charlie Strom
+	        June 4, 1981: Corrected label errors in
+	        direct calls to disk controllers. Saved
+	        register clobbered by direct calls. Fixed
+	        console echo of drive selection. Changed
+	        skew table for Micromation controller to
+	        a faster configuration. (Note by CW: this
+		change is for CPM 2.2, my original table
+		was for 1.4 and is still there as comments)
+	Version 3.6; C.W.
+		May 31, 1981: Add SHIFT routine and logical
+		variables for 128, 256, 512, and 1024 byte
+		sector sizes. Add hardware specific code for
+		Micromation Doubler, California Computer Sys-
+		tems 2422, and Disk Jockey 2D controllers.
+	Version 3.5; C.W.
+		May 16, 1981: Add parameter for specifying
+		the range of tracks copied. Removed CRLF
+		between source and object messages. Moved
+		INIT message to one-time code. Display #
+		of buffers used if insufficient space. Echo
+		source and object drives. Home drives after
+		the copy is complete (to flush buffers).
+	Version 3.4; C.W.
+		May 9, 1981: Fix bug in read error recovery
+		that caused bad read to repeat forever.
+		(Took me two attempts. No branch to TRYRDA.)
+		Changed NUMERR to 4.
+	Version 3.3; C.W.
+		March 22, 1981: Added DIFFTRK (ability to
+		copy from different tracks) in order to be
+		able to unpack UCSD Pascal disks.
+	Version 3.2; C.W.
+		March 18, 1981: Corrected read skew bug
+		noticed by Steve Bogolub. Added CR,LF to
+		the read and write error messages that
+		got deleted in version 1.1
+		Added WRSWCH, WRCODE, WRTAB to help solve
+		problems with CP/M 2.2 blocking with some
+		manufacturers CBIOS routines.
+	Version 3.1; C.W.
+		March 10, 1981: Added TSKEW and code for
+		track skewing to increase speed for fast
+		controllers.
+		Separated read and write error checking:
+		NUMERR now applies to each track read,
+		but to each entire write pass.
+	Version 3.0; C.W.
+		March 6, 1981: Check if given number of
+		buffers will overlay the BIOS and reduce
+		accordingly.
+		Moved comments to DOC file to keep the
+		source editable in one pass, and add
+		more explanation to the comments on
+		sector sizes and read skewing.
+	Version 2.3; C.W.
+		March 2, 1981: Change all references to
+		EXITCP to EXIT so that user gets a chance
+		to put in system disk before program re-
+		boots CP/M.
+	Version 2.2; C.W.
+		February 24, 1981: added auto size check.
+		Added interleave table suitable for very
+		fast disk controllers.
+	Version 2.1; C.W.
+		February 18, 1981: added code to check
+		console port for Ctrl-C abort condition
+		during copy, and misc code to help in
+		CP/M 2.2 systems that block and deblock
+		from large sectors.
+	Version 2.0; by Chuck Weingart
+		February 16, 1981: Changed messages added
+		in V1.1 and 1.2 back to upper case - some
+		people have terminals that dont handle
+		lower case.
+	Version 1.2; C. Strom
+		February 12, 1981: corrected typo
+		in OBJMSG when SINGLE true; added
+		a CR.
+	Version 1.1; by Kelly Smith
+		January 21, 1981:
+		( >>>modifications undocumented <<< )
+	Version 1.0; by Chuck Weingart
+		October 1980: after the public domain
+		Tarbell disk copy program (does not
+		require a Tarbell controller)
+
+
+Note to subsequent modifiers:
+	Please note the sqecific changes you make to the
+	code, so that others can keep track what you have
+	done, even if it is just lower case messages.
+
+------------------------------------------------------------
+
+ This  program  will  copy the data area of one CP/M disk to
+another (thats tracks 2 - 76), as  fast  as  possible.   All
+data  written  is  read  back  to  verify that the write was
+successful, and multiple tracks are copied in one pass,  for
+speed.   The version as supplied assumes that the controller
+CRC checking is sufficient for verification, but an assembly
+option allows complete byte-by-byte comparison on  the  read
+back.  It is possible to copy only part of a disk,  moving a
+block of tracks from one disk to a different part of another.
+
+ The  program  as  supplied will automatically determine the
+size of the CP/M system and adjust  the  number  of  buffers
+accordingly.  For example, it can copy four tracks at a pass
+in a minimum (16K) system, and 18 tracks at a pass in a max-
+imum system (64K).  A fixed-buffer option is also available:
+the number of track buffers, and hence the minimum size, can
+be  changed  to  suit your system.  Only standard CP/M CBIOS
+calls are used to access the disk, no  BDOS  calls,  so  the
+BDOS and CCP can be overlaid by the track buffers.  No other
+CP/M  functions are assumed.  North Star CP/M or UCSD Pascal
+users should be able to modify this program easily to run on
+their systems.
+
+ The source is supplied with assembly options to allow even
+faster operation on the following controllers:  Micromation
+Doubler, at double density,  Disk Jockey 2D, and California
+Computer Systems  2422.  The program  is supplied using 128
+byte sectors, but the modifications for other physical sec-
+tor sizes should be straightforward for these boards.
+
+ COPYFAST will allow a disk to  be  copied  on  a  one-drive
+system,  as  an  assembly option.  A version with 18 buffers
+(64K) will require only 5 complete swaps.
+
+------------------------------------------------------------
+
+ Four  assembled  versions  of the program are supplied, for
+your convenience.  They are  called  CPYFST4F.COM  for  very
+fast  disk  controllers (such as CCS 2422), CPYFST4M.COM for
+controllers (such as Micromation) that cannot write a  track
+in  one  revolution,  CPYFST4S.COM  for controllers (such as
+Versafloppy) that must interleave both reads and writes with
+a skew of 2, and  CPYFST4V.COM  for  controllers  that  must
+write  with  a  skew of 3.  I recommend that you try each of
+the four programs to see how fast they run on  your  system.
+The  only  difference  between  them  is  the read and write
+interleave.  All four versions do read-after-write  checking
+and  automatically determine the number of buffers to use in
+the copy.  If all four COM files run  very  slowly  you  may
+have  a slow controller or an inefficient CBIOS, and it will
+be necessary to examine this documentation closely and  edit
+the source to fit your requirements.  The source is supplied
+for   CPYFST4F.COM  and  I  list  all  the  differences  for
+CPYFST4M.COM, CPYFST4S.COM, and CPYFST4V.COM later  in  this
+file.  
+
+------------------------------------------------------------
+
+ This source can be assembled with the CP/M ASM or MAC.
+
+ COPYFAST  runs  on an 8080 or similar CPU, CP/M 1.3, 1.4 or
+2.x, or most  CP/M  compatable  disk  operating  systems  as
+supplied, and does not use any particular type of controller
+or  disk  hardware,  other  than the "standard" 77 track, 26
+sector-per-track disk.   The  latter  two  numbers  can  be
+easily  changed  in  the  source.  Note however that certain
+disk controller  boards  are  supported  directly,  thru  an
+assembly option.
+
+ The program currently assumes that the disk controller  can
+read  and write the disk in just one revolution.  This means
+that an entire track can  be  written  and  checked  in  two
+revolutions.   Two  alternate interleave tables are included
+in the source if this is not possible  with  your  hardware,
+and any sector interleave can be used by changing the table.
+An  assembly option is available to allow interleaved reads,
+if your disk controller cannot keep up with the program. An-
+other option is available if read interleaving is not used,
+to increase the read speed by changing the first sector read
+on each track so the read will start as soon as possible af-
+ter the seek is complete.
+
+ This program  has  been  run  unaltered  on  a  Micromation
+Doubler  disk  controller  with Shugart drives, the Califor-
+nia Computer Systems model 2422A disk controller, a  Tarbell
+single  density  controller board, and a Cromemco 4FDC board
+(the latter two use a WD 1771 chip) with Persci drives,  and
+the worst copy time was 122 seconds.  A typical time is more
+like  56  seconds  (CCS  controller).  Faster hardware means
+faster copies.
+
+ The program is written with all necessary constants in  eq-
+ates,  so  modifying  it for some other type of sector size,
+for example, should be fairly easy.  In fact, Roy  Lipscomb,
+a  member  of  the  Chicago Area Computer Hobbyist Exchange,
+wrote a program called FOTOCOPY  for  the  Thinkertoys  DJ2D
+controller after asking me a few questions about the purpose
+of  the  BIOS calls.  I believe he simply modified the CBIOS
+jump table in the program to point to the on-board EPROM  of
+the  DJ2D,  and  changed  the  various  equates  to what was
+necessary for a 1024 byte double-density  disk.  He  reports
+really  fantastic  copy  speeds for that controller using my
+methods. I borrowed his code back to add DJ2D support here.
+
+ The only bad comments I have heard to date is that the pro-
+gram  isnt  fast with the Txxxxxl and Txxxxxxxxy versions of
+CP/M.  The two cases I got personally involved  with  turned
+out  to  be  very much the same thing: poorly written sector
+blocking/deblocking routines.  In one case, I suggested that
+the interleave table be  changed  to  1,2,3,4,9,10,11,12,...
+in  a  512  byte  (128*4)  sector.  That way, the first four
+"sectors" fit into the first physical sector, and  then  the
+four "sectors" in the third physical sector are done, and so
+on.   The  second case turned out to be a bug in the DEBLOCK
+code that Digital Research is suggesting  be  used  in  CP/M
+2.x.   The  source  they  are  distributing will miss blocks
+and/or cause unnecessary I/O to the disk.  If you use  their
+code, do so with care.
+
+ One manufacturer of controller boards  is  supposed  to  be
+supplying  a  CBIOS  that  checks the density of the disk on
+every single track.  Obviously, that will really  slow  down
+everything, including COPYFAST.
+
+ Note: for CP/M 2.x users with single drive systems and sec-
+tor sizes greater than 128, the program now homes  the  disk
+before swapping the disk (at label STARTL).  This is to give
+the CBIOS a chance to write the last sector.  If homeing the
+drive is not enough to cause your CBIOS to empty the buffer,
+then  add  any  code at that point that will do so or change
+the CBIOS.  I recommend the latter, since homing  the  drive
+is  only  done  in  such special cases such as a reboot or a
+disk change.
+
+------------------------------------------------------------
+
+Quick course in floppy disk functions:
+
+ The  IBM 3741 floppy disk has 77 tracks, or positions where
+the read/write head can be.  There is always a counter some-
+where in the BIOS and/or disk controller  board  that  gives
+the  current  position  of  the currently selected disk.  It
+usually takes about 15ms to move the head one track  (in  or
+out),  and can take up to 120ms to move the heads from track
+76 to track 0.  Track zero, by the way, is  at  the  outside
+edge of the disk.  The diskette rotates at 360 RPM, or 167ms
+per  revolution.   The  standard format specifies that there
+are 26 128-byte sectors, or records, on each track.
+
+ A little quick arithmetic will give you the results that it
+takes maybe 6ms or slightly longer for one  sector  to  pass
+under  the head.  Since the disks are always rotating, there
+is always  some sector now under, or about to be under,  the
+head.   It  can also take an entire sector for a floppy disk
+controller to find where it is, assuming that the disk  head
+was suddenly and randomly loaded, or moved to another track.
+Furthermore,  many  floppy disk controllers cannot even read
+one sector after another, or  perhaps  they  can  read,  but
+cannot  write that fast (since writing requires that some of
+the gap bytes be written before and after  the  data,  where
+reading  can  start  just  after the address mark, and stops
+when the first gap byte after the data stops.)
+
+ Another major consideration for copy programs  is  that  it
+takes  maybe  30ms for the head of a disk drive to be loaded
+onto the surface of the diskette, and you dont  like  to  do
+that often, since the impact could cause wear.
+
+ What does this all mean?  Well, suppose you want to write a
+copy  program.   First, you have to tell the controller what
+track to start at, and to load the head.   That  might  take
+30ms to load the head and 50ms to move the head to the right
+track.   Now, you want to read sector one, but sector one is
+not there right now.  You might have to wait 80ms for sector
+one to come around.  (there is no CBIOS  command  for  "read
+the  next  sector,  whatever  that  is" and some controllers
+cannot do it at all) After you have read sector  one,  maybe
+you then want to read sector two.  Unfortunately, you waited
+too  long  to  decide,  and  the head is now halfway through
+sector two.  So, the controller waits 166ms for the start of
+sector two to come around again.  You would have been better
+off if you asked for the odd sectors first  (1,3,5...)   and
+then  gotten  the even sectors on the next revolution.  That
+would take only 334ms all in all.  That is  what  is  called
+read interleaving, or skewing for short.
+
+ There  is  another  type  of skewing, called track skewing.
+That occurs when you have read the last  sector,  sector  26
+for  example.   Now,  you order the disk to move the head to
+the next track.  That took 15ms, and in that time sectors 1,
+2, and part of 3 rotated by under the head.  So, if you tell
+the controller to read sector 1, then you have to wait until
+sector 1 rotates by again, about 150ms.  If you could  start
+this  read  at sector 4, and read everything after that, you
+would not waste  as  much  time.   That's  track  (or  seek)
+skewing.
+
+ In order to make a copy in the shortest time, this program
+does all of the following:
+
+1. Reads as many tracks as possible into core, and then
+	switches to the other drive to write. This will
+	minimize the number of times the head on each
+	drive has to be loaded.
+2. Does all reads as fast as possible, with any skew that
+	is needed to achieve that. The fastest possible is
+	no skewing at all, of course. The skewing pattern
+	is in a table for easy manipulation.
+3. Does all writes as fast as possible, with any skew that
+	is needed. The write skew does not have to be the
+	same as the read skew, because some controllers can
+	read faster than they can write.
+4. Allows track skewing on the main read so that the track
+	can be read with as little rotational delay as poss-
+	ible. The read after the write does not need this
+	skewing, because there is no movement between the
+	write and the following read.
+
+ The program does one thing that slows it down: it checks
+the data that is written by reading it back. If you are very
+confident of the reliability of your system, controller,
+and disks you could skip that step. That is done by setting
+NOCOMP to TRUE. On a normal controller, that step adds about
+12 seconds to the copy time, and I think it is worth it.
+
+------------------------------------------------------------
+
+	Assembly-time variables that can be changed:
+
+CPM:	TRUE if running strictly thru the CP/M BIOS routines
+
+DJ2D:	TRUE if running thru the  Disk Jockey 2D Eprom  rou-
+	tine. This version is currently for 128 byte sectors
+	but should  be useable  for 256,  512, or 1024  byte 
+	disks, with simple modification of SECSIZ and DDEN.
+
+MMATION: TRUE for copying Micromation Doubler double density
+	format disks, thru the Eprom.  Only supplied for the
+	standard 52 sectors per track double density format.
+
+CCS2422: TRUE if running  thru the  California Computer Sys-
+	tems 2422  Eprom  (MOSS  1-1),  in single  or double
+	density. Currently for 128 byte, single density, but
+	should be useable with simple  modifications to SEC-
+	SIZ, DDEN, DSIDE and the read and write skew tables.
+
+
+Note: Only one of the above options can be true at one time.
+
+
+SINGLE:	TRUE for single drive copy program
+
+RSKEW:	TRUE  if  read  interleaving  needed.  If FALSE, the
+	program will  read the sectors sequentially  (1,2,3,
+	4,...)   When  TRUE, you should modify the read skew
+	table (READTAB) to fit your particular requirements.
+	Read  skewing is used on the initial read and on the
+	read-after-write check.  (This is FALSE for CPYFST4F
+	and CPYFST4M and TRUE for CPYFST4S and CPYFST4V.)
+
+SLOW:  For CPM versions (CPM is TRUE).  If SLOW is TRUE, this
+	will generate a slow write skew table.  This  can  be
+	helpful  to people with really slow disk controllers.
+	(This is FALSE for CPYFST4F and CPYFST4S and TRUE for
+	CPYFST4M and CPYFST4V.)
+
+DOCOMP:	TRUE  if  byte-by-byte   comparison  is  desired  on 
+	read-after-write  check.  NOCOMP  must be  FALSE  if
+	DOCOMP is TRUE (but both can be FALSE).
+
+NOCOMP:	TRUE  if no read-back  checking is desired  at  all.
+	DOCOMP must be FALSE if NOCOMP is TRUE.  This option
+	will speed  up the program  at the expense  of error
+	checking, but some BIOSes might already do the check-
+	ing and repeating it here would be a waste of time.
+
+NUMERR:	The  number of errors before counting as a permanent
+	error.  The error counter applies  independently  to
+	each  track  read,  but applies to each entire write
+	pass.  That is, the program will try  to  read  each
+	track NUMERR times, and will quit and then go to the
+	next track.  However, when writing, the program will
+	stop writing when NUMERR errors have occurred on the
+	current   pass,   and  then  it  will  start  a  new
+	read/write pass at the track after  the  track  with
+	the  write error.  The read and write error counters
+	are independent, since they are supposed to  be  two
+	different disks.
+
+SDLAST:	the number of sectors per track. This value also de-
+	termines the size of the  READTAB, WRITAB, and WRTAB
+	tables.
+
+SDZERO:	the number of 128-byte sectors on track zero, if CPM
+	is true. Many DD disks still have track zero in sin-
+	gle density  (IBM standard),  so the  program cannot
+	try to read all the sectors on track zero. This con-
+	stant is ignored for the device-specific versions.
+
+TSKEW:	The  value  of  the  track to track read skew.  This
+	applies only if  RSKEW is FALSE, that  is,  no  read
+	sector  skewing.   This  is  to  allow  even  faster
+	reads when a fast disk controller chip is used.  The
+	reason is this: after the last sector on  the  track
+	is  read (usually 26), the program must move the arm
+	on the disk to the next track.  This takes time,  of
+	course,  and  so the disk has rotated a bit.  So, if
+	the next  sector  wanted  is  the  first,  then  the
+	program  has  to  wait until the disk has rotated a-
+	round all the way back to the  start.   But  if  the
+	program  could  then start with sector 8, say, there
+	would be no waiting.  Of course, the  program  would
+	have  to read sectors 1-7  after reading  number 26,
+	and then move the arm.  So,  then  it  should  start
+	reading  the next track at sector 13, and so on.  In
+	this case, the value of TSKEW  is  6.   The  program
+	will  always  start  a  pass on sector one, but will
+	not  start at sector one if the track skew  gives  a
+	value  greater  than SDLAST.  That is, track skewing
+	is a modulus  function.  If TSKEW  is  7,  the poss-
+	ible  starting sectors are  1,8,15,22,3,10,17,... if
+	SDLAST is 26.  Track skewing is used only during the
+	initial  read  from  the  source   disk.    On   the
+	read-after-write check, the write skew table is used
+	to compensate for the head load and seek times. This
+	value is ignored if RSKEW is TRUE.
+
+SECSIZ:	number  of  bytes per sector.  Read the comments re-
+	garding the sector size below if you plan  to  adapt
+	the  program to some other type of disk format.  For
+	CP/M compatible BIOS routines, this is always 128.
+
+WRSWCH: TRUE if it is necessary to pass your CBIOS different
+	values in reg. C during writes. See the CP/M 2.2 Al-
+	teration Guide for the purpose of this value in reg.
+	C.  If TRUE,  it will be necessary to edit the WRTAB
+	table to fit your particular requirements. If FALSE,
+	the value in  reg. C will  be that  given in WRCODE,
+	normally 2.
+
+WRCODE:	If WRSWCH is FALSE,  this is the value passed to the
+	CBIOS sector write routine in reg. C.  See the  CP/M
+	2.2 Alteration Guide for details of this value,  but
+	it is normally 2 for this application.
+
+DSIDE:	For hardware-specific versions, TRUE if double-sided
+	disk drives.
+
+DDEN:	For hardware-specific versions, TRUE if double dens-
+	ity disks. 
+
+FIRSTRK:the first track  copied.  If the  starting track for
+	the source and object disks are not identical,  then
+	this figure  applies to the object disk.  Note: this
+	value is  normally  the track where CP/M  places the 
+	directory.  It is assumed that the  bootstrap starts
+	at track 0 and ends on track FIRSTRK-1.
+
+LASTRK:	the last track copied plus one. The number of tracks
+	copied is normally LASTRK-FIRSTRK.
+
+	These latter two values specify the copy range,  and
+	the program can  be run in other ways  by the param-
+	eter given when COPYFAST  is first invoked.  FIRSTRK
+	and LASTRK  specify how the  parameter will actually
+	be interpreted.  (May not apply to hardware-specific
+	versions.) Note: only complete tracks are copied.
+
+ All	0-(Lastrk-1)	   ***	Entire disk
+ Data	Firstrk-(Lastrk-1)	CP/M data area
+ First	Firstrk			CP/M directory track 
+ Last	(Lastrk-1)		Last track on disk
+ One	1			Track one, UCSD directory
+ Pascal	1-(Lastrk-1)		UCSD Pascal data area
+ System	0-(Firstrk-1)	   ***	CP/M bootstrap
+ Zero	0		   ***	Track zero, UCSD bootstrap
+ n1-n2	n1-n2			n1 and n2 must be less than
+				Lastrk
+
+	*** NOTE: many double-density disk formats will have
+	the  first  track in single density, 128-byte sector
+	format.  So, if you are running with a disk that  is
+	not  absolutely  standard,  single - density format,
+	copying track zero may not work, since  only  SDLAST
+	sectors  will  be  copied,  or  the  controller  may
+	encounter errors on track 0.  So, these options  are
+	accepted only when CPM is TRUE.  See also the SDZERO
+	constant.
+
+BUFFNU:	the  number of full track buffers that will fit into
+	your system.  This figure includes the space used by
+	the read-back buffers, if used.  Zero or minimum 2.
+
+	If  you  wish auto-size determination, set BUFFNU to
+	zero, and the program will use all space up to,  but
+	not  including the CBIOS routines.  With the current
+	specification of 26 sectors per track,  the  program
+	will  require  at  least  39K  for  buffers alone if
+	BUFFNU is 12, and so should  run  in  a  42K  system
+	minimum.   (12  *  128  * 26 = 39936 plus 3K for the
+	CBIOS and program).   I  recommend  that  BUFFNU  be
+	minimum   of   2   if  you  do  not  want  auto-size
+	determination,  or if there is  missing or read-only
+	(EPROM)  memory between the TPA and the BIOS in your
+	system.
+
+DIFFTRK: is the difference between the source and the object
+	track numbers.  That is, this quantity is  added  to
+	the  object  track  number  to  get the source track
+	number.  This is so that the program can move tracks
+	around from one disk to another.  This  is  normally
+	zero.   DIFFTRK is ignored in a single-disk program.
+
+	For example, to copy tracks 25 to  49  from  a  UCSD
+	Pascal  disk to tracks 0 to 24 of an empty disk, set
+	FIRSTRK to zero, LASTRK to 25 (24 plus 1), and  then
+	DIFFTRK has to be 25(source) - 0(object), or 25.
+
+	DIFFTRK is used  only when the default copy range is
+	used.  If one of the range  parameters is specified,
+	then DIFFTRK will be set to zero automatically.
+
+ The last four  quantities are in  single-byte  constants in
+the program, and can be modified by DDT to alter the charac-
+teristics of the program to suit your needs.  They are found
+at label TRKSRT in the program, at locations :
+	FIRSTRK		133
+	LASTRK		134
+	BUFFNU		135
+	DIFFTRK		136
+ I change these values  to create various  versions of Copy
+programs. These  values are defaults, and they are not used
+if the  range parameter is  specified,  (or in  the case of
+BUFFNU, if CP/M is too small).
+
+
+ Note: some distributors  of  CP/M  (such  as  Micromation),
+supply a CBIOS that alters the BDOS routines, whether or not
+the  BDOS  is  present  there.   This  means that you cannot
+safely let COPYFAST take all space up to the CBIOS,  because
+the  CBIOS will modify the contents in the highest buffer in
+the mistaken idea that the  BDOS  is  there.   This  usually
+means that the CBIOS cannot be used for UCSD Pascal, either.
+
+
+ Note:  if you are modifying this program for use with other
+than 128 byte sectors, and this has been done  successfully,
+you  MUST  change  the  code  at  label  SHIFT.   There  are
+currently 7 DAD H's for 128 byte sectors,  since 128 = 2  to
+the  7th  power.  The source program will currently assemble
+correct code for the cases of 128, 256, 512, and  1024  byte
+sectors,  so  you only have to change the program if you are
+running something else.  Do not change the number if you are
+running with a CBIOS written to deblock the physical sectors
+into 128 byte logical sectors,  as  all  CP/M  1.x  and  2.x
+compatible  BIOS  routines do.  In such cases, the number of
+"sectors" per track is changed instead, exactly the same  as
+CP/M  itself  is  told.  The CBIOS in that case will put the
+logical sectors into one physical sector  before  doing  the
+write.   It will of course be necessary to change the sector
+skew tables to something that matches  the  capabilities  of
+the  disk controller and the blocksize.  You must understand
+exactly how your CBIOS blocks and deblocks from the physical
+sectors before you can make up a good skew table.
+
+-------------------------------------------------------------
+
+ Alternate interleave table for slower controllers.
+
+ The sectors are listed in the order they will be written to
+disk.  NOTE: the peculiar ordering is due to the  fact  that
+some  disk  controllers cannot switch between writing sector
+26 and reading sector 1 in time - so the table  begins  with
+25,  proceed up every other sector, and ends with number 24.
+While the head is passing sectors 25  and  26,  the  program
+will  be  switching to read back the entire track.  There is
+generally no problem starting with sector 25, because simply
+moving the head after the previous read on most drives  will
+take  about  one half revolution.  This table was determined
+empirically using Shugart drives and doing actual tests with
+two different types of controller  boards,  and  it  is  the
+fastest variation found.  Change at your own risk.
+
+	DB	25,1,3,5,7,9,11,13,15,17,19,21,23
+	DB	26,2,4,6,8,10,12,14,16,18,20,22,24
+
+(This table is used in CPYFST4M.COM and CPYFST4S.COM)
+
+ The  following  table  is  recommended  for   those   whose
+controllers  cannot write even every other sector.  There is
+no peculiar starting sector here because the interleave ends
+on sector 24, and that is the same as the table above.  This
+might be a better choice for a "universal" table.
+
+	DB	1,4,7,10,13,16,19,22,25
+	DB	2,5,8,11,14,17,20,23,26
+	DB	3,6,9,12,15,18,21,24
+I put this table in the "SLOW" CPM version.
+
+ It is likely that if you require one of the alternate write
+skew tables, then you will also have to have read skew.  So,
+you should also make RSKEW equal to TRUE and modify the read
+skew table to run as fast as possible.
+
+-------------------------------------------------------------
+
+ Users  of  double-density  controllers may be interested in
+what I did with mine.  My BIOS is written so that  a  double
+density disk is considered as two single disks, that I refer
+to  as  "the  front  half"  and "the back half".  With three
+drives, A, B, and C are the fronts, and D, E, and F are  the
+back.   A single density disk is only front.  Each track has
+3328 bytes (26*128) bytes of data for the  front  half,  and
+3328  bytes for the back half.  The way COPYFAST works makes
+it possible  to  copy  the  front  half  to  the  back,  and
+vice-versa,  and  I  dont  have  a  lot of funny versions of
+programs written exclusively for a particular density  disk.
+Two "disks" per floppy also means twice the directory space.
+My  BIOS  is also written to check the disk density whenever
+the disk in HOMEd, which COPYFAST does before starting.  The
+only hardware dependencies in my  system  are  in  the  disk
+initialization program and in the BIOS.
+
+------------------------------------------------------------
+
+Suggestions for improvements:
+
+1. Ask if you really wanted to copy a disk if track 2
+   (the directory) was completely empty i.e. all E5's
+2. Better error checking .. the program reports only
+   one comparison error per track right now.
+3. Have an option where it only compares two disks to
+   see if they are the same.
+4. Check for CP/M 2. If so, use the disk attribute table
+   for information like number of sectors, number of
+   tracks, etc.
+5. Could this thing be modified for hard disk backups?
+
+    

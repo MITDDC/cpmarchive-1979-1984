@@ -1,0 +1,2709 @@
+!<arch>
+Makefile        362430876   99    31    100644  1755      `
+COPTS=  -g -O
+
+HEADS=  mactab.h ../mac/mac.h mactab.x
+
+CFILES= mactab00.c mactab01.c mactab02.c mactab03.c mactab04.c \
+	mactab05.c mactab06.c mactab07.c mactab08.c mactab09.c \
+	mactab10.c
+
+FILES=  mactab00.o mactab01.o mactab02.o mactab03.o mactab04.o \
+	mactab05.o mactab06.o mactab07.o mactab08.o mactab09.o \
+	mactab10.o
+
+mactab: ${FILES}
+	cc -N ${COPTS} -o mactab ${FILES}
+
+${FILES}:
+	cc -c ${COPTS} $*.c
+
+depend:
+	grep '^#include' ${CFILES} | sed 's/:[^"]*"\([^"]*\)".*/: \1/' \
+		| sed 's/\.c/.o/' | sed '/.*<.*/d' >makedep
+	echo '/^# DO NOT DELETE THIS LINE/+2,$$d' >eddep
+	echo '$$r makedep' >>eddep
+	echo 'w' >>eddep
+	cp Makefile Makefile.bak
+	ed - Makefile < eddep
+	rm eddep makedep
+	echo '# DEPENDENCIES MUST END AT END OF FILE' >> Makefile
+	echo '# IF YOU PUT STUFF HERE IT WILL GO AWAY' >> Makefile
+	echo '# see make depend above' >> Makefile
+
+# DO NOT DELETE THIS LINE -- make depend uses it
+
+mactab00.o: ../mac/mac.h
+mactab00.o: mactab.h
+mactab01.o: ../mac/mac.h
+mactab01.o: mactab.h
+mactab01.o: mactab.x
+mactab02.o: ../mac/mac.h
+mactab02.o: ../mac/m.out.h
+mactab02.o: mactab.h
+mactab02.o: mactab.x
+mactab03.o: ../mac/mac.h
+mactab03.o: mactab.h
+mactab03.o: mactab.x
+mactab04.o: ../mac/mac.h
+mactab04.o: mactab.h
+mactab04.o: mactab.x
+mactab05.o: ../mac/mac.h
+mactab05.o: mactab.h
+mactab05.o: mactab.x
+mactab06.o: ../mac/mac.h
+mactab06.o: mactab.h
+mactab06.o: mactab.x
+mactab07.o: ../mac/mac.h
+mactab07.o: mactab.h
+mactab07.o: mactab.x
+mactab08.o: ../mac/mac.h
+mactab08.o: mactab.h
+mactab08.o: mactab.x
+mactab09.o: ../mac/mac.h
+mactab09.o: mactab.h
+mactab09.o: mactab.x
+mactab10.o: ../mac/mac.h
+mactab10.o: mactab.h
+mactab10.o: mactab.x
+# DEPENDENCIES MUST END AT END OF FILE
+# IF YOU PUT STUFF HERE IT WILL GO AWAY
+# see make depend above
+
+Makefile.bak    362430876   99    31    100644  1755      `
+COPTS=  -g -O
+
+HEADS=  mactab.h ../mac/mac.h mactab.x
+
+CFILES= mactab00.c mactab01.c mactab02.c mactab03.c mactab04.c \
+	mactab05.c mactab06.c mactab07.c mactab08.c mactab09.c \
+	mactab10.c
+
+FILES=  mactab00.o mactab01.o mactab02.o mactab03.o mactab04.o \
+	mactab05.o mactab06.o mactab07.o mactab08.o mactab09.o \
+	mactab10.o
+
+mactab: ${FILES}
+	cc -N ${COPTS} -o mactab ${FILES}
+
+${FILES}:
+	cc -c ${COPTS} $*.c
+
+depend:
+	grep '^#include' ${CFILES} | sed 's/:[^"]*"\([^"]*\)".*/: \1/' \
+		| sed 's/\.c/.o/' | sed '/.*<.*/d' >makedep
+	echo '/^# DO NOT DELETE THIS LINE/+2,$$d' >eddep
+	echo '$$r makedep' >>eddep
+	echo 'w' >>eddep
+	cp Makefile Makefile.bak
+	ed - Makefile < eddep
+	rm eddep makedep
+	echo '# DEPENDENCIES MUST END AT END OF FILE' >> Makefile
+	echo '# IF YOU PUT STUFF HERE IT WILL GO AWAY' >> Makefile
+	echo '# see make depend above' >> Makefile
+
+# DO NOT DELETE THIS LINE -- make depend uses it
+
+mactab00.o: ../mac/mac.h
+mactab00.o: mactab.h
+mactab01.o: ../mac/mac.h
+mactab01.o: mactab.h
+mactab01.o: mactab.x
+mactab02.o: ../mac/mac.h
+mactab02.o: ../mac/m.out.h
+mactab02.o: mactab.h
+mactab02.o: mactab.x
+mactab03.o: ../mac/mac.h
+mactab03.o: mactab.h
+mactab03.o: mactab.x
+mactab04.o: ../mac/mac.h
+mactab04.o: mactab.h
+mactab04.o: mactab.x
+mactab05.o: ../mac/mac.h
+mactab05.o: mactab.h
+mactab05.o: mactab.x
+mactab06.o: ../mac/mac.h
+mactab06.o: mactab.h
+mactab06.o: mactab.x
+mactab07.o: ../mac/mac.h
+mactab07.o: mactab.h
+mactab07.o: mactab.x
+mactab08.o: ../mac/mac.h
+mactab08.o: mactab.h
+mactab08.o: mactab.x
+mactab09.o: ../mac/mac.h
+mactab09.o: mactab.h
+mactab09.o: mactab.x
+mactab10.o: ../mac/mac.h
+mactab10.o: mactab.h
+mactab10.o: mactab.x
+# DEPENDENCIES MUST END AT END OF FILE
+# IF YOU PUT STUFF HERE IT WILL GO AWAY
+# see make depend above
+
+READ_ME         362430876   99    31    100644  2295      `
+Mactab mods--
+
+added by Bill Hollier to try to cope with archaic machines like PDP-8
+& CM-202...
+
+in header section
+
+instr	<n>
+	- the (minimum) size of an instruction (in bytes)
+
+bind
+	- bind the starts of instructions to instruction boundries
+
+addr	<n>
+	- the size of a machine address (in bits)
+
+added by Peter Lamb to as an aid to debugging d-files and
+interpreting other people's d-files
+
+comments in d-files  -  lines ignored after the first occurence of
+	the defined constant COMCHAR.. currently ';'
+
+white space in opcode formats - ' ' and '\t' are ignored in opcode
+	formats
+
+mactab listings --
+
+	-h header
+	-hheader	use the header given to head the listing
+			instead of the 'mac' title or the d-file
+			name
+
+	-l		give a listing of the groups of opcodes
+			which are legal for groups of arg pictures.
+			(If that sounds like double-dutch, have a
+			look at a listing)
+
+	-n		give nroff pretties to a -l listing
+
+	-f		for each instruction in all its legal formats
+			print a picture of the code generated -
+
+			0 or 1	bits produced by 'o', 'n' or 'v' formats
+			a - m   bits generated by args a - m, as is
+			A - M   bits generated by args a - m, PC relative
+			____	Underlined -- bit-field swapped first half
+				underlined, last half plain.
+
+
+	(-n implies -l, -f implies -l)
+
+mods added by prl to make mactab work for 8086's
+
+'q' format code -- pc relative like 'p', BUT where the pc FOLLOWS the
+		bytes as they are fetched!!!  Is there no end to the
+		proliferation of addressing modes??
+
+-- mod for general niceness
+	Magic number in r-files -- MWORDR in mac.h if you don't like
+	my choice. I got sick of mac dumping core and other random
+	behavior when it got fed a garbage r-file
+
+-- suggestion(minor)  - allow definition of the m.out magic no. in
+the d-file header section.
+
+-- I am at the moment working towards relocatable mac - i got
+sick of reassembling my 8086 i/o routines over and over and over........
+
+
+		Peter Lamb
+		Comp. Sci. Dept.
+		Melb. Uni.
+		14 Sept 1979
+label classes:
+
+a new section that binds label names to class names
+
+class
+classname	label1,label2,label3
+otherclass	label4,label5
+%
+
+then a arg pic may appear with a class name in it
+
+	classname,expr		{ 0 0 0 0
+	otherclass,expr		{ 0 1 2 3
+
+any label of the given class may appear as an arg in the expression
+
+mactab.h        362430876   99    31    100644  491       `
+#include "stdio.h"
+
+#define	NE1	10
+#define	NS1	20
+#define	NS3	4
+
+#define	NLIT	32
+#define	NSYM	50
+#define	NFMT	50
+
+#define	NTREE	750
+#define	NTABLE	1200
+#define	NOPCOD	200
+
+#define COMCHAR	';'
+
+
+struct	node	{
+	int	n_sym;
+	int	n_mem;
+	char	n_mem4[4];
+	struct	node	*n_alt;
+	struct	node	*n_next;
+	};
+
+struct ocdump	{
+	struct	oc	*ocd_opc;
+	unsigned int	ocd_classes;
+};
+
+struct od {	/* opcodes have this format when first declared */
+	char od_name[8];
+	struct os *od_list;
+	struct od *od_next;
+};
+
+mactab.x        362430877   99    31    100644  880       `
+extern	char	*p;
+extern	char	clabel[ ];
+extern	char	buf[ ];
+extern	char	literals[16][8];
+
+extern	char	hextab[ ];
+extern	char	dectab[ ];
+extern	char	octtab[ ];
+extern	char	alptab[ ];
+extern	char	oprtab[ ];
+
+extern	char	(*fn)();
+extern	char	(*avec[ ])();
+
+extern	char	*lvec[ ];
+
+extern	int	tp;
+extern	int	nslot;
+extern	int	nlit;
+extern	int	nfmt;
+extern	int	nops;
+extern	int	nsym;
+extern	int	nline;
+extern	int	nerr;
+extern	int	sym;
+extern	int	mem;
+extern	char	mem4[ ];
+extern	int	fd;
+
+extern	struct	node	*tree;
+extern	struct	tbl	*s2;
+extern	struct	tbl	*parse;
+extern	struct	fd	format[ ];
+extern	struct	oc	*opcode;
+extern	struct	st	symtab[ ];
+extern	struct	ht	head;
+
+
+extern	struct	tbl	e1[NE1];
+extern	struct	tbl	s1[NS1];
+extern	struct	tbl	s3[NS3];
+
+extern	struct	ocdump	*dmplst;
+
+extern	struct	node	*dslot();
+extern	char	*lformat();
+extern	char	*getlit();
+extern	struct	os	*scanop();
+mactab00.c      362430877   99    31    100644  2664      `
+#include	"../mac/mac.h"
+#include	"mactab.h"
+
+extern	plit();
+extern	plab();
+extern	pclass();
+extern	phed();
+extern	pops();
+extern	pfmt();
+extern	parg();
+extern	pend();
+
+
+
+char	*p;
+char	clabel[64];
+char	buf[512];
+char	literals[NLIT][8];
+
+char	hextab[ ] =	"0123456789abcdef";
+char	dectab[ ] =	"0123456789";
+char	octtab[ ] =	"01234567";
+char	alptab[ ] = "\
+ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+abcdefghijklmnopqrstuvwxyz._";
+char	oprtab[ ] =	"+-*/%><~&|";
+
+char	(*fn)();
+int	(*avec[ ])() =	{
+	plit,		/* literals */
+	plab,		/* pre-def labels */
+	pclass,		/* label classes */
+	phed,		/* header */
+	pops,		/* opcodes */
+	pfmt,		/* formats */
+	parg,		/* instr args */
+	pend,		/* output form code */
+	0
+	};
+
+char	*lvec[ ] =	{
+	"literals",
+	"labels",
+	"classes",
+	"header",
+	"opcodes",
+	"formats",
+	"args",
+	"end",
+	0
+	};
+
+int	tp	= 0;
+int	nslot	= 0;
+int	nlit	= 0;
+int	nfmt	= 0;
+int	nops	= 0;
+int	nsym	= 0;
+int	nline	= 0;
+int	nerr	= 0;
+int	sym;
+int	mem;
+char	mem4[4];
+int	fd;
+
+struct	node	*tree;
+struct	tbl	*s2;
+struct	tbl	*parse;
+struct	fd	format[NFMT];
+struct	od	*opcode;
+struct	st	symtab[NSYM];			/* 8 pre-defined labels */
+struct	ht	head;
+struct	ocdump	*dmplst;
+
+/*
+ *
+ *	Pre-defined sections of the parser.
+ *
+ *	E1:	expression evaluater
+ *	S1:	part of the source line before the args
+ *	S3:	part of the line after the args.
+ *
+ */
+
+
+struct	tbl	e1[NE1] =	{
+
+/*  0 */ { -LPL,	'=',	1,	LITP	},
+/*  1 */ { -OPR,	0,	4,	OOPR	},
+/*  2 */ { -OPR,	1,	4,	OOPR	},
+/*  3 */ { -OPR,	7,	4,	OOPR	},
+/*  4 */ { LBL,	NUL,	8,	OLBL	},
+/*  5 */ { CON,	NUL,	8,	OCON	},
+/*  6 */ { -CHR,	'!',	8,	OCHR	},
+/*  7 */ { MCH,	NUL,	NUL,	GOTO	},
+
+/*  8 */ { OPR,	NUL,	1,	OOPR	},
+/*  9 */ { MCH,	NUL,	NUL,	RETN	},
+};
+
+struct	tbl	s1[NS1] =	{
+
+/*  0 */ { LBL,	NUL,	6,	ALBL	},		/* label tag */
+/*  1 */ { EOL,	NUL,	NUL,	OREC	},
+/*  2 */ { EOF,	NUL,	NUL,	ENDP	},
+/*  3 */ { COM,	NUL,	10,	NOOP	},
+/*  4 */ { SPA,	NUL,	12,	NOOP	},
+/*  5 */ { MCH,	NUL,	NUL,	OERR	},
+ 
+/*  6 */ { SPA,	NUL,	12,	NOOP	},		/*  6 */
+/*  7 */ { COM,	NUL,	10,	NOOP	},
+/*  8 */ { EOL,	NUL,	NUL,	OREC	},
+/*  9 */ { MCH,	NUL,	NUL,	OERR	},
+
+/* 10 */ { EOL,	NUL,	NUL,	OREC	},		/* 10 */
+/* 11 */ { MCH,	NUL,	NUL,	OERR	},
+
+/* 12 */ { LBL,	NUL,	16,	DOPV	},		/* 12 */
+/* 13 */ { EOL,	NUL,	NUL,	OREC	},
+/* 14 */ { COM,	NUL,	10,	NOOP	},
+/* 15 */ { MCH,	NUL,	NUL,	OERR	},
+
+/* 16 */ { SPA,	NUL,	20,	NOOP	},		/* 16 */
+/* 17 */ { EOL,	NUL,	NUL,	OREC	},
+/* 18 */ { COM,	NUL,	10,	NOOP	},
+/* 19 */ { MCH,	NUL,	NUL,	OERR	},
+
+/* 20 */   /* start of user-defined section */		/* 20 */
+};
+
+struct	tbl	s3[NS3] =	{
+
+/*  0 */ { SPA,	NUL,	1,	NOOP	},
+/*  1 */ { COM,	NUL,	2,	NOOP	},
+/*  2 */ { EOL,	NUL,	NUL,	OREC	},
+/*  3 */ { MCH,	NUL,	NUL,	OERR	},
+
+							/* 4 */
+};
+mactab01.c      362430877   99    31    100644  2487      `
+#include "../mac/mac.h"
+#include "mactab.h"
+#include "mactab.x"
+
+/*
+ * Define section bits and which
+ * sections will be notified if they don't appear
+ * The bits must be upshifted by the section's index
+ * in lvec
+ */
+
+#define PLIT	(1<<0)
+#define PLAB	(1<<1)
+#define PCLS	(1<<2)
+#define PHED	(1<<3)
+#define POPS	(1<<4)
+#define PFMT	(1<<5)
+#define PARG	(1<<6)
+#define PEND	(1<<7)
+
+#define MUST_HAVE	(PHED|PEND)
+#define WARN_HAVE	(POPS|PFMT|PARG)
+
+int fflag, lflag, nflag, hflag, xflag;
+char *list_header = "Mactab";
+
+
+main(argc, argv)
+char	*argv[ ];
+{
+	register int i,j;
+	register char *opts, c;
+	int sects = 0;
+
+	while(argc > 1 && *argv[1] == '-') {
+		argc--;
+		argv++;
+
+		opts = &argv[0][1];
+		while (c = *opts++)
+			switch (c) {
+	
+			case 'h':
+				if(argv[0][2] != 0) {
+					list_header = &argv[0][2];
+					opts = "";
+				} else if(argc > 1) {
+					argc--;
+					list_header = *++argv;
+				}
+				hflag = 1;
+				break;
+	
+			case 'x':
+				xflag = 1;
+				lflag = 1;
+				break;
+
+			case 'f':
+				fflag = 1;
+				lflag = 1;
+				break;
+	
+			case 'n':		/* nroff listing */
+				nflag = 1;
+				lflag = 1;
+				break;
+	
+			case 'l':		/* ordinary listing */
+				lflag = 1;
+				break;
+	
+			default:
+				printf("bad option %s\n", argv[0]);
+			}
+	}
+
+	if (argc > 1)  {
+		close(0);
+		if (open(argv[1], 0) < 0)  {
+			error("can't open %s", argv[1]);
+			exit(1);
+			}
+		if(hflag == 0) {
+			list_header = argv[1];
+			}
+		}
+
+	if (argc > 2)  {
+		fd = creat(argv[2], 0666);
+		if (fd < 0)  {
+			error("can't create %s", argv[2]);
+			return;
+			}
+		}
+
+
+	/*
+	 *   The parser description is made up of several parts.
+	 *
+	 *	The first symbol seen must be a label, and if not,
+	 *	it is a fatal error. the label's value determines
+	 *	the type of section to follow. the section is
+	 *	terminated by an eof (% in col 1).
+	 */
+
+	for (;;)  {			/* get all segs */
+
+		getlin();
+		getsym();		/* initial label */
+
+		if (sym == EOF)  {
+			pend();
+			break;
+			}
+
+		if (sym != LBL)  {
+			error("section descriptor needed", 0);
+			exit(1);
+			}
+
+		/*
+		 *   Decode descriptor and call handler.
+		 */
+
+		for (i=0; lvec[i]; i++)
+			if (compar(lvec[i], clabel))  {
+				sects |= (1<<i);
+				fn = avec[i];
+				(*fn)();
+				break;
+				}
+
+		if (!lvec[i])  {
+			error("%s: no such section", clabel);
+			exit(1);
+			}
+
+		}
+
+	j = 1;
+	for(i = 0; lvec[i]; i++) {
+		j <<= 1;
+		if((j & MUST_HAVE) && !(j & sects))
+			error("section %s missing", lvec[i]);
+		if((j & WARN_HAVE) && !(j & sects))
+			warn("section %s missing", lvec[i]);
+	}
+}
+
+mactab02.c      362430877   99    31    100644  3155      `
+#include	"../mac/mac.h"
+#include	"../mac/m.out.h"	/* for magic words */
+#include	"mactab.h"
+#include	"mactab.x"
+
+
+/*
+ *   Machine header section.
+ *
+ *   Contains a set necessary data items describing
+ *   the target machine's architecture.
+ */
+phed()
+{
+	register char *r;
+	register char cc;
+	register int ndc;
+	register int i;
+
+	ndc = 0;			/* number of dc?'s */
+	head.h_page = 60;		/* def. page size */
+	head.h_i_len = 1;		/* basic instr len = 1 addressable
+					/* unit
+					*/
+	head.h_i_flg = 0;		/* free form instrs */
+	head.h_addr = 16;		/* def. addr. len. = 16 bits */
+	head.h_mword = MWORDR;		/* r-file magic word */
+	head.h_macmword = MWORD;	/* m.out default magic word */
+
+	while (getlin())  {
+
+		getsym();
+		if (sym != LBL)  {
+			error("symbolic needed", 0);
+			continue;
+			}
+
+		if (compar("dc", clabel))  {
+			if (ndc >= 4)  {
+				error("only 4 dc's allowed", 0);
+				continue;
+				}
+
+			getsym();
+			if (sym != LBL && sym != LIT)  {
+				error("dc char missing", 0);
+				continue;
+				}
+
+			head.dctype[ndc].f_class = clabel[0];
+
+			while (*p == ' ' || *p == '\t')
+				p++;
+
+			head.dctype[ndc].f_len = fmtscan(&head.dctype[ndc]);
+
+			ndc++;
+			continue;
+			}
+
+		if (compar("defmt", clabel))  {
+			head.dctype[4].f_class = '\0';
+			while (*p == ' ' || *p == '\t')
+			p++;
+			head.dctype[4].f_len = fmtscan(&head.dctype[4]);
+			continue;
+			}
+
+		if (compar("mac", clabel))  {
+			getsym();
+			if (sym != STR)  {
+				error("string needed", 0);
+				continue;
+				}
+
+			copy(clabel, head.h_mac);
+			continue;
+			}
+
+		if (compar("page", clabel))  {
+			getsym();
+			if (sym != CON)  {
+				error("page length required");
+				continue;
+				}
+
+			head.h_page = mem;
+			continue;
+			}
+
+		if (compar("byte", clabel))  {
+			getsym();
+			if (sym != CON || mem <= 0)  {
+				error("funny byte width %s", clabel);
+				continue;
+				}
+
+			head.h_bu_len = mem;
+			continue;
+			}
+
+		if (compar("word", clabel))  {
+			getsym();
+			if (sym != CON || mem <= 0)  {
+				error("funny word width %s", clabel);
+				continue;
+				}
+
+			head.h_w_len = mem;
+			continue;
+			}
+
+		if (compar("instr",clabel))  {
+			getsym();
+			if (sym != CON || mem <=0)  {
+				error("funny instruction width %s", clabel);
+				continue;
+				}
+
+			head.h_i_len = mem;
+			continue;
+			}
+
+		if (compar("bind",clabel))  {
+
+			head.h_i_flg = 1;
+			continue;
+
+			}
+
+		if (compar("addr",clabel))  {
+			getsym();
+			if (sym != CON || mem <= 0)  {
+				error("funny address bit width %s", clabel);
+				continue;
+				}
+
+			head.h_addr = mem;
+			continue;
+			}
+
+		if (compar("magic",clabel))  {
+			getsym();
+			if (sym != CON)  {
+				error("funny magic number %s", clabel);
+				continue;
+				}
+
+			head.h_macmword = mem;
+			continue;
+			}
+
+		if (compar("ii", clabel))  {
+			warn("illegal instr. no longer required");
+			continue;
+			}
+
+		if (compar("pc", clabel))  {
+			getsym();
+			if (sym != LBL)  {
+				error("label needed", 0);
+				continue;
+				}
+
+			if (compar("pre", clabel))
+				head.h_pc_post = FALSE;
+			else
+				if (compar("post", clabel))
+					head.h_pc_post = TRUE;
+				else
+					error("pre/post pc only", 0);
+
+			continue;
+			}
+
+		error("bad header descriptor %s", clabel);
+		}
+
+	return;
+}
+
+mactab03.c      362430877   99    31    100644  422       `
+#include "../mac/mac.h"
+#include "mactab.h"
+#include "mactab.x"
+
+
+pend()
+{
+	if (nerr)  {
+		error("errors encountered: %d", nerr);
+		exit(1);
+		}
+
+	write(fd, &head, HT);
+	if (nlit)
+		write(fd, &literals[0][0], nlit*8);
+	write(fd, &format[0], nfmt * FD);
+	write(fd, &opcode[0], head.h_o_len);
+	write(fd, &parse[0], head.h_p_len * TBL);
+	if (nsym)
+		write(fd, &symtab[0], ST * nsym);
+
+	close(fd);
+
+	propcodes();
+
+	exit(0);
+}
+mactab04.c      362430878   99    31    100644  336       `
+#include	"../mac/mac.h"
+#include	"mactab.h"
+#include	"mactab.x"
+
+
+plit()
+{
+	while (getlin())  {
+		getsym();
+		if (sym != LBL)  {
+			error("label expected", 0);
+			continue;
+			}
+
+		/*
+		 *   Copy into literal table
+		 */
+
+		copy(clabel, literals[nlit]);
+
+		nlit++;
+		if (nlit >= NLIT)
+			break;
+		}
+
+	head.h_literals = nlit;
+	return;
+}
+mactab05.c      362430878   99    31    100644  1407      `
+#include	"../mac/mac.h"
+#include	"mactab.h"
+#include	"mactab.x"
+
+
+plab()
+{
+	register int i;
+
+	for (i=0; i<NSYM; i++)  {
+		if (!getlin())
+			break;
+
+		getsym();
+		if (sym != LBL)  {
+			error("pre-definition - label needed", 0);
+			continue;
+			}
+
+		copy(clabel, &symtab[i].s_u.s_name[0]);
+
+		getsym();
+		if (sym != CON)  {
+			error("defined label - value required",0);
+			mem = 0;
+			}
+
+		symtab[i].s_value = mem;
+		symtab[i].s_mode  = ABS | DEFN;
+		}
+
+	nsym = i;
+	head.h_labels = i;
+
+	return;
+}
+
+pclass() {
+	register int i, class = 1, classp;
+
+	while(getlin()) {
+		getsym();
+
+		if(sym != LBL) {
+			error("class name required", 0);
+			continue;
+		}
+
+		if(mem == ERR) {
+			if(class == 0)
+				error("%s too many classes\n", clabel);
+			copy(clabel, symtab[nsym].s_u.s_name);
+			symtab[nsym].s_value = class;
+			symtab[nsym].s_mode = DEFN|CLAS;
+			symtab[nsym].s_class = 0;
+			classp = nsym;
+			class <<= 1;
+			nsym++;
+		} else if(!(symtab[mem].s_mode & CLAS)) {
+			error("%s is a label, not a classname", clabel);
+			continue;
+		} else {
+			classp = mem;
+		}
+
+		for(;;) {
+			getsym();
+			if(sym == EOL)
+				break;
+			if(sym == DEL)
+				continue;
+
+			if(sym != LBL) {
+
+				error("expected label", 0);
+				continue;
+			}
+
+			if(mem == ERR || (symtab[mem].s_mode & CLAS)) {
+				error("label name required", 0);
+				continue;
+			}
+
+			symtab[mem].s_class |= symtab[classp].s_value;
+		}
+	}
+	head.h_labels = nsym;
+}
+
+mactab06.c      362430878   99    31    100644  2754      `
+#include	"../mac/mac.h"
+#include	"mactab.h"
+#include	"mactab.x"
+
+extern int cmp();
+extern struct od *getod();
+extern struct os *getos();
+
+pops()
+{
+	register struct od *od_start, *od_new;
+	register struct os *os_new;
+	int format, selector, opval; /* the three opcode attributes */
+	int n_od, n_os;
+
+	od_start = NUL;
+	n_od = n_os = 0;
+
+	while(getlin()) {
+
+		getsym();
+		if(sym != LBL) {
+			error("bad opcode");
+			continue;
+		}
+
+		od_new = getod();
+
+		copy(clabel, od_new->od_name);
+		od_new->od_list = NUL;
+		od_new->od_next = od_start;
+		od_start = od_new;
+		n_od++;
+
+		for(;;) {
+			getsym();
+			if(sym == EOL)
+				break;
+
+			if(sym != CHR || mem != '(') {
+				error("expected '('");
+				break;
+			}
+
+			getsym();
+
+			if(sym != CON) {
+				error("opcode selector missing");
+				break;
+			}
+
+			selector = mem;
+
+			getsym();
+
+			if(sym != CON) {
+				error("opcode format no. missing");
+				break;
+			}
+
+			format = mem;
+
+			getsym();
+
+			if(sym != CON) {
+				error("opcode value missing");
+				break;
+			}
+
+			opval = mem;
+
+			getsym();
+
+			if(sym != CHR || mem != ')') {
+				error("expected ')'");
+				break;
+			}
+
+			os_new = getos();
+
+			os_new->os_sel = selector;
+			os_new->os_fmt = format;
+			os_new->os_opc = opval;
+			os_new->os_next = od_start->od_list;
+			od_start->od_list = os_new;
+
+			n_os++;
+		}
+	}
+
+	/* reformat the table into a single space for
+	 * writing onto disk
+	 */
+
+	head.h_o_len = n_od*sizeof(struct oc) + n_os*sizeof(struct os);
+	refmtop(n_od, od_start, head.h_o_len);
+	qsort(opcode, n_od, sizeof(struct oc), cmp);
+	head.h_ops = nops = n_od;
+	head.h_opstart = opcode;
+}
+
+refmtop(n_oc, od_start, space)
+struct od *od_start;
+{
+	register struct od *q, *r;
+	register struct oc *p;
+	struct oc *oc_start;
+
+	opcode = p = (struct oc *)malloc(space);
+
+	if(p == NUL) {
+		fprintf(stderr, "No space for opcode table\n");
+		exit(1);
+	}
+
+	q = od_start;
+	oc_start = p;
+	while(q != NUL) {
+		*p++ = *((struct oc *) q );
+		r = q->od_next;
+		free(q);
+		q = r;
+	}
+
+	refmtos(n_oc, oc_start, (struct os *)p);
+}
+
+refmtos(n_oc, oc_start, os_start)
+struct oc *oc_start;
+struct os *os_start;
+{
+	register struct oc *p;
+	register struct os *q, *r;
+
+	p = oc_start;
+	q = os_start;
+
+	while(n_oc-- > 0) {
+		r = p->oc_list;
+		p->oc_list = q;
+		while(r != NUL) {
+			*q = *r;
+			r = r->os_next;
+			if(r != NUL) {
+				q->os_next = q+1;
+				free(r);
+			}
+			++q;
+		}
+
+		p++;
+	}
+}
+
+struct od *
+getod() {
+	register struct od *od;
+
+	od = (struct od *)malloc(sizeof (struct od));
+
+	if(od == NUL) {
+		fprintf(stderr, "No space for opcode table\n");
+		exit(1);
+	}
+
+	return(od);
+}
+
+struct os *
+getos() {
+	register struct os *os;
+
+	os = (struct os *)malloc(sizeof (struct os));
+
+	if(os == NUL) {
+		fprintf(stderr, "No space for opcode table\n");
+		exit(1);
+	}
+
+	return(os);
+}
+mactab07.c      362430878   99    31    100644  2327      `
+#include	"../mac/mac.h"
+#include	"mactab.h"
+#include	"mactab.x"
+
+
+/*
+ *   Format descriptors.
+ */
+
+pfmt()
+{
+	register struct fd *q;
+	register int i;
+
+	if (!head.h_bu_len)  {
+		error("basic addr width in bits required before dc", 0);
+		exit(1);
+		}
+
+	q = &format[0];
+	for (i=0; i<NFMT; i++)  {
+		if (!getlin())
+			break;
+
+		q->f_class = getnum();
+		while (*p == ' ' || *p == '\t')
+			p++;
+		q->f_len = fmtscan(q);
+		q++;
+		}
+
+	head.h_formats = nfmt = i;
+	return;
+}
+
+fmtscan(q)
+register struct fd *q;
+{
+	register int n;
+	register int i;
+	register cc;
+	register int width;
+	register int w;
+
+
+	width = 0;
+	n = 0;
+
+	while (cc = *p++)  {
+
+		if (cc == ' ' || cc == '\t')
+			continue;
+
+		if (cc == '\n' || cc == COMCHAR)  {
+			q->f_desc[n] = 0;
+			break;
+			}
+
+		if (n > 6) {
+			error("too many format descriptor subsets");
+		}
+
+
+		if (cc >= 'a' && cc <= 'm' ||
+		    cc == 'o' || cc == '!' ||
+		    cc == 'v')  {
+			p++;			/* skip : */
+			w = getnum();
+			q->f_desc[n] = cc;
+			q->f_width[n] = w;
+			n++;
+			width += w;
+			continue;
+			}
+
+		if (cc == 'p')  {
+			cc = *p++;
+			p++;				/* bump past : */
+			if (cc < 'a' || cc > 'm')  {
+				error("pc relative arg only", 0);
+				return(0);
+				}
+			w = getnum();
+			q->f_desc[n] = cc | PMODE;
+			q->f_width[n] = w;
+			n++;
+			width += w;
+			continue;
+			}
+
+		if (cc == 'r')  {
+			w = getnum();
+			q->f_value[n] = w;
+			if (w <= 0)  {
+				error("bad reloc. width", 0);
+				return(0);
+				}
+			cc = *p++;
+			if (cc == 'p') {
+				cc = *p++;
+				q->f_desc[n] = PMODE;
+			} else
+				q->f_desc[n] =  0;
+			p++;			/* skip :*/
+			if (cc < 'a' || cc > 'm')  {
+				error("bad reloc. arg %c", cc);
+				return(0);
+				}
+			w = getnum();
+			q->f_desc[n] |= (cc | RMODE);
+			q->f_width[n] = w;
+			n++;
+			width += w;
+			continue;
+			}
+
+		if (cc == '#')  {		/* const */
+			q->f_value[n] = i = getnum();
+			p++;
+			w = getnum();		/* width */
+			if (i >> w)
+				error("data overflow", 0);
+			width += w;
+			q->f_desc[n] = '#';
+			q->f_width[n] = w;
+			n++;
+			continue;
+			}
+
+		if (cc == 'n')  {		/* next n bits */
+			p++;
+			w = getnum();
+			width += w;
+			q->f_desc[n] = cc;
+			q->f_width[n] = w;
+			n++;
+			continue;
+			}
+
+		error("bad format character %c", cc);
+		}
+
+	if (width % head.h_bu_len)  {
+		error("format descriptor uneven multiple",0);
+		return(ERR);
+		}
+
+	return(width / head.h_bu_len);
+}
+
+mactab08.c      362430879   99    31    100644  6044      `
+#include	"../mac/mac.h"
+#include	"mactab.h"
+#include	"mactab.x"
+
+
+
+/*
+ *   Argument of instruction decoder.
+ *   This generates the parser for MAC.
+ */
+parg()
+{
+	register int ns2;
+	register int i;
+
+	treeinit();			/* set up dummy node (root) */
+	while (getlin())  {
+		p = buf;
+		gentree();
+		}
+
+	if (!tree->n_alt)  {
+		/* null root */
+		error("no parser table generated !", 0);
+		return;
+		}
+
+
+					/* cvt tree to linear array */
+	if((parse = (struct tbl *) malloc(sizeof (struct tbl)
+		* (nslot + NE1 + NS1 + NS3))) == NULL) {
+		error("parse table too large", 0);
+		exit(1);
+	}
+
+	s2 = &parse[NE1+NS1];
+
+	ptable(tree->n_alt);
+	ns2 = tp;			/* size of seg. 2 */
+
+
+	/*
+	 *   Apply various patches to the generated
+	 *   table to make it really useable.
+	 *
+	 *   Symbol type MCH implies always match
+	 *   on this parser symbol. It is so MAC
+	 *   can do special actions at these times.
+	 */
+
+	for (i=0; i<ns2; i++)  switch (s2[i].tb_sym)  {
+
+		case EOL:
+			s2[i].tb_sym = MCH;
+			s2[i].tb_act = SELC;		/* select options */
+			s2[i].tb_mem = NUL;
+			s2[i].tb_next = ns2;
+			break;
+
+		case ERR:
+			s2[i].tb_sym = MCH;
+			s2[i].tb_act = OERR;		/* parse error */
+			break;
+
+		case LIT:
+			s2[i].tb_sym = -s2[i].tb_sym;
+			s2[i].tb_act =  NOOP;
+			break;
+
+		case DEL:
+		case CHR:
+		case OPR:
+			s2[i].tb_sym = -s2[i].tb_sym;
+			s2[i].tb_act = ODEL;
+			break;
+
+		case STR:
+			s2[i].tb_act = OSTR;
+			break;
+
+		case EXP:
+			/*
+			 *   Call expr parser. An error is
+			 *   detectable on 1st symbol. If so -
+			 *   the expr parser returns to next
+			 *   state. If a good match - it returns
+			 *   to the next tree state.
+			 */
+			s2[i].tb_sym = MCH;
+			s2[i].tb_act = EXPR;
+			break;
+
+
+		case LBL:
+			/* make an entry for a classed label */
+
+			s2[i].tb_act = CLBL;
+			break;
+
+		default:
+			/* don't do anything */
+			s2[i].tb_act = NOOP;
+			break;
+
+		}
+
+	/*
+	 *   Relocate all four sections and combine into one.
+	 */
+
+	/*
+	 *   First copy the predefined sections into the table
+	 */
+
+	copytbl(e1, &parse[0], NE1);
+	copytbl(s1, &parse[NE1], NS1);
+	/* section 2 (user-defined) is already in place */
+	copytbl(s3, &parse[ns2+NS1+NE1], NS3);
+
+	tp = 0;
+	relocate(&e1[0], NE1);
+	relocate(&s1[0], NS1);
+	relocate(&s2[0], ns2);
+	relocate(&s3[0], NS3);
+
+
+	head.h_p_len = tp;
+	head.h_p_start = NE1;
+	return;
+}
+
+/*
+ *   This routine was designed with the aid of the
+ *   project supervisor - Mr. Richard Miller.
+ *
+ *   The author of MACTAB duly thanks him.
+ *
+ */
+gentree()
+{
+	register struct node *q;
+	register cc;
+
+	q = tree;
+
+	do	{
+
+		getsym();
+		while (sym != q->n_sym || mem != q->n_mem)
+
+			if (q->n_alt)
+				q = q->n_alt;
+
+			else  {
+				q->n_alt = dslot();
+				q = q->n_alt;
+				while (sym != EOL)  {
+					getsym();
+					q->n_next = dslot();
+					q = q->n_next;
+					/*
+					 * for each 'next' branch we need
+					 * an extra table slot
+					 */
+					nslot++;
+					}
+
+				}
+
+			/*  */
+
+		q = q->n_next;
+		}	while (sym != EOL);
+
+	/*  end of sectional build  */
+
+	return;
+}
+
+/*
+ *   Initialise root node for gentree();
+ */
+treeinit()
+{
+	sym = ERR;
+	tree = dslot();
+	return;
+}
+
+/*
+ *   Define a node in the tree.
+ */
+struct node *
+dslot()
+{
+	register int i;
+	register struct node *t;
+
+	if((t = (struct node *) malloc(sizeof (struct node))) == NULL) {
+		error("parse table too large", 0);
+		exit(1);
+		}
+
+	t->n_sym = sym;
+	if (sym == LBL) {
+		if(mem < 0) {
+			error("%s undefined", clabel);
+		} else if (!symtab[mem].s_mode & CLAS) {
+			error("%s is not a class", clabel);
+		} else
+			t->n_mem = symtab[mem].s_value;
+	} else {
+		t->n_mem = mem;
+	}
+
+	for (i=0; i<4; i++)
+		t->n_mem4[i] = mem4[i];
+	t->n_alt = NUL;
+	t->n_next = NUL;
+
+	nslot++;
+	return(t);
+}
+
+/*
+ *   Recursive descent routine to build a state table
+ *   from the previously generated n-ary tree.
+ */
+ptable(q)
+register struct node *q;
+{
+	register struct node *r;
+	register int rtp;
+	register int rltp;
+	register int i;
+	register int j;
+
+	r = q;
+	rtp = tp;
+
+	/*
+	 *   Scan list of 'alts' for an EOL.
+	 *   For very subtle reasons - this MUST be
+	 *   the last alt in the alt list.
+	 *   In order for the parser not to be confused
+	 *   between a classed label and an expression
+	 *   EXP must be the last alt before EOL
+	 */
+	shiftdown(EXP, q);	/* shift any EXP to the end of the alt list */
+	shiftdown(EOL, q);	/* make EOL the last alt. If there was an
+				 * EXP it will now also be in the right place
+				 */
+
+	do	{
+		s2[tp].tb_sym = q->n_sym;
+		s2[tp].tb_mem = q->n_mem;
+		for (j=0; j<4; j++)
+			s2[tp].tb_arg[j] = q->n_mem4[j];
+
+		tp++;
+		q = q->n_alt;
+		}	while (q);
+
+	rltp = tp;			/* remember last Tree Pointer */
+	s2[tp++].tb_sym = ERR;		/* stopping point */
+
+	/*
+	 *   Descend each alt,next level in turn to
+	 *   build the full tree.
+	 */
+	for (i=rtp; i<rltp; i++)  {
+
+		s2[i].tb_next = tp;
+		if (r->n_next)
+			ptable(r->n_next);
+
+		r = r->n_alt;
+		}
+
+	return;
+}
+
+relocate(t, n)
+register struct tbl *t;
+register int n;
+{
+	register struct tbl *ep;
+	register int rtp;
+	register int nxt;
+	register int i;
+
+
+	rtp = tp;
+	ep = &parse[rtp];
+	tp += n;
+
+	while (n-- > 0)  {
+		nxt = t->tb_next;
+		ep->tb_next = (nxt == 0 ? 0 : nxt + rtp);
+		ep++;
+		t++;
+		}
+
+	return;
+}
+
+copytbl(s, d, n)
+struct tbl *s, *d;
+int n;
+{
+	register char *s1, *d1;
+	register int i;
+
+	i = n * sizeof (struct tbl);
+	s1 = (char *) s; d1 = (char *) d;
+
+	while (i-- > 0)
+		*d1++ = *s1++;
+}
+
+shiftdown(sym, q)
+register struct node *q;
+{
+	do	{
+		/* once sym is found, the first part of the &&
+		 * will always be true
+		 */
+		if (q->n_sym == sym && q->n_alt)
+			swap(q, q->n_alt);
+		q = q->n_alt;			/* move along alt list */
+
+	}	while (q);
+}
+
+static int swap(m, d)
+register struct node *m, *d;
+{
+	register int i, j;
+	/*
+	 *    swap entries *m and *d.
+	 *   this will put sym as last on list.
+	 *   note - don't swap alt pointers !!!
+	 */
+	i = d->n_sym;
+	d->n_sym = m->n_sym;
+	m->n_sym = i;
+
+	i = d->n_mem;
+	d->n_mem = m->n_mem;
+	m->n_mem = i;
+
+	for (j=0; j<4; j++)  {
+		i = d->n_mem4[j];
+		d->n_mem4[j] = m->n_mem4[j];
+		m->n_mem4[j] = i;
+		}
+
+	i = (int)d->n_next;
+	d->n_next = m->n_next;
+	m->n_next = (struct node *)i;
+}
+mactab09.c      362430879   99    31    100644  4299      `
+#include	"../mac/mac.h"
+#include	"mactab.h"
+#include	"mactab.x"
+
+
+/*
+ *   Misc. routines.
+ */
+
+
+getlin()
+{
+	register int nchar;
+	register cc;
+
+	nchar = 0;
+	nline++;
+	p = buf;
+
+	while ((cc = getchar())  != EOF)  {
+		if (nchar > 510)  {
+			error("buffer overflow - line truncated", 0);
+			while((cc = getchar()) != EOF && cc != '\n');
+			buf[511] = '\n';
+			return(512);
+			}
+
+		if (cc == '%' && !nchar)  {
+			while ((cc = getchar()) != '\n' && cc != EOF);
+			break;			/* simulate eof */
+			}
+
+		if (cc == COMCHAR) {
+			while((cc = getchar()) != '\n' && cc != EOF);
+			if(nchar == 0) {
+				nline++;
+				continue;
+				}
+			}
+
+		buf[nchar++] = cc;
+		if (cc == '\n')
+			return(nchar);
+		}
+
+	buf[0] = '\0';
+	return(0);
+}
+
+getsym()
+{
+	register char *s;
+	register cc;
+	register int i;
+
+	cc = skipws();
+
+	if (any(cc, alptab) >= 0)  {
+		s = clabel;
+		*s++ = cc;
+		while (any(*p, alptab) >= 0 || any(*p, dectab) >= 0)
+			*s++ = *p++;
+		*s = '\0';
+		if (compar("expr", clabel))  {
+			sym = EXP;
+			mem = NUL;
+			return;
+			}
+
+		for (mem=0; mem<nlit; mem++)
+			if (compar(literals[mem], clabel))  {
+				sym = LIT;
+				return;
+				}
+
+		sym = LBL;
+		for(mem = nsym-1; mem >= 0; mem--) {
+			if(compar(symtab[mem].s_u.s_name, clabel))
+				break;
+		}
+		return;
+		}
+
+
+	if ((i = any(cc, oprtab)) >= 0)  {
+		sym = OPR;
+		mem = i;
+		return;
+		}
+
+
+	if (cc >= '0' && cc <= '9')  {
+		p--;
+		sym = CON;
+		mem = getnum();
+		return;
+		}
+
+	if (cc == '\n')  {
+		sym = EOL;
+		mem = NUL;
+		for (i=0; i<4; i++)
+			mem4[i] = 0;
+		return;
+		}
+
+	if (cc == '{')  {
+		/* funny EOL symbol - with SELC options */
+		s = &mem4[0];
+		for (i=0; i<4; i++)
+			*s++ = getnum();
+		sym = EOL;
+		while (*p != '\n')
+			p++;
+		return;
+		}
+
+	if (cc == ',')  {
+		sym = DEL;
+		mem = cc;
+		return;
+		}
+
+	if (cc == '"')  {
+		i = 0;
+		while (*p != '"' && *p != '\n')
+			clabel[i++] = *p++;
+		clabel[i] = '\0';
+		if (*p == '"')
+			p++;
+		sym = STR;
+		mem = NUL;
+		return;
+		}
+
+	sym = CHR;
+	mem = cc;
+	return;
+}
+
+compar(r, s)
+register char *r;
+register char *s;
+{
+	register int n;
+
+	n = 1;
+	while (*r == *s)  {
+		if (*r == '\0')
+			return(1);
+		if (n > 8)
+			return(0);
+		r++;
+		s++;
+		n++;
+		}
+	return(0);
+}
+
+getnum()
+{
+	register int i,j;
+	register cc;
+
+	cc = skipws();
+	i = 0;
+	if (cc == '0')  {
+
+		if (*p == 'x')  {
+			p++;
+			while ((j = any(*p, hextab)) >= 0)  {
+				i = (i<<4) | j;
+				p++;
+				}
+			return(i);
+			}
+
+		if (*p == 'b')  {
+			p++;
+			while (*p == '0' || *p == '1')
+				i = (i<<1) | (*p++ - '0');
+			return(i);
+			}
+
+		while ((j = any(*p, octtab)) >= 0)  {
+			i = (i<<3) | j;
+			p++;
+			}
+		return(i);
+		}
+
+	i = cc - '0';
+	while ((j = any(*p, dectab)) >= 0)  {
+		i = i * 10 + j;
+		p++;
+		}
+	return(i);
+}
+
+any(cc, str)
+register char cc;
+char	 str[ ];
+{
+	register i = 0;
+
+	while (str[i])  {
+		if (cc == str[i])
+			return(i);
+		i++;
+		}
+
+	return(ERR);
+}
+
+error(s, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9)
+register char *s;
+{
+	printf("%3d: ", nline);
+	printf(s, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	putchar('\n');
+	nerr++;
+
+	return;
+}
+
+warn(s, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9)
+register char *s;
+{
+	printf("%3d: ", nline);
+	printf(s, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+	putchar('\n');
+	return;
+}
+
+copy(r, s)
+register char *r;
+register char *s;
+{
+	while ((*s++ = *r++) != '\0');
+	return;
+}
+
+/*
+ * Scan opcode selector list
+ * for selector match & return pointer if found
+ * else return NUL
+ */
+
+struct os *
+scanop(list, selector)
+struct oc *list;
+register int selector;
+{
+	register struct os *p;
+
+	p = list->oc_list;
+	while(p != NUL) {
+		if(p->os_sel == selector)
+			break;
+		p = p->os_next;
+	}
+
+	return(p);
+}
+
+/*
+ *   Comparison for searching.
+ *
+ *	return  1:  *r > *r,
+ *		0:  *r = *s,
+ *	       -1:  *r < *s.
+ */
+cmp(r, s)
+register char *r;
+register char *s;
+{
+	register int i;
+
+	/*
+	 *   Fast compare.
+	 */
+	if (*r < *s)
+		return(-1);
+	if (*s < *r)
+		return(1);
+	i = 0;
+	while (i < 8)  {
+		r++;
+		s++;
+
+		if (*r < *s)
+			return(-1);
+		if (*s < *r)
+			return(1);
+		if (!*r)
+			return(0);		/* equal on nul */
+		i++;
+		}
+	return(0);
+}
+
+/*	Skip white space and comments  - comments
+	start with COMCHAR and end at the real end of the line
+*/
+
+skipws() {
+	register char cc;
+
+	while((cc = *p++) == ' ' || cc == '\t');
+	if(cc == COMCHAR)
+		while((cc = *p++) != '\n' && !(cc == '\\' && *p == '\n') &&
+			cc != '\0');
+
+	return(cc);
+}
+
+mactab10.c      362430880   99    31    100644  10827     `
+#include "../mac/mac.h"
+#include "mactab.h"
+#include "mactab.x"
+#include <ctype.h>
+
+extern fflag, hflag, lflag, nflag, xflag;
+extern char *list_header;
+extern char *clasnam();
+
+static int cmp99();
+static int cmpxr();
+static char line[512];
+static int accept;
+static int args;
+static int xref;	/* wrongo! nfmt is declared elsewhere!  nfmt; */
+
+struct fmt {
+	char	*fm_header,
+		*fm_xhead,
+		*fm_exp,
+		*fm_lit,
+		*fm_lbl,
+		*fm_opr,
+		*fm_con,
+		*fm_eol,
+		*fm_del,
+		*fm_str,
+		*fm_chr,
+		*fm_trailer,
+		*fm_spc1,
+		*fm_spc2,
+		*fm_spc3,
+		*fm_bp,
+		*fm_class;
+};
+
+struct fmt nml = {
+	"\t\t%s Opcode Formats\n\n",
+	"\t\t%s Opcode Crossreference\n\n",
+	"<expr> ",
+	"%s ",
+	"<label> ",
+	"%c ",
+	"0x%x ",
+	"",
+	"%c ",
+	"\"<string>\" ",
+	"%c ",
+	"",
+	"\n",
+	"\n\n",
+	"\n\n\n",
+	"\n\n\n",
+	"<class:%.8s>"
+};
+
+struct fmt nrf = {
+	".ce\n%s Opcode Formats\n.sp 2\n.nf\n",
+	".ce\n%s Opcode Crossreference\n.sp 2\n.nf\n",
+	"<expr> ",
+	"\\fB%s\\fR ",
+	"<label> ",
+	"\\fB%c\\fR ",
+	"\\fB0x%x\\fR ",
+	"",
+	"\\fB%c\\fR ",
+	"\\fB\"\\fR<string>\\fB\"\\fR ",
+	"\\fB%c\\fR ",
+	".fi\n",
+	".sp 1\n",
+	".sp 2\n",
+	".sp 3\n",
+	".bp\n",
+	"<class:%.8s>"
+};
+static struct fmt *fmt;
+char *nrhead = "";
+
+#ifdef		PDP11
+
+int	bitmask[ ] =	{
+
+	0x0000,	0x0001,	0x0003,	0x0007,	0x000f,
+		0x001f,	0x003f,	0x007f,	0x00ff,
+		0x01ff,	0x03ff,	0x07ff,	0x0fff,
+		0x1fff,	0x3fff,	0x7fff,	0xffff
+
+	};
+
+#endif
+
+
+#ifdef		INTERDATA
+
+int	bitmask[ ] =	{
+
+	0x00000000,  0x00000001,  0x00000003,  0x00000007,  0x0000000f,
+		     0x0000001f,  0x0000003f,  0x0000007f,  0x000000ff,
+		     0x000001ff,  0x000003ff,  0x000007ff,  0x00000fff,
+		     0x00001fff,  0x00003fff,  0x00007fff,  0x0000ffff,
+		     0x0001ffff,  0x0003ffff,  0x0007ffff,  0x000fffff,
+		     0x001fffff,  0x003fffff,  0x007fffff,  0x00ffffff,
+		     0x01ffffff,  0x03ffffff,  0x07ffffff,  0x0fffffff,
+		     0x1fffffff,  0x3fffffff,  0x7fffffff,  0xffffffff
+
+	};
+
+#endif
+
+propcodes() {
+	register char *op = (char *)opcode;
+	register int thisclass, lastclass, n, x;
+	register struct ocdump *p, *startcl;
+	register struct ocdump *model;
+
+	if(lflag == 0)
+		return;
+
+	xref = 0;
+
+	opclasses();
+
+	if(hflag == 0 && head.h_mac[0] != 0) {
+		list_header = head.h_mac;
+	}
+
+	fmt = nflag ? &nrf : &nml;
+	if(nflag) {
+		printf(nrhead);
+	}
+
+	printf(fmt->fm_header, list_header);
+
+	for(args = 0; args <= ('m' - 'a'); args++) {
+		p = dmplst;
+		n = 0;
+		x = 0;
+		thisclass = lastclass = p->ocd_classes;
+
+		while(n < nops) {
+			startcl = p;
+			model = NUL;
+			while(thisclass == lastclass && n < nops) {
+				accept = 0;
+				scantree(tree, p, args, 0);
+				if(accept) {
+					printf("%-8.8s  ", (p->ocd_opc)->oc_name);
+					if((x+1) % 6 == 0)
+						printf("\n");
+					x++;
+					model = p;
+				}
+				p++;
+				n++;
+				lastclass = thisclass;
+				if(n < nops)
+					thisclass = p->ocd_classes;
+			}
+			if(model != NUL) {
+				if(x % 6 != 0)
+					printf("\n");
+				printf(fmt->fm_spc2);
+
+				dumptree(tree, line, startcl, p, model, 0, 0);
+				printf(fmt->fm_spc2);
+			}
+			lastclass = thisclass;
+			x = 0;
+		}
+	}
+	if(xflag) {
+		xref = 1;
+		printf(fmt->fm_bp);
+		printf(fmt->fm_xhead, list_header);
+		doxref();
+	}
+	printf(fmt->fm_spc2);
+	printf(fmt->fm_trailer);
+
+}
+
+dumptree(p, cp, startcl, endcl, modelcl, cont_str, picargs)
+register struct node *p;
+char *cp;
+register struct ocdump *startcl, *endcl;
+register struct ocdump *modelcl;
+{
+	register int class;
+	register char *pp;
+	register int form;
+
+	if( p->n_alt != NUL )
+		dumptree(p->n_alt, cp, startcl, endcl, modelcl, cont_str, picargs);
+
+	switch(p->n_sym) {
+
+	case EXP:
+/***		printf("expr\n"); ***/
+		cp = lformat(cp, fmt->fm_exp);
+		picargs++;
+		break;
+
+	case LIT:
+/***		printf("literal\n"); ***/
+		cp = lformat(cp, fmt->fm_lit, getlit(p->n_mem));
+		break;
+
+	case LBL:
+/***		printf("label\n"); ***/
+		if((pp = clasnam(p->n_mem)) != NULL) {
+			cp = lformat(cp, fmt->fm_class, pp);
+		} else {
+			cp = lformat(cp, fmt->fm_lbl);
+		}
+		picargs++;
+		break;
+
+	case OPR:
+/***		printf("operator\n"); ***/
+		cp = lformat(cp, fmt->fm_opr, oprtab[p->n_mem]);
+		break;
+
+	case CON:
+/***		printf("constant\n"); ***/
+		cp = lformat(cp, fmt->fm_con, p->n_mem);
+		picargs++;
+		break;
+
+	case EOL:
+/***		printf("eol\n"); ***/
+		*cp++ = '\n';
+		*cp = '\0';
+
+		if(xref) {
+			if(!cont_str)
+				printf("%2d:\t<opcode>\t%s", ++nfmt, line);
+			break;
+		}
+
+		class = (p->n_mem4[0] & SELOPC) ? p->n_mem4[2] : 0;
+
+		form = (p->n_mem4[0] & SELFMT) ?
+			p->n_mem4[3] :
+			scanop(modelcl->ocd_opc, class)->os_fmt;
+
+		if((modelcl->ocd_classes & (1 << class)) && args == picargs
+			&& !cont_str) {
+			printf("\t<opcode>\t%s", line);
+			if(fflag) {
+				printf(fmt->fm_spc1);
+				prfmts(startcl, endcl, class, p);
+				printf(fmt->fm_spc1);
+			}
+		}
+		break;
+
+	case DEL:
+/***		printf("del\n"); ***/
+		cp = lformat(cp, fmt->fm_del, p->n_mem);
+		break;
+
+	case STR:
+/***		printf("string\n");***/
+		cp = lformat(cp, fmt->fm_str);
+		cont_str = 1;
+		picargs++;
+		break;
+
+	case CHR:
+/***		printf("chr\n"); ***/
+		cp = lformat(cp, fmt->fm_chr, p->n_mem);
+		break;
+
+	default:
+/***		printf("null action\n"); ***/
+		break;
+	}
+
+	if( p->n_next != NUL )
+		dumptree(p->n_next, cp, startcl, endcl, modelcl, cont_str, picargs);
+
+}
+
+char *
+lformat(cp, format, a, b, c, d, e, f, g, h)
+register char *cp, *format;
+{
+	sprintf(cp, format, a, b, c, d, e, f, g, h);
+
+	while(*cp)
+		cp++;
+
+	return(cp);
+}
+
+char *
+getlit(n)
+{
+	static char nosuch[] = "NONEXISTANT LITERAL ";
+	static char lit[20];
+	register char *s1, *s2;
+
+	if(n >= nlit)
+		return(nosuch);
+
+	for(s1 = lit, s2 = literals[n]; *s2 && s2 < &literals[n][8];
+		*s1++ = *s2++);
+	*s1 = '\0';
+
+	return(lit);
+}
+
+opclasses() {
+	struct oc *op = opcode;
+	register int i, classes;
+	register struct os *q;
+	struct ocdump *p;
+
+	if((p = dmplst = (struct ocdump *)malloc(nops * sizeof(struct ocdump))) == NULL) {
+		printf("No core for opcode dump\n");
+		exit(1);
+	}
+
+
+	for(i = 0; i < nops; i++) {
+		classes = 0;
+		for(q = opcode[i].oc_list; q != NUL; q = q->os_next) {
+			if(q->os_sel < WORDSIZ)
+				classes |= (1 << q->os_sel);
+		}
+		p->ocd_classes = classes;
+		p->ocd_opc = op;
+		p++;
+		op++;
+	}
+
+	qsort(dmplst, nops, sizeof (struct ocdump), cmp99);
+}
+
+static int cmp99(r, s)
+register struct ocdump *r, *s;
+{
+	if(nbits(r->ocd_classes) > nbits(s->ocd_classes))
+		return(1);
+
+	if(nbits(r->ocd_classes) < nbits(s->ocd_classes))
+		return(-1);
+
+	if(r->ocd_classes > s->ocd_classes)
+		return(1);
+
+	if(r->ocd_classes < s->ocd_classes)
+		return(-1);
+
+	return(cmp(r->ocd_opc, s->ocd_opc));
+}
+
+static int cmpxr(r, s)
+register struct ocdump *r, *s;
+{
+	return(cmp(r->ocd_opc, s->ocd_opc));
+}
+
+nbits(i)
+register int i;
+{
+	register j, k;
+
+	k = 0;
+	for(j = WORDSIZ; j > 0; j--) {
+		if(i == 0)
+			break;
+		if(i & 1)
+			k++;
+		i >>= 1;
+	}
+}
+
+prfmts(startcl, endcl, class, node)
+register struct node *node;
+register struct ocdump *startcl, *endcl;
+{
+	register int val, fmt;
+
+	while (startcl < endcl) {
+
+		fmt = (node->n_mem4[0] & SELFMT) ?
+			node->n_mem4[3] :
+			scanop(startcl->ocd_opc, class)->os_fmt;
+
+		val = (node->n_mem4[0] & SELVAL) ?
+			node->n_mem4[1] : 0;
+
+		if(args == nargs(fmt)) {
+			printf("\t%-8.8s\t", (startcl->ocd_opc)->oc_name);
+			prform(fmt, val, scanop(startcl->ocd_opc, class)->os_opc);
+			putchar('\n');
+		}
+
+		startcl++;
+	}
+}
+prform(form, val, op)
+{
+	register struct fd *fmt;
+	register int pr;
+	register int rf;
+	register int n;
+	register int mask;
+	register int i;
+	register int ilen;
+
+
+	/*
+	 *   Format descriptor loop.
+	 *
+	 */
+
+	ilen = 0;
+	fmt = &format[form];
+
+	for (i=0; fmt->f_desc[i] != 0; i++)  {
+
+		ilen += fmt->f_width[i];
+		pr = fmt->f_desc[i] & (RMODE | PMODE);
+		n  = fmt->f_desc[i] & 0xff;
+
+						/* opcode field */
+		if (n == 'o')  {
+			rf = fmt->f_width[i];
+			nprintb(op & BITMASK(rf), rf);
+			continue;
+			}
+
+							/* pc field */
+		if (n == '!')  {
+			nprintc('!', fmt->f_width[i]);
+			continue;
+			}
+
+							/* arg field */
+		if (n >= 'a' && n <= 'm')  {
+			rf = fmt->f_width[i];
+			if (pr & PMODE)  {
+				/* pc relative */
+				n = toupper(n);
+				}
+
+			if (pr & RMODE)  {
+				/* byte relocation */
+				nprintc('_', fmt->f_value[i]);
+				nprintc('\b', fmt->f_value[i]);
+				}
+
+			nprintc(n, rf);
+			continue;
+			}
+
+							/* constant field */
+		if (n == '#')  {
+			nprintb(fmt->f_value[i], fmt->f_width[i]);
+			continue;
+			}
+
+							/* value field */
+		if (n == 'v')  {
+			rf = fmt->f_width[i];
+			mask = BITMASK(rf);
+			nprintb(val & mask, rf);
+			val >>= rf;
+			continue;
+			}
+
+							/* next n bits of opcode */
+		if (n == 'n')  {
+			rf = fmt->f_width[i];
+			mask = BITMASK(rf);
+			nprintb(op & mask, rf);
+			op >>= rf;
+			continue;
+			}
+
+
+
+		/*  should never happen - but ... */
+
+		printf("corrupted format descriptor <%c>\n", n);
+		exit(1);
+
+		}
+
+	return;
+}
+nprintc(c, n)
+register char c;
+register int n;
+{
+	while(n-- > 0)
+		putchar(c);
+}
+
+nprintb(v, n)
+register int v, n;
+{
+	if(--n > 0)
+		nprintb(v>>1, n);
+
+	putchar('0' + (v & 1));
+}
+
+char *clasnam(class) {
+
+	register int syms = nsym-1;
+
+	while(syms >= 0) {
+
+		if((symtab[syms].s_mode & CLAS) && symtab[syms].s_value == class)
+			return(symtab[syms].s_u.s_name);
+		syms--;
+	}
+
+	return(NULL);
+}
+
+scantree(p, ocd, args, cont_str)
+register struct node *p;
+register struct ocdump *ocd;
+{
+	register int fmt, class;
+
+	if(p->n_alt != NUL)
+		scantree(p->n_alt, ocd, args, cont_str);
+
+	if(p->n_sym == STR)
+		cont_str = 1;
+
+	if(p->n_sym == EOL) {
+
+		class = (p->n_mem4[0] & SELOPC) ? p->n_mem4[2] : 0;
+
+		fmt = (p->n_mem4[0] & SELFMT) ?
+			p->n_mem4[3] :
+			scanop(ocd->ocd_opc, class)->os_fmt;
+
+		if((ocd->ocd_classes & (1 << class)) && nargs(fmt) == args
+			&& !cont_str)
+			accept = 1;
+	}
+
+	if(p->n_next != NUL)
+		scantree(p->n_next, ocd, args, cont_str);
+}
+
+nargs(form)
+{
+	return(format[form].f_class);
+}
+
+doxref() {
+	register struct ocdump *p;
+	register int i;
+
+	qsort(dmplst, nops, sizeof(struct ocdump), cmpxr);
+
+	dumptree(tree, line, NUL, NUL, NUL, 0, 0);
+
+	printf(fmt->fm_spc1);
+
+	printf("Op%sFmt   |", nflag ? "\\\\":"\\");
+	for(i = 1; i <= nfmt; i++)
+		printf(" %2d |", i);
+	putchar('\n');
+	printf("----------");
+	for(i = 1; i <= nfmt; i++)
+		printf("-----");
+	putchar('\n');
+
+	p = dmplst;
+	for(i = 1; i <= nops ; i++) {
+		printf("%-8.8s |", p->ocd_opc);
+		nfmt = 0;
+		xrtree(tree, p, 0, 0);
+		putchar('\n');
+		p++;
+	}
+}
+
+xrtree(p, ocd, args, cont_str)
+register struct node *p;
+register struct ocdump *ocd;
+{
+	register int fmt, class;
+
+	if(p->n_alt != NUL)
+		xrtree(p->n_alt, ocd, args, cont_str);
+
+	switch(p->n_sym) {
+
+	case STR:
+		cont_str = 1;
+		args++;
+		break;
+
+	case EXP: case CON: case LBL:
+		args++;
+		break;
+
+	case EOL:
+
+		class = (p->n_mem4[0] & SELOPC) ? p->n_mem4[2] : 0;
+
+		fmt = (p->n_mem4[0] & SELFMT) ?
+			p->n_mem4[3] :
+			scanop(ocd->ocd_opc, class)->os_fmt;
+
+		if(!cont_str) {
+			++nfmt;
+
+			if((ocd->ocd_classes & (1 << class)) &&
+				nargs(fmt) == args)
+				printf(" %2d |", nfmt);
+			else
+				printf(" ** |");
+		}
+	}
+
+	if(p->n_next != NUL)
+		xrtree(p->n_next, ocd, args, cont_str);
+}
+
+test.d          362430880   99    31    100644  452       `
+header
+pc	post
+; comment
+byte	8 ;comment
+word	3
+instr	1
+addr	16
+dc	b	r4a:8
+defmt		a:8
+mac	"test selc clause"
+%
+literals
+a
+b
+%
+labels
+r0	0
+r1	1
+fr0	0
+fr1	1
+%
+classes
+intreg	r0,r1
+fltreg	fr0,fr1
+%
+args
+a		{ 0b0010	0	1	0
+b		{ 0b0011	0	1	1
+
+" "
+expr
+intreg,expr	{0b0011		0	1	3
+fltreg,expr	{0b0011		0	1	3
+%
+opcodes
+clr	(0 0 0x10)  (1 0 0x11)
+test	(0 2 0x30)  (1 2 0x31)
+rts	(0 0 0x20)  (1 0 0x21)
+%
+formats
+0	o:8
+0	o:8#0xff:8
+1	o:8r4a:8
+2	o:7 a:1 b:8
+%
+end
+test.f          362430880   99    31    100644  611       `
+		test selc clause Opcode Formats
+
+clr       rts       test      
+
+
+	<opcode>	
+
+	clr     	00010000
+	rts     	00100000
+
+	<opcode>	b 
+
+	clr     	0001000111111111
+	rts     	0010000111111111
+	test    	0011000111111111
+
+	<opcode>	a 
+
+	clr     	00010001
+	rts     	00100001
+
+
+
+test      
+
+
+	<opcode>	<expr> 
+
+	test    	00110000____aaaaaaaa
+
+
+
+clr       rts       test      
+
+
+	<opcode>	<class:fltreg>, <expr> 
+
+	clr     	0010001abbbbbbbb
+	rts     	0100001abbbbbbbb
+	test    	0110001abbbbbbbb
+
+	<opcode>	<class:intreg>, <expr> 
+
+	clr     	0010001abbbbbbbb
+	rts     	0100001abbbbbbbb
+	test    	0110001abbbbbbbb
+
+
+
+
+
+
+test.l          362430881   99    31    100644  245       `
+		test selc clause Opcode Formats
+
+clr       rts       test      
+
+
+	<opcode>	
+	<opcode>	b 
+	<opcode>	a 
+
+
+test      
+
+
+	<opcode>	<expr> 
+
+
+clr       rts       test      
+
+
+	<opcode>	<class:fltreg>, <expr> 
+	<opcode>	<class:intreg>, <expr> 
+
+
+
+
+

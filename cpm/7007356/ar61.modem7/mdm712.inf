@@ -1,0 +1,110 @@
+
+TOPIC :  MDM712 MODEM PROGRAM INSTALLATION INFORMATION
+
+FROM  :  IRVIN M. HOFF W6FFC
+
+DATE  :  07/27/83
+
+
+       This program is based on one originally written by Ward Christ-
+ensen in September 1977.  It has since undergone a considerable number
+of changes.  Recent changes include auto-dialing and continuous redial-
+ing for the Hayes 300 or 1200 Smartmodem and the U. S. Robotics, along
+with the standard PMMI 103 routines the program has long supported.  It
+also handles up to two alternate long distance systems such as SPRINT,
+ALLNET, MCI, (can be used to auto-dial TYMNET), etc.
+
+
+NOTE:  Special configuration files are being added for specific types of
+       computers.  A large number are already available (as shown below)
+       and others are being added as interest escalates.  This file will
+       be updated accordingly.
+
+       To adapt this version to your equipment, you will want to get
+some of the following programs:
+
+              Program name          Purpose
+
+               MDM712.ASM       (source code file)
+               MDM712.COM       (object code file)
+               MDM712.DOC       (how-to-use file)
+               MDM712.INF       (information file)
+               M712AC.ASM       (AppleCat II overlay file)
+	       M712AL.ASM       (Altos Series 5 overlay file)
+               M712AP.ASM       (Apple II overlay file)
+               M712DP.ASM       (Datapoint 1560 overlay)  
+               M712GP.ASM       (General purpose overlay)
+               M712H8.ASM       (Heath/Zenith H89 file)
+               M712HP.ASM       (Hewlett Packard 125 file)	
+               M712HZ.ASM       (Heath/Zenith Z-100 file)
+               M712I2.ASM       (Interfacer 3/4 overlay file)
+               M712KP.ASM       (KayPro overlay file)
+               M712MD.ASM       (Morrow MD overlay file)
+               M712MM.ASM       (Morrow Multi I/O overlay file)
+               M712NE.ASM       (NEC PC-8001 overlay file)
+               M712NM.ASM       (Phone number overlay, ALD information)
+               M712OS.ASM       (Osborne OS-1 overlay file)
+               M712OT.ASM       (Otrona Attache overlay file)
+               M712OX.ASM       (Osborne Executive overlay file)
+               M712PM.ASM       (PMMI S-100 modem overlay)
+               M712TV.ASM       (TeleVideo TS-802 overlay)
+               M712XE.ASM       (Xerox 820 overlay file)
+               M712ZB.ASM       (Telcon ZORBA overlay file)
+
+
+       (The minimum would be any pair in one of the examples shown
+below.)
+
+       There are several ways by which you can set the proper ports,
+status pin values, etc. for your equipment.
+
+
+     1) Use your editor, ASM (or MAC)  MDM712.COM    and
+        and DDT (or SID) with:         M712xx.ASM
+
+               (712xx stands for an appropriate overlay)
+                                                             or
+     2) Use your editor, ASM (or MAC)  MDM712NASM
+
+
+        One of those should appeal to you.  The program is designed to
+work immediately for PMMI users with no changes - just use MDM712.COM.
+(You might wish to change some of the available options, however.  It
+is set to use base port 0C0H.)
+
+        When ready to use the program, type 'H' (for 'HELP'), hit RET
+and it will display helpful information on the commands.  There are so
+many commands there are several pages.  You can abort the display with
+a CTL-C.  (One of the most useful features being CTL-P to toggle your
+printer on/off.)  You can also type a question mark (?) which shows the
+current parameters.
+
+        The program has received numerous worthwhile optional features
+in the past several months.
+
+
+SUPPLEMENTAL INFORMATION OF INTEREST:
+
+        When adapting the program to your equipment, this table might be
+helpful:
+
+        (A typical port number will be shown for each.)
+
+                             PMMI UART   8251     2661     8250
+
+PORT    (control or status)     0C0H     29H      0EDH    0D8H+5
+BAUDRP  (baud rate port)       PORT+2    ---      ---      ---
+MODCTL1 (control or status)     PORT     PORT     PORT     PORT
+MODCTL2 (2nd control port)     PORT+3    ---      ---      ---
+MODDATP (data port)            PORT+1   PORT-1   PORT-1   PORT-5 
+MODRCVB (receive bit)           02H      02H      02H      01H
+MODRCVR (receive ready)         02H      02H      02H      01H
+MODSNDB (send buffer empty bit) 01H      01H      01H      20H
+MODSNDR (send ready)            01H      01H      01H      20H
+
+        (1  For a PMMI board with UART for a typical S-100 computer)
+        (2  For a non-PMMI computer using a 8251A to external modem)
+        (3  For a Heath/Zenith Z-100 computer using the 2661B I/O
+        (4  For a Heath/Zenith Z-19 or Z-89 using the 8250 I/O
+
+

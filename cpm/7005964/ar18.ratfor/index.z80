@@ -1,0 +1,69 @@
+;1	FUNCTION INDEX(KA,KB,LB,LA)
+;2	INTEGER*1 KA,KB
+;3	C Must pass string lengths explicitly in F66
+;4	DIMENSION KA(LA),KB(LB)
+	EXT	$AT
+	ENTRY	INDEX
+INDEX	LD	(KA),HL
+	LD	(KB),DE
+	LD	A,02
+	LD	HL,LB
+	CALL	$AT
+;7	NS=LA-LB+1
+;8	DO 100 INDEX=1,NS
+	LD	HL,(LB)
+	LD	E,(HL)
+	INC	HL
+	LD	D,(HL)
+	DEC	DE
+	LD	(LB1),DE
+	LD	HL,(LA)
+	LD	A,(HL)
+	INC	HL
+	LD	H,(HL)
+	LD	L,A
+	XOR	A
+	SBC	HL,DE
+	PUSH	HL	;Number of start positions
+;9	C Try each possible start position until KB found
+;10	DO 10 I=1,LB
+;11	IA=I+INDEX-1
+;12	10	IF(KA(IA).NE.KB(I))GO TO 100
+	LD	HL,(KA)
+	POP	BC
+DO100:	LD	DE,(KB)
+	LD	A,(DE)
+	CPIR	;search for 1st character
+	JR	NZ,NFND
+	PUSH	BC
+	LD	BC,(LB1)	;number chars yet to find
+	LD	A,C
+	OR	B
+	JR	Z,FOUND
+	PUSH	HL
+DO10:	INC	DE
+	LD	A,(DE)
+	CPI	;Compare rest of string
+	JR	NZ,NXT
+	JP	PE,DO10	;if any left to find
+;String found starting at INDEX
+	POP	HL
+FOUND:	POP	BC
+	LD	DE,(KA)	;Calculate INDEX
+	XOR	A
+	SBC	HL,DE
+	RET
+NXT:	POP	HL
+	POP	BC
+	LD	A,B	;repeat if INDEX<NS
+	OR	C
+	JR	NZ,DO100
+NFND:	LD	HL,0
+	RET
+KA:	DS	2
+KB:	DS	2
+LB:	DS	2
+LA:	DS	2
+LB1:	DS	2
+	END
+

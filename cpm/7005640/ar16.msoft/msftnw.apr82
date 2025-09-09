@@ -1,0 +1,179 @@
+
+                      MICROSOFT NEWSLETTER
+
+                           APRIL, 1982
+
+                ================================
+
+                         16 BIT PRODUCTS
+                         ---------------
+
+  There appears to be some confusion about our 16 bit products.  
+I hope this will explain our current policies and procedures.
+  First, at this time, *NONE* of our 16 bit products (8086, 8088, 
+Z8000, 68000) are available as Microsoft Corporation End User 
+Products.  Instead, these products (MS-DOS, Xenix, Fortran, 
+Cobol, Pascal, etc) are licensed to a number of commercial 
+customers who then market them in conjunction with their own 
+hardware and/or systems.  We often refer to these customers as 
+"OEMs".   Since the marketing of a product licensed in this 
+manner is strictly up to the OEM, we cannot answer any questions 
+regarding the availability (or price) of these products.  In 
+addition, since the product may have been modified for the 
+specific hardware involved, we cannot answer any questions 
+regarding a particular implementation.
+  In summary, our 16 bit products are "custom" products; for 
+information regarding these products, one should contact a 
+particular OEM, and NOT Microsoft. 
+
+      FILE ACCESS (CONT'D)
+      --------------------
+  Last issue we talked a bit about files, and the way CP/M 
+allocates file space on disk. This issue, let's look at 
+sequential file access as performed by MBasic/Bascom, Fortran and 
+Cobol.
+  First, a quick review.  A sequential file is a file that is 
+accessed in sequence.  This "sequence" is the order in which the 
+records were entered.  If we write a file that contains 100 
+records;  and then attempt to read that file, if we want the 98th 
+record, we first have to read past records 1 thru 97. There is no 
+way to access a record "out of sequence" or randomly.  Usually, 
+if we want to update a sequential file, we read the old file as 
+input and write a new file containing the changed information.
+  Now let's look at how each language handles sequential files. 
+
+  MBASIC/BASCOM 
+  The commands Basic uses for sequential I/O include OPEN, CLOSE, 
+LINE INPUT#, INPUT#, PRINT#, and WRITE#, and PRINT# USING.  When 
+we OPEN a sequential file in Basic, it must be OPENed as either 
+an input (I) or output (O) file.  
+  A file is then written by using a PRINT or WRITE statement for 
+each record you wish to write.  For example, the following code 
+segment opens a file, and writes 100 records to the file: 
+     OPEN "O",1,"TEST.DAT"
+     FOR I= 1 TO 100
+     J = I + I
+     PRINT #1,"RECORD # ";I;J
+     NEXT I
+     CLOSE 
+  Note that we wrote both a string variable and a numeric 
+variable.  The resulting file will look something like this: 
+ RECORD # 1  2
+ RECORD # 2  4
+ ... 
+  The file will contain 100 records and each record will be 
+terminated with a carriage return/line feed pair.  The file 
+itself is terminated with a control-Z (Hexadecimal 1A).  
+  In the example above, we used the PRINT statement.  If we had 
+used the WRITE statement, the string would have been placed in 
+quotes, and there would have been a comma between the values of I 
+and J.  This is particularly useful when we attempt to read the 
+file again, as we'll see below.  PRINT# USING will produce 
+formatted output to a file, just a PRINT USING produces formatted 
+output to your terminal.
+  Just as we have the WRITE and PRINT statements for output, we 
+have two corresponding statements for input:  LINE INPUT, and 
+INPUT.  The difference is the manner in which data is delimited.  
+LINE INPUT will read an entire record, up to (but not including) 
+the CR/LF (carriage return/line feed) pair.  This allows us to 
+input entire strings of data at one time. The INPUT statement 
+expects each numeric data item to be delimited by commas, and 
+strings contained in quotes.  
+  On input, the end of a file is detected by the EOF function, as 
+illustrated below: 
+     WHILE NOT E0F(1)
+     .
+     .
+     WEND
+  Here, we're checking file number 1 for end of file.  
+  To summarize, the file I/O statements in Basic format output 
+just as they would to the screen or printer.  The WRITE statement 
+writes a file that can be read easily with the INPUT statement;  
+and PRINT will generate data readable by the LINE INPUT 
+statement.
+
+  FORTRAN 
+  Like Basic, FORTRAN uses the same I/O statements for sequential 
+disk files as it does for I/O to the console. However, in FORTRAN 
+we have a few extensions.  First, we can make use of UNFORMATTED 
+I/O to and from disk.  We also have access to the END= branch in 
+the READ statement, and the ERR= branch in the READ and WRITE 
+statements.  Finally, one should remember that FORTRAN limits 
+disk records to 128 characters of less.
+  Let's look at formatted I/O first.  Sequential disk I/O in 
+FORTRAN is performed in the same manner as console I/O, with one 
+important difference.  When FORTRAN reads or writes a disk 
+record, the record is terminated with a carriage return ONLY (no 
+line feed).  Similarly, when FORTRAN reads a disk file, it 
+assumes that the records are terminated with only a carriage 
+return, and the line feed is treated as data.  
+  This idiosyncrasy can be annoying, but is fairly easy to deal 
+with.  On input, we can simply skip the first character of the 
+second thru last records. On output, define a LOGICAL variable as 
+the line feed character and write in an A1 format, as below: 
+     LOGICAL LF
+     LF=10
+     DO 10 I=1,10
+     WRITE(6, 20) I,LF 10   CONTINUE 20   FORMAT(I4,A1)
+  This will write a line feed character at the end of each line 
+of output.  Notice that we do not need to allow one character at 
+the beginning of the record for carriage control, as we would if 
+we were writing to a printer.   Unformatted I/O is performed in 
+the same manner as formatted I/O, but without the FORMAT 
+statement.  This allows us to write records to disk files in 
+"memory image" or binary format, which saves disk space, and is 
+faster.  Files written in this manner may be read only by another 
+FORTRAN program, also using unformatted I/O.
+  As mentioned earlier, we can use the END= and ERR= branches 
+with disk I/O statements.  The format of these statements is as 
+shown in your FORTRAN manual.  The END= will transfer control to 
+the specified statement number when an end of file is 
+encountered.  The ERR= will transfer control to the specified 
+statement when a physical I/O error occurs.  Note that ERR= will 
+NOT trap "logical" errors, such as errors in format width or 
+specification.   FORTRAN allows us to use a file name other than 
+the standard "FORTnn.DAT";  by using the OPEN subroutine.  This 
+statement is formatted as follows: 
+ CALL OPEN(filenumber,filename,  drivenumber) 
+  Where filenumber is the LUN (6-10) of the file, filename is the 
+name of the file (in quotes), and drivenumber is the drive number 
+according to the following table: 
+   drivenumber    drive
+   -----------    -----
+          0       currently 
+                  logged 
+          1         A:
+          2         B:
+             etc.
+  An example of this statement is shown below.  Note that the 
+filename is filled to 8 spaces, and the extension to 3 spaces. 
+Also, the period separating the filename and the extension is 
+also left out. 
+    CALL OPEN(6,'TEST    DAT',0) 
+  This statement will open the file TEST.DAT on the default 
+drive, for use as logical unit (LUN) 6. 
+
+  COBOL 
+  COBOL has two different formats for sequential files.  
+  The first (and default) is SEQUENTIAL.  In the SEQUENTIAL 
+format, records are considered variable length, and each record 
+begins with several characters of control information.  Files 
+written with the SEQUENTIAL organization can be read only by 
+another COBOL program.
+  The second format is called LINE SEQUENTIAL, and is the 
+familiar CP/M "text" file format.  Each record is variable 
+length, terminated by a carriage return/ line feed pair, and 
+consists of a string of ASCII characters.
+  Like BASIC, COBOL sequential files may be opened for input or 
+output.  There is also a special mode allowed for COBOL files, 
+called EXTEND.  A file that is OPENed EXTEND may have records 
+added to it at the end of the file.
+  While COBOL code is a bit to lengthy for an example here, watch 
+the public access space for examples of COBOL file and screen 
+handling in the near future.
+
+  That's all for this issue.  In the next issue we'll talk about 
+random access files and how they are implemented in the various 
+Microsoft languages.
+
+

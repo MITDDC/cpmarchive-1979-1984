@@ -1,0 +1,150 @@
+
+                     ** RT-11 to CP/M Converter Package **
+                           ** User Documentation **
+
+1.0  Introduction
+
+     The RT-11 to CP/M converter is designed to facilitate communication
+between CP/M and RT-11 speaking systems.  Both systems are numerous, and a
+given person is likely to have to move files back and forth between systems of
+the two types.  For example, an individual may want to exchange files between
+his personal CP/M system and his company's RT-11 system.  I wrote this package
+for my own personal use, so I can justify distributing it in the public domain
+as it is, in effect, "paid for".
+
+     Since I am making no money on this thing, I would resent it highly if
+anyone else reaped any profit from my effort.  Sharing the wealth is one thing,
+but when there is no wealth to share.....  I claim copyright on the package so
+that I can get legally annoyed at anyone who tries to sell the package.  The
+deal is this:  You may make as many copies for as many people as you like.  You
+may charge them no more than the cost of a disk (if you provide it), a shipping
+container (if needed and you provide it), and postage (if needed).  I had a
+quesion recently from a user about giving the package to a business--I know
+that they have lots of money, but it's free to them, too.
+
+     With the end of the speech, lets get down to business!
+
+
+2.0  Starting the Package Up
+
+     I provide compiled objects to everybody as not everybody has a new-enough
+revision of BDS C to compile the thing.  Other mishaps occur, too.  You still
+need to know how to compile the thing, though, in case you lose the object or
+in case you modify the package.  Anyhow, to compile the program, you will need
+Version 1.4 or later of Leor Zolman's (i.e. BD Software's) C compiler.  For BDS
+C, see Lifeboat Associates in New York City.  The command sequence goes like
+this:
+
+     A>CC1 RT11.C
+     A>CC1 RTMISC.C
+     A>CC1 RTFILES.C
+     A>CLINK RT11 RTMISC RTFILES
+
+It is important that the linkage be done on one line as the library rename()
+function will be pulled instead of the rename() function in RTFILES.C if you
+don't.  Anyhow, you now have RT11.COM and three intermediate files RT*.CRL.
+Kill the .CRL files if you want to as they are no longer needed.
+
+     To actually run the package, type RT11 with no parameters.  The package
+will load and demand that you put your RT-11 disk in drive B and your CP/M disk
+in drive A.  Do so.  If the RT-11 disk doesn't have a valid directory yet (a
+new disk), that's OK.  Type carriage return.  If you type anything but just
+return, the package will not go into operation.  At this point, the package
+will ask for today's date as mm/dd/yy.  This establishes the system date word
+for any RT-11 files created.  A valid system date word appears to be a must for
+Version 3 RT-11 systems.  Once you have a valid date in place, the package will
+ask for a command.  Invalid commands draw a list of valid commands.  ? is an
+invalid command, so ? will get you help if you need it.  Commands are a single
+letter. Any additional letters are ignored.  Additional data needed by a
+command is asked for via a fairly detailed prompt set.
+
+3.0  Commands
+
+3.1  ? (Help)
+
+     This gets you a list of valid commands.  Any invalid command will do here,
+but ? is easy to remember.  No parameters needed.
+
+3.2  D (Directory)
+
+     This command lists the directory on the RT-11 diskette -- i.e. the disk in
+drive B.  No parameters needed.
+
+3.3  E (Erase file)
+
+     This command prompts the user for a valid RT-11 file name.  Answering the
+file name prompt with just a carriage return will abort the command.  No
+wildcard characters are supported.  The program then erases the specified file
+from the RT-11 disk.
+
+3.4  G (Get file)
+
+     This command gets a file from the RT-11 disk (drive B) and puts it on the
+CP/M disk (drive A).  The user is prompted first for the RT-11 file name, then
+for the CP/M file name.  Answering the RT-11 file name prompt with just a
+carriage return will abort the command.  Answering the CP/M file name prompt
+with just a carriage return will make the CP/M file have the same name as the
+RT-11 file.  The program will then move the file from drive B to drive A a
+block at a time.
+
+3.5  I (Initialize disk)
+
+     This command allows you to initialize the directory and volume ID of a new
+diskette.  To initialize the directory, the program needs to know: 1) how many
+blocks of directory to allocate, and 2) how many "extra bytes" to allocate per
+directory entry.  For a single-density floppy (DX:), four directory segments
+is the usual number.  RT-11 itself does not use the extra bytes, so this is
+almost always 0.  With this, the program will initialize the directory.  To
+initialize the volume ID block, the program needs to know the volume name and
+the owner name.  Both names are truncated to 12 characters so that they will
+fit in their allotted slots on the disk.  If you answer either prompt with just
+a carriage return, a default value will be substituted.  The defaults are RT11A
+for volume name and blank for owner name.  With this, the program will
+initialize the volume ID block and return to command level.  For extra safety,
+the program asks you if you really want to do this.  Any reply except an
+upper-case Y will abort the command.  I make it picky in this regard since this
+operation causes the certain loss of all data on the disk.
+
+3.6  P (Put file)
+
+     This command allows you to put a file onto the RT-11 disk (drive B) from
+the CP/M disk (drive A).  The program will prompt you for a CP/M file name and
+an RT-11 file name.  Answering either with just a carriage return will abort
+the command.  This differs from the G command because all valid RT-11 file
+names are valid CP/M file names but NOT vice-versa.  The program will then move
+the file from drive A to drive B a block at a time.
+
+3.7  Q (Quit)
+
+     This command returns you to CP/M.  You will be given an opportunity to put
+in your system disk before the system is re-booted.  Change disks if necessary
+and type any character to re-boot.
+
+3.8  R (Rename file)
+
+     This command allows you to rename a file on the RT-11 disk (drive B).  The
+program will prompt you for the old name.  If the file does not exist, the
+command aborts with a message to that effect.  Otherwise, the program prompts
+you for the new name and renames the file.  If you answer either name wih just
+a carriage return, the command aborts.
+
+3.9  T (Type file)
+
+     This command lets you look at text files on the RT-11 disk (drive B).  The
+command prompts you for a file name.  If you answer with just a carriage
+return, the command aborts.  Otherwise, the file is displayed on the screen.
+The results with object files, etc. can be spectacular.  I haven't yet
+implemented an abort character, so long listings can be a bit tedious.  A
+control C is no good unless you want to wind up back at CP/M.
+
+
+4.0  Summation
+
+     I include the source code so that you can either fix the things that I
+haven't gotten around to implementing (the problem with non-profit things like
+this) or fix any bugs that you find.  I'd appreciate a shout about any bugs as
+I try to keep the things killed off as best I can.  Good luck!
+
+                                             William C. Colley, III
+                                                  19-MAR-81
+

@@ -1,0 +1,98 @@
+PROCEDURE QQSORT( left, right : INTEGER );
+{
++ WRITTEN BY:	Richard C. Singleton
++ DATE WRITTEN:	Sept 17, 1968
++
++ This procedure sorts the elements of array A[1..n] into
+  ascending order.  The method used is similar to QUICKERSORT
+  by R.S. Scowen, which in turn is similar to an algorithm given
+  by Hibbard and to Hoare's QUICKSORT.
++
++ Modified 6 Oct 1980 for Pascal/Z.		+}
+{
+GLOBAL
+  TYPE
+    Index  = 1..N;
+    Scalar = <Some scalar type>
+  VAR
+    A : array [Index] of Scalar;
+}
+VAR
+  t, tt: Scalar;
+  ii, ij, k, L, m : integer;
+  IL, IU : array [0..20] of integer;{Permit sorting up to 2**(K+1)-1 elements}
+  i, j, ix	: integer;
+  alldone, d : BOOLEAN;
+BEGIN 				{$C-,M-,F-}
+  i := left;
+  j := right;
+  m := 0;
+  ii := i;
+  alldone := FALSE;
+  REPEAT
+     If ((j-i) > 10) OR ( (i = ii) and (i < j) ) then
+       BEGIN
+	  ij := (i+j) DIV 2;
+	  t := A[ij];
+	  k := i;
+	  L := j;
+	  If (A[i] > t) then
+	    begin
+	      A[ij] := A[i]; A[i] := t; t := A[ij]
+	    end;
+	  If (A[j] < t) then
+	    begin
+	      A[ij] := A[j]; A[j] := t; t := A[ij];
+	      If (A[i] > t) then
+		begin
+		  A[ij] := A[i]; A[i] := t; t := A[ij]
+		end;
+	    end;
+	  d := FALSE;
+	  REPEAT
+	    REPEAT
+	      L := L - 1;
+	    UNTIL A[L] <= t;
+	    REPEAT
+	      k := k + 1;
+	    UNTIL A[k] >= t;
+	    If (k <= L) then
+	      begin
+	        tt := A[L]; A[L] := A[k]; A[k] := tt;
+	      end
+	    Else
+	      d := TRUE;
+	  UNTIL d;
+	  If (L-i) > (j-k) then
+	    begin  IL[m] := i; IU[m] := L; i := k end
+	  Else
+	    begin IL[m] := k; IU[m] := j; j := L end;
+	  m := m + 1;
+       END
+     Else
+       BEGIN
+	 For ix := (i+1) to j do
+	   begin
+	     t := A[ix];
+	     k := ix - 1;
+	     If A[k] > t then
+	       begin
+		 REPEAT
+		   A[k+1] := A[k];
+		   k := k - 1;
+		 UNTIL A[k] <= t;
+		 A[k+1] := t;
+	       end;
+	   end;{For ix}
+	 m := m - 1;
+	 If m >= 0 then
+	   begin
+	     i := IL[m];
+	     j := IU[m];
+	   end
+         Else
+	   alldone := TRUE;
+       END;
+  UNTIL alldone;
+END;{of QQSORT}			{$C+,M+,F+}
+

@@ -1,0 +1,10 @@
+oterm version 4.04 -- changes
+
+copyright 1982  Michael M Rubenstein
+
+- the long standing problem that a few people have
+  experienced of occasionally losing echoed
+  characters has been fixed.
+
+- nulls and rubouts are now filtered from the log
+

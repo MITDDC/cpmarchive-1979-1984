@@ -1,0 +1,83 @@
+Changes for RBBS 3.1:
+
+1.  User now receives the message ">>>ACCESS DENIED<<<" if he attempts
+to enter CP/M and there is an asterisk next to his entry in USERS.
+
+2.  The Kill Command reprompts for another message to kill in the same
+fashion as the Read command.
+
+3.  A ^K during a forward sequential Read just skips the rest of the
+current message being displayed and goes on to the next one.
+--------------------
+
+                  RBBS 3.0 Preliminary Documentation
+
+RBBS Version 3.0 is based on RBBS 2.4 and incorporates several mods
+from RBBS-RTN.001.  However, it goes far beyond those mods to fix many
+longstanding bugs as well as add many new features.
+
+The major new feature is a working user password scheme which
+minimally impacts present systems running older versions of RBBS.
+
+The first version of this program has been in use for about a month on
+three RCP/M systems in the El Paso, TX area and has received a
+thorough debugging which led directly to this first public release.
+
+To run this version, you will also need MENURBBS and NEWCOM text
+files, as well as making up your own versions of PWDS, BULLETIN, INFO,
+and ENTERCPM text files.  Only MENURBBS and ENTERCPM are new, and
+ENTERCPM may be extracted from your existing RBBS source file to use.
+
+Users running older versions of RBBS will have to edit their USERS
+file to replace the blanks between fields with semicolons and add a
+new field for the initial default password as follows:
+
+JOE USER;ANYCITY, USA;DEFAULT
+
+Be sure to us overwrite rather than insert mode to make these changes.
+
+The only major drawback to bringing this program up in .COM file
+format is that you will not only need BASCOM and L80, but also a TPA
+of at least 54K to run L80.  Alternately, if you have access to
+PLINKII, you will not have a problem with linking this program.
+
+You will also have to make some trivial mods to the source to
+customize it for you local implementation:
+
+1.  Change VERS1$ in line 190 to be your own system name.
+
+2.  Change SYS1$ and SYS2$ in line 200 to your (the SYSOP's) first and
+last name, respectively.
+
+3.  Change DSK$ in line 220 to the drive containing all the files read
+or used by RBBS.
+
+4.  Remove the REM in lines 890 and 7140 if you want RBBS to store the
+first four characters of the caller's last name beginning at 40H.
+This information may then be used by other programs, such as special
+versions of XMODEM, to log the caller's name in some file.
+
+5.  Change the value for the OUT statement in line 4290.  It is
+presently set up to output a zero in port 82H for a DCHayes modem
+addressed at 80H.
+
+6.  Change your PWDS file to add two new fields, ending up looking
+like the following format:
+
+field1,field2,field3,field4
+
+where:
+
+field1 is the "first name" for direct entry to CP/M
+
+field2 is the "last name" used for the SYSOP login
+
+field3 is the "password" or answer to the prompt in field4 (or NOPASS,
+in which case no password is required of the user)
+
+field4 is the prompt string that the user must answer to match field3.
+
+Enjoy!
+
+--Frank Wancho
+

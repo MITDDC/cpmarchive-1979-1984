@@ -1,0 +1,873 @@
+>>>>>>>>>>>>>>>>>>>>> CP/M-Net News <<<<<<<<<<<<<<<<<<<<<<<<
+
+============================================================
+Number 7	       July, 1981	   Volume 1, Issue 7
+============================================================
+
+		      In This Issue
+		      =============
+
+		 SIG/M-CPMUG Caveat (???)
+	     By: Kelly Smith, CP/M-Net "SYSOP"
+
+     A Comparison of CP/M and UNIX: A Matter of Choice
+      By: Richard Conn, with additions by: Ted Shapin
+
+      Midwest Update: SQ, USQ, and Other New Programs
+	    By: Ben Bronson, Hyde Park RCPM/RBBS
+
+	 Rumor-MILL...Possible NEW Mega-RCPM System!
+		 By: Kelly Smith, CP/M-Net
+
+ Printed  monthly  (at worst quarterly) to inform user's  of
+RCPM Systems to the latest software news,  information,  and
+updates   of   public	domain	 software   accessible	 via
+telephone/modem transfer.  Yearly subscription for copies of
+the  CP/M-Net News may be obtained by mailing $18.00  (check
+or money orders only) to Kelly Smith,  CP/M-Net,  3055	Waco
+Street,  Simi Valley,  California 93063.  CP/M-Net is a non-
+profit	orginization and all money received on subscriptions
+are utilized for the sustaining and enhancments of the CP/M-
+Net System.
+
+ If  you  would  like to contribute an	article,  include  a
+column	containing your area of interest and  expertise,  or
+participate  in an open forum for conversation and  transfer
+of  ideas,  feel free to send it to the CP/M-Net System  and
+indicate that you would like it to be included in the  CP/M-
+Net  News...if possible,  use WordStar (trademark,  MicroPro
+International)	or  Electric  Pencil   (trademark,   Micheal
+Shrayer) in 60 column format.
+
+
+NOTE:  CP/M is a registerd trademark of Digital Research
+
+
+		       On the Stack
+		       ============
+
+ Many  thanks to the following supporting subscribers to the
+CP/M-Net News:
+
+R. C. Alberts, R. C. Alberts Co.,Inc., Pewaukee, Wisconsin
+Trevor Marshall, Dept. of Elec. Eng., Nedlands, W. Austrlia
+Joseph C. Sharp, Micro Science Assoc., San Luis Obispo, CA.
+C. E. Stuart, Goleta, CA.
+R. E. Walker, Beaumont, Texas
+William Wolfson, Waylan, Mass.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+		   SIG/M-CPMUG Caveat (???)
+		   ========================
+
+	       By: Kelly Smith, CP/M-Net "SYSOP"
+
+ The   follwing  message  was  downloaded  June   25,	1981
+from  Technical  CBBS  (313) 846-6127.	It's  with  absolute
+dismay that I write  this  message  (article),	 inspired by
+my   own  general interest and participation in this  matter
+(and  also  the  help  of 5   bottles  of  Henry  Weinhard's
+(Private  Reserve)...I	will   keep  you   informed   on  my
+progress (consumption) as  I  proceed).  I intend   to	type
+this  exactly as it occurs  to	my  somewhat 'foggy'  brain,
+in  a 'straight-from-the-hip' attitude...if  at  times	 you
+find  this offensive,	well then DARN	it...this  is  life,
+and it's time to face facts. And so:
+
+     Msg 147 is 06 line(s) on 06/21/81 from BILL EARNEST
+     to ALL about SIG/M-CPMUG CAVEAT
+
+ I    have   just   left  a  small  file  on   this   system
+named SIGMWARN.MSG  on	drive A.  It is in that form instead
+of  as	a message for readability  reasons.  Hopefully,  the
+current  unknown state of affairs will be resolved  shortly,
+but  take  note.  Also see the messages earlier  from  Bruce
+Ratoff.  (Nrs. 129 & 130 as of now)
+
+************************************************************
+*							   *
+*	       *** IMPORTANT NOTICE *** 		   *
+*							   *
+*     AS OF JUNE 1, 1981, THERE IS NO OFFICIAL		   *
+*     VERBAL OR WRITTEN AUTHORIZATION TO MERGE THE	   *
+*     SIG/M LIBRARY VOLS. 1-25 (19-25 PASCAL Z 1-7)	   *
+*     INTO THE CP/M USERS GROUP LIBRARY.		   *
+*							   *
+*     BE AWARE THAT IF 25 NEW CP/M USERS GROUP VOLUMES	   *
+*     APPEAR, THEY MAY BE SIG/M VOLS. 1-25.		   *
+*							   *
+*     FOR UPDATES ON THIS MATTER, CONTACT  RIBBS	   *
+*     ACG-NJ AT (201) 272-1874 OR RIBBS LEHIGH VALLEY	   *
+*     AT (215) 398-3937.  SIG/M CORRESPONDENCE SHOULD	   *
+*     BE MAILED TO:   SIG/M USER GROUP			   *
+*		      P. O. BOX 97			   *
+*		      ISELIN, NJ 08830			   *
+*							   *
+*     PLEASE FEEL FREE TO COPY THIS MESSAGE IN CLUB	   *
+*     NEWSLETTERS, MAGAZINES AND OTHER CBBS'S.		   *
+*							   *
+*			 SIG/M				   *
+*     BILL CHIN       BRUCE RATOFF    HENRY KEE 	   *
+*     RAY GLUECK      BILL EARNEST    HOWARD FINGERHUT	   *
+*							   *
+************************************************************
+
+ O.K.,...what  the  heck does THAT MEAN???..." NO   OFFICIAL
+or  WRITTEN   authorization  to MERGE into the  CP/M  User's
+Group...".   Is  SIG/M  a  'public  domain'  distributer  of
+software,   or	is this limited to 'authorized	individuals'
+(limited access),   for  the lucky  few???    Well  first of
+all,  let's get a definition  of terms...
+
+   From Merriam-Webster, 'Webster's New Ideal Dictionary':
+
+public	(adj);	 1 a :	 of,  relating to,  or affecting all
+the people :   ...c :  relating to or engaged in the service
+of   the  community or nation  2 a :   of or   realting   to
+mankind  in  general...5 :  accessible to or shared  by  all
+members of the community...[and so on and so on].
+
+domain	(adv);	 1  a:	complete and absolute  ownership  of
+land...2   :	a   territory	over   which   dominion   is
+exercised...[again, so on and so on].
+
+ Let's	pick 'public,  #5;  accessible to or shared  by  all
+members of  the  community' and 'domain,   #2:	 a territory
+over   which  dominion is  exercised'...  O.K.	SIMPLE!  The
+PEOPLE OWN IT!!!
+
+ Yes,  Kelly OWNS IT, Bruce OWNS IT, and even Tony Gold OWNS
+IT! So	WHY the 'authorization'?...I understood that when  I
+gave  SIG/M my (shabby) software efforts,   that it was  "in
+the PUBLIC DOMAIN...".   What  the heck do I REALLY CARE  as
+to WHO uses  it (?).  I  really  feel fortunate that someone
+actually  USES the things that (I on occasion) crank-out  at
+ALL!
+
+[Interrupt   at  this  point...dinner  call,   Ben   Bronson
+call...ah,    much   better   now...Henry's   #6,    renewed
+inspiration! Now where was I?]
+
+ Maybe a better way to attack this subject,  is question WHO
+benefits from PUBLIC DOMAIN software...well, my first outing
+was to wade through the (numerous) JUNK files, and find some
+REAL  'Gems' amist the agony of programs (such as  TACO.BAS)
+that  were  of	little merit...WOW!  Look  at  this  'MODEM'
+program...wonder  what I could do with that?  (the  rest  is
+history!).  Anyway,  the point is,  that people like YOU and
+myself	have  taken 'diamonds-in-the-rough' and shaped	them
+into  the  many (and varied) ESSENTIAL	programs,  that  are
+SUPER  VALUABLE to use for the individual  growth  potential
+that has been INSPIRED by such programs...look at FINDBAD...
+a  reasonably  good  magazine  article	that  (almost)	'ran
+amoke'!...but  what  was  derived from	all  the  individual
+efforts of you (THE PUBLIC)? A fantastic development for the
+benefit of ALL PEOPLE! Now thats my point...
+
+ I  draw NO SIDES here...I do suspect that many of you	have
+missed	the point on WHY you freely give away  your  efforts
+(e.g.,	'hacking'  away 'till 3 in the morning)...is it  for
+the 'glory' (sure it's neat to see your name in print...I am
+THRILLED  when	I  see	that  SIG/M  volume  #5  is  ALL  MY
+STUFF!)...is	 it	for    'the    benifit	  of	 all
+mankind'?... well... I'm too darned humble to go that far...
+I may be good, but i'm not THAT GOOD! So WHY???
+
+ Well,	I'll  tell  yah why (just my WHY)...It's just  down-
+right-fun!  I  got a call from a  kid some months ago,	that
+was amazed at what he had found..EXCLAMATION..Over 300 BASIC
+games...this  kid (Jeff,  15 years old),  found a  fantastic
+access	to  MIND EXPANSION!  Yes,  BASIC GAMES...he has  now
+progressed  to bigger-and-better ASSEMBLY Language  programs
+now, but to watch this kid GROW....WOW! Thats why I do this,
+and  thats ALSO why I am conserned about whats taking  place
+with this SIG/M-CPMUG bull...Sad.
+
+ Let's	get a little 'background' on what  took  place...May
+24th, 1981 (Memorial Day weekend):
+
+ Bruce	Ratoff's house...people present:  Tony	Gold,  Eddie
+Currie,  Bruce,  and  me (third party)...conversation:	Tony
+Gold's concern over the 'backlash' of comment concering  the
+CPMUG and Lifelines 'commercial aspects'...in addition,  the
+'path' that SIG/M has taken (Good-'ol,	US of A competition;
+I love it!),  and finding out if Bruce would like to 'bring-
+up' a RBBS (Mega-Message-System) for Lifeboat.
+
+ Bruce's  concern about SIG/M is to remain 'autonomous' from
+CPMUG...to  quote:  "More water runs from two  spouts,  than
+one".  Bruce's other concern is that SOME SOFTWARE is  being
+witheld  from CPMUG because it is DIRECTLY COMPETITIVE	with
+Lifeboat,  and	that the PROFIT MOTIVE in Lifelines (as well
+as the lack of articles on competive products to Lifeboat's)
+causes much concern (that an organization:  Lifelines) is in
+it ONLY for the MONEY.
+
+ Well,	after  spending a weekend with Tony Gold,  I see the
+situation  for	what (I perceive) it  to  be...Lifeboat  and
+Lifelines  are	(indeed)  in the same building	(do  I	hear
+"Booo, Hiss"?). Yep, takes up a couple a'hundred square feet
+of  office space...gads,  cabinets full of disks...takes two
+people	just  to  handle  orders,   more  people  doing  the
+Lifelines magazine...shipping,	order entry,  GADS...this is
+alot of WORK! And just HOW MUCH for the disks?...8 bucks!
+
+ So  anyway,  if Tony Gold were to attempt to make a  living
+selling diskettes to people as the CPMUG ONLY,	he's loosing
+his  ***!  Believe  me,  I  am now  just  understanding  the
+problems  with distributing,  copy charges,  mailing,  etc.,
+with  the CP/M-Net News...and I have NO OVERHEAD!  And I  am
+trying to promote system upgrades to CP/M-Net,	while I have
+little	more than 30 'subscribers' (at the same $18/year  as
+Lifelines) who give-a-darn,  and it's costing 70-80  dollars
+to put it out each month!  Put 2 and 2 together,  and figure
+that I go 'belly-up' before the year is out...and the really
+STUPID thing is that I GIVE IT AWAY!!!
+
+ As  far as the 'control' of the CPMUG,  it's my  impression
+that  Tony  Gold is absolutely concerned that  ALL  software
+contributed  (via CACHE) be represented in any and  all  new
+releases of CPMUG volumes (even such masterworks as TACO's).
+
+ I  want  to add a note here,  that Jim Mills is doing	one-
+heck-of-a-job with distribution of the CPMUG...also to	Ward
+Christensen   for   all  his  fine  efforts  (and   software
+contributions)	that has made possible the 'net-working'  of
+the  many  RCPM's now running... darn,  I wish  I'd  written
+DU...instead   I   offer  such	 (memorable)   programs   as
+AREACODE...Gag.
+
+ Darn,	as I drink more of this stuff...I tend to wander. To
+get  on  with  this:  Who  gives a diddely  darn  WHERE  the
+software GOES TO, much less where it COMES FROM...as long as
+it  gets into the hands of PEOPLE (The PUBLIC) who  want  to
+use  it?  If the Pascal/Z Users Group want to put stuff into
+the  SIG/M...GREAT!  If  Tony Gold wants to  use  the  SIG/M
+stuff...WHY  NOT?  If Kelly Smith wants to see some 15	year
+old kid get really inspired...WHY NOT???
+
+ At  this point,  I close...I may be back for more  comment,
+and  surely  suspect that those of you out there  that	read
+this will have yours...cuss me out, but at least I said what
+I thought and am not afraid to get it out in the open...just
+first consider...we attempt to THINK LOGICALLY when we write
+programs...let's THINK LOGICALLY for the benefit of the end-
+user of those programs...
+
+ Day two of the saga continues...Saturday morning,  with  me
+bleary-eyed from too many Henry's...
+
+ In response to  my file  BULL.MSG (ALL of the above) placed
+on  Ben  Bronson's  Hyde  Park	RCPM,  Bill  Earnest put the
+following (June 27, 1981) message to me on CP/M-Net...
+
+ "00142,13,06/27/81,Bill Earnest,SYSOP Response re: SIG/M,"
+
+ "I   am   sorry   to  see  such  a  hassle  rise   over   a
+misinterpretation of that SIG/M-CPMUG message.  It was  made
+because  as of then,  there were strong indications that the
+SIG/M disks would be taken, references to SIG/M deleted, and
+re-issued under CPMUG numbers.  We have been careful to show
+the source of SIG/M vols.  19 thru 23, as the PASCAL-Z group
+via merger,  and believe that it might "rip-off" someone not
+realizing the possible duplication.  Widest distribution  of
+software is certainly the main object, and the intent was to
+give all concerned the fullest choice possible.  If the data
+is  not "disguised",  we are certainly agreeable to  another
+outlet to facilitate the spread."
+
+ Well Bill, I am sorry to see such a hassle take place also,
+but this is what ultimately takes place when a message (such
+as the one 'posted' by you,  and others of SIG/M)  'implies'
+impropriety...especially  when based on unfounded rumor  and
+gossip.  This  is  an irresponsible position for  anyone  to
+assume! From the tone of your message to me, it appears that
+'others' were upset also...
+
+ I think what is particularly unfortunate,  is the  paranoia
+of  'irrational suspicions' that (1) someone would BOTHER to
+edit  off  ALL  references to SIG/M,  and  (2)  that  ANYONE
+entering  software into the public domain is NOT AWARE  that
+they  do so FREELY with no limitations on  subsequent  usage
+(unless  they  'tag'  the file with a "NOT TO  BE  USED  FOR
+COMMERCIAL APPLICATIONS", and (3) to think that anyone could
+'disguise'   the   files  to  a  form  that  would  NOT   BE
+RECOGNIZED...and even if they were,  SO WHAT?  It was FREELY
+GIVEN AWAY!
+
+ I  have  certainly had a change of attitude after  speaking
+directly  to Tony Gold...I asked reasonable  questions,  got
+reasonable answers (NO SECOND-HAND INFORMATION), and best of
+all  was  impressed  with  his  concern...NOT  CONCERN   for
+Lifeboat/Lifelines,  but  for  the  proper  distribution  of
+submitted software (read 'NO Hold-Outs' here...), as well as
+a responsiveness to get the problems 'out-into-the-light-of-
+day' with Bruce Ratoff.
+
+ Let me suggest,  that in the future TALK DIRECTLY with  the
+principals involved...get it all out (I am really sorry that
+we  could  not  get ahold of Bill Chin when we were  all  at
+Bruces house),  and discuss the issues in a  'non-emotional'
+manner.   I   can   see  both  sides  of  this   SIG/M-CPMUG
+thing...Tony  Gold has 'fathered his baby',  you  guys  have
+done  a  SUPER effort in offering an alternate  source,  but
+somehow  BOTH groups perceive an unfounded threat  of  'one-
+against-the-other'...the THREAT just DOES NOT EXIST!
+
+ Thank  you  for  responding,  to my (even  my  'emotional')
+message...but I think that the real loosers out of all  this
+would be the 'end-users' if BULL persists. Let's all get
+our stories straight before jumping to conclusions...
+
+                                   Best regards,
+
+                                   Kelly Smith
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+      A Comparison of CP/M and UNIX: A Matter of Choice
+      =================================================
+
+                      By: Richard Conn
+
+     An  interesting  discussion and controversy  concerning
+the  selection  of  an Operating System (OS)  for  a  micro-
+computer-based  office automation system has recently  taken
+place between and within members of DARCOM (Dept of the Army
+Readiness Command) and others on the ARPA Network.   Central
+to  the  controversy are two basic groups -- those  for  the
+CP/M OS and those for UNIX/UNIX-like OS's.
+
+     This is the first such controversy I have observed that
+has taken any significant proportions,  and with the  advent
+of  the new 16-bit microprocessors such as the 8086,  Z8000,
+and  68000  and the "UNIX-like" operating  systems  such  as
+OMNYX and XENIX,  the question of staying with CP/M or going
+to the UNIX environment is going to arise with more and more
+frequency.   UNIX  (first released by Bell Labs in 1969) has
+recently  been hailed as the "Operating System of the  80'S"
+by several people, and I feel that now may be a good time to
+outline  a  comparison	of  CP/M 2.2  and  UNIX  for  future
+reference.   Note that this comparison involves  traditional
+UNIX  (NOT  necessarily identical to the  yet-to-be-released
+XENIX).
+
+     Having  done  some research on and used both  types  of
+operating  systems,  I	offer the following  discussion  for
+general dissemination.	 This discussion is divided into two
+parts  -- (1) a brief comparison of Bell's UNIX and CP/M 2.2
+and (2) a brief discussion of the criteria for selection  of
+the OS and my recommendation.
+
+
+			   Part 1
+			   ------
+
+	  -- A Comparison of UNIX and CP/M 2.2 --
+
+     The  following  is  a basic comparison of	several  key
+points of the UNIX and CP/M 2.2 Operating Systems.  Data for
+the UNIX part of the comparison was extracted from "The Bell
+System Technical Journal",  July-Aug 78,  Vol 57, No 6, Part
+2, ISSN0005-8580 (Articles:  "A Retrospective" by DM Ritchie
+and "The UNIX Shell" by SR Bourne primarily).   Data for the
+CP/M 2.2 part of the comparison was extracted from  "Digital
+Research  CP/M 1.4 & 2.0 Documentation" reprinted by  Morrow
+Designs,  Inc.	(Section II:   CP/M 2.0 User's Guide).	 The
+data  presented is edited and augmented by comments from  my
+personal experiences.
+
+	  UNIX		      ! 	CP/M 2.2
+------------------------------!----------------------------
+o No Unique Version	      ! o Unique Version
+  At least 5 versions exist:  !   Version 2.2 (Precisely
+     1.  "Standard" maintained!    Defined)
+by the UNIX Support Group at  !
+Bell Labs		      !
+     2.  PWB/UNIX (Programmers!
+Work Bench)		      !
+     3.  Version 6 (distrib.  !
+by Western Electric)	      !
+     4.  Version 7	      !
+     5.  The version currently!
+in use by the Computing       !
+Science Research System at    !
+Bell Labs		      !
+			      !
+o Multi-user/process	      ! o Single-user/process
+			      !
+o File Size Limit	      ! o File Size Limit
+  ==  1e9 bytes (depends on   !   == 8e6 bytes
+version); e=10 to power       !
+			      !
+o Supports Random Access Files! o Supports RA Files also
+			      !
+o Targeted to the PDP-11 Fam  ! o Targeted to 8080/Z80
+			      !
+o Tree Directory Structures   ! o Dual-Level Directory
+  (Indefinite number of levels!   Structure (USER/DIR or
+and Path Names) 	      ! SYS) and Limited Path (A:FN)
+			      !
+o Links Allowed 	      ! o Links Permitted (Extension)
+  (Different dir entries pt to!
+same file for disk space save)!
+			      !
+o Device Transparency and Re- ! o Device Transparency and Re-
+  directability Complete      !   directability limited to
+  (I/O routed to/from files   !   terminal I/O
+and terminals with equal ease)!
+
+		 User Interface Comparisons
+		 --------------------------
+
+	  UNIX		      ! 	CP/M 2.2
+------------------------------!--------------------------
+o Command Interpreter	      ! o Command Interpreter
+  "Shell"                     !   "CCP"
+			      !
+o Shell Easily Replaced       ! o CCP Replaced with
+			      !   difficulty
+			      !
+o Not Part of Kernal	      ! o Not Part of Kernal
+			      !
+o Full Command Language is    ! o Full Command Language is
+  relatively complicated      !   simple
+			      !
+o All commands have redirect- ! o Only terminal I/O is
+  able I/O (<,<<,>,>>)	      !   redirectable
+			      !
+o More extensive wild cards   ! o Simple wild cards
+  (?,*,[c1-c2],[c1...cn])     !   (?,*)
+			      !
+o Interprocess information    ! o No equivalent
+  transfer (pipes); coroutines!
+			      !
+o Type-Ahead		      ! o Type-Ahead possible
+			      !   via BIOS
+			      !
+o Parallel processes	      ! o No equivalent
+			      !
+o Indirect command files; no  ! o Indirect cmnd files; 20
+  limit to arguments	      !   argument limit
+  (sh file arg1 arg2 ...)     !   (submit file arg1 ...)
+			      !
+o Conditional Execution       ! o No equivalent
+  (ANDF - &&, ORF - !!)       !
+			      !
+o Construct Execution	      ! o No equivalent
+     if ... then ... else     !
+     case ... in ...	      !
+     while ... do ...	      !
+     for ... do ...	      !
+     until ... do ...	      !
+			      !
+o Shell Variables (Param sub) ! o No equivalent
+  ex:  user=myfile	      !
+       print $user	      !
+			      !
+o Command Substitution	      ! o No equivalent
+  ex:  d='pwd'		      !
+
+
+			Other Items
+			-----------
+
+	  UNIX		      ! 	CP/M 2.2
+------------------------------!----------------------------
+o Reliability - Good	      ! o Reliability - Good
+			      !
+o Security - Fair	      ! o Security - Poor
+			      !
+o Use of HOL		      ! o Use of HOL
+  90-95% in C - OS	      !   Mainly Assem - OS
+  95-100% in C - Utilities    !   90% in PL/M - Std Utils
+			      !
+o ARPANET Interface (NCP)     ! o No Equivalent
+  currently available	      !   (except for terminal pgms)
+			      !
+o Extensive document prepara- ! o Extensive document prep
+  tion facilities	      !   facilities
+     ed - simple char-oriented!    ED - simple char-oriented
+       editor		      !      editor
+     Are there any screen-    !    WM, EP - screen-oriented
+       oriented editors or    !      editors
+       formatters?	      !    WS, MW - s-o edit/format
+     troff, nroff - formatters!    TFS - formatter
+       with macro expansion   !      with macro expansion
+     eqn - mathematical expr  !    No known equivalent
+       preprocessor	      !
+     tbl - table preprocessor !    No known equivalent
+     spell - spelling check   !    SPELLGUARD - spell chk
+			      !
+     speak - voice output     !    No known equivalent
+     diff - file comparator   !    FILCOM - file comparator
+			      !
+o Online instruction	      ! o Online instruction
+     learn -- tutor	      !    PILOT - CAI language
+     online help?	      !    HELP - online doc
+			      !
+o Exotic applications	      ! o Exotic applications
+     yacc - compiler-compilers!    MUMATH - symbolic
+     others?		      !      algebra
+			      !
+o Languages		      ! o Languages
+     C, FORTRAN 77, BASIC,    !    C, FORTRAN IV, BASICs,
+SNOBOL, APL, ALGOL 68, PASCAL ! APL, ALGOL 60, PASCALs,
+others? 		      ! LISP, MUMATH, MUSIMP,
+			      ! PILOT, PL/I, COBOL
+			      ! others?
+
+		     Part 1 Commentary
+		     -----------------
+
+     From  the point of view of a hacker (such as I consider
+myself to be),	both CP/M and UNIX are outstanding operating
+systems to experiment with and study.	Systems  programming
+on  each is relatively easy to do,  and both exhibit an  ex-
+treme  level of extensibility which may be utilized by	sys-
+tems  programmers.   By  this I mean that both OS's  can  be
+modified,  tailored to a specific application,	with a great
+deal  of  ease at the systems programming  level.   Each  is
+flexible  enough to be used to create a "virtual machine" of
+the system programmer's design which can react in almost any
+way desired (e.g.,  text processing environments and program
+development  environments  can be easily created  which  are
+tailored to a user's particular needs).
+
+     The particularly intriguing aspects of UNIX to me are:
+
+	  1.   the  tree directory structures;	using these,
+each user's projects and files can be logically grouped  and
+organized as the user and/or his manager desires and special
+work environments,  each with their own set of commands, can
+be easily created
+
+	  2.   the Shell (command interpreter) can be easily
+replaced,  so specialized shells or even menu-driven command
+environments may be created with ease
+
+	  3.   device transparency and redirectability is an
+outstanding  concept!	This  allows  instances  such  as  a
+program  which	by default sends its output to the  terminal
+(such  as a directory program) to be forced to	channel  its
+output	to  a  different device,  a file,  or  even  another
+process;  the potential for applications of this facility is
+enormous!
+
+	  4.  parallel processing and coroutines are common-
+place;	this  provides the very nice ability of a  user  to,
+say,  initiate	the printing of a file while he goes off and
+does  something  else  -- better yet,  one  user  may  issue
+several  commands to be executed concurrently while he	does
+something else
+
+	  5.   conditional executions (ANDF,  ORF), language
+constructions in the command language (IF, WHILE, FOR, CASE,
+etc.),	 and  parameter  and  command  substitutions  (Shell
+variables) are novel and interesting concepts
+
+     On the other hand, the intriguing aspects of CP/M to me
+are:
+	  1.   the  ability to divide logical  projects  and
+work  files into user areas,  with each user area having its
+own  set of files and commands (any number of which  may  be
+hidden	[transparent]  to  the	user);	 in  a	single	user
+environment,  this seems to be just as reasonable and useful
+as the tree structure of UNIX
+
+	  2.	the   ability  to  replace  the  CCP   (with
+difficulty);  this can be done easier in UNIX, but it is not
+outside  the  scope of a system programmer to do  this	with
+CP/M  (I  have done it,  making a major  modification  which
+greatly  enhances  CP/M's power -- command execution of  COM
+files under my new CCP searches the current user area on the
+current  disk,	falls to user 0 of the current disk  if  not
+found, finally falls to user 0 or drive A: if not found, and
+finally   issues   an	error  message).    This   new	 CCP
+significantly places CP/M in a competative mode with UNIX in
+command  execution  (UNIX  traces up the  tree	for  command
+execution).
+
+	  3.   CP/M's terminal I/O is redirectable, and this
+buys a lot of flexibility for the user;  UNIX,	however,  is
+equally redirectable and even more so
+
+	  4.   CP/M  is  very small,  leaving  much  of  the
+microcomputer's  memory  for the transcients and  utilities;
+size   is   sometimes	a  problem,   but   with   the	 new
+microprocessors and their megabyte addressing  capabilities,
+it should no longer pose such a problem
+
+	  5.   finally, and perhaps most importantly, a wide
+variety of relatively high-quality software (screen-oriented
+editors,  language systems,  communications systems, etc) is
+currently  available  for  CP/M,  and I have not  seen	such
+quality  systems yet being prepared for systems  like  XENIX
+(whose specs are not even out yet); there will be a definite
+lag  before (and IF) XENIX and other such systems obtain the
+software base currently in existence for CP/M!!!!!
+
+			   Part 2
+
+ A Commentary -- Criteria for Selection and Recommendation
+ ---------------------------------------------------------
+
+     In making such a selection of operating systems, I feel
+that   there  are  five  basic	questions  which  should  be
+considered in the evaluation.  In short, these questions are
+the following:
+
+	  1.   Is  the OS adequate to meet the needs of  the
+user?  Is there enough memory for the required utilities and
+applications  programs	to  run in (considering  the  memory
+management schemes employed by the OS)?   VERY IMPORTANT  --
+Is  the OS responsive (In the microcomputer age,  I consider
+the  time  of the user/programmer to be much  more  valuable
+than the time of the machine, and an OS/machine which in any
+way  slows the user/programmer down due to its lack  of  re-
+sponsiveness should be reevaluated!!!!)
+
+	  2.   Is  the OS extensible (user-customizable  for
+his  particular application)?	If I don't like the form  of
+the  command language or the commands of the editor,  can  I
+change these to meet my tastes?  If I want a menu-based user
+interface, can I create one?
+
+	  3.  Is software produced under the OS on machine A
+easily	transportable to the same OS on machine B (allowing,
+of course,  media compatability)?   Source code generally is
+transportable provided the language is standardized (like  C
+on UNIX),  but is the binary (including the OS "hooks") also
+transportable (like on CP/M)?
+
+	  4.   Are software tools (editors,  compilers,  de-
+buggers,  etc.) available AND effective for the target class
+of users?   For instance, I would much rather give my secre-
+tary  a screen-oriented editor which is easy to use  as  op-
+posed  to  a character-oriented editor in which she  has  to
+worry  about the position of an imaginary cursor.   The tool
+should be easy to use, people should be quickly and inexpen-
+sively trained to use it,  and it should be efficient (fast,
+capable,  and  requiring  as little overhead  as  possible).
+Also,  if  I currently have an existing tool base  which  my
+people are already trained to use,  I should think carefully
+about  moving  to  a new OS just because it is new  or	pro-
+mising.
+	  5.   Finally,  is the software easily maintainable
+and reliable?	Tools are seldom perfect,  and	improvements
+are constantly coming out.   I would like to see the ability
+to modify my tools if I desire (I own them, don't I?) and be
+supported  by the vendor as new releases  emerge.   Also,  I
+want  to use proven,  time-tested tools which I can rely  on
+extensively.
+
+     Hence, reader, from my point of view, presented are the
+primary attributes of UNIX and CP/M 2.2 and my basic set  of
+criteria to judge these systems by.   Coming from a largely-
+CP/M environment (I already have CP/M as a base), UNIX would
+win hands down (looking through the eyes of a hacker).	UNIX
+is a fantastic software tool which supports many interesting
+and exciting features,	and, regardless of the use I put the
+UNIX  system  to,  I still have my CP/M base to  support  my
+current applications and interests (also including hacking).
+
+     The  above statement,  however,  was from the point  of
+view  of  a hacker with a CP/M base.   The  question  posed,
+however, was from the point of view of the creation of a new
+system	to support office automation.	This is a management
+system in a manager's environment,  not a hacker system in a
+programmer's environment.  To make a choice for the manager,
+let's fall back to the five criteria outline above.
+
+     In  my opinion,  both operating systems come out  about
+even in the first three items.	 Both UNIX (XENIX?) and CP/M
+are   generally   adequate,    extensible,    and    support
+transportable software for the automated office environment.
+In  both cases,  tools may have to be designed for  specific
+needs  (like  XMSG for UNIX mail and CBBS software for	CP/M
+mail).	 Software  support  from  systems  programmers	will
+probably  be  required	to design and  integrate  the  tools
+necessary for an automated office system.
+
+     Item  4 is perhaps a key point in the  decision.	CP/M
+already has a relatively-large base of quality tools for the
+target	class  (secretarial/managerial) of  user.   From  my
+observation of automated office environments such as my  own
+CP/M environment,  AUGMENT of Tymshare,  and NLS under TENEX
+and TOPS-20,  I note that the majority of the time (at least
+in  my	case,  and  I suspect most others) is spent  in  the
+electronic mail system and the editors.  Consequently, tools
+for these environments must be most effective,	allowing the
+user to get his job done in a minimum amount of time with  a
+minimum  amount of effort.   I am currently employing  menu-
+driven	mail  systems and fast screen-oriented	editors  for
+these  functions,  and	I feel	that  (design-dependent,  of
+course),  these  are the most productive alternatives avail-
+able today.  Specialized terminals designed with the editors
+in  mind  (e.g.,  DNLS Workstations) are a  good  goal,  but
+general CP/M screen editors such as Word Master,  Word Star,
+and Magic Wand are already available, reliable, field-proven
+and  tested,  and reasonably effective (I spend little	time
+waiting on them/giving commands and more time composing than
+I  do  with  more conventional editors).   I have  not	seen
+comparable  field-proven software for the new  UNIX  systems
+(they are not even out yet).
+
+     Finally,	 the   fifth   item,	that   of   software
+maintainability and support, is concentrated on support from
+this (office automation) level.   Your environment  probably
+will not have systems programmers readily available,  so you
+will  probably	be  largely  dependent	on  vendor  support.
+Again, reliable, field-proven software is a big plus.
+
+     Two  additional  points should be brought out  at	this
+time  as well:	 (1) the philosophy question of the state of
+the  art and (2) the philosophy question of the use  of  the
+new microcomputers (microprocessors).
+
+     Concerning  the  state  of the art,  UNIX	(XENIX?)  is
+definitely closer to it than CP/M,  but the operating system
+is just the RESOURCE MANAGER of the computer system, not the
+KEY to the computer system.   The KEY to the system lies  in
+the  TOOLS (utilities) which run under the operating system!
+These tools must be reliable,  easy to use, and efficient in
+human  terms.	From my observations,  EDITORS are the	most
+instrumental   of   tools,   and   the	 Word	Master	 and
+(particularly)	Word Star are the most	powerful,  reliable,
+and  efficient	editors  I  have  seen	(with  the  possible
+exception  of EMACS on MIT and the DNLS editor).   Such  are
+already  available under CP/M,	and I know of no  comparable
+editor (Such could exist,  of course) under XENIX (will  the
+UNIX editors work on XENIX?).
+
+     Concerning the philosophy question,  many people  still
+look  at computer systems and operating systems from a "con-
+ventional" point of view.   The computer is typically viewed
+as  an expensive resource which must be used as  efficiently
+(in terms of computer thruput) as possible,  but the  micro-
+processor  has	changed that.	Under CP/M,  I am  currently
+running  two  microcomputers (total cost is  under  $15,000)
+quite  effectively.   These machines and their software  are
+designed to serve me,  and to obtain a maximum of effective-
+ness for the user (measured in terms of minimum wait on  the
+computer),  operations such as number crunching programs and
+print  spooling  are sent to the second machine.   Too	many
+times  I have working in environments such as a dual  CYBER,
+DEC-10,  or  VAX where the machine's thruput was  considered
+above the individual's effectiveness, and the responsiveness
+of  these  machines to me was far less than that of  my  own
+microcomputer!	 I hope you consider this point;  individual
+effectiveness and usefulness should be of prime concern, and
+consider  the idea of supplying the single  individual	with
+more than one processor/machine.  Many of the pro-UNIX types
+may  cling  to the old (machine-thruput) school of  thought,
+but much is to be said for the user-effective (made possible
+by  the  inexpensiveness  of the  microcomputer)  school  of
+thought.   The	multiprocess capabilities of UNIX are  nice,
+but I consider multiprocessor capability to be nicer still!
+
+     In  sum,  my recommendation is to go with CP/M if	your
+need is immediate.   If not, wait and see what the UNIX-like
+systems  have to offer in reliability,	tools,	and competa-
+tively-marketed (competition is very important for quaility)
+software.   "Something  better" is always  coming  out,  but
+buying	"the best" (=most recent?) software at a given  time
+is  not necessarily the best decision in the long run.	 New
+software  is  frequently  field-debugged  (not	always,   of
+course),  and you should be leary of opening yourself up  to
+do the debugging when you are trying to get a job done.
+
+	 ...and additional comments by Ted Shapin
+	 ----------------------------------------
+
+     Richard  Conn has written a very interesting comparison
+of CP/M and UNIX.  Although my experience is only with CP/M,
+there area few things that should be added to his report.
+
+     First,  while  UNIX  is proprietary to Bell  Labs	(and
+licensed  by  Western Electric) it is  "escaping"  into  the
+public	domain.   An active users group called the "Software
+Tools"  group  has grown up around the book  of  that  title
+written  by  Kernihan and Plauger.   The book described  the
+programming of some UNIX-like tools in RATFOR.	 RATFOR is a
+FORTRAN preprocessor that has a syntax resembling 'C'.	 The
+users  group  has greatly expanded and enhanced  the  RATFOR
+tools  to  include many of the UNIX tools such as  a  shell,
+screen editors,  pipes,  etc., and transported the system to
+many different computers.   See the article in the September
+1980  Communications  of  the  ACM,   "A  Virtual  Operating
+System".   You  can  get information on the  Software  Tools
+Group  from Debbie Scherrer,  Lawrence Berkeley  Laborotory,
+Univ.  of California,  Berkeley,  CA.  94720.  This approach
+embeds UNIX-like tools in a host operating  system.  Another
+step in this direction was the publication of the article "A
+Portable  Directory System" in the April 1981 Journal of the
+ACM.   This  adds  a UNIX-like directory  structure  to  the
+software tools environment.
+
+     Another source of UNIX-like systems are those that were
+written  independently of any UNIX systems and hence are not
+subject  to  Western Electric  licensing.   A  complete  'C'
+compiler  was  written by a programmer at the Mark  Williams
+Company in Chicago.  The first system is for the PDP-11, the
+second for the Z8000.	Bill Plauger's company, Whitesmith's
+in  New York has also written a 'C' compiler and  UNIX	like
+system which they can sell independently of W.E. licensing.
+
+     As  far  as CP/M editors go,   I have heard  very	good
+reports  of an editor called MINCE,  (Mince is not  complete
+EMACS)	that is sold by a small company called Mark  of  the
+Unicorn  started by people who recently graduated from	MIT.
+They also sell a text formatter called AMETHYST that is like
+SCRIBE that runs on the DEC-20.  See the review in Dr. Dobbs
+Journal, April 1981.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+      Midwest Update: SQ, USQ, and Other New Programs
+      ===============================================
+
+	    By: Ben Bronson, Hyde Park RCPM/RBBS
+
+ A  bunch of useful new stuff has appeared back here in  the
+Midwest,   most   importantly  SQ.COM  and  USQ.COM;   file-
+compression  and expansion utilities that work	very  easily
+and  offer  a  30-40% saving on disk space and	modem  time.
+Within a few weeks,  most long files will be distributed  in
+compressed  form on most RCPM systems,	so it'll be vital to
+get hold of USQ.COM,  the 'unsqueezing' utility.  Royal  Oak
+(313-588-7054) and HP/RCPM (312-955-4493) have SQ/USQ up for
+downloading  plus  a  batch  of updates  to  older  standard
+programs and a few good DOC files that,  surprisingly,	were
+not  written  by Kelly.  Better give a call to	one  of  the
+Chicago  or  Michigan systems on RCPMLIST and  check  what's
+available.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	 Rumor-MILL...Possible NEW Mega-RCPM System!
+	 ===========================================
+
+		 By: Kelly Smith, CP/M-Net
+
+ There	are  tentative plans in the works for  a  multi-user
+(possible 32!) RCPM system,  to be established by one of the
+biggest  suppliers of CP/M compatible software.  Main  usage
+will be for two party message drop and transfer of  software
+'updates'  to  OEM   users,  as well as  access  to  general
+information  (newsletter  type thing) and possibly  a  'try-
+before-you-buy'    facility    for   program	demo's	  of
+software...the	whole  project	is just at  the  'discussion
+stage',  and  details for implementation  still need  to  be
+defined...message  system  will probably be RBBS running via
+CP/NET in the PDP-11...amazing!
+
+ In addition, remember that Reseda CA system that was posted
+on  numerous  RCPMLIST's  that was 'due up  in	2-3  weeks'?
+Well,  lets  try   again...but	this  time same guy  but  in
+Manhatten  NY!	I suspect  the	system	will  sign  on	with
+"Currie's  Software Emporium"...probably using RBBS and PMMI
+modem  with...YES!  10 megabyte hard disk!
+
+

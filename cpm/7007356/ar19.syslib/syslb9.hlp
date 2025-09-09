@@ -1,0 +1,178 @@
+ZCPR2 Feature-Specific Utilities
+Initialization Routines
+ZCPRQ Status Routine
+Multiple Command Line Pointer Routine
+Path-Oriented File Search Routine
+File Status Routine
+:Introduction
+
+     This module contains a series of routines which are designed 
+to  allow the programmer to take advantage of key ZCPR2  Features 
+without doing a lot of programming for himself.   In  particular, 
+facilities such as the following are provided:
+
+          .  Initialization -- Setting the location of the
+                    multiple command line buffer
+          .  Initialization -- Defining the location of a command
+                    search path
+          .  Initialization -- Setting the current disk/user
+                    character definition
+          .  Initialization -- Setting all ZCPR2-Specific buffers
+                    from the standard utility buffers
+          .  Utility -- Returning a pointer to the first byte
+                    of the next command
+          .  Utility -- Searching for a file along the command
+                    search path
+          .  Utility -- Determining the attributes of a file
+
+:Initialization Routines
+
+     Routine Name:  ZINIMC
+     Function:
+          ZINIMC defines the base address of the multiple command 
+line  buffer for the ZCPR2 system.   The initialization performed 
+by  this  routine  is used by the ZMCPTR routine  to  return  the 
+pointer to the first character of the next command.
+     Inputs:  HL = base address of multiple command line buffer
+     Outputs:  None
+     Registers Affected:  None
+     SYSLIB Routines Called:  None
+     Special  Error Conditions:  None
+     Note:   If  this routine is not called,  it is assumed  that 
+multiple command lines are not supported.
+
+
+     Routine Name:  ZINIEXT
+     Function:
+          ZINIEXT  defines the base address of a  command  search 
+path.   The  ZPFIND  routine uses this base address to start  its 
+search for a file.   Note that this provides added flexibility in 
+that  this need not necessarily be the base address of the  ZCPR2 
+System command search path, but it may be the base address of any 
+path (such as a separate path to look for HLP files).
+     Inputs:  HL = base address of path
+     Outputs:  None
+     Registers Affected:  None
+     SYSLIB Routines Called:  None
+     Special  Error Conditions:  None
+     Note:   If  this  routine is not called,  the external  path 
+defaults to an empty path,  so no harm is done and no search  can 
+be performed.
+
+
+     Routine Name:  ZCPRSET
+     Function:
+          ZCPRSET  performs  two  functions  -- it  defines   the 
+character used to specify the current disk or user (default value 
+is  $) and it sets the DMA address for disk file transfers  (used 
+by  ZFSTAT).   If  this routine is not called,  then the  current 
+indicator is defaulted to $ and the DMA address is set to 80H.
+     Inputs:  A = Current Indicator, HL = DMA Address
+     Outputs:  None
+     Registers Affected:  None
+     SYSLIB Routines Called:  None
+     Special  Error Conditions:  None
+     Note:   If  this  routine is not called,  Current  Indicator 
+defaults to $ and DMA Address defaults to 80H.
+
+
+     Routine Name:  ZGPINS
+     Function:
+          ZGPINS  initializes the ZCPR2-Specific Buffers from the 
+ZCPR2  Utility Standard General-Purpose Installation Format  Buf
+fers.   This is to be used by ZCPR2 Utilities,  such as XDIR3, to 
+completely initialize all the necessary buffers.
+     The buffers in the utilities are located as indicated in the 
+ZCPR2 Utilities Manual.
+
+     Inputs:  None
+     Outputs:  None
+     Registers Affected:  None
+     SYSLIB Routines Called:  MOVEB, ZINIMC, ZINIEXT, ZCPRSET,
+                              ZFNINIT
+     Special  Error Conditions:  None
+
+:ZCPRQ Status Routine
+
+     Routine Name:  ZCPRQ
+     Function:
+          ZCPRQ  queries the status of the  SZCPR  module,  which 
+contains these routines.  On exit, this routine returns:
+               HL = Base Address of External Path
+               DE = Base Address of Multiple Command Buffer
+               A = Multiple Command Available Flag (0=No)
+     Inputs:  None
+     Outputs:  HL = Base Address of External Path
+               DE = Base Address of Multiple Command Buffer
+               A = Multiple Command Available Flag (0=No)
+     Registers Affected:  HL, DE, A
+     SYSLIB Routines Called:  None
+     Special  Error Conditions:  None
+
+:Multiple Command Line Pointer Routine
+
+     Routine Name:  ZMCPTR
+     Function:
+          ZMCPTR  returns a pointer to the next character in  the 
+multiple command line if multiple commands are enabled.   A  flag 
+is returned which says if multiple commands are enabled or not.
+     Inputs:  None
+     Outputs:  HL pts to next char in line
+               A=0 and Zero Flag Set (Z) if multiple commands
+                    are not available; NZ otherwise
+     Registers Affected:  HL, PSW
+     SYSLIB Routines Called:  None
+     Special  Error Conditions:  None
+
+:Path-Oriented File Search Routine
+
+     Routine Name:  ZPFIND
+     Function:
+          ZPFIND  searches  for a file along the  command  search 
+path  whose  base address was defined when the programmer  called 
+ZINIEXT.   It  logs into each disk and user area along the  path, 
+looking for the file whose FCB is pted to by DE,  until it either 
+finds  the file or reaches the end of the path (file not  found).  
+If the file is found,  it returns the disk and user area in which 
+the file resides.   ZPFIND always returns the process to the disk 
+and user area it is "currently" logged into.
+
+     Inputs:  DE pts to the FCB of the file to find
+              B is a flag; if B <> 0, search the current disk and
+                    user area first; if B=0, do not search the
+                    current disk and user area first
+
+
+ZPFIND, Con't
+
+     Outputs:  Zero Flag Clear (NZ) and A=0FFH if file found
+               B = Disk (B=0 if Disk A), C=User if file found
+               Zero Flag Set (Z) and A=0 if file not found
+
+     Registers Affected:  BC, PSW
+
+     SYSLIB Routines Called:  BDOS
+
+     Special  Error Conditions:  None
+
+:File Status Routine
+
+     Routine Name:  ZFSTAT
+     Function:
+          ZFSTAT  determines  the attributes of the file  in  the 
+current disk and user area whose FCB is pted to by DE.   It tells 
+the programmer if the file is SYSTEM or not and READ/ONLY or not.
+     Inputs:  DE pts to FCB of file
+     Outputs:  B=0 means file is NOT System, B<>0 means file is
+               C=0 means file is NOT R/O, C<>0 means file is
+               Zero Flag Set (Z) and A=0 if file found and BC
+                    valid, and Zero Flag Clear (NZ) if file not
+                    found
+     Registers Affected:  BC, PSW
+     SYSLIB Routines Called:  BDOS
+     Special  Error Conditions:  None
+     Note:  ZFSTAT does NOT do a search.
+
+
+
+

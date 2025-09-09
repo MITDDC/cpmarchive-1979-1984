@@ -1,0 +1,123 @@
+OTSETUP.DOC -- OTERM Terminal Simulator Setup        page   1
+
+
+
+Copyright 1981, 1982  Michael M Rubenstein
+Version 4.00 (4 Oct 82)
+
+OTSETUP  is  used to install extended  function  key 
+definitions in OTERM.   See OTERM.DOC for details on 
+using extended function keys.
+
+The syntax for OTSETUP is
+
+  otsetup <fkey file> <OTERM input> <OTERM output>
+
+Only  the  fkey file is required.   The OTERM  input 
+file defaults to oterm.com as does the output  file.  
+Only  those parts of the input or output OTERM  file 
+names which differ from the default need be entered.
+For example:
+
+  otsetup fkeys b: b:
+
+will use b:oterm.com and create b:oterm.com.
+
+In  all cases,  if a file with the same name as  the 
+output  already  exists it will be renamed  with  an 
+extenstion of .bak.
+
+The  fkeys  file contains the extended function  key 
+definitions in the form:
+
+name /function key value/
+
+The  name  may  be from 1 through  127  alphanumeric 
+characters.   Upper  and lower case are  equivalent.  
+The "/"s may be any printing character.   The  func-
+tion key value may contain any characters except the 
+delimiter  specified (including carriage returns and 
+line feeds).
+
+Any number of carriage returns,  line feeds,  spaces 
+or  control characters may appear between  the  name 
+and the delimiter or before the next name.
+
+Commands may be entered in the function key value as 
+for  files  by entering esc <digit> for  a  function 
+key.
+
+Control  characters may be entered in the  file,  or 
+may be entered as esc <char>.   For example,  esc a, 
+would generate ^A.  Rubout may be entered as esc ?.
+
+Note: To  enter  a control character with  WordStar, 
+      precede it with control p.
+
+
+
+
+
+
+OTSETUP.DOC -- OTERM Terminal Simulator Setup        page   2
+
+
+Example:
+
+a  /function key a/
+
+verylongfunctionkeynamebutnotevenclosetomax
+
+/line1
+line2
+line3
+/
+
+commands
+=^[1log on
+xmodem rc file.txt
+^[1wait 20
+^[1send file.txt
+=
+
+In the last definition, ^[ is an escape character.
+
+If   a  function  key  is  defined  with  the   name 
+OTERMINIT,   it  will  be  executed  when  OTERM  is 
+started.   If one is defined with the name OTERMEND, 
+it   will  be  executed  at   program   termination.  
+OTERMEND  may not contain a file read  command,  but 
+otherwise  these function keys follow the same rules 
+as others and may be executed manually.
+
+
+END OF DOCUMENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

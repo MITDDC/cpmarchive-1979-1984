@@ -1,0 +1,107 @@
+
+			ZB4MHZ.DOC
+
+		P. L. Kelley -  (617) 332-1610
+			 05/29/82
+
+	The file ZB4MHZ.ASM modifies Percom's ZBIOS.SYS and
+ZFOR.COM for CP/M to operate with a 4 MHz CPU on the H89. You
+will need to modify the CPU board to operate at 4MHz.
+Instructions on how to do this can be found in the December 81
+H-Scoop or obtained from Najay Systems, 3136 Vermillion Street,
+West Covina, CA 91792. You should be warned that some
+instructions describe modifications that are specific to the pre
+FCC board (the one that is used with the H-19). The new board
+used with the H-19A is not identical in the area of the board
+where the Najay modifications are made. It was found that the
+description given of the location of the clock pullup resistor
+and the lines differed from the layout on the FCC board.
+
+	Why 4 MHz? Speed of course. In particular, I was very
+disturbed by the very, very slow warmboot of a "normal" double
+density Percom system (256 byte physical sectoring). I decided to
+go 4 MHz hoping I could buy at least a factor of 2 on disk I/O
+reasoning that the CPU might be able to keep up with Percom's
+non-interleaved sectoring. The non-interleaving of sectors caused
+the disk to rotate once per sector accessed; it took about 3
+seconds to read a 4K (256 byte physical sectors) track. On the
+way to 4 MHz I discovered Percom's undocumented "extended"
+density (1K byte physical sectors). For a 32K file using normal
+density the 4MHz system takes 18 seconds to load the file while
+the 2 MHz system takes about 30 seconds; using extended density
+the 4 MHz system takes about 5 seconds while the 2 MHz system
+takes 10 seconds. In any case, at 4 MHz and using 1K sector size
+the H89 is now acceptably fast based on my earlier experience
+with other 5.25 inch CP/M systems.
+
+	What is the Percom 4MHz problem? It was not obvious at
+least from the approach I took. After modifying the CPU and
+making certain that it was running properly by using a 4MHz
+modification of Heath's H-17 CP/M I discovered the system would
+cold boot from Percom's zrom but do no disk I/O. Using a Z-80
+version of Ward Christensen's Resource program I disassembled
+both the zrom and ZBIOS.SYS. Much of the code was similar which
+puzzled me. I finally discovered a slight difference in the delay
+between the interrupt command and the execution of a new command.
+There was a MOV A,B in ZBIOS.SYS instead of a POP PSW which was
+in zrom. This difference is 6 clock cycles out of approximately
+100 in the zrom version. It took me a long while to believe that
+an 6 persent difference was that crucial. If I had taken the
+straightforward approach of just doubling the timing loops in
+ZBIOS I could have saved myself some time. It was also necessary
+to add a slight delay on return from the interrupt routine when
+writing single density soft sectored disks.
+
+	The changes to ZFOR, Percom's formatting program, were
+relatively simple after understanding the 4 MHz problems with
+ZBIOS. The tricky part was the routine to synchronize to the
+holes when formatting hard disks. I found the appropriate counter
+value was not a simple multiple of Percom's value. Either
+Percom's value is wrong or my drives are off speed since I had
+trouble formatting hard disks at 2 MHz.
+
+	Are there remaining problems? At this point I cannot
+cold boot at 4 MHz hard sector or single density soft sectored
+disks. This is not surprising for hard sectored disks since
+the H17 rom must be modified for 4 Mhz operation. I do not plan
+to try to solve this problem a I am quite happy to live with
+booting from double density or extended density disks.
+
+	The information Percom gave me about their system was
+incorrect. The minimum configuration needed to run the Percom
+board as a stand alone soft sectored controller is:
+
+	1. 32K ram
+	2. I/O rom (444-61)
+	3. H17 rom (444-19)
+
+The H17 controller board is not needed except to make the initial
+CP/M disk. If you own CP/M for the Heath have your dealer make a
+soft sectored Percom system for you or borrow a friend's H17
+board to make your own. If you upgrade from an H19 order the roms
+at the same time you buy your upgrade kit.
+
+	Included in ZB4MHZ.ASM is an implimentation of the
+parallel port, something that Percom has not provided in version
+1.00 of their BIOS. It is a simple routine for a Centronics 730
+which allows paging and eliminates a linefeed after carriage
+return assuming you are using the auto linefeed after carriage
+return feature of the 730. It is also possible to cut the
+connection between U13 pin 12 and U9 pin 10 and reconnect U13 pin
+12 to U9 pin 9. This readdresses the status port for the printer
+from E5 to E6. Since the DSR bit is the same on the serial port
+as the BUSY bit on the parallel port, this allows much of the
+software written for a serial port to be compatible with the
+parallel port; in particular, ZBIOS.SYS will drive the parallel
+port.
+
+	ZB4MHZ.ASM can be converted from the version to modify
+ZBIOS.SYS to the version to modify ZFOR.COM simply by reversing
+TRUE and FALSE in two equates in the file. There are options
+available in ZB4MHZ.ASM for modifying ZBIOS.SYS depending on
+memory size and whether the Centronics 730 driver is desired.
+ZB4MHZ.ASM is written for use with versions 1.00 of ZBIOS.SYS and
+ZFOR.COM, when and if newer versions become available extensive
+modifications to ZB4MHZ.ASM will likely need to be made.
+
+

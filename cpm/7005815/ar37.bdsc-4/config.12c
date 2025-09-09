@@ -1,0 +1,905 @@
+/*  CONFIG.C -- Configuration Program for TVI 950
+      written in BDS C by Richard Conn
+
+Program Name:  CONFIG.C
+Version:  1.2
+Date:  6 Oct 82
+Notes:
+
+	The purpose of this program is to configure the TVI 950 CRT
+	to respond in a manner desired by the user.  Several of the
+	attributes of the TVI 950 are examined and set by this pgm.
+	These attributes include:
+
+		. Function Key Definitions
+		. User Line Display
+		. Scrolling (Smooth or Hard)
+		. Tab Stops
+		. Video Display (Black on White or vice-versa)
+		. Key Click (On or Off)
+		. Cursor Type
+
+	CONFIG runs in two basic modes -- Setup and Configure.
+Setup mode allows the user to set the various parameters of the
+terminal interactively.  Configure programs the terminal.  CONFIG
+is invoked by the following forms:
+
+		CONFIG		<-- Programs the terminal from its internal
+					configuration setting
+		CONFIG filename	<-- Programs the terminal from the settings
+					given in the data file; if file
+					type is not specified, a type of
+					CFG is assumed; if the file is not
+					found on the current drive, drive A:
+					is examined (user areas not changed)
+		CONFIG /S	<-- Enter Setup mode; initial setting values
+					are those already programmed into
+					CONFIG
+		CONFIG fname /S	<-- Enter Setup mode with settings from the
+					indicated file
+
+	The data files created and read by this program and read by the
+accompanying TINIT program conform to the following structure:
+
+Line 1:
+	Variable Values		Meaning
+	-------- ------		-------
+	cursor	'0' to '4'	Cursor Attributes
+	fkeys	'Y' or 'N'	Program Function Keys
+	click	'>' or '<'	Key Click On or Off
+	scroll	'8' or '9'	Enable Smooth or Hard Scrolling
+	tabs	'Y' or 'N'	Set Tab Stops
+	uline	'Y' or 'N'	Set and Display User Line
+	video	'b' or 'd'	Reverse or Normal Video
+
+	These characters are followed by <CR> <LF>
+
+Line n:
+	If uline=YES then text of ulbuffer (User Line); length is ullen;
+		text is followed by <CR> <LF>
+	If tabs=YES then text of tabbuffer (contains <SP> and '.'); length
+		is tablen; text is followed by <CR> <LF>
+	If fkeys=YES then text of fkeybuffer (22 strings of up to 20 chars
+		each); length is fkeylen; text is followed by <CR> <LF>
+
+*/
+
+#define	version	12	/* Version Number */
+
+/********************************************************************
+  Basic Definitions
+ ********************************************************************/
+
+/*  Standard Header File  */
+#include	"A:BDSCIO.H"
+
+/*  File Name and Mode Strings  */
+#define	configfile	"CONFIG.COM"		/* File Name */
+#define	configtype	".CFG"			/* Data File Type */
+#define	configmode	0			/* Read/Only */
+
+/*  Basic Constants  */
+#define	strlen	100	/* Max number of chars in a string */
+#define	ESC	0x1b	/* Escape code */
+#define	CR	'\r'	/* Carriage Return */
+#define	BEL	0x07	/* Ring Bell */
+#define	CTRLH	0x08	/* Backspace Char */
+#define	CTRLL	0x0c	/* Cursor Back */
+#define	CTRLU	0x15	/* Delete Line Char */
+#define	CTRLX	0x18	/* Delete Line Char */
+#define	RUBOUT	0x7f	/* Backspace Char */
+
+#define	FALSE	0
+#define	TRUE	-1
+#define	echo	TRUE
+#define	noecho	FALSE
+#define	YES	'Y'
+#define	NO	'N'
+
+/*  Buffer Sizes  */
+#define	ullen	81	/*  User Line Length of ULBUFFER  */
+#define	tablen	80	/*  Length of TABBUFFER  */
+#define	fkeylen	464	/*  Length of FKEYBUFFER  */
+
+/*  Cursor Positioning  */
+#define	gotoxy	'='	/* Position Cursor */
+
+/*  Clear Screen  */
+#define	clear	'+'	/* Clear screen */
+
+/*  Function Keys  */
+#define	fctkey	'|'	/* Begin function key definition */
+#define	fctend	0x19	/* Ctrl-Y for end function key definition */
+#define	ctrlp	0x10	/* Control-P for char ESCAPE in Fct Key cmd */
+
+/*  User Line  */
+#define	loadusr	'f'	/* Load User Line */
+#define	dispusr	'g'	/* Display User Line */
+#define	dispst	'h'	/* Display Status Line */
+
+/*  Scrolling  */
+#define	sscroll	'8'	/* Enable Smooth Scrolling */
+#define	hscroll	'9'	/* Enable Hard Scrolling (no Smooth Scrolling) */
+
+/*  Tabs  */
+#define	tabclr	'3'	/* Clear All Tabs */
+#define	tabset	'1'	/* Set Tab at Cursor */
+
+/*  Video  */
+#define	vidnorm	'd'	/* Normal (white on black) Video */
+#define	vidrev	'b'	/* Reverse (black on white) Video */
+
+/*  Key Click  */
+#define	clkon	'>'	/* Keyclick ON */
+#define	clkoff	'<'	/* Keyclick OFF */
+
+/*  Cursor Type  */
+#define	curs	'.'	/* Set cursor attribute */
+
+/********************************************************************
+  MAINLINE Routine
+ ********************************************************************/
+
+char	cursor, click, scroll, uline, video, tabs, fkeys;
+char	ulbuffer[ullen], tabbuffer[tablen], fkeybuffer[fkeylen];
+char	iobuf[BUFSIZ];
+
+main(argc,argv)
+int	argc;
+char	**argv;
+{
+	char *argstr;
+
+	switch (argc) {
+	   case 1  :	program(); break;
+	   case 2  :	argstr = argv[1];  /* Pt to first arg */
+			if (*argstr == '/') {  /* SETUP or HELP */
+				if (*++argstr == 'S') setup("");
+				else help();  /* HELP if /non-S */
+				}
+			else {
+				readfile(argstr);
+				program();
+				}
+			break;
+	   case 3  :	argstr = argv[2];  /* Pt to 2nd arg */
+			if ((*argstr == '/') && (*++argstr == 'S')) {
+				readfile(argv[1]);
+				setup(argv[1]);
+				}
+			else help();
+			break;
+	   default :	help(); break;
+	   }
+	exit(TRUE);
+}  /* End of Mainline */
+
+help()  /* HELP File */
+{
+	puts("\nCONFIG -- Configuration for TVI 950 Terminal");
+	puts("\n  CONFIG is invoked by one of the following forms --");
+	puts("\n\tCONFIG\t\t<-- Configured by internal settings");
+	puts("\n\tCONFIG /S\t\t<-- User Sets Up Configuration");
+	puts("\n\tCONFIG filename.typ\t<-- Configured by file");
+	puts("\n\tCONFIG filename.typ /S\t<-- Set Up from file");
+}
+
+/********************************************************************
+  SETUP Routine to initialize a Configuration File
+ ********************************************************************/
+
+setup(filename)  /* This is the master menu and command routine for setting up
+		the TVI 950 characteristics */
+char *filename;
+{
+	int  exit;
+	char ch;
+
+	exit = FALSE;  /* Set no exit for now */
+	cmnd(hscroll);  /* Hard Scrolling for Displays */
+	cmnd(dispst);  /* Display Status Line */
+	newscreen (filename);  /* Display Banner and Menu */
+
+	/* Main Command Processing Loop */
+	do {
+	   at (14,17," "); at (14,17,""); ch = response(echo);
+	   switch (ch) {
+		case CR  : newscreen(filename); break;
+		case 'C' : cursor=setcursor(); break;
+		case 'D' : status(); newscreen(filename); break;
+		case 'F' : fkeys=setfkeys(); newscreen(filename); break;
+		case 'K' : click=setclick(); break;
+		case 'P' : program(); newscreen(filename); break;
+		case 'S' : scroll=setscroll(); break;
+		case 'T' : tabs=settabs(); break;
+		case 'U' : uline=setuline(); break;
+		case 'V' : video=setvideo(); break;
+		case 'X' : exit = TRUE; break;
+		case 'Z' : readwrite(filename); break;
+		default  : cmderror(ch); break;
+		}
+	} while (!exit);
+
+	cls();  /* Write exiting banner */
+	at (1,1,"CONFIG Exiting to CP/M");
+}
+
+newscreen(filename)  /* Print menu of commands on screen */
+char *filename;
+{
+	int i;
+
+	cls();  /* Clear Screen */
+	cmnd('$');  /* Graphics ON */
+	at (2,21,"bkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkc"); /* Title Box */
+	at (3,21,"j"); at (3,61,"j");
+	at (4,21,"akkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkd");
+	at (6,3,"bkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkc");  /* Left Box */
+	at (13,3,"akkkkkkkkkkkkkkkkkkkkkkkkkkkkkkd");
+	at (6,46,"bkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkc");  /* Right Box */
+	at (13,46,"akkkkkkkkkkkkkkkkkkkkkkkkkkkkkkd");
+	for (i=7;i<13;i++) {
+		at (i,3,"j"); at (i,34,"j");  /* Left Box */
+		at (i,46,"j"); at (i,77,"j");  /* Right Box */
+		}
+	for (i=3;i<79;i++) at (17,i,"k");  /* Dividing Line */
+	cmnd('%');  /* Graphics OFF */
+
+	at (3,26,"");
+	printf("CONFIG for TVI 950, Version %d.%d",
+		version/10,version%10);  /* Title Box */
+
+	at ( 7,5,"Commands to Set Attributes");  /* Left Box */
+	at ( 8,5,"Cmd Attribute   Cmd Attribute");
+	at ( 9,5," C  Cursor Type  S  Scrolling");
+	at (10,5," D  Disp Status  T  Tabs");
+	at (11,5," F  Fct Keys     U  User Line");
+	at (12,5," K  Key Click    V  Video");
+
+	at ( 7,48,"Commands to Execute Functions");  /* Right Box */
+	at ( 8,48," Cmd Function");
+	at ( 9,48,"  P  Program TVI 950");
+	at (10,48,"  X  Exit to CP/M");
+	at (11,48,"  Z  Read/Write File");
+	at (12,48,"<cr> Refresh Screen");
+
+	at (14,7,"Command?");  /* Command Line Prompt */
+}
+
+setcursor()  /* Set cursor type */
+{
+	char ch;
+
+	do {
+		clreos();  /* Clear Display Area */
+		at (18, 1,"Select Type of Cursor --");
+		at (19,10,"0 - No Cursor");
+		at (20,10,"1 - Blinking Block     2 - Steady Block");
+		at (21,10,"3 - Blinking Underline 4 - Steady Underline");
+		at (23,15,"Selection? "); ch=response(echo);
+	} while (('0' > ch) | (ch > '4'));
+	return(ch);
+}
+
+status()  /* Display Status of CONFIG */
+{
+	char ch;
+	int i;
+
+	cls();
+
+	at (1,33,"CONFIG Status Display");
+
+	cmnd('$');  /* Graphics ON */
+	at (1,32,"J"); at (1,54,"J");
+	at (2,32,"AKKKKKKKKKKKKKKKKKKKKKD");
+	cmnd('%');  /* Graphics OFF */
+
+	if (fkeys == YES) fkeystatus();  /* Print Function Key Information */
+
+	at (3,1,"User Line --");
+	if (uline == YES) printf("\n%s",ulbuffer);
+	  else puts("\nUser Line is NOT DISPLAYED");
+
+	at (5,1,"Tab Settings are --");
+	if (tabs == YES) {
+		printf("\n");
+		for (i=0; i<tablen; i++) putchar(tabbuffer[i]);
+		at (7,1,"");
+		for (i=1; i<=tablen; i++) if (i%5 == 0) {
+				if (i == 5) printf("    5");
+				    else    printf("   %d",i);
+				}
+		puts("\n");
+		}
+	  else puts("\nTabs are NOT SET");
+
+	at (11,1,"Key Click is ");
+	if (click == clkon) puts("ON"); else puts("OFF");
+
+	at (12,1,"Cursor is ");
+	switch (cursor) {
+		case '0' : puts("NOT DISPLAYED"); break;
+		case '1' : puts("Blinking Block"); break;
+		case '2' : puts("Steady Block"); break;
+		case '3' : puts("Blinking Uline"); break;
+		default  : puts("Steady Uline"); break;
+		}
+
+	at (13,1,"Scrolling is ");
+	if (scroll == sscroll) puts("Soft"); else puts("Hard");
+
+	at (14,1,"Video is ");
+	if (video == vidnorm) puts("Normal"); else puts("Reverse");
+
+	at (24,1,"Type Any Char to Cont -- "); ch=response(noecho);
+}
+
+setfkeys()  /* This routine allows the user to define his function keys */
+{
+	char ch, *lptr, fstr[21], *tstr;
+	int fnum, *numptr, start, i;
+
+	clreos();  /* Clear Display Area */
+	at (18,1,"Do you Wish to Initialize the Function Keys? ");
+	ch=response(noecho);
+	if (ch == YES) for (fnum=1;fnum<=22;fnum++) {  /* Init Keys */
+		lptr = fkeybuffer + (fnum-1)*20;
+		*lptr++ = '1';  /* Transmit to computer */
+		*lptr = '\0';  /* Init to empty */
+		}
+
+	cls();  /* Clear Display Area */
+	at (1,34,"Function Key Programming");
+	cmnd('$');  /* Graphics ON */
+	at (1,33,"J"); at (1,58,"J");
+	at (2,33,"AKKKKKKKKKKKKKKKKKKKKKKKKD");
+	cmnd('%');  /* Graphics OFF */
+
+	fkeystatus();  /* Print current settings of keys */
+
+	/* Main Function Key Programming Command Loop */
+	do {
+		at (3,1,"Number of Function Key (0=Stop, 1-11=Fct)? ");
+		dots(2);
+		*numptr = 0; scanf("%d",numptr); fnum = *numptr;
+		if ((fnum < 1) | (fnum > 11)) fnum=0;
+
+		if (fnum != 0) {
+			at (4,1,"Is this Key Shifted (Y/N)? ");
+			ch=response(echo);
+			if (ch == YES) fnum += 11;
+			at (5,1,"String for this Key? ");
+			dots(19); inline(fstr,19);
+			lptr = fkeybuffer + (fnum-1)*20;  /* Pt to key entry */
+			at (6,1,"Is this command locally executed? ");
+			ch=response(echo);
+			if (ch == YES) *lptr++ = '2';
+				else *lptr++ = '1';
+			tstr = fstr;
+			while (*tstr != '\0') *lptr++ = *tstr++;
+			*lptr = '\0';
+			at (7,1,"Is this string to be ended by <RETURN>? ");
+			ch=response(echo);
+			if (ch == YES) {
+				*lptr = '\r'; *++lptr = '\0';
+				}
+			if (fnum > 11) {
+				start = 53;  /* Set 2nd column */
+				fnum -= 11;  /* Adjust to 1-11 */
+				}
+			   else start = 31;
+			for (i=start; i<start+20; i++) at (fnum+10, i, " ");
+			at (fnum+10,start,"");
+			prfkeystr(fstr);
+			}
+	} while (fnum != 0);
+	return(YES);
+}
+
+fkeystatus()  /* Display Status of Function Keys */
+{
+	char ch;
+	int i;
+
+	cmnd('$');  /* Graphics ON */
+	at (10,30,"B"); at (10,74,"C");  /* Draw Box for Fct Keys */
+	at (22,30,"A"); at (22,74,"D");
+	for (i=1; i<=11; i++) {
+		at (i+10,30,"J");
+		at (i+10,52,"J");
+		at (i+10,74,"J");
+		}
+	for (i=31; i<52; i++) {
+		at (10,i,"K");
+		at (22,i,"K");
+		}
+	at (10,52,"N"); at (22,52,"O");
+	for (i=53; i<=73; i++) {
+		at (10,i,"K");
+		at (22,i,"K");
+		}
+	cmnd('%');  /* Graphics OFF */
+
+	/* Store current function key definitions in box */
+	for (i=1; i<=11; i++) {
+		at (i+10,31,"");
+		prfkeystr(fkeybuffer+(i-1)*20+1);
+		at (i+10,53,"");
+		prfkeystr(fkeybuffer+(i+10)*20+1);
+		}
+
+	/* Box titles and numbers along left side of box */
+	at (9,31,"Function Key"); at (9,53,"Shifted Function Key");
+	for (i=1; i<=11; i++) {
+		if (i < 10) at (i+10,28,"");
+			else at (i+10,27,"");
+		printf("%d",i);
+		}
+}
+
+setclick()  /* This routine turn the key click on or off */
+{
+	char ch;
+
+	clreos();  /* Clear Display Area */
+	at (18, 1,"Do you want the Key Click ON? ");
+	ch=response(echo);
+	at (20,10,"Key Click is ");
+	if (ch==YES) {
+		puts("ON");
+		return(clkon);
+		}
+	else {
+		puts("OFF");
+		return(clkoff);
+		}
+}
+
+setscroll()  /* This routine turn the smooth scroll on or off */
+{
+	char ch;
+
+	clreos();  /* Clear Display Area */
+	at (18, 1,"Do you want Smooth Scrolling ON? ");
+	ch=response(echo);
+	at (20,10,"Smooth Scrolling is ");
+	if (ch==YES) {
+		puts("ON");
+		return(sscroll);
+		}
+	else {
+		puts("OFF");
+		return(hscroll);
+		}
+}
+
+settabs()  /* This routine allows the user to specify tab locations */
+{
+	char *lptr, ch;
+	int i;
+
+	clreos();  /* Clear Display Area */
+
+	lptr = tabbuffer;  /* Pt to first char of tab buffer */
+	for (i=0;i<tablen;i++) *lptr++=' ';  /* Clear tab buffer */
+	i = 1; lptr = tabbuffer;  /* Set char pos and ptr to 1st char */
+
+	at (18,1,"Do you wish to Enable Tabs? ");
+	ch=response(echo);
+	if (ch != YES) return(NO);
+
+	at (18,1,"Set Tab Stops -- . Sets, <SPACE BAR> Clears");
+	at (19,1,"Left and Right Arrow Keys move Cursor Left and Right");
+	at (20,1,"<RETURN> terminates entry of tab stops");
+	at (24,1,"");
+	do {
+		ch=response(noecho);  /* Get char */
+		switch (ch) {
+			case CR :	break;
+			case ' ' :
+			case '.' :	*lptr++ = ch;  /* Store Char */
+					putchar(ch);  /* Echo Char */
+					i++;  /* Incr col counter */
+					if (i > tablen) {  /* Beyond EOL */
+						i--; lptr--;
+						putchar(CTRLH);
+						}
+					break;
+			case CTRLH :	if (i == 1) putchar(BEL);
+					else {  /* left arrow */
+						i--; lptr--;
+						putchar(ch);
+						}
+					break;
+			case CTRLL :	if (i == tablen) putchar(BEL);
+					else {  /* right arrow */
+						i++; lptr++;
+						putchar(ch);
+						}
+					break;
+			default :	putchar(BEL); break;
+		}
+	} while (ch != CR);
+	return(YES);
+}
+
+setuline()  /* This routine turn the smooth scroll on or off */
+{
+	char ch;
+
+	clreos();  /* Clear Display Area */
+	at (18, 1,"Do you want the User Line Displayed? ");
+	ch=response(echo);
+	at (19,10,"User Line Display is ");
+	if (ch==YES) {
+		printf("ON\nOld User Line was --\n%s",ulbuffer);
+		printf("\nInput Your User Line --\n");
+		inline(ulbuffer,ullen);
+		return(YES);
+		}
+	else {
+		puts("OFF");
+		return(NO);
+		}
+}
+
+setvideo()  /* This routine selects the screen video attribute */
+{
+	char ch;
+
+	clreos();  /* Clear Display Area */
+	at (18, 1,"Do you want Reverse Video? ");
+	ch=response(echo);
+	if (ch==YES) {
+		at (20,10,"Reverse Video is ON");
+		return(vidrev);
+		}
+	else {
+		at (20,10,"Normal Video is ON");
+		return(vidnorm);
+		}
+}
+
+readwrite(filename)  /* Read or Write a Data File or Write CONFIG.COM */
+char *filename;
+{
+   char ch, tname[20], oname[20], *bptr;
+   int fd, ioblen;
+
+   oname[1] = '\0';  /* clear output file name */
+
+   /* Loop until exit command specified */
+   do {
+	/* Input valid command */
+	do {
+		clreos();  /* Clear to end of screen */
+		at (18,1,"Select one of the following --");
+		at (19,1,"0 - Exit         1 - Read a File");
+		at (20,1,"2 - Write a File 3 - Write CONFIG.COM");
+		at (22,1,"Selection? "); ch=response(echo);
+	} while ((ch < '0') | (ch > '3'));
+	/* Get file name for Read or Write of a data file */
+	if ((ch == '1') | (ch == '2')) {
+		at (23,1,"Name of File (<RETURN> = ");
+		printf("%s)? ", filename);
+		dots(20); inline (tname,20);
+		bptr = tname;  /* Pt to first char of file name */
+		while (*bptr != '\0') {
+			*bptr = toupper(*bptr);
+			bptr++;
+			}
+		if (tname[0] == '\0') strcpy (oname,filename);
+			else strcpy (oname,tname);
+		}
+	switch (ch) {
+		case CR  : ch = '0'; break;  /* <CR> = Done */
+		case ' ' : ch = '0'; break;  /* <SP> = Done */
+		case '0' : break;
+		case '1' : readfile (oname); break;
+		case '2' : writefile (oname); break;
+		case '3' : printf("\nWriting CONFIG.COM to Disk");
+				fd = fcreat(configfile, iobuf);
+				ioblen = endext() - 0x100;
+				bptr = 0x100;
+				writebuffer (bptr, ioblen);
+				fflush (iobuf);
+				fclose (iobuf);
+				break;
+		}
+   } while (ch != '0');
+}
+
+cmderror(ch1)  /* Invalid Command Received -- Print error message */
+char ch1;
+{
+	clreos();  /* Clear to EOS from 18,1 */
+	at (18,1,"Invalid Command: ");
+	putchar(ch1);
+}
+
+clreos()  /* Clear to End of Screen (EOS) for SETUP */
+{
+	at (18, 1,"");  /* Position Cursor */
+	printf("%c%c",ESC,'Y');
+	sleep(1);  /* Brief Delay */
+}
+
+/********************************************************************
+  Routines to Read and Write Configuration Data
+ ********************************************************************/
+
+readfile(name)  /* Read Indicated File */
+char *name;
+{
+	int fd, i, type;
+	char newfile[20], filename[20], *ptr;
+
+	ptr = name;  /* Copy passed name into FILENAME */
+	type = FALSE;
+	i = 0;
+	while (*ptr != '\0') {
+		if (*ptr == '.') type = TRUE;  /* Note if file type given */
+		filename[i++] = *ptr++;
+		}
+	filename[i] = '\0';
+	if (!type) strcat (filename,configtype);  /* Set default file type */
+
+	fd = fopen (filename, iobuf);  /* Try to open file */
+	if (fd == ERROR) {  /* If failure, try to open file on A: */
+		newfile[0] = '\0';
+		strcat (newfile,"A:");
+		strcat (newfile,filename);
+		fd = fopen (newfile, iobuf);
+		if (fd == ERROR) {  /* If this fails, give error */
+			printf("File %s not found", filename);
+			exit (FALSE);
+			}
+		}
+
+	/* Read in parameters from disk file */
+	cursor = getc(iobuf);
+	if (('0'<=cursor) & (cursor<='4')) /* OK */;
+		else ferror();
+
+	fkeys = getc(iobuf);
+	if ((fkeys == YES) | (fkeys == NO)) /* OK */;
+		else ferror();
+
+	click = getc(iobuf);
+	if ((click == clkon) | (click == clkoff)) /* OK */;
+		else ferror();
+
+	scroll = getc(iobuf);
+	if ((scroll == sscroll) | (scroll == hscroll)) /* OK */;
+		else ferror();
+
+	tabs = getc(iobuf);
+	if ((tabs == YES) | (tabs == NO)) /* OK */;
+		else ferror();
+
+	uline = getc(iobuf);
+	if ((uline == YES) | (uline == NO)) /* OK */;
+		else ferror();
+
+	video = getc(iobuf);
+	if ((video == vidrev) | (video == vidnorm)) /* OK */;
+		else ferror();
+
+	getc(iobuf); getc(iobuf);  /* Ignore <CR> <LF> */
+
+	if (uline == YES) readbuffer (ulbuffer, ullen);
+
+	if (tabs == YES) readbuffer (tabbuffer, tablen);
+
+	if (fkeys == YES) readbuffer (fkeybuffer, fkeylen);
+
+	fclose(iobuf);
+}
+
+readbuffer (bufname, buflen)  /* Read into the buffer pted to by bufname */
+char *bufname;
+int buflen;
+{
+	int i, inch;
+	char *bptr;
+
+	bptr = bufname;
+	for (i=1;i<=buflen;i++) {
+		inch = getc(iobuf);
+		if (inch == ERROR) ferror();
+		*bptr++ = inch;
+		}
+	getc(iobuf); getc(iobuf);  /* Flush <CR> <LF> */
+}
+
+writefile (name)  /* Write the file to disk */
+char *name;
+{
+	int fd, i, type;
+	char filename[20], *ptr;
+
+	ptr = name;  /* Copy passed name into FILENAME */
+	type = FALSE;
+	i = 0;
+	while (*ptr != '\0') {
+		if (*ptr == '.') type = TRUE;  /* Note if file type given */
+		filename[i++] = *ptr++;
+		}
+	filename[i] = '\0';
+	if (!type) strcat (filename,configtype);  /* Set default file type */
+
+	fd = fcreat(filename, iobuf);  /* Create new file */
+	if (fd == ERROR) {
+		puts("\nDisk Full");
+		ferror();
+		}
+
+	/* Write data into file */
+	putc (cursor, iobuf);
+	putc (fkeys, iobuf);
+	putc (click, iobuf);
+	putc (scroll, iobuf);
+	putc (tabs, iobuf);
+	putc (uline, iobuf);
+	putc (video, iobuf);
+	putc ('\r', iobuf);
+	putc ('\n', iobuf);
+	if (uline == YES) writebuffer (ulbuffer, ullen);
+	if (tabs == YES) writebuffer (tabbuffer, tablen);
+	if (fkeys == YES) writebuffer (fkeybuffer, fkeylen);
+
+	/* Write out buffer and close file */
+	fflush(iobuf);
+	fclose(iobuf);
+}
+
+writebuffer (bufname, buflen)  /* Write named buffer to disk */
+char *bufname;
+int buflen;
+{
+	int i;
+	char *bptr;
+
+	bptr = bufname;
+	for (i=1;i<=buflen;i++) putc (*bptr++,iobuf);
+	putc ('\r',iobuf); putc ('\n',iobuf);
+}
+
+program()  /* Program the Terminal */
+{
+	char *pstr;
+	int i;
+	char fch;
+
+	printf("%c%c%c",ESC,curs,cursor);  /* Config Cursor Type */
+	if (fkeys == YES) {  /* Program Function Keys */
+		for (i=1;i<=22;i++) {
+			pstr = fkeybuffer + (i-1)*20;
+			fch = i+'1'-1;
+			if (*pstr != '\0')
+			 printf("%c%c%c%s%c",ESC,fctkey,fch,pstr,fctend);
+			}
+		}
+	cmnd(click);  /* Set Key Click */
+	cmnd(scroll);  /* Set Scrolling */
+	if (tabs == YES) {  /* Set Tab Stops */
+		cmnd(tabclr);  /* Clear ALL Tab Stops */
+		printf("\n");
+		pstr = tabbuffer;
+		for (i=1;i<=80;i++) {
+			if (*pstr++ == '.') cmnd(tabset); 
+			putchar(' ');
+			}
+		printf("\n");
+		}
+	if (uline == YES) {  /* Program User Line */
+		printf("%c%c%s%c",ESC,loadusr,ulbuffer,'\r');
+		cmnd(dispusr);
+		}
+	cmnd(video);
+	cls();  /* New Screen */
+}
+
+/********************************************************************
+  Primitive Functions
+ ********************************************************************/
+
+prfkeystr(ptr)  /* Print function key string with <ESCAPE> char processing */
+char *ptr;
+{
+		while (*ptr != '\0') if (*ptr != ESC) putchar(*ptr++);
+			else {
+				putchar('$');
+				ptr++;
+				}
+}
+
+ferror() /* File Format Error Encountered */
+{
+	puts("\nAborting on Fatal Error in Data File");
+	exit (FALSE);
+}
+
+dots(ndots)  /* Print Dots */
+int ndots;
+{
+	int i;
+	for (i=1;i<=ndots;i++) putchar('.');
+	for (i=1;i<=ndots;i++) putchar(CTRLH);
+}
+
+inline(buffer,nchars)  /* Input a line from user into BUFFER */
+char *buffer;
+int nchars;
+{
+	int i, j;
+	char *lptr, ch;
+
+	i = 1; lptr = buffer;  /* Init count and ptr */
+	do {
+		ch=bios(3);  /* Get char with no echo and no caps */
+		switch (ch) {
+			case CR :	*lptr = '\0';  /* End String */
+					break;
+			case RUBOUT :
+			case CTRLH :	if (i == 1) putchar(BEL);
+					else {
+						i--; lptr--;
+						rubout();
+						}
+					break;
+			case CTRLU :
+			case CTRLX :	for (j=i;j>1;j--) {
+						rubout();
+						}
+					i = 1; lptr = buffer;
+					break;
+			default :	if (i == nchars) putchar(BEL);
+					else {
+						*lptr++ = ch;
+						i++;
+						if (ch != ESC) putchar(ch);
+							else putchar('$');
+						}
+					break;
+		}
+	} while (ch != CR);
+}
+
+rubout()  /* Echo Backspace, Space, Backspace */
+{
+	putchar(CTRLH); putchar(' '); putchar(CTRLH);
+}
+
+response(echo_on)  /* Get response from user */
+int echo_on;
+{
+	char ch;
+
+	ch = bios(3);  /* Get character from user */
+	ch = toupper(ch);  /* Capitalize */
+	if (echo_on) bios(4,ch);
+	return (ch);
+}
+
+cls()  /* Clear the Screen */
+{
+	cmnd(clear);
+	sleep(1);  /* Delay briefly for terminal */
+}
+
+at(row,col,string)  /* Write <string> at <row,col> address on screen */
+int row, col;
+char *string;
+{
+	printf("%c%c%c%c%s",ESC,gotoxy,row+' '-1,col+' '-1,string);
+}
+
+cmnd(ch1)  /* Issue <ESC><ch1> Command */
+char ch1;
+{
+	printf("%c%c",ESC,ch1);
+}
+
+

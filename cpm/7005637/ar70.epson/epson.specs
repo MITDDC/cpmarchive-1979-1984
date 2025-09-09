@@ -1,0 +1,167 @@
+                  MXFEATUR.DOC - 7/19/82
+This is reprinted from an information brochure by Epson America, Inc.
+-------------------------------------------------------------------------------
+
+Epson has always had a reputation for giving you the most printer for
+your money.  But hang onto your hat.  Now we're giving you even more. 
+
+             *** MX Printers plus GRAFTRAX+ ***  
+Wait 'till you see our new graphic capabilities in action.  
+With a bit image resolution of 120 dots per inch horizontally and
+72 DPI vertically, you get precision to rival plotters.  
+And all the reliability you'd expect from Epson.
+Plus, in the new-generation MX-80, MX-80F/T and MX-100, GRAFTRAX+ is
+standard. 
+
+So is true back space and software printer reset.  And programmable
+form length, horizontal, tab and right margin.
+
+                 *** We've got your type. ***
+But this is for openers.  We've also added a few new type styles.  For
+a grand total of 66.
+
+There are normal-weight faces and emphasized faces.  Double-strike
+faces and double/emphasized faces.  And for scientific notations,
+footnotes and other places where you'll need small print, there's a
+handy subscript and superscript.
+
+We also give you enough international symbols to print almost any
+Western language.  And you can underline with just one pass of the
+print head instead of two.
+
+               *** Is anything still the same? ***
+Absolutely.  Underneath this bonanza of terrific firmware is the same,
+reliable Epson hardware you've come to know and love.
+
+We know when to leave well enough alone.  So all of our new-generation
+machines still give you bidirectional printing, logic seeking, and our
+famous disposable print head.  When it wears out, you simply throw it
+away.  A new one is a third the cost of conventional heads, and you
+can change it yourself in seconds.
+
+And speaking of making a quick change, our MX-100 and MX-80F/T still
+give you a choice of tractor or friction paper feed.  So if you've got
+a long report or something else that's right for fanfold, pin-feed
+paper, simply snap in the tractor mechanism.  And when you want to
+print on your letterhead or just about any other plain or roll paper,
+snap it out.
+
+Either way, you'll be getting the crisp, clean, correspondence-quality
+printing that has made Epson the best-selling printers in the world.
+
+       *** Fully-loaded printers at stripped-down prices. ***
+How do we do it time after time?  It's simple.  Epson is the largest
+manufacturer of printers in the world -- larger, in fact, than all the
+others combined.  And ever since our MX printers were introduced,
+they've been consistently the best value in printers for small
+computers you can buy.
+
+And now they're even better.
+
+			Specifications:
+			---------------
+
+Print method:		Serial impact dot matrix
+Print rate:		MX-80, MX-80F/T.....80 CPS
+			MX-100.............100 CPS
+Print direction:	Bidirectional in text mode,
+			unidirectional in bit image mode.
+Number of pins in head: 9
+Matrix:			9x9 to 18x18 (see 'Print modes')
+Line spacings:		1/8", 1/6", 7/72", plus programmable
+Throughput at 10 CPI:
+(Logical seeking function)	MX-80, MX-80F/T		MX-100
+20 character line		    105 LPM		110 LPM
+40 character line		     73 LPM		 79 LPM
+80 character line		     46 LPM		 51 LPM
+136 character line		    -------		 34 LPM
+
+PRINTING CHARACTERISTICS:
+Character set:		Full 96-character ASCII with descenders
+Graphics:		Bit image, standard horizontal density
+			of 60 dots per inch; double density of
+			120 dots per inch
+Printing modes:		Standard, 9x9 matrix
+			Double, 9x18 matrix (advance paper 1/216th
+			and repeat line)
+			Emphasized, 18x9 matrix (shift right and
+			double strike)
+			Double Emphasized, 18x18 matrix
+			(combination of above)
+
+PRINTING SIZES:		Chars per inch		Max. chars per line
+MX-80 and MX-80 F/T	
+Normal			10			80
+Normal Expanded		5			40
+Compressed		17.16			132
+Compressed Expanded	8.58			66
+
+MX-100 Normal		10			136
+Normal Expanded		5			68
+Compressed		17.16			233
+Compressed Expanded	8.58			116
+
+FORMS HANDLING:
+Line feed:		Programmable length 1 to 85/72nds
+Form feed:		Programmable to 127 lines or 22"
+Horizontal tab:		To 28 positions
+Skip Over Perf:		Programmable length and interval
+
+INTERFACES:
+Standard:		Centronics-style 8-bit parallel
+Optional:		RS232, IEEE488
+Buffer size:		1 line standard, RS232 with 2K buffer optional
+
+MEDIA HANDLING:
+Paper feed:		MX-80, adjustable tractor-type pin feed
+			MX-80F/T, friction feed plus adjustable
+			snap-off tractor standard
+			MX-100, same as MX-80F/T
+Paper width range:	MX-80, 4" to 10" fanfold
+			MX-80F/T, 8.3" to 8.5" single sheet,
+			8.5" roll, 4" to 10" fanfold
+			MX-100, 8.5" to 12" single sheet, 8.5"
+			roll, 4" to 15.5" fanfold
+Number of parts to form:Limited by paper thickness (0.3mm max)
+Paper path:		Rear
+
+SWITCHES/LIGHTS/DETECTORS:
+Indicators:		Power; Printer Ready; Paper Out; On Line
+Switches:		Power On/Off; On Line; Form Feed; Line Feed
+Detectors:		Internal buzzer responds to Paper Out with
+			a three-second buzz.
+
+RELIABILITY:
+Print Head Life
+	Expectancy:	100 x 10^6 characters
+MCBF (excluding Print
+	head):		 5 million lines
+
+INKED RIBBON:
+Color:			Black
+Type:			Cartridge
+Life Expectancy:	3 million characters
+
+ENVIRONMENTAL CONDITIONS:
+Operating Temperature
+	Range:		41 degrees Fahrenheit to 95 degrees Fahrenheit
+Operating Humidity:	10 to 80% non-condensing
+
+POWER REQUIREMENTS:
+Voltage:		115V, 60Hz
+Current:		1 Ampere
+Power Consumption:	100 VA maximum
+
+SELF-TEST MODE:
+Depressing Line Feed Switch while turning power ON engages self-test
+which prints all characters in ROM.
+
+PHYSICAL CHARACTERISTICS:
+		Height		Width		Depth		Weight
+MX-80		4.2"		14.7"		12.0"		12 lbs.
+MX-80F/T	5.2"		14.7"		12.0"		15.4 lbs.
+MX-100		5.2"		23.3"		12.5"		21 lbs.
+
+-------------------------------------------------------------------------------
+
+

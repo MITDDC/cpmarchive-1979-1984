@@ -1,0 +1,20 @@
+SIG/M volume 11 (supercedes SIG/M volume 3)
+
+Expanded ADVENTURE 8080/Z80 version supercedes SIG/M volume 3.
+This version will sense the type of processor (Z80 or 8080) and
+take advantage of Z80 instruction set if available.
+
+NUMBER	SIZE	NAME		COMMENTS
+
+		-CATALOG.011	CONTENTS OF SIG/M VOL. 11
+		ABSTRACT.011	NOTES ON EXPANDED ADVENTURE
+
+1.1	 36K	ADV.COM
+1.2	105K	ADVT.DAT
+1.3	 31K	ADVI.DAT
+1.4	  4K	ADVI.PTR
+1.5	 15K	ADVT.PTR
+
+
+          *** BEWARE OF ZORTON ***
+

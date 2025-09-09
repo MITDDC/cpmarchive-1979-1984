@@ -1,0 +1,2791 @@
+
+;/*
+;** Small-C Compiler Version 2.0
+;**
+;** Copyright 1982 J. E. Hendrix
+;**
+;** Part 4
+;*/
+        JMP CC1
+;#include "stdio.h"
+;/*
+;** stdiol.h -- header for local STDIO/CALL, and VM interfaces
+;*/
+;#define stdin 0
+;#define stdout 1
+;#define stderr 2
+;#define stdport 3
+;#define stdlist 4
+;#define ERR -2
+;#define EOF -1
+;#define YES 1
+;#define NO 0
+;#define NULL 0
+;#define CR 13
+;#define LF 10
+;#asm
+;STDIOL.R:LIBRY
+; STD I/O ROUTINES
+  EXTRN INDEX  
+  EXTRN RINDEX 
+  EXTRN GETC   
+  EXTRN GETCHAR
+  EXTRN FGETC  
+  EXTRN FGETS  
+  EXTRN PUTC   
+  EXTRN PUTCHAR
+  EXTRN FPUTC  
+  EXTRN FPUTS  
+  EXTRN PUTS   
+  EXTRN FOPEN  
+  EXTRN FCLOSE 
+  EXTRN GETARG 
+; STD I/O ROUTINES MATCHING VM ROUTINES
+  EXTRN FFLUSH 
+  EXTRN ABORT  
+  EXTRN EXIT   
+  EXTRN UNLINK 
+; ARITHMETIC & LOGICAL ROUTINES
+  EXTRN CCARGC 
+  EXTRN CCSXT  
+  EXTRN CCDSGI 
+  EXTRN CCDDGI 
+  EXTRN CCINCI 
+  EXTRN CCDECI 
+  EXTRN CCGINT 
+  EXTRN CCPIDDPD
+  EXTRN CCPDPI 
+  EXTRN CCDSGC 
+  EXTRN CCDDGC 
+  EXTRN CCINCC 
+  EXTRN CCDECC 
+  EXTRN CCGCHAR
+  EXTRN CCPCDDPD
+  EXTRN CCPDPC 
+  EXTRN CCPCHAR
+  EXTRN CCPINT 
+  EXTRN CCOR   
+  EXTRN CCXOR  
+  EXTRN CCAND  
+  EXTRN CCEQ   
+  EXTRN CCNE   
+  EXTRN CCGT   
+  EXTRN CCLE   
+  EXTRN CCGE   
+  EXTRN CCLT   
+  EXTRN CCCMP  
+  EXTRN CCUGE  
+  EXTRN CCULT  
+  EXTRN CCUGT  
+  EXTRN CCULE  
+  EXTRN CCUCMP 
+  EXTRN CCASR  
+  EXTRN CCASL  
+  EXTRN CCSUB  
+  EXTRN CCNEG  
+  EXTRN CCCOM  
+  EXTRN CCMULT 
+  EXTRN CCDIV  
+  EXTRN CCLNEG 
+  EXTRN CCSWITCH
+; VM ROUTINES
+;VM.R:   LIBRY
+  EXTRN CCBOJ  
+  EXTRN CCEXIT 
+  EXTRN CCPOLL 
+  EXTRN CCHALT 
+  EXTRN CCOPEN 
+  EXTRN CCCLOSE
+  EXTRN CCDELIM
+  EXTRN CCREAD 
+  EXTRN CCWRITE
+  EXTRN CCSEEK 
+  EXTRN CCMODE 
+  EXTRN CCFILE 
+  EXTRN CCPURGE
+  EXTRN CCFLUSH
+  EXTRN CCALLOC
+  EXTRN CCFREE 
+  EXTRN CCAVAIL
+;#include "cc.def"
+;/*
+;** Small-C Compiler Version 2.0
+;**
+;** Copyright 1982 J. E. Hendrix
+;**
+;** Macro Definitions
+;*/
+;
+;/*
+;** compile options
+;*/
+;#define PHASE2   /* 2nd and later compiles */
+;#define SEPARATE /* compile separately */
+;#define OPTIMIZE /* compile output optimizer */
+;#define NOCCARGC /* no calls to CCARGC */
+;/* #define HASH     /* use hash search for macros */
+;/* #define SMALL_VM /* uses Small-VM interface */
+;/* #define CMD_LINE /* command line run options */
+;/* #define DYNAMIC  /* allocate memory dynamically */
+;/* #define POLL     /* poll for operator interruptions */
+;/* #define PDS      /* uses PDS assembler and loader */
+;#define COL      /* terminate labels with a colon */
+;#define TAB  9   /* put out tabs of this value */
+;#define UPPER    /* force symbols to upper case */
+;#define LINK     /* will use with linking loader */
+;
+;/*
+;** machine dependent parameters
+;*/
+;#define BPW     2   /* bytes per word */
+;#define LBPW    1   /* log2(BPW) */
+;#define SBPC    1   /* stack bytes per character */
+;#define ERRCODE 7   /* op sys return code */
+; 
+;/*
+;** symbol table format
+;*/
+;#define IDENT    0
+;#define TYPE     1
+;#define CLASS    2
+;#define OFFSET   3
+;#define NAME     5
+;#define OFFSIZE (NAME-OFFSET)
+;#define SYMAVG  10
+;#define SYMMAX  14
+;
+;/*
+;** symbol table parameters
+;*/
+;#define NUMLOCS   25
+;#define STARTLOC  symtab
+;#define ENDLOC   (symtab+(NUMLOCS*SYMAVG))
+;#define NUMGLBS   180
+;#define STARTGLB  ENDLOC
+;#define ENDGLB   (ENDLOC+((NUMGLBS-1)*SYMMAX))
+;#define SYMTBSZ   2770  /* NUMLOCS*SYMAVG + NUMGLBS*SYMMAX */
+; 
+;/*
+;** System wide name size (for symbols)
+;*/
+;#define NAMESIZE 9
+;#define NAMEMAX  8
+; 
+;/*
+;** possible entries for "IDENT"
+;*/
+;#define LABEL    0
+;#define VARIABLE 1
+;#define ARRAY    2
+;#define POINTER  3
+;#define FUNCTION 4
+; 
+;/*
+;** possible entries for "TYPE"
+;**    low order 2 bits make type unique within length
+;**    high order bits give length of object
+;*/
+;/*      LABEL   0 */
+;#define CCHAR   (1<<2)
+;#define CINT    (BPW<<2)
+; 
+;/*
+;** possible entries for "CLASS"
+;*/
+;/*      LABEL     0 */
+;#define STATIC    1
+;#define AUTOMATIC 2
+;#define EXTERNAL  3
+;
+;/*
+;** "switch" table
+;*/
+;
+;#define SWSIZ   (2*BPW)
+;#define SWTABSZ (25*SWSIZ)
+; 
+;/*
+;** "while" statement queue
+;*/
+;#define WQTABSZ  30
+;#define WQSIZ     3
+;#define WQMAX   (wq+WQTABSZ-WQSIZ)
+; 
+;/*
+;** entry offsets in while queue
+;*/
+;#define WQSP    0
+;#define WQLOOP  1
+;#define WQEXIT  2
+; 
+;/*
+;** literal pool
+;*/
+;#define LITABSZ 700
+;#define LITMAX  (LITABSZ-1)
+; 
+;/*
+;** input line
+;*/
+;#define LINEMAX  80
+;#define LINESIZE 81
+;
+;/*
+;** output staging buffer size
+;*/
+;#define STAGESIZE   800
+;#define STAGELIMIT  (STAGESIZE-1)
+; 
+;/*
+;** macro (define) pool
+;*/
+;#define MACQSIZE 950
+;#define MACMAX  (MACQSIZE-1)
+; 
+;/*
+;** statement types
+;*/
+;#define STIF      1
+;#define STWHILE   2
+;#define STRETURN  3
+;#define STBREAK   4
+;#define STCONT    5
+;#define STASM     6
+;#define STEXPR    7
+;#define STDO      8 /* compile "do" logic */
+;#define STFOR     9 /* compile "for" logic */
+;#define STSWITCH 10 /* compile "switch/case/default" logic */
+;#define STCASE   11
+;#define STDEF    12
+;#define STGOTO   13 /* compile "goto" logic */
+;
+;/*
+;** external references in part 1
+;*/
+;extern char
+; optimize,
+  EXTRN OPTIMIZE       
+; *stagenext, ssname[NAMESIZE];
+  EXTRN STAGENEX       
+  EXTRN SSNAME 
+;extern int
+;  beglab,  csp, output;
+  EXTRN BEGLAB 
+  EXTRN CSP    
+  EXTRN OUTPUT 
+;
+;/*
+;** external references in part 2
+;*/
+;extern int
+;  findmac(),
+  EXTRN FINDMAC        
+;  clearstage(),  col(),  cout(),  getint(),  getlabel(),
+  EXTRN CLEARSTA       
+  EXTRN COL    
+  EXTRN COUT   
+  EXTRN GETINT 
+  EXTRN GETLABEL       
+;  nl(),  numeric(),  ol(),  ot(),  printlabel(),
+  EXTRN NL     
+  EXTRN NUMERIC        
+  EXTRN OL     
+  EXTRN OT     
+  EXTRN PRINTLAB       
+;  lout(),  outdec(),  outstr(),  streq();
+  EXTRN LOUT   
+  EXTRN OUTDEC 
+  EXTRN OUTSTR 
+  EXTRN STREQ  
+;
+;/*
+;** external references in part 3
+;*/
+;extern int const();
+  EXTRN CONST  
+;
+;#include "cc41.c"
+;/*
+;** print all assembler info before any code is generated
+;*/
+;header()  {
+CC1:
+HEADER:: 
+;  beglab=getlabel();
+        CALL GETLABEL
+        SHLD BEGLAB
+;    {
+;    jump(beglab);
+        LHLD BEGLAB
+        PUSH H
+        CALL JUMP
+        POP B
+;    }
+;  }
+        RET
+;
+;/*
+;** print any assembler stuff needed at the end
+;*/
+;trailer()  {  
+TRAILER::        
+;  ol("END");
+        LXI H,CC3+0
+        PUSH H
+        CALL OL
+        POP B
+;  }
+        RET
+CC3:    DB 69,78,68,0
+;
+;/*
+;** load # args before function call
+;*/
+;loadargc(val) int val; {
+LOADARGC::       
+;  if(findmac("NOCCARGC")==0) {
+        LXI H,CC4+0
+        PUSH H
+        CALL FINDMAC
+        POP B
+        MOV A,H
+        ORA L
+        JNZ CC5
+;    ot("MVI A,");
+        LXI H,CC4+9
+        PUSH H
+        CALL OT
+        POP B
+;    outdec(val);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL OUTDEC
+        POP B
+;    nl();
+        CALL NL
+;    }
+;  }
+CC5:
+        RET
+CC4:    DB 78,79,67,67,65,82,71,67,0,77
+        DB 86,73,32,65,44,0
+;
+;/*
+;** declare entry point
+;*/
+;entry() {
+ENTRY::  
+;  outstr(ssname);
+        LXI H,SSNAME
+        PUSH H
+        CALL OUTSTR
+        POP B
+;  col();
+        CALL COL
+	CALL COL     ; added by BRD
+;  ol("ENTRY");
+        LXI H,CC6+0
+        PUSH H
+        CALL OL
+        POP B
+;  }
+        RET
+CC6:    DB 0,69,78,84,82,89,0
+;
+;/*
+;** declare external reference
+;*/
+;external(name) char *name; {
+EXTERNAL::       
+;  ot (" EXTRN ");  --hand added by brd
+       LXI H,BRD1
+       PUSH H
+       CALL OT
+       POP B
+; ol (name);
+	POP B
+	POP H
+	PUSH H
+	PUSH B
+	PUSH H
+	CALL OL
+	POP B
+;  outstr(name);
+;        POP B
+;        POP H
+;        PUSH H
+;        PUSH B
+;        PUSH H
+;	CALL OUTSTR
+;        POP B
+;  col();
+;        CALL COL
+;  ol("EXTRN");
+;        LXI H,CC7+0
+;        PUSH H
+;        CALL OL
+;        POP B
+;  }
+        RET
+CC7:    DB 69,88,84,82,78,0
+BRD1:	DB	" EXTRN ",0
+;
+;/*
+;** fetch object indirect to primary register
+;*/
+;indirect(lval) int lval[]; {
+INDIRECT::       
+;  if(lval[1]==CCHAR) call("CCGCHAR");
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,2
+        CALL CCDDGI
+        XCHG;;
+        LXI H,4
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC9
+        LXI H,CC8+0
+        PUSH H
+        CALL CALL
+        POP B
+;  else               call("CCGINT");
+        JMP CC10
+CC9:
+        LXI H,CC8+8
+        PUSH H
+        CALL CALL
+        POP B
+CC10:
+;  }
+        RET
+CC8:    DB 67,67,71,67,72,65,82,0,67,67
+        DB 71,73,78,84,0
+;
+;/*
+;** fetch a static memory cell into primary register
+;*/
+;getmem(lval)  int lval[]; {
+GETMEM:: 
+;  char *sym;
+;  sym=lval[0];
+        PUSH B
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        CALL CCGINT
+        CALL CCPDPI
+;  if((sym[IDENT]!=POINTER)&(sym[TYPE]==CCHAR)) {
+        POP H
+        PUSH H
+        CALL CCGCHAR
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCNE
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,1
+        CALL CCDDGC
+        XCHG;;
+        LXI H,4
+        CALL CCEQ
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC12
+;    ot("LDA ");
+        LXI H,CC11+0
+        PUSH H
+        CALL OT
+        POP B
+;    outstr(sym+NAME);
+        POP H
+        PUSH H
+        LXI D,5
+        DAD D
+        PUSH H
+        CALL OUTSTR
+        POP B
+;    nl();
+        CALL NL
+;    call("CCSXT");
+        LXI H,CC11+5
+        PUSH H
+        CALL CALL
+        POP B
+;    }
+;  else {
+        JMP CC13
+CC12:
+;    ot("LHLD ");
+        LXI H,CC11+11
+        PUSH H
+        CALL OT
+        POP B
+;    outstr(sym+NAME);
+        POP H
+        PUSH H
+        LXI D,5
+        DAD D
+        PUSH H
+        CALL OUTSTR
+        POP B
+;    nl();
+        CALL NL
+;    }
+CC13:
+;  }
+        POP B
+        RET
+CC11:   DB 76,68,65,32,0,67,67,83,88,84
+        DB 0,76,72,76,68,32,0
+;
+;/*
+;** fetch addr of the specified symbol into primary register
+;*/
+;getloc(sym)  char *sym; {
+GETLOC:: 
+;  const(getint(sym+OFFSET, OFFSIZE)-csp);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,3
+        DAD D
+        PUSH H
+        LXI H,2
+        PUSH H
+        CALL GETINT
+        POP B
+        POP B
+        PUSH H
+        LHLD CSP
+        POP D
+        CALL CCSUB
+        PUSH H
+        CALL CONST
+        POP B
+;  ol("DAD SP");
+        LXI H,CC14+0
+        PUSH H
+        CALL OL
+        POP B
+;  }
+        RET
+CC14:   DB 68,65,68,32,83,80,0
+;
+;/*
+;** store primary register into static cell
+;*/
+;putmem(lval)  int lval[]; {
+PUTMEM:: 
+;  char *sym;
+;  sym=lval[0];
+        PUSH B
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        CALL CCGINT
+        CALL CCPDPI
+;  if((sym[IDENT]!=POINTER)&(sym[TYPE]==CCHAR)) {
+        POP H
+        PUSH H
+        CALL CCGCHAR
+        PUSH H
+        LXI H,3
+        POP D
+        CALL CCNE
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,1
+        CALL CCDDGC
+        XCHG;;
+        LXI H,4
+        CALL CCEQ
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC16
+;    ol("MOV A,L");
+        LXI H,CC15+0
+        PUSH H
+        CALL OL
+        POP B
+;    ot("STA ");
+        LXI H,CC15+8
+        PUSH H
+        CALL OT
+        POP B
+;    }
+;  else ot("SHLD ");
+        JMP CC17
+CC16:
+        LXI H,CC15+13
+        PUSH H
+        CALL OT
+        POP B
+CC17:
+;  outstr(sym+NAME);
+        POP H
+        PUSH H
+        LXI D,5
+        DAD D
+        PUSH H
+        CALL OUTSTR
+        POP B
+;  nl();
+        CALL NL
+;  }
+        POP B
+        RET
+CC15:   DB 77,79,86,32,65,44,76,0,83,84
+        DB 65,32,0,83,72,76,68,32,0
+;
+;/*
+;** put on the stack the type object in primary register
+;*/
+;putstk(lval) int lval[]; {
+PUTSTK:: 
+;  if(lval[1]==CCHAR) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,2
+        CALL CCDDGI
+        XCHG;;
+        LXI H,4
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC19
+;    ol("MOV A,L");
+        LXI H,CC18+0
+        PUSH H
+        CALL OL
+        POP B
+;    ol("STAX D");
+        LXI H,CC18+8
+        PUSH H
+        CALL OL
+        POP B
+;    }
+;  else call("CCPINT");
+        JMP CC20
+CC19:
+        LXI H,CC18+15
+        PUSH H
+        CALL CALL
+        POP B
+CC20:
+;  }
+        RET
+CC18:   DB 77,79,86,32,65,44,76,0,83,84
+        DB 65,88,32,68,0,67,67,80,73,78
+        DB 84,0
+;
+;/*
+;** move primary register to secondary
+;*/
+;move() {
+MOVE::   
+;  ol("MOV D,H");
+        LXI H,CC21+0
+        PUSH H
+        CALL OL
+        POP B
+;  ol("MOV E,L");
+        LXI H,CC21+8
+        PUSH H
+        CALL OL
+        POP B
+;  }
+        RET
+CC21:   DB 77,79,86,32,68,44,72,0,77,79
+        DB 86,32,69,44,76,0
+;
+;/*
+;** swap primary and secondary registers
+;*/
+;swap() {
+SWAP::   
+;  ol("XCHG;;");  /* peephole() uses trailing ";;" */
+        LXI H,CC22+0
+        PUSH H
+        CALL OL
+        POP B
+;  }
+        RET
+CC22:   DB 88,67,72,71,59,59,0
+;
+;/*
+;** partial instruction to get immediate value
+;** into the primary register
+;*/
+;immed() {
+IMMED::  
+;  ot("LXI H,");
+        LXI H,CC23+0
+        PUSH H
+        CALL OT
+        POP B
+;  }
+        RET
+CC23:   DB 76,88,73,32,72,44,0
+;
+;/*
+;** partial instruction to get immediate operand
+;** into secondary register
+;*/
+;immed2() {
+IMMED2:: 
+;  ot("LXI D,");
+        LXI H,CC24+0
+        PUSH H
+        CALL OT
+        POP B
+;  }
+        RET
+CC24:   DB 76,88,73,32,68,44,0
+;
+;/*
+;** push primary register onto stack
+;*/
+;push() {
+PUSH::   
+;  ol("PUSH H");
+        LXI H,CC25+0
+        PUSH H
+        CALL OL
+        POP B
+;  csp=csp-BPW;
+        LHLD CSP
+        PUSH H
+        LXI H,2
+        POP D
+        CALL CCSUB
+        SHLD CSP
+;  }
+        RET
+CC25:   DB 80,85,83,72,32,72,0
+;
+;/*
+;** unpush or pop as required
+;*/
+;smartpop(lval, start) int lval[]; char *start; {
+SMARTPOP::       
+;  if(lval[5])  pop(); /* secondary was used */
+        LXI H,4
+        CALL CCDSGI
+        LXI D,10
+        CALL CCDDGI
+        MOV A,H
+        ORA L
+        JZ CC27
+        CALL POP
+;  else unpush(start);
+        JMP CC28
+CC27:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL UNPUSH
+        POP B
+CC28:
+;  }
+        RET
+;
+;/*
+;** replace a push with a swap
+;*/
+;unpush(dest) char *dest; {
+UNPUSH:: 
+;  int i;
+;  char *sour;
+;  sour="\tXCHG;;";  /* peephole() uses trailing ";;" */
+        PUSH B
+        PUSH B
+        LXI H,0
+        DAD SP
+        XCHG;;
+        LXI H,CC29+0
+        CALL CCPINT
+;  while(*sour) *dest++ = *sour++;
+CC30:
+        POP H
+        PUSH H
+        CALL CCGCHAR
+        MOV A,H
+        ORA L
+        JZ CC31
+        LXI H,6
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        PUSH H
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        CALL CCGCHAR
+        CALL CCPDPC
+        JMP CC30
+CC31:
+;  sour=stagenext;
+        LXI H,0
+        DAD SP
+        PUSH H
+        LHLD STAGENEX
+        CALL CCPDPI
+;  while(--sour > dest) { /* adjust stack references */
+CC32:
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        POP D
+        CALL CCUGT
+        MOV A,H
+        ORA L
+        JZ CC33
+;    if(streq(sour,"\tDAD SP")) {
+        POP H
+        PUSH H
+        PUSH H
+        LXI H,CC29+8
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC34
+;      --sour;
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+;      i=BPW;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,2
+        CALL CCPDPI
+;      while(numeric(*(--sour))) {
+CC35:
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        CALL CCGCHAR
+        PUSH H
+        CALL NUMERIC
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC36
+;        if((*sour=*sour-i) < '0') {
+        POP H
+        PUSH H
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGCHAR
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        POP D
+        CALL CCSUB
+        CALL CCPDPC
+        PUSH H
+        LXI H,48
+        POP D
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC37
+;          *sour=*sour+10;
+        POP H
+        PUSH H
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGCHAR
+        LXI D,10
+        CALL CCPCDDPD
+;          i=1;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,1
+        CALL CCPDPI
+;          }
+;        else i=0;
+        JMP CC38
+CC37:
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,0
+        CALL CCPDPI
+CC38:
+;        }
+        JMP CC35
+CC36:
+;      }
+;    }
+CC34:
+        JMP CC32
+CC33:
+;  csp=csp+BPW;
+        LHLD CSP
+        LXI D,2
+        DAD D
+        SHLD CSP
+;  }
+        POP B
+        POP B
+        RET
+CC29:   DB 9,88,67,72,71,59,59,0,9,68
+        DB 65,68,32,83,80,0
+;
+;/*
+;** pop stack to the secondary register
+;*/
+;pop() {
+POP::    
+;  ol("POP D");
+        LXI H,CC39+0
+        PUSH H
+        CALL OL
+        POP B
+;  csp=csp+BPW;
+        LHLD CSP
+        LXI D,2
+        DAD D
+        SHLD CSP
+;  }
+        RET
+CC39:   DB 80,79,80,32,68,0
+;
+;/*
+;** swap primary register and stack
+;*/
+;swapstk() {
+SWAPSTK::        
+;  ol("XTHL");
+        LXI H,CC40+0
+        PUSH H
+        CALL OL
+        POP B
+;  }
+        RET
+CC40:   DB 88,84,72,76,0
+;
+;/*
+;** process switch statement
+;*/
+;sw() {
+SW::     
+;  call("CCSWITCH");
+        LXI H,CC41+0
+        PUSH H
+        CALL CALL
+        POP B
+;  }
+        RET
+CC41:   DB 67,67,83,87,73,84,67,72,0
+;
+;/*
+;** call specified subroutine name
+;*/
+;call(sname)  char *sname; {
+CALL::   
+;  ot("CALL ");
+        LXI H,CC42+0
+        PUSH H
+        CALL OT
+        POP B
+;  outstr(sname);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL OUTSTR
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+CC42:   DB 67,65,76,76,32,0
+;
+;/*
+;** return from subroutine
+;*/
+;ret() {
+RET::    
+;  ol("RET");
+        LXI H,CC43+0
+        PUSH H
+        CALL OL
+        POP B
+;  }
+        RET
+CC43:   DB 82,69,84,0
+;
+;/*
+;** perform subroutine call to value on stack
+;*/
+;callstk() {
+CALLSTK::        
+;  immed();
+        CALL IMMED
+;  outstr("$+5");
+        LXI H,CC44+0
+        PUSH H
+        CALL OUTSTR
+        POP B
+;  nl();
+        CALL NL
+;  swapstk();
+        CALL SWAPSTK
+;  ol("PCHL");
+        LXI H,CC44+4
+        PUSH H
+        CALL OL
+        POP B
+;  csp=csp+BPW;
+        LHLD CSP
+        LXI D,2
+        DAD D
+        SHLD CSP
+;  }
+        RET
+CC44:   DB 36,43,53,0,80,67,72,76,0
+;
+;/*
+;** jump to internal label number
+;*/
+;jump(label)  int label; {
+JUMP::   
+;  ot("JMP ");
+        LXI H,CC45+0
+        PUSH H
+        CALL OT
+        POP B
+;  printlabel(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+CC45:   DB 74,77,80,32,0
+;
+;/*
+;** test primary register and jump if false
+;*/
+;testjump(label)  int label; {
+TESTJUMP::       
+;  ol("MOV A,H");
+        LXI H,CC46+0
+        PUSH H
+        CALL OL
+        POP B
+;  ol("ORA L");
+        LXI H,CC46+8
+        PUSH H
+        CALL OL
+        POP B
+;  ot("JZ ");
+        LXI H,CC46+14
+        PUSH H
+        CALL OT
+        POP B
+;  printlabel(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+CC46:   DB 77,79,86,32,65,44,72,0,79,82
+        DB 65,32,76,0,74,90,32,0
+;
+;/*
+;** test primary register against zero and jump if false
+;*/
+;zerojump(oper, label, lval) int oper, label, lval[]; {
+ZEROJUMP::       
+;  clearstage(lval[7], 0);  /* purge conventional code */
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,14
+        CALL CCDDGI
+        PUSH H
+        LXI H,0
+        PUSH H
+        CALL CLEARSTA
+        POP B
+        POP B
+;  oper(label);
+        LXI H,6
+        CALL CCDSGI
+        PUSH H
+        LXI H,6
+        CALL CCDSGI
+        XTHL
+        PUSH H
+        LXI H,$+5
+        XTHL
+        PCHL
+        POP B
+;  }
+        RET
+;
+;/*
+;** define storage according to size
+;*/
+;defstorage(size) int size; {
+DEFSTORA::       
+;  if(size==1) ot("DB ");
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCEQ
+        MOV A,H
+        ORA L
+        JZ CC49
+        LXI H,CC48+0
+        PUSH H
+        CALL OT
+        POP B
+;  else        ot("DW ");
+        JMP CC50
+CC49:
+        LXI H,CC48+4
+        PUSH H
+        CALL OT
+        POP B
+CC50:
+;  }
+        RET
+CC48:   DB 68,66,32,0,68,87,32,0
+;
+;/*
+;** point to following object(s)
+;*/
+;point() {
+POINT::  
+;  ol("DW $+2");
+        LXI H,CC51+0
+        PUSH H
+        CALL OL
+        POP B
+;  }
+        RET
+CC51:   DB 68,87,32,36,43,50,0
+;
+;/*
+;** modify stack pointer to value given
+;*/
+;modstk(newsp, save)  int newsp, save; {
+MODSTK:: 
+;  int k;
+;  k=newsp-csp;
+        PUSH B
+        LXI H,0
+        DAD SP
+        PUSH H
+        LXI H,8
+        CALL CCDSGI
+        PUSH H
+        LHLD CSP
+        POP D
+        CALL CCSUB
+        CALL CCPDPI
+;  if(k==0)return newsp;
+        POP H
+        PUSH H
+        MOV A,H
+        ORA L
+        JNZ CC53
+        LXI H,6
+        CALL CCDSGI
+        POP B
+        RET
+;  if(k>=0) {
+CC53:
+        POP H
+        PUSH H
+        XRA A
+        ORA H
+        JM CC54
+;    if(k<7) {
+        POP H
+        PUSH H
+        PUSH H
+        LXI H,7
+        POP D
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC55
+;      if(k&1) {
+        POP H
+        PUSH H
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC56
+;        ol("INX SP");
+        LXI H,CC52+0
+        PUSH H
+        CALL OL
+        POP B
+;        k--;
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        INX H
+;        }
+;      while(k) {
+CC56:
+CC57:
+        POP H
+        PUSH H
+        MOV A,H
+        ORA L
+        JZ CC58
+;        ol("POP B");
+        LXI H,CC52+7
+        PUSH H
+        CALL OL
+        POP B
+;        k=k-BPW;
+        LXI H,0
+        DAD SP
+        PUSH H
+        POP B
+        POP D
+        PUSH D
+        PUSH B
+        LXI H,2
+        CALL CCSUB
+        CALL CCPDPI
+;        }
+        JMP CC57
+CC58:
+;      return newsp;
+        LXI H,6
+        CALL CCDSGI
+        POP B
+        RET
+;      }
+;    }
+CC55:
+;  if(k<0) {
+CC54:
+        POP H
+        PUSH H
+        XRA A
+        ORA H
+        JP CC59
+;    if(k>-7) {
+        POP H
+        PUSH H
+        PUSH H
+        LXI H,-7
+        POP D
+        CALL CCGT
+        MOV A,H
+        ORA L
+        JZ CC60
+;      if(k&1) {
+        POP H
+        PUSH H
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCAND
+        MOV A,H
+        ORA L
+        JZ CC61
+;        ol("DCX SP");
+        LXI H,CC52+13
+        PUSH H
+        CALL OL
+        POP B
+;        k++;
+        LXI H,0
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+;        }
+;      while(k) {
+CC61:
+CC62:
+        POP H
+        PUSH H
+        MOV A,H
+        ORA L
+        JZ CC63
+;        ol("PUSH B");
+        LXI H,CC52+20
+        PUSH H
+        CALL OL
+        POP B
+;        k=k+BPW;
+        LXI H,0
+        DAD SP
+        PUSH H
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,2
+        CALL CCPIDDPD
+;        }
+        JMP CC62
+CC63:
+;      return newsp;
+        LXI H,6
+        CALL CCDSGI
+        POP B
+        RET
+;      }
+;    }
+CC60:
+;  if(save) swap();
+CC59:
+        LXI H,4
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC64
+        CALL SWAP
+;  const(k);
+CC64:
+        POP H
+        PUSH H
+        PUSH H
+        CALL CONST
+        POP B
+;  ol("DAD SP");
+        LXI H,CC52+27
+        PUSH H
+        CALL OL
+        POP B
+;  ol("SPHL");
+        LXI H,CC52+34
+        PUSH H
+        CALL OL
+        POP B
+;  if(save) swap();
+        LXI H,4
+        CALL CCDSGI
+        MOV A,H
+        ORA L
+        JZ CC65
+        CALL SWAP
+;  return newsp;
+CC65:
+        LXI H,6
+        CALL CCDSGI
+        POP B
+        RET
+;  }
+        POP B
+CC52:   DB 73,78,88,32,83,80,0,80,79,80
+        DB 32,66,0,68,67,88,32,83,80,0
+        DB 80,85,83,72,32,66,0,68,65,68
+        DB 32,83,80,0,83,80,72,76,0
+;
+;/*
+;** double primary register
+;*/
+;doublereg() {ol("DAD H");}
+DOUBLERE::       
+        LXI H,CC66+0
+        PUSH H
+        CALL OL
+        POP B
+        RET
+CC66:   DB 68,65,68,32,72,0
+;#include "cc42.c"
+;/*
+;** add primary and secondary registers (result in primary)
+;*/
+;add() {ol("DAD D");}
+ADD::    
+        LXI H,CC67+0
+        PUSH H
+        CALL OL
+        POP B
+        RET
+CC67:   DB 68,65,68,32,68,0
+;
+;/*
+;** subtract primary from secondary register (result in primary)
+;*/
+;sub() {call("CCSUB");}
+SUB::    
+        LXI H,CC68+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC68:   DB 67,67,83,85,66,0
+;
+;/*
+;** multiply primary and secondary registers (result in primary)
+;*/
+;mult() {call("CCMULT");}
+MULT::   
+        LXI H,CC69+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC69:   DB 67,67,77,85,76,84,0
+;
+;/*
+;** divide secondary by primary register
+;** (quotient in primary, remainder in secondary)
+;*/
+;div() {call("CCDIV");}
+DIV::    
+        LXI H,CC70+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC70:   DB 67,67,68,73,86,0
+;
+;/*
+;** remainder of secondary/primary
+;** (remainder in primary, quotient in secondary)
+;*/
+;mod() {div();swap();}
+MOD::    
+        CALL DIV
+        CALL SWAP
+        RET
+;
+;/*
+;** inclusive "or" primary and secondary registers
+;** (result in primary)
+;*/
+;or() {call("CCOR");}
+OR::     
+        LXI H,CC72+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC72:   DB 67,67,79,82,0
+;
+;/*
+;** exclusive "or" the primary and secondary registers
+;** (result in primary)
+;*/
+;xor() {call("CCXOR");}
+XOR::    
+        LXI H,CC73+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC73:   DB 67,67,88,79,82,0
+;
+;/*
+;** "and" primary and secondary registers
+;** (result in primary)
+;*/
+;and() {call("CCAND");}
+AND::    
+        LXI H,CC74+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC74:   DB 67,67,65,78,68,0
+;
+;/*
+;** logical negation of primary register
+;*/
+;lneg() {call("CCLNEG");}
+LNEG::   
+        LXI H,CC75+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC75:   DB 67,67,76,78,69,71,0
+;
+;/*
+;** arithmetic shift right secondary register
+;** number of bits given in primary register
+;** (result in primary)
+;*/
+;asr() {call("CCASR");}
+ASR::    
+        LXI H,CC76+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC76:   DB 67,67,65,83,82,0
+;
+;/*
+;** arithmetic shift left secondary register
+;** number of bits given in primary register
+;** (result in primary)
+;*/
+;asl() {call("CCASL");}
+ASL::    
+        LXI H,CC77+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC77:   DB 67,67,65,83,76,0
+;
+;/*
+;** two's complement primary register
+;*/
+;neg() {call("CCNEG");}
+NEG::    
+        LXI H,CC78+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC78:   DB 67,67,78,69,71,0
+;
+;/*
+;** one's complement primary register
+;*/
+;com() {call("CCCOM");}
+COM::    
+        LXI H,CC79+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC79:   DB 67,67,67,79,77,0
+;
+;/*
+;** increment primary register by one object of whatever size
+;*/
+;inc(n) int n; {
+INC::    
+;  while(1) {
+CC81:
+;    ol("INX H");
+        LXI H,CC80+0
+        PUSH H
+        CALL OL
+        POP B
+;    if(--n < 1) break;
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC83
+        JMP CC82
+;    }
+CC83:
+        JMP CC81
+CC82:
+;  }
+        RET
+CC80:   DB 73,78,88,32,72,0
+;
+;/*
+;** decrement primary register by one object of whatever size
+;*/
+;dec(n) int n; {
+DEC::    
+;  while(1) {
+CC85:
+;    ol("DCX H");
+        LXI H,CC84+0
+        PUSH H
+        CALL OL
+        POP B
+;    if(--n < 1) break;
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        DCX H
+        CALL CCPDPI
+        PUSH H
+        LXI H,1
+        POP D
+        CALL CCLT
+        MOV A,H
+        ORA L
+        JZ CC87
+        JMP CC86
+;    }
+CC87:
+        JMP CC85
+CC86:
+;  }
+        RET
+CC84:   DB 68,67,88,32,72,0
+; 
+;/*
+;** test for equal to
+;*/
+;eq()  {call("CCEQ");}
+EQ::     
+        LXI H,CC88+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC88:   DB 67,67,69,81,0
+;
+;/*
+;** test for equal to zero
+;*/
+;eq0(label) int label; {
+EQ0::    
+;  ol("MOV A,H");
+        LXI H,CC89+0
+        PUSH H
+        CALL OL
+        POP B
+;  ol("ORA L");
+        LXI H,CC89+8
+        PUSH H
+        CALL OL
+        POP B
+;  ot("JNZ ");
+        LXI H,CC89+14
+        PUSH H
+        CALL OT
+        POP B
+;  printlabel(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+CC89:   DB 77,79,86,32,65,44,72,0,79,82
+        DB 65,32,76,0,74,78,90,32,0
+;
+;/*
+;** test for not equal to
+;*/
+;ne()  {call("CCNE");}
+NE::     
+        LXI H,CC90+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC90:   DB 67,67,78,69,0
+;
+;/*
+;** test for not equal to zero
+;*/
+;ne0(label) int label; {
+NE0::    
+;  ol("MOV A,H");
+        LXI H,CC91+0
+        PUSH H
+        CALL OL
+        POP B
+;  ol("ORA L");
+        LXI H,CC91+8
+        PUSH H
+        CALL OL
+        POP B
+;  ot("JZ ");
+        LXI H,CC91+14
+        PUSH H
+        CALL OT
+        POP B
+;  printlabel(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+CC91:   DB 77,79,86,32,65,44,72,0,79,82
+        DB 65,32,76,0,74,90,32,0
+;
+;/*
+;** test for less than (signed)
+;*/
+;lt()  {call("CCLT");}
+LT::     
+        LXI H,CC92+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC92:   DB 67,67,76,84,0
+;
+;/*
+;** test for less than to zero
+;*/
+;lt0(label) int label; {
+LT0::    
+;  ol("XRA A");
+        LXI H,CC93+0
+        PUSH H
+        CALL OL
+        POP B
+;  ol("ORA H");
+        LXI H,CC93+6
+        PUSH H
+        CALL OL
+        POP B
+;  ot("JP ");
+        LXI H,CC93+12
+        PUSH H
+        CALL OT
+        POP B
+;  printlabel(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+CC93:   DB 88,82,65,32,65,0,79,82,65,32
+        DB 72,0,74,80,32,0
+;
+;/*
+;** test for less than or equal to (signed)
+;*/
+;le()  {call("CCLE");}
+LE::     
+        LXI H,CC94+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC94:   DB 67,67,76,69,0
+;
+;/*
+;** test for less than or equal to zero
+;*/
+;le0(label) int label; {
+LE0::    
+;  ol("MOV A,H");
+        LXI H,CC95+0
+        PUSH H
+        CALL OL
+        POP B
+;  ol("ORA L");
+        LXI H,CC95+8
+        PUSH H
+        CALL OL
+        POP B
+;  ol("JZ $+8");
+        LXI H,CC95+14
+        PUSH H
+        CALL OL
+        POP B
+;  ol("XRA A");
+        LXI H,CC95+21
+        PUSH H
+        CALL OL
+        POP B
+;  ol("ORA H");
+        LXI H,CC95+27
+        PUSH H
+        CALL OL
+        POP B
+;  ot("JP ");
+        LXI H,CC95+33
+        PUSH H
+        CALL OT
+        POP B
+;  printlabel(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+CC95:   DB 77,79,86,32,65,44,72,0,79,82
+        DB 65,32,76,0,74,90,32,36,43,56
+        DB 0,88,82,65,32,65,0,79,82,65
+        DB 32,72,0,74,80,32,0
+;
+;/*
+;** test for greater than (signed)
+;*/
+;gt()  {call("CCGT");}
+GT::     
+        LXI H,CC96+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC96:   DB 67,67,71,84,0
+;
+;/*
+;** test for greater than to zero
+;*/
+;gt0(label) int label; {
+GT0::    
+;  ol("XRA A");
+        LXI H,CC97+0
+        PUSH H
+        CALL OL
+        POP B
+;  ol("ORA H");
+        LXI H,CC97+6
+        PUSH H
+        CALL OL
+        POP B
+;  ot("JM ");
+        LXI H,CC97+12
+        PUSH H
+        CALL OT
+        POP B
+;  printlabel(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;  nl();
+        CALL NL
+;  ol("ORA L");
+        LXI H,CC97+16
+        PUSH H
+        CALL OL
+        POP B
+;  ot("JZ ");
+        LXI H,CC97+22
+        PUSH H
+        CALL OT
+        POP B
+;  printlabel(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+CC97:   DB 88,82,65,32,65,0,79,82,65,32
+        DB 72,0,74,77,32,0,79,82,65,32
+        DB 76,0,74,90,32,0
+;
+;/*
+;** test for greater than or equal to (signed)
+;*/
+;ge()  {call("CCGE");}
+GE::     
+        LXI H,CC98+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC98:   DB 67,67,71,69,0
+;
+;/*
+;** test for gteater than or equal to zero
+;*/
+;ge0(label) int label; {
+GE0::    
+;  ol("XRA A");
+        LXI H,CC99+0
+        PUSH H
+        CALL OL
+        POP B
+;  ol("ORA H");
+        LXI H,CC99+6
+        PUSH H
+        CALL OL
+        POP B
+;  ot("JM ");
+        LXI H,CC99+12
+        PUSH H
+        CALL OT
+        POP B
+;  printlabel(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+CC99:   DB 88,82,65,32,65,0,79,82,65,32
+        DB 72,0,74,77,32,0
+;
+;/*
+;** test for less than (unsigned)
+;*/
+;ult()  {call("CCULT");}
+ULT::    
+        LXI H,CC100+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC100:  DB 67,67,85,76,84,0
+;
+;/*
+;** test for less than to zero (unsigned)
+;*/
+;ult0(label) int label; {
+ULT0::   
+;  ot("JMP ");
+        LXI H,CC101+0
+        PUSH H
+        CALL OT
+        POP B
+;  printlabel(label);
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        CALL PRINTLAB
+        POP B
+;  nl();
+        CALL NL
+;  }
+        RET
+CC101:  DB 74,77,80,32,0
+;
+;/*
+;** test for less than or equal to (unsigned)
+;*/
+;ule()  {call("CCULE");}
+ULE::    
+        LXI H,CC102+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC102:  DB 67,67,85,76,69,0
+;
+;/*
+;** test for greater than (unsigned)
+;*/
+;ugt()  {call("CCUGT");}
+UGT::    
+        LXI H,CC103+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC103:  DB 67,67,85,71,84,0
+;
+;/*
+;** test for greater than or equal to (unsigned)
+;*/
+;uge()  {call("CCUGE");}
+UGE::    
+        LXI H,CC104+0
+        PUSH H
+        CALL CALL
+        POP B
+        RET
+CC104:  DB 67,67,85,71,69,0
+;
+;peephole(ptr) char *ptr; {
+PEEPHOLE::       
+;  while(*ptr) {
+CC106:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        CALL CCGCHAR
+        MOV A,H
+        ORA L
+        JZ CC107
+;    if(streq(ptr, "\tLXI H,0\n\tDAD SP\n\tCALL CCGINT")) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+0
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC108
+;      if(streq(ptr+31, "XCHG;;")) {pp2();ptr=ptr+38;}
+;patched by BRD to be streq(ptr+29, "/n/tXCHG;;")
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        LXI D,29	; used to be 31 ...patch by BRD
+        DAD D
+        PUSH H
+	LXI H,BRD4 	; patch by BRD used to be       LXI H,CC105+30
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC109
+        CALL PP2
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,38
+        CALL CCPIDDPD
+;      else                        {pp1();ptr=ptr+30;}
+        JMP CC110
+CC109:
+        CALL PP1
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,30
+        CALL CCPIDDPD
+CC110:
+;      }
+;    else if(streq(ptr, "\tLXI H,2\n\tDAD SP\n\tCALL CCGINT")) {
+        JMP CC111
+CC108:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+37
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC112
+;      if(streq(ptr+31, "XCHG;;")) {pp3(pp2);ptr=ptr+38;}
+; patched by BRD to be streq(ptr+29, "/n/tXCHG;;")
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+	LXI D,29	; patch by BRD...used to be        LXI D,31
+        DAD D
+        PUSH H
+	LXI H,BRD4	; patch by BRD...used to be        LXI H,CC105+67
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC113
+        LXI H,PP2
+        PUSH H
+        CALL PP3
+        POP B
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,38
+        CALL CCPIDDPD
+;      else                        {pp3(pp1);ptr=ptr+30;}
+        JMP CC114
+CC113:
+        LXI H,PP1
+        PUSH H
+        CALL PP3
+        POP B
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,30
+        CALL CCPIDDPD
+CC114:
+;      }
+;    else if(optimize) {
+        JMP CC115
+CC112:
+        LDA OPTIMIZE
+        CALL CCSXT
+        MOV A,H
+        ORA L
+        JZ CC116
+;      if(streq(ptr, "\tDAD SP\n\tCALL CCGINT")) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+74
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC117
+;        ol("CALL CCDSGI");
+        LXI H,CC105+95
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+21;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,21
+        CALL CCPIDDPD
+;        }
+;      else if(streq(ptr, "\tDAD D\n\tCALL CCGINT")) {
+        JMP CC118
+CC117:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+107
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC119
+;        ol("CALL CCDDGI");
+        LXI H,CC105+127
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+20;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,20
+        CALL CCPIDDPD
+;        }
+;      else if(streq(ptr, "\tDAD SP\n\tCALL CCGCHAR")) {
+        JMP CC120
+CC119:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+139
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC121
+;        ol("CALL CCDSGC");
+        LXI H,CC105+161
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+22;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,22
+        CALL CCPIDDPD
+;        }
+;      else if(streq(ptr, "\tDAD D\n\tCALL CCGCHAR")) {
+        JMP CC122
+CC121:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+173
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC123
+;        ol("CALL CCDDGC");
+        LXI H,CC105+194
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+21;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,21
+        CALL CCPIDDPD
+;        }
+;      else if(streq(ptr,
+        JMP CC124
+CC123:
+;"\tDAD SP\n\tMOV D,H\n\tMOV E,L\n\tCALL CCGINT\n\tINX H\n\tCALL CCPINT")) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+206
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC125
+;        ol("CALL CCINCI");
+        LXI H,CC105+265
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+59;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,59
+        CALL CCPIDDPD
+;        }
+;      else if(streq(ptr,
+        JMP CC126
+CC125:
+;"\tDAD SP\n\tMOV D,H\n\tMOV E,L\n\tCALL CCGINT\n\tDCX H\n\tCALL CCPINT")) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+277
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC127
+;        ol("CALL CCDECI");
+        LXI H,CC105+336
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+59;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,59
+        CALL CCPIDDPD
+;        }
+;      else if(streq(ptr,
+        JMP CC128
+CC127:
+;"\tDAD SP\n\tMOV D,H\n\tMOV E,L\n\tCALL CCGCHAR\n\tINX H\n\tMOV A,L\n\tSTAX D")
+;) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+348
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC129
+;        ol("CALL CCINCC");
+        LXI H,CC105+412
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+64;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,64
+        CALL CCPIDDPD
+;        }
+;      else if(streq(ptr,
+        JMP CC130
+CC129:
+;"\tDAD SP\n\tMOV D,H\n\tMOV E,L\n\tCALL CCGCHAR\n\tDCX H\n\tMOV A,L\n\tSTAX D")
+;) {
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+424
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC131
+;        ol("CALL CCDECC");
+        LXI H,CC105+488
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+64;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,64
+        CALL CCPIDDPD
+;        }
+;      else if(streq(ptr, "\tDAD D\n\tPOP D\n\tCALL CCPINT")) {
+        JMP CC132
+CC131:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+500
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC133
+;        ol("CALL CCPIDDPD");
+	LXI	H,BRD2	; patch by brd
+;        LXI H,CC105+527
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+27;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,27
+        CALL CCPIDDPD
+;        }
+;      else if(streq(ptr, "\tDAD D\n\tPOP D\n\tMOV A,L\n\tSTAX D")) {
+        JMP CC134
+CC133:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+541
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC135
+;        ol("CALL CCPCDDPD");
+	LXI H,BRD3	; patch by brd
+;        LXI H,CC105+572
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+31;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,31
+        CALL CCPIDDPD
+;        }
+;      else if(streq(ptr, "\tPOP D\n\tCALL CCPINT")) {
+        JMP CC136
+CC135:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+586
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC137
+;        ol("CALL CCPDPI");
+        LXI H,CC105+606
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+20;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,20
+        CALL CCPIDDPD
+;        }
+;      else if(streq(ptr, "\tPOP D\n\tMOV A,L\n\tSTAX D")) {
+        JMP CC138
+CC137:
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,CC105+618
+        PUSH H
+        CALL STREQ
+        POP B
+        POP B
+        MOV A,H
+        ORA L
+        JZ CC139
+;        ol("CALL CCPDPC");
+        LXI H,CC105+642
+        PUSH H
+        CALL OL
+        POP B
+;        ptr=ptr+24;
+        LXI H,2
+        DAD SP
+        PUSH H
+        LXI H,4
+        CALL CCDSGI
+        LXI D,24
+        CALL CCPIDDPD
+;        }
+;      /* additional optimizing logic goes here */
+;      else cout(*ptr++, output);
+        JMP CC140
+CC139:
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        CALL CCGCHAR
+        PUSH H
+        LHLD OUTPUT
+        PUSH H
+        CALL COUT
+        POP B
+        POP B
+CC140:
+CC138:
+CC136:
+CC134:
+CC132:
+CC130:
+CC128:
+CC126:
+CC124:
+CC122:
+CC120:
+CC118:
+;      }
+;    else cout(*ptr++, output);
+        JMP CC141
+CC116:
+        LXI H,2
+        DAD SP
+        PUSH H
+        CALL CCGINT
+        INX H
+        CALL CCPDPI
+        DCX H
+        CALL CCGCHAR
+        PUSH H
+        LHLD OUTPUT
+        PUSH H
+        CALL COUT
+        POP B
+        POP B
+CC141:
+CC115:
+CC111:
+;    }
+        JMP CC106
+CC107:
+;  }
+        RET
+CC105:  DB 9,76,88,73,32,72,44,48,13,9
+        DB 68,65,68,32,83,80,13,9,67,65
+        DB 76,76,32,67,67,71,73,78,84,0
+        DB 88,67,72,71,59,59,0,9,76,88
+        DB 73,32,72,44,50,13,9,68,65,68
+        DB 32,83,80,13,9,67,65,76,76,32
+        DB 67,67,71,73,78,84,0,88,67,72
+        DB 71,59,59,0,9,68,65,68,32,83
+        DB 80,13,9,67,65,76,76,32,67,67
+        DB 71,73,78,84,0,67,65,76,76,32
+        DB 67,67,68,83,71,73,0,9,68,65
+        DB 68,32,68,13,9,67,65,76,76,32
+        DB 67,67,71,73,78,84,0,67,65,76
+        DB 76,32,67,67,68,68,71,73,0,9
+        DB 68,65,68,32,83,80,13,9,67,65
+        DB 76,76,32,67,67,71,67,72,65,82
+        DB 0,67,65,76,76,32,67,67,68,83
+        DB 71,67,0,9,68,65,68,32,68,13
+        DB 9,67,65,76,76,32,67,67,71,67
+        DB 72,65,82,0,67,65,76,76,32,67
+        DB 67,68,68,71,67,0,9,68,65,68
+        DB 32,83,80,13,9,77,79,86,32,68
+        DB 44,72,13,9,77,79,86,32,69,44
+        DB 76,13,9,67,65,76,76,32,67,67
+        DB 71,73,78,84,13,9,73,78,88,32
+        DB 72,13,9,67,65,76,76,32,67,67
+        DB 80,73,78,84,0,67,65,76,76,32
+        DB 67,67,73,78,67,73,0,9,68,65
+        DB 68,32,83,80,13,9,77,79,86,32
+        DB 68,44,72,13,9,77,79,86,32,69
+        DB 44,76,13,9,67,65,76,76,32,67
+        DB 67,71,73,78,84,13,9,68,67,88
+        DB 32,72,13,9,67,65,76,76,32,67
+        DB 67,80,73,78,84,0,67,65,76,76
+        DB 32,67,67,68,69,67,73,0,9,68
+        DB 65,68,32,83,80,13,9,77,79,86
+        DB 32,68,44,72,13,9,77,79,86,32
+        DB 69,44,76,13,9,67,65,76,76,32
+        DB 67,67,71,67,72,65,82,13,9,73
+        DB 78,88,32,72,13,9,77,79,86,32
+        DB 65,44,76,13,9,83,84,65,88,32
+        DB 68,0,67,65,76,76,32,67,67,73
+        DB 78,67,67,0,9,68,65,68,32,83
+        DB 80,13,9,77,79,86,32,68,44,72
+        DB 13,9,77,79,86,32,69,44,76,13
+        DB 9,67,65,76,76,32,67,67,71,67
+        DB 72,65,82,13,9,68,67,88,32,72
+        DB 13,9,77,79,86,32,65,44,76,13
+        DB 9,83,84,65,88,32,68,0,67,65
+        DB 76,76,32,67,67,68,69,67,67,0
+        DB 9,68,65,68,32,68,13,9,80,79
+        DB 80,32,68,13,9,67,65,76,76,32
+        DB 67,67,80,73,78,84,0,67,65,76
+        DB 76,32,67,67,68,68,80,68,80,73
+        DB 0,9,68,65,68,32,68,13,9,80
+        DB 79,80,32,68,13,9,77,79,86,32
+        DB 65,44,76,13,9,83,84,65,88,32
+        DB 68,0,67,65,76,76,32,67,67,68
+        DB 68,80,68,80,67,0,9,80,79,80
+        DB 32,68,13,9,67,65,76,76,32,67
+        DB 67,80,73,78,84,0,67,65,76,76
+        DB 32,67,67,80,68,80,73,0,9,80
+        DB 79,80,32,68,13,9,77,79,86,32
+        DB 65,44,76,13,9,83,84,65,88,32
+        DB 68,0,67,65,76,76,32,67,67,80
+        DB 68,80,67,0
+BRD2:	DB 'CALL CCPIDDPD',0
+BRD3:	DB 'CALL CCPCDDPD',0
+BRD4:	DB 0DH,09H,'XCHG;;',0
+;
+;pp1() {
+PP1::    
+;  ol("POP H");
+        LXI H,CC142+0
+        PUSH H
+        CALL OL
+        POP B
+;  ol("PUSH H");
+        LXI H,CC142+6
+        PUSH H
+        CALL OL
+        POP B
+;  }
+        RET
+CC142:  DB 80,79,80,32,72,0,80,85,83,72
+        DB 32,72,0
+;
+;pp2() {
+PP2::    
+;  ol("POP D");
+        LXI H,CC143+0
+        PUSH H
+        CALL OL
+        POP B
+;  ol("PUSH D");
+        LXI H,CC143+6
+        PUSH H
+        CALL OL
+        POP B
+;  }
+        RET
+CC143:  DB 80,79,80,32,68,0,80,85,83,72
+        DB 32,68,0
+;
+;pp3(pp) int pp; {
+PP3::    
+;  ol("POP B");
+        LXI H,CC144+0
+        PUSH H
+        CALL OL
+        POP B
+;  pp();
+        POP B
+        POP H
+        PUSH H
+        PUSH B
+        PUSH H
+        LXI H,$+5
+        XTHL
+        PCHL
+;  ol("PUSH B");
+        LXI H,CC144+6
+        PUSH H
+        CALL OL
+        POP B
+;  }
+        RET
+CC144:  DB 80,79,80,32,66,0,80,85,83,72
+        DB 32,66,0
+;
+        END
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             

@@ -1,0 +1,482 @@
+MicroTELNET (MTN) is a program written in Z80 code and designed to
+interface with the facilities of CP/M 1.4 and 2.2.  The program
+consists of two files: MTNxx.COM and MTNMSGS.OVR, where xx is the
+version number - currently 13 (1.3).
+
+Running MTN will automatically drop you into a customizing sequence
+where you can change all of the default settings, define keyboard
+macros, indicate you terminal type, select your modem card type, and
+finally save the current state to a filename of your own choosing.  It
+is that file which you run for subsequent sessions.  All of the
+customizing code and one-time code is in the area used by the buffer
+and is why the actual size of the program differs from the running
+size.  When the customization is complete, you are left in that
+version to continue or Quit and run the newly created version, or
+whatever.
+
+Once you have completed the customization sequence, or run the
+customized version, you are left online, unless you type a CTRL-^,
+which is the intercept character.  The program stops looking at the
+remote (modem) port and awaits another character as a command.  When
+the command has completed its action, it will resume checking the
+remote port for input.  Any characters sent by the remote host are
+ignored during that time.  A future version of MTN may incorporate
+interrupt-driven buffered I/O for the remote port, and possibly for
+the Console ports for those using direct serial console I/O.
+
+The program itself is about 9K and currently resides beginning at
+0100H.  In an earlier design it was self-relocating to just under CCP
+before I figured out how to write the buffer to a file from within the
+program.  I am thinking of reinstalling that capability for another
+reason: being able to chain to another program and return to MTN.
+Eventually, I should be able to replace all the functions of CCP and
+recover all of that space.  The only problem is that you would not be
+able to run those programs which overlay CCP, like DDT and ZDT, and
+those which cause a boot.  In those cases it would be best to
+customize your CCP to automatically run your customized MTN.
+Alternately, I am considering modifying the jump in the program at
+0100H to have it jump to the regular loop instead of init, saving the
+program state to a special filename, such as CONT, before chaining to
+the other program....
+
+I now think I know how to create the feature that everybody seems to
+want: emulating a particular terminal, either a DM2500 or a VT52.
+These two should cover most of the cases.  Depending on your console
+type, this may expand the program size at least another 2K.
+
+Finally, the code itself is over 56K of well-commented source, and
+another 17K for the source to the documentation, all written in Z80
+code starting in May 1980 and assembled and linked using Microsoft's
+MACRO-80 and LINK-80.
+
+The following is a direct transcript of all of the descriptive
+documentation built-in to each command.  The user can also get this at
+any time by responding with a "?" to the "[Confirm]" prompt.  All of
+these writeups cause the screen to be cleared and written in inverse
+video, if those sequences are known to the program.  The text is
+actually kept in a separate file (MTNMSGS.OVR) and accessed by
+starting sector number in a similar fashion that WordStar uses.  In
+fact, the clear screen and inverse video functions can be patched in
+ala WordStar - or can be made part of the interactive "install".  What
+do you think?
+
+The first section is what is produced when a "customized" version of
+MicroTELNET (MTN) is run.  The second section is the log of the
+creation of the first section.
+
+All of this, except this commentary, was produced by logging onto the
+KA and using the ^P command to CP/M to force the output to be
+simultaneously directed to both the Console and the LST: device which
+in my case is the modem.  (This capability had to be removed in the
+latest versions, however.)
+--------------------
+
+A>b:test
+
+Customized MicroTELNET 1.3
+Copyright (c) 1980 Frank J. Wancho
+Type "^^" then "?" for Help.
+*** Carrier: ON ***
+
+
+Display HELP Information? [Confirm] OK
+
+ Type the CTRL-^ key and one of the following Command Characters.
+ [Confirm] the Command with a RETURN, the "Y" key, or the SPACE key.
+ Any other key will cause the Command to be ignored.
+
+    ^^ - Passes CTRL-^ to Modem.
+    H - Displays this HELP Information File.
+    D - DIALs a Phone Number (tries up to three times).
+    R - REDIALs the last number dialed as above.
+    T - TERMINATEs the call (hangs up phone).
+
+    S - Displays the current STATUS Information.
+    I - INTERACTIVE Mode Setup.
+
+    E - Sets ECHO Mode:    "R" for REMOTE (default) or
+                           "L" for LOCAL.
+
+    M - Sets MODEM Mode:   "E" for EXTERNAL (default) or
+                           "I" for INTERNAL.
+
+    P - Sets PARITY Mode:  "N" for NONE (default) or
+                           "E" for EVEN.
+
+    V - Sets VERBOSE Mode: "S" for ON (default) or
+                           "C" for OFF.
+
+    B - Sets BUFFER Mode:  "R" for RECORD on,
+                           "S" for STOP recording (default), or
+                           "E" for ERASE the Buffer.
+
+    O - Sets OUTPUT Mode:  "T" for TEXT (default) or
+                           "R" for RAW.
+
+    F - Sets FLOW Mode:    "N" for NONE (default),
+                           "X" for XON/XOFF, or
+                           "A" for ACK/NAK (currently unimplemented).
+
+    L - LISTs the Buffer or a Disk File to the Console.
+    W - WRITEs the Buffer to a Disk File.
+    X - TRANSMITs a Disk File to the Modem.
+
+    K - Puts Keyboard Macro string on a numeric character.
+
+    Q - QUITs and returns to CP/M.
+
+    Any other character is ignored.
+
+Dial a number? [Confirm] ?
+
+ The DIAL Command prompts for a phone number to be dialed by the
+ Automatic Calling Unit section of the internal Modem.  Any phone
+ number may be entered, and non-digits will be ignored, except
+ for the special character "*".  This character will cause a
+ two-second pause in the dialing of the number.  Standard CP/M
+ line input editing can be used when responding to this prompt.
+
+ After the number is dialed, the MTN will examine the modem
+ status for a carrier detect every second, up to 30 times for the
+ D.C.  Hayes modem and up to 17 times for the PMMI modem.  If a
+ carrier is detected during that time, the modem status is
+ examined one more time after another one second delay.  If a
+ carrier detect is still on, then a message is issued to the
+ Console.  If no carrier is detected in the alloted time, the
+ number is redialed and the process repeated two more times
+ before a "No Answer" message is issued to the Console.
+
+ In any case, MTN does not use this modem status to inhibit
+ characters from being sent to the remote.  Thus an external modem
+ may be used and the phone number manually dialed and the line
+ switched to to the modem after manual verification of a carrier.
+
+ The INTERACTIVE Setup Mode Command, which is automatically
+ offered at installation time, and which may be manually invoked
+ at any other time, gives you the opportunity to pre-establish a
+ number to be used by the REDIAL Command without actually dialing
+ the number.
+
+ The current number, if any, is always available by using the
+ STATUS Command.
+
+Dial a number? [Confirm] OK
+Enter Phone Number: 555-1212
+Dialing...5551212
+Waiting for Carrier...
+*** Carrier: ON ***
+
+Redial:  [Confirm] ?
+
+ The REDIAL Command works exactly like the DIAL Command, except
+ the previously entered number from the last DIAL Command, or
+ preset with the INTERACTIVE Mode Setup is offered to be used.
+ Either confirm the offering or refuse it and use the DIAL Command
+ directly to dial a new number.
+
+ The current number, if any, is always available by using the
+ STATUS Command.
+
+Hang up phone? [Confirm] ?
+
+ The TERMINATE Command will cause MTN to send a Control byte to
+ the modem telling it to hang up the phone.  If the phone signal
+ is being routed through the Modem card, even though an external
+ modem is being used, the call will be terminated and the phone
+ line placed in an "on hook" condition.  If no modem card is
+ being used, this command will have no effect.
+
+Display STATUS Information? [Confirm] ?
+
+ The STATUS Command displays a list of the current settings of
+ the various Modes, the current addresses of the buffer pointers
+ in HEX, the current size of the buffer and remaining available
+ space in both HEX and DECIMAL, and the current phone number, if
+ any.
+
+Display STATUS Information? [Confirm] OK
+
+Carrier: ON
+VERBOSE Mode: ON
+MODEM Mode: EXTERNAL
+PARITY Mode: NONE
+ECHO Mode: REMOTE
+FLOW Mode: NONE
+OUTPUT Mode: TEXT
+Starting Buffer Address: xxxx (HEX)
+Current Buffer Address:  xxxx (HEX)
+Top of Available Memory: xx00 (HEX)
+Space Used:  xx,xxx (DECIMAL) Bytes.
+Space Left:  xx,xxx (DECIMAL) Bytes.
+BUFFER Mode: RECORD OFF
+
+Interactive Mode Setup?: [Confirm] ?
+
+ The INTERACTIVE Setup Mode provides a way to step through each
+ of the setable modes and change their current default value as
+ well as being able to set the default phone number used for the
+ REDIAL Command and to define each of the special "function" keys.
+
+ This Command is automatically invoked for you at installation
+ time and you are given the opportunity to save this customized
+ version of the program at that time.
+
+Set ECHO Mode? (Default: REMOTE): [Confirm] ?
+
+ The ECHO Mode Command give you the capability to change the
+ current default setting of whether or not MTN should echo what
+ you type from your keyboard (LOCAL), or just send it to the modem
+ and let the distant host echo what you just typed (REMOTE).
+
+Set MODEM Mode? (Default: EXTERNAL): [Confirm] ?
+
+ The MODEM Mode Command allows you to select the use of the
+ INTERNAL Modem card for remote communications at 300 baud, or an
+ EXTERNAL modem connected to the second serial port at the speed
+ of the port and that modem.  The MTN program has been checked
+ out with only external 300 and 1200 baud external modems and no
+ guarantees are being offered at any higher asynchronous baud.
+
+Set PARITY Mode? (Default: NONE): [Confirm] ?
+
+ The PARITY Mode Command offers the choice between EVEN and NO
+ parity being computed for outgoing remote characters.  EVEN
+ parity is always sent to the Console, and the parity bit is
+ stripped on every character recorded in the buffer.
+
+Set VERBOSE Mode? (Default: ON): [Confirm] ?
+
+ The VERBOSE Mode Command lets you turn on (SET) or turn off
+ (CLEAR) the extra prompting of most of the commands and the
+ "Dialing..." and "Waiting for Carrier..." messages when you
+ become more familiar with the operation of the MTN Commands.
+
+Set BUFFER Mode? (Default: RECORD OFF): [Confirm] ?
+
+ The BUFFER Mode Command allows you to RECORD or STOP recording
+ the characters being received from the remote port, or ERASE the
+ contents of the buffer.  (Actually, ERASE simply resets the
+ buffer end address pointer and character count.)  You can turn on
+ RECORD and STOP recording at any time as a crude editing
+ technique to prevent undesired portions from being record in the
+ resulting continuous character stream.  (Also, when LOCAL ECHO
+ Mode is chosen, everything typed from the Console keyboard,
+ including Keyboard Macros are recorded in the buffer as well.)
+
+ When there is only room for two thousand more characters in the
+ buffer, and RECORD is on, each character sent to the Console will
+ be accompanied by a BELL character (^G) as a warning that the
+ buffer is almost full.  If you allow the buffer to become full,
+ MTN will automatically stop recording and looking at the input
+ stream, except to send an XOFF (^S) character to the remote port
+ if the XON/XOFF FLOW Mode has been selected, and write the buffer
+ to a disk file, prompting you for a filename.  IF XON/XOFF FLOW
+ Mode has been selected, an XON (^Q) character will automatically
+ be sent to the remote port and recording will resume in a "fresh"
+ buffer.
+
+ Whether or not RECORD is on or STOPped, the current contents of
+ the buffer may be written to the disk by the WRITE Command.  The
+ current contents of the buffer may be viewed on the Console by
+ the "B" subcommand of the LIST Command.
+
+ When RECORD is turned on, you will also be dropped into the
+ OUTPUT Command to selected TEXT or RAW recording mode.  See the
+ OUTPUT Command description for more details.
+
+Set OUTPUT Mode? (Default: TEXT): [Confirm] ?
+
+ The OUTPUT Mode determines whether every incoming character will
+ be recorded in the buffer (RAW), or NULLs (^@ or 00H), DELs (7FH)
+ will be ignored, ^Zs will be turned into NULLs and the parity bit
+ stripped (TEXT).  The permits non-text data to be recorded in the
+ buffer, listed on the Console from either the buffer file or a
+ file, or transmitting any file to the remote port.
+
+Set FLOW Mode? (Default: NONE): [Confirm] ?
+
+ The FLOW Mode Command allows you to turn on the XON/XOFF flow
+ control protocol to be able to stop input from the remote port
+ when the buffer becomes full.  This is a function of being able
+ to turn on that same protocol with the remote host to make this
+ mode properly work.
+
+ A future implementation of MTN will also permit the XON/XOFF
+ flow control to be honored for controlling output to the remote
+ port.
+
+ ACK/NAK or ETX/NAK Flow Control may also be implemented in a
+ future release.
+
+List Function? [Confirm] ?
+
+ The LIST Command allows you to list the current contents of the
+ buffer if it is not empty or the contents of any disk file to the
+ Console.  A future version will also allow you to list the
+ directory of any currently mounted disk, run any built-in CP/M
+ command and chain to a program and return to MTN in its current
+ state.
+
+ The OUTPUT Mode determines whether CP/M EOFs are to be ignored
+ when displaying the contents of a disk file.  The entire contents
+ of the buffer are displayed regardless of embedded CP/M EOF mark.
+
+ The listing is stopped every 23 LFs and any key may be typed to
+ resume the listing.  At any other time, a SPACE key will abort
+ the listing.
+
+Write Buffer to Disk? [Confirm] ?
+
+ The WRITE Command will write the contents of the non-empty
+ buffer to a disk file.  The command will prompt for the filename
+ in standard CP/M format and with the same editing capabilities.
+ (Do not type a ^C as the first character of the filename or you
+ will be dropped out of MTN and lose the buffer's contents.)  If
+ the file already exists, you will be given the opportunity to
+ overwrite it or exit from the command to try again.  When the
+ file has been written, a message will be displayed indicating how
+ many records were written.
+
+ This command will return incomplete if any disk errors were
+ detected to permit you to correct the condition by replacing the
+ disk in question and manually reinvoking the command again.  Any
+ disk may be used even though CP/M did not know about it upon
+ entering the program - MTN does a disk system reset before it
+ prompts for the name.  So change your almost full disk before
+ using this command or before the buffer becomes full and an
+ auto-WRITE is done for you.
+
+Send a File from Disk? [Confirm] ?
+
+ The XMIT Command prompts for a filename to be sent to the remote
+ port.  As with the WRITE Command, standard CP/M input line
+ editing can be used and the disk containg the file must be
+ mounted before the command is issued.
+
+ This command uses a technique where it looks for a LF echo from
+ the remote port for every CR it sends before it sends the next
+ character.  No LF characters are ever sent to the remote, and
+ successive LFs cause successive CRs to be sent instead.  The
+ transmission of the file may be aborted at any time with a SPACE
+ key.  Any other key will cause the command to break out of the
+ "wait-for-LF-echo" loop and resume sending the next character.
+
+ The setting of the OUTPUT Mode determines whether the
+ transmission will stop at the first CP/M EOF mark detected
+ (TEXT), or wait for the actual end of physical file (RAW).
+
+Define a Key? [Confirm] ?
+
+ The KEYBOARD Macro Command allows you to define "function" keys,
+ i.e., a two-key sequence (CTRL-^ followed by a number key) to
+ transmit the desired string of characters (up to 31 characters
+ each) to the remote port.  The only character which cannot be
+ sent is a NULL (00H).
+
+ You are asked if you want to define a key and with a positive
+ response (a CR, "Y", or a SPACE), you will be asked to enter a
+ numeric character to be defined and the string to be placed on
+ that character.  You will then be asked if you want to keep the
+ trailing CR and then if you want to add more to the string.  This
+ cycle repeats until you give with a non-positive response.
+
+ Experience so far has shown this function to work at 300 baud
+ and requiring a clean line to work properly at 1200 baud.
+ Whatever you enter from the keyboard while the string is being
+ sent to the remote port is not buffered in this version.
+
+ This command is automatically run at installation time if you
+ chose to run the INTERACTIVE Setup Mode at that time.  Any keys
+ you define at that time are saved in that customized version.
+ However, once defined, any key may be subsequently defined or
+ redefined but is not saveable (at this time).  A future version
+ of MTN may allow you to save and load the settings of the keys
+ from a disk file, as well as remove the 31-key restriction per
+ key and only have a limit on the total size of all defined
+ strings.
+
+Quit? [Confirm] ?
+
+ The QUIT Command stops the MTN and returns to CP/M after
+ resetting the disk system and restoring the disk drive used as
+ the default drive when MTN was started.
+
+ A future version of MTN may not actually let you leave MTN, but
+ allow you to chain to other programs and automatically return to
+ MTN when the program is done.  Right now it is possible to force
+ a return to a fresh copy of MTN or a customized version, or to a
+ MENU program and is optional.
+
+Quit? [Confirm] OK
+
+--------------------
+The "install" session begins here.  Note that MTN only prints the word
+"Customized" on installed versions.  MTN also knows whether or not you
+are using CP/M 2.2 or 1.4.  If 1.4, the third choice is not offered
+below.  Of course if your terminal does not have a META key, the
+choice between option 1 and the rest is academic.
+--------------------
+
+A>b:mtn
+
+MicroTELNET 1.3
+Copyright (C) 1980 Frank J. Wancho
+Type "^^" then "?" for Help.
+
+You are using CP/M Version 2.2 and have the option of using:
+
+(1) Direct Console Serial I/O with ^@ and META capability, or
+(2) BIOS Console I/O with ^@ but no META capability, or
+(3) BDOS Console I/O with no ^@ or META capability.
+
+Enter the number of your choice here: 1
+Using Direct Console Serial I/O
+
+Interactive Mode Setup?: [Confirm] OK
+
+Display STATUS Information? [Confirm] XXX
+
+Set ECHO Mode? (Default: REMOTE): [Confirm] XXX
+
+Set MODEM Mode? (Default: EXTERNAL): [Confirm] XXX
+
+Set PARITY Mode? (Default: NONE): [Confirm] XXX
+
+Set FLOW Mode? (Default: NONE): [Confirm] XXX
+
+Set BUFFER Mode? (Default: RECORD OFF): [Confirm] XXX
+
+Define a Key? [Confirm] XXX
+
+Set VERBOSE Mode? (Default: ON): [Confirm] XXX
+
+Enter Phone Number: xxx-xxxx
+
+Which terminal type are you using?
+
+(1) GT-100 or GT-101 (INFOTON 100)
+
+(2) PA3025 (a modified DM3025)
+
+(3) InterTube II (ugh!)
+
+(4) SOROQ IQ 120
+
+Enter the number of your choice: 2
+
+Which modem card are you using?
+
+(1) D.C. Hayes (either version)
+
+(2) Potomac Micromodem (PMMI)
+
+Enter the number of your choice: 1
+
+Save this Customized Version Now?: [Confirm] OK
+
+Filename?: b:test.com
+
+   xx 128-Byte Records Written to Disk.
+
+*** Program Save Complete ***
+*** Carrier: ON ***

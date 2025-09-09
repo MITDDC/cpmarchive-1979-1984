@@ -1,0 +1,109 @@
+
+;		       MDM712 - 08/01/83
+;
+;		   COPYRIGHT 1983 BY IRV HOFF
+; 
+;
+;***********************************************************************
+;
+; NOTE: MDM712 SUPPORTS AUTO-DIALING AND AUTOMATIC CONTINUOUS
+;	REDIALING FOR THE FOLLOWING MODEMS:
+;
+;		a)  PMMI 103 PLUG-IN S-100 MODEM
+;		b)  HAYES SMARTMODEM 300 OR 1200
+;		c)  U. S. ROBOTICS 300/1200 MODEM
+;
+;	   THIS IS THE ONLY EXISTING PROGRAM TO SUPPORT ALL
+;	   THESE MODEMS CONCURRENTLY.  CHECK THE FOLLOWING
+;	   THREE BYTES IN ANY OF THE OVERLAYS.  (YOU CAN
+;	   STILL USE THE PROGRAM WITH OTHER EXTERNAL MODEMS
+;	   SUCH AS THE BELL 212A, RACAL-VADIC, ETC., WITH
+;	   MANUAL DIALING.)
+;
+;		0103H	FF = PMMI, 00 = NON-PMMI
+;		0104H	FF = HAYES SMARTMODEM 300 OR 1200
+;				OR U. S. ROBOTICS 300/1200
+;			00 = NONE OF THE ABOVE
+;		0105H	54 = "T" FOR TOUCH TONE DIALING, OR
+;			50 = "P" FOR ROTARY PULSE DIALING
+;				(FOR HAYES OR U. S. ROBOTICS ONLY)
+;
+;***********************************************************************
+;
+; 08/01/83  Added two alternate dialing routines such as MCI and SPRINT.
+;	    Slight change in batch transfer area.  Prevented CTL-Y and
+;  MDM712   CTL-R from outputting to the modem while saving for disk.
+;	    Fixed "disk space remaining" to read correctly with CP/M+.
+;	    Renamed all overlays to conform with 6-character filename
+;	    limit on Compuserve.	- Irv Hoff
+;
+; 07/01/83  Changed TERM to allow use of printer port for modem use.
+;	    Needed by the Morrow MD and NEC 8001 computers.  Changed all
+;  MDM711   overlays to allow overprinting the PMMI parity routines as
+;	    the Applecat overlay was not working properly.  Removed the
+;	    short break tone during disconnect as Smartmodem 1200 were
+;	    locking up.  (Smartmodem 300 were operating normally.)
+;					- Irv Hoff
+;
+; 06/17/83  At last.  Program now has autodialing and auto-continuous
+;	    redialing for Hayes Smartmodem 300 or 1200, PMMI 103 modem
+;  MDM710   or U.S.Robotics.  After first unsuccessful try, asks if you
+;	    want to quit, try once again, or continuously redial.  Also
+;	    changed the BYE routine to be compatible with systems other
+;	    than RCP/M.  Now trap 87H and 7H which are sometimes used by
+;	    mainframes to signify "do not send any more sectors at this
+;	    time".  This keeps the original Christensen protocol when
+;	    ACKNAK is set YES.  (ACKNAK can of course be set to NO if
+;	    the results seem preferable to the user.  Some problems have
+;	    been noticed in batch transfers and modem-to-modem use with
+;	    ACKNAK set NO.)		- Irv Hoff
+;
+; 05/27/83  Corrected a phone number in the library.  Added a CR/LF for
+;	    the quiet mode if using batch transfer.  Simplified initial-
+;  MDM709   ization at startup.  Two minor mods to assist in adding an
+;	    overlay for Hayes 300/1200 SmartModem later.
+;					- Irv Hoff
+;
+;
+; 05/15/83  Extensive revisions on many parts of the program.  Relocated
+;	    most of the PMMI routines near the start to facilitate using
+;  MDM708   the new 300/1200 PMMI board or the Hayes Smartmodem.  Some
+;	    of the more ambitious changes include:
+;		a) CRC system replaced with the high-speed lookup tables
+;		   similar to those used in CHEK15.
+;		b) Separate printer buffer.  Can now print regardless of
+;		   input speed even when saving for a disk file.
+;		c) Printer buffer and disk buffer each can accept up to
+;		   128 characters after an X-OFF to compensate for line-
+;		   oriented systems and satellite linking.
+;		d) Saving to disk made far more user-friendly.  'NOL' no
+;		   longer used.  File automatically closed upon exit.
+;		e) Sector count shown before "ACK" is sent, allowing
+;		   high-speed transfers (to 19,200 baud) without errors.
+;		f) Typing BYE on command line or CTL-D in terminal mode
+;		   disconnects and returns to CP/M.  Also closes any disk
+;		   files that may be open.  "X" (secondary option) does
+;		   the same thing, allowing automatic terminate at com-
+;		   pletion of file transfer.
+;		g) Improved the "E" (echo) mode, also half duplex mode.
+;		h) Control characters above ^M not passed to the CRT, an
+;		   optional feature.
+;		i) Handling of command line options greatly modernized.
+;		j) For PMMI users, program automatically comes up in
+;		   originate mode at default speed.  No need to ever say
+;		   TO.300 unless a baudrate change is desired.
+;		k) Simlified and changed numerous flags to be consistent
+;		   with others.
+;		l) Several improvements in error handling and detection.
+;	    Numerous other changes.  We attempted to incorporate all the
+;	    suggestions forwarded from various users in addition to some
+;	    features I wanted myself.   - Irv Hoff
+;
+; 01/01/83  First version.  Can be assembled with ASM.COM.  MDM700 was
+;	    selected to commence a new series of version numbers.  This
+;  MDM700   can be readily used on data bank systems that limit file
+;	    names to a total of 6 characters.
+;					- Irv Hoff
+;
+;***********************************************************************
+

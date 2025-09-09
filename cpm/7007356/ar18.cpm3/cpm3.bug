@@ -1,0 +1,39 @@
+
+Date: 05/18/83
+From: Frank Kerzich
+To:   All
+Re:   CP/M 3.0 bug
+
+There is a nasty bug in CP/M 3.0 for non-banked systems.  It seems
+that 'SET.COM' uses the field 'BUFAD' in the BCB for the buffer instead
+of the address contained in 'BUFAD'.  I have called D.R. and they are
+working on it.  To check it out use SID or DDT to load SET.COM and display
+position 25F1H for 7 bytes and position 2643H for 5 bytes.  they should
+read aS follows:
+                  25F1H:   LXI B,000AH    ;get bcb offset to BUFAD
+                           DAD B
+                           SHLD  xxADH    ;save address of BUFAD
+At 2643H it should read:
+                            LHLD xxADH    ;get saved address of BUFAD
+                            MOV  B,H      ;get high order byte
+                            MOV  C,L      ;get low order byte
+    this code makes the address of 'BUFAD' the actual buffer.
+    I am in the process of getting a fix from D.R. now, but they are
+    not that co-operative.
+                               F. Kerzich
+
+
+To:   Frank Kerzick
+From: Dave Mabry
+Re:   CP/M plus bugs
+
+Hi - roger on SET.COM. That bug clobbers any subsequent transfers
+>16k to a freshly SET disk (like after SET C: [update=on].)
+I know DR is very reluctant about this one. It was discovered about
+8 weeks ago and last thing I heard they flatly denied the bug!
+ 
+CCP.COM also has a bug: at 0AF6 there's a MOV B,M, where execution just
+came back from a BDOS call. HL in this case holds an ERROR NUMBER and not
+a RAM pointer, so MOV B,M is nonsense. In some systems, when HL=FFFF,
+it will hang! (My disk controller uses the last 1k of RAM and accessing
+anything other than a valid controller command address hangs the system.)

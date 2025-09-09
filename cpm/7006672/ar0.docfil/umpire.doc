@@ -1,0 +1,23 @@
+UMPIRE  is  a comprehensive memory test program implementing  two 
+test  algorithms developed at the University  of  Illinois.   The 
+algorithms  were  published  in June 1978 'IEEE  TRANSACTIONS  ON 
+COMPUTERS'.   The  University of Illinois test algorithms are the 
+'BOOMERANG' and the 'HALF SLOW' test routines.  Also included are 
+two test routines I devised.
+
+The  test will automatically size the TPA and test all of  memory 
+up the start of BDOS.   There are only three control codes.  A ^K 
+will cause the test to restart, a ^C will cause a jump to address 
+zero (i.e. warm boot), and a ^S will cause the program to stop or 
+start.  The ^S function is particularlly useful in the 'SCRAMBLE' 
+and 'SPIRAL' routine to stop to test causing refresh verification 
+on dynamic memories.   Another ^S will cause the test to start up 
+again.  Both the 'SCRAMBLE' and 'SPIRAL' test routines use random 
+data  so  this  is  a fair test of a  memory  array  for  pattern 
+sensitivity.
+
+Send any comments or suggestions to:
+     Mel Cruts
+     DIGITAL DELI COMPUTER STORE
+     80 WEST EL CAMINO REAL
+     MOUNTAIN VIEW, CA. 94040

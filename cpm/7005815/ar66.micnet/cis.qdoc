@@ -1,0 +1,57 @@
+QUICK.DOC (CHS, 4/19/82)
+
+How to get to CP-MIG with the least fuss and muss:
+
+     
+    The Compuserve Information  System  makes  a  number  of
+assumptions  about  a  user when he initially logs in to the
+system under a new PPN (account number).  We will go through
+a procedure to change these so that  you  can  easily  enter
+CP-MIG  and  later on explore other facets of the service if
+you so desire.
+
+    The top "page" presented to a user at  login  is  CIS-1,
+the   main   table   of   contents.   Choose  item  5,  User
+Information, to get to page CIS-4.  Choose  selection  4  to
+call  up page DEFALT-1.  This default program is all we need
+be concerned with to tailor the user profile to our needs.
+
+    Item 1, terminal type, is initially set to selection  4,
+"other".  Do not alter at this time.
+
+    Item  2,  initial  page,  should be changed to MicroNet.
+MicroNet is the old name Compuserve used  for  what  is  now
+called the personal computing area.  In actuality, it allows
+entry  to  the command monitor (the "OK" prompt), similar to
+the familiar A> in CP/M.
+
+    Item 3, EMAIL  waiting  action,  should  be  changed  to
+automatically run EMAIL if any messages are waiting.  EMAIL,
+incidentally,  is Compuserve's electronic mail facility, and
+is totally independent of CP-MIG.  It is possible that  some
+members  will want to contact you through EMAIL, and in this
+mannner you will be able to automatically  retrieve  waiting
+mail.
+
+    Item  4,  terminal  parameters,  is  a  rather  involved
+procedure in which you define  the  hardware  parameters  of
+your  data  terminal  equipment.   Items  such as case, line
+length and nulls after <CR> are handled here.
+
+    Item 5 allows you to set a brief mode  to  supress  many
+menus.   If  the  menu  is  required, responding with a <CR>
+rather than a choice will bring it up.
+
+    Item 6 enables an optional auto-run of a  program.   You
+may plug CP-MIG in here if you so desire.
+
+    Lastly   item   7  will  summarize  your  newly  created
+defaults.  Note that the system will store this  information
+associated  with  your  account  number  and  it need not be
+re-entered unless you want to change a default.
+
+    Note that there is also an OP command in CP-MIG (OPtion)
+which should also be used once in the SIG  and  which  makes
+some  related  requests.   Luckily  you need only go through
+this once!
+

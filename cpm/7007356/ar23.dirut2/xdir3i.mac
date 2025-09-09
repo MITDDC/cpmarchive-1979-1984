@@ -1,0 +1,600 @@
+;
+;  PROGRAM:  XDIR3INS -- Installation Program for XDIR3
+;  AUTHOR:  RICHARD CONN
+;  VERSION:  1.21 (for XDIR3, Version 1.2)
+;  DATE:  3 NOV 82
+;  PREVIOUS VERSIONS:  NONE
+;
+; modified 11/11/82 to repair bug that prevented the disabling of
+;	   paths.   (Ron Fowler)
+;
+;
+;	XDIR3INS is a program which allows the user to set the XDIR3 default
+; conditions without resorting to a reassembly of XDIR3 or the use of a patch
+; technique with a debugger like DDT.  It is interactive, and it allows
+; to user to display the XDIR3 defaults and set them.
+;
+;	XDIR3INS is invoked by a command line like the following:
+;		XDIR3INS
+;	It will prompt the user for the name of the XDIR III file to patch,
+; allow him to patch it, and then save the result on disk in the same file
+; or a different file.
+;
+
+;
+;  Buffer contents
+;
+optbuff	equ	3		; offset to first byte of buffer
+dok	equ	optbuff		; disk OK
+uok	equ	optbuff+1	; user OK
+igrp	equ	optbuff+2	; Group by file name and type or type and name
+ifmt	equ	optbuff+3	; Vertical or Horizontal Format
+iatt	equ	optbuff+4	; Non-Sys or Sys Files or both
+iscn	equ	optbuff+5	; Dir Display or File Scan by default
+fenab	equ	optbuff+6	; Enable F Option
+lenab	equ	optbuff+7	; Enable FL Option
+asenab	equ	optbuff+8	; Enable AS Option
+udenab	equ	optbuff+9	; Enable User Spec of User and Disk
+extpab	equ	optbuff+10	; Enable External Paths
+extpth	equ	optbuff+11	; External Path Address if Enabled
+
+;
+;  Constants
+;
+cr	equ	0dh
+lf	equ	0ah
+
+;
+;  Externals
+;
+	ext	bbline
+	ext	eval
+	ext	print
+	ext	initfcb
+	ext	moveb
+	ext	cin
+	ext	cout
+	ext	caps
+	ext	crlf
+	ext	phl4hc
+	ext	f$open
+	ext	f$close
+	ext	f$read
+	ext	f$write
+	ext	f$rename
+	ext	f$delete
+	ext	f$make
+	ext	fname
+	ext	putud
+	ext	getud
+	ext	retud
+	ext	logud
+
+;
+;  Main Line Routine
+;
+	lxi	h,80h	; set DMA Address for base
+	shld	base
+	call	print
+	db	'XDIR3INS -- Installation Program for XDIR3',0
+
+	call	putud	; save current user/disk for return
+	call	retud	; get current user/disk
+	mov	a,b	; save data
+	sta	cdisk
+	mov	a,c
+	sta	cuser
+openlp:
+	call	getfile	; get file name and log in user/disk
+	rz		; abort?
+	lda	user	; save current user/disk
+	sta	users
+	lda	disk
+	sta	disks
+	call	f$open	; try to open file
+	jz	openok
+	call	print
+	db	cr,lf,'Error -- File Not Found',0
+	call	getud	; restore current user/disk
+	jmp	openlp
+openok:
+	lxi	h,fcb	; copy FCB to FCBIN
+	lxi	d,fcbin
+	mvi	b,36	; 36 bytes
+	call	moveb
+	lxi	d,fcbin	; input file
+	call	f$read	; read a block in
+	call	print
+	db	cr,lf,'Ready to Set Default Values',cr,lf,0
+command:
+	call	print
+	db	cr,lf,'	XDIR3INS Command (D=Display Values, S=Set Values, '
+	db	'X=Exit)? ',0
+	call	capin	; get response
+	cpi	'S'	; set?
+	jz	cmdsetup
+	cpi	'D'
+	jz	cmdpropt
+	cpi	'X'
+	jz	exit
+	call	print
+	db	cr,lf,'  Invalid Command',0
+	jmp	command
+cmdsetup:
+	call	setup
+	jmp	command
+cmdpropt:
+	call	propt
+	jmp	command
+exit:
+	call	print
+	db	cr,lf,'Do you want to save changes (Y or N, <CR>=Y)? ',0
+	call	capin
+	cpi	'N'	; done?
+	rz
+	call	getud	; restore current user/disk
+	call	print
+	db	cr,lf,'Provide Name of Output File',0
+	call	getfile
+	rz
+	lxi	d,fcbout
+	call	initfcb
+	call	f$delete	; delete file if there
+	call	initfcb
+	call	f$make		; create output file
+	cpi	0ffh	; error?
+	jz	derr
+	mvi	a,60	; set dot count
+	sta	dcount
+	call	print
+	db	cr,lf,'Writing File to Disk --',cr,lf,0
+	call	f$write		; write first block to it
+	ora	a	; ok?
+	jnz	derr
+exitl:
+	lxi	d,fcbin	; pt to input file
+	lda	users	; get user number
+	mov	c,a	; ... in C
+	lda	disks	; get disk number
+	mov	b,a	; ... in B
+	call	logud	; log in user/disk for source
+	call	f$read	; read in block
+	ora	a	; done?
+	jnz	exitd
+	lxi	d,fcbout	; pt to output file
+	lda	user	; get user number
+	mov	c,a	; ... in C
+	lda	disk	; get disk number
+	mov	b,a	; ... in B
+	call	logud	; log in user/disk for destination
+	call	prdot	; print dot
+	call	f$write	; write out block
+	ora	a	; error?
+	jz	exitl
+derr:
+	call	print
+	db	cr,lf,'Disk Write Error -- Abort',0
+	call	getud
+	ret
+exitd:
+	call	f$close	; close input file
+	lda	user	; get dest user/disk
+	mov	c,a
+	lda	disk
+	mov	b,a
+	call	logud
+	lxi	d,fcbout	; close output file
+	call	f$close
+	lxi	d,fcb	; now delete new file if exists
+	call	initfcb	; init fcb
+	call	f$delete
+	call	initfcb	; init fcb again
+	xchg		; HL pts to new name
+	lxi	d,fcbout	; DE pts to old name
+	call	initfcb		; init fcb
+	call	f$rename	; file renamed
+	call	getud	; restore original user/disk
+	ret
+
+;
+;  Print dot and count down
+;
+prdot:
+	mvi	a,'.'	; print dot
+	call	cout
+	lda	dcount	; count down
+	dcr	a
+	sta	dcount
+	rnz
+	mvi	a,60	; reset count
+	sta	dcount
+	jmp	crlf	; new line
+
+;
+;  Get file name from user, and, goto the user/disk he specified (or implied)
+;    Return with Zero Set if Abort; DE pts to FCB
+;
+getfile:
+	call	print
+	db	cr,lf,'Name of XDIR3 File (<CR>=Abort)? ',0
+	xra	a	; no caps
+	call	bbline	; get line
+	ora	a	; abort?
+	rz
+	lxi	d,fcb	; pt to fcb
+	call	fname	; parse and get params
+	jnz	gf0
+	call	print
+	db	cr,lf,'Error -- Invalid User or Disk -- Reenter',0
+	jmp	getfile
+gf0:
+	mov	a,b	; get disk
+	cpi	0ffh	; current?
+	jz	gf1
+	dcr	a	; adjust to 0-15
+	sta	disk	; set new disk
+	jmp	gf1a
+gf1:
+	lda	cdisk	; set current disk
+	sta	disk
+gf1a:
+	mov	a,c	; get user
+	cpi	0ffh	; current?
+	jz	gf2
+	cpi	'?'	; current if all
+	jz	gf2
+	sta	user	; set new user
+	jmp	gf2a
+gf2:
+	lda	cuser	; set current user
+	sta	user
+gf2a:
+	lda	disk	; set disk
+	mov	b,a
+	lda	user	; set user
+	mov	c,a
+	call	logud	; go there
+	mvi	a,0ffh	; set OK
+	ora	a
+	ret
+
+;
+;  Buffers
+;
+dcount:	ds	1	; dot counter
+base:	ds	2	; base address
+cdisk:	ds	1	; current disk number
+cuser:	ds	1	; current user number
+disk:	ds	1	; disk number
+user:	ds	1	; user number
+disks:	ds	1	; source disk number
+users:	ds	1	; source user number
+fcbout:
+	db	0	; temporary output file FCB
+	db	'WORK    $$$'
+	ds	4
+	ds	16
+	ds	4
+fcb:
+	ds	36	; new file name FCB
+fcbin:
+	ds	36	; input file FCB
+
+;
+;  Print the current options setting
+;
+propt:
+	call	prud
+	call	prdok
+	call	pruok
+	call	prigrp
+	call	prifmt
+	call	priatt
+	call	priscn
+	call	prf
+	call	prfl
+	call	pras
+	jmp	prex
+;
+prdok:
+	lxi	d,dok
+	call	ptr
+	call	print
+	db	cr,lf,'Specification of Disk Allowed: ',0
+	call	pryn	; Yes or No
+	ret
+;
+pruok:
+	lxi	d,uok
+	call	ptr
+	call	print
+	db	cr,lf,'Specification of User Allowed: ',0
+	call	pryn
+	ret
+;
+prigrp:
+	call	print
+	db	cr,lf,'Alphabetize Listing by File ',0
+	lxi	d,igrp
+	call	ptr
+	mov	a,m	; get flag
+	ora	a	; 0=name and type
+	jz	propt1
+	call	print
+	db	'Type and Name',0
+	ret
+propt1:
+	call	print
+	db	'Name and Type',0
+	ret
+;
+prifmt:
+	lxi	d,ifmt
+	call	ptr
+	call	crlf	; new line
+	mov	a,m	; get flag
+	ora	a	; 0=vertical
+	jz	propt3
+	call	print
+	db	'Horizontal',0
+	jmp	propt4
+propt3:
+	call	print
+	db	'Vertical',0
+propt4:
+	call	print
+	db	' Listing',0
+	ret
+;
+priatt:
+	xra	a	; set not 1
+	sta	one
+	lxi	d,iatt
+	call	ptr
+	call	crlf
+	mov	a,m	; get flag
+	ani	80h	; check non-sys flag
+	jz	propt5
+	mvi	a,0ffh	; set 1
+	sta	one
+	call	print
+	db	'Non-System ',0
+propt5:
+	mov	a,m	; get flag
+	ani	40h	; check sys flag
+	jz	propt6
+	lda	one	; one?
+	ora	a	; 0=no
+	jz	prpt5a
+	call	print
+	db	'and ',0
+prpt5a:
+	call	print
+	db	'System ',0
+propt6:
+	call	print
+	db	' Files Are Selected',0
+	ret
+one:	ds	1
+;
+priscn:
+	lxi	d,iscn
+	call	ptr
+	call	crlf
+	mov	a,m	; get flag
+	ora	a	; 0=dir display
+	jz	propt7
+	call	print
+	db	'File Name Scan',0
+	jmp	propt8
+propt7:
+	call	print
+	db	'Directory Display',0
+propt8:
+	call	print
+	db	' Default Function Selected',0
+	ret
+;
+prf:
+	lxi	d,fenab
+	call	ptr
+	call	print
+	db	cr,lf,'Enable File Scanner Options: ',0
+	call	pryn
+	ret
+;
+prfl:
+	lxi	d,lenab
+	call	ptr
+	call	print
+	db	cr,lf,'Enable File Log Option: ',0
+	call	pryn
+	ret
+;
+pras:
+	lxi	d,asenab
+	call	ptr
+	call	print
+	db	cr,lf,'Enable Attribute System Option: ',0
+	call	pryn
+	ret
+;
+prud:
+	lxi	d,udenab
+	call	ptr
+	call	print
+	db	cr,lf,'Enable Specification of User Number and Disk: ',0
+	call	pryn
+	ret
+;
+prex:
+	lxi	d,extpab
+	call	ptr
+	call	print
+	db	cr,lf,'Enable External Paths: ',0
+	call	pryn
+	ora	a	; 0=no
+	rz		; done if no external paths
+	push	h
+	inx	h
+	mov	a,m	; get low-order address
+	inx	h
+	mov	h,m	; get high-order address
+	mov	l,a	; low in L
+	call	print
+	db	cr,lf,'Address of External Path is ',0
+	call	phl4hc	; hex
+	call	print
+	db	'H',0
+	pop	h
+	ret
+
+;
+;  Print utilities
+;
+ptr:
+	lhld	base	; get base addres
+	dad	d	; add in offset
+	ret
+pryn:
+	mov	a,m	; get flag
+	ora	a	; 0=no
+	jz	pryn1
+	call	print
+	db	'Yes',0
+	ret
+pryn1:
+	call	print
+	db	'No',0
+	ret
+
+;
+;  Set buffer contents
+;
+setup:
+	call	prud	; print flag status and set ptr to flag
+	call	setf	; prompt user for change
+	mov	a,m	; get new flag
+	ora	a	; 0=no UD
+	jnz	setup1
+	lxi	d,dok	; turn off DOK and UOK also
+	call	ptr
+	mvi	m,0	; DOK off
+	inx	h
+	mvi	m,0	; UOK off
+	jmp	setup2
+setup1:
+	call	prdok	; print flag status and set ptr to flag
+	call	setf	; prompt user for change
+	call	pruok
+	call	setf
+setup2:
+	call	prigrp
+	call	print
+	db	cr,lf,'  If the flag is enabled, Group by File Type and Name'
+	db	cr,lf,'  If the flag is disabled, Group by Name and Type',0
+	call	setf
+	call	prifmt
+	call	print
+	db	cr,lf,'  If the flag is enabled, Format is Horizontal'
+	db	cr,lf,'  If the flag is disabled, Format is Vertical',0
+	call	setf
+	call	priatt
+	mov	b,m	; get attribute in B
+	call	print
+	db	cr,lf,'  Enable Non-System File Display (Y or N, <CR>=No '
+	db	'Change)? ',0
+	call	setfx
+	ora	a	; No?
+	jz	nsno
+	cpi	0ffh	; Yes?
+	jnz	sq
+	mvi	a,80h	; set Yes
+	ora	b	; or in flag
+	mov	b,a	; put flag back
+	jmp	sq
+nsno:
+	mov	a,b	; get flag to set No
+	ani	7fh	; set bit off
+	mov	b,a	; put flag back
+sq:
+	call	print
+	db	cr,lf,'  Enable System File Display (Y or N, <CR>=No '
+	db	'Change)? ',0
+	call	setfx
+	ora	a	; No?
+	jz	sno
+	cpi	0ffh	; Yes?
+	jnz	sq1
+	mvi	a,40h	; set Yes
+	ora	b	; or in flag
+	mov	b,a	; result in B
+	jmp	sq1
+sno:
+	mov	a,b	; get flag to set No
+	ani	80h	; mask out bit
+	mov	b,a	; put flag back
+sq1:
+	mov	m,b	; store flag
+	call	priscn
+	call	print
+	db	cr,lf,'  If the flag is enabled, File Scan is Selected'
+	db	cr,lf,'  If the flag is disabled, Directory Display is '
+	db	'Selected',0
+	call	setf
+	call	prf
+	call	setf
+	call	prfl
+	call	setf
+	call	pras
+	call	setf
+	call	prex
+	call	setf
+	ora	a	; no?
+	rz
+	cpi	0ffh	; Yes?
+	rnz
+	call	print
+	db	cr,lf,'  Address of External Path (<CR>=No Change)? ',0
+	xra	a	; No caps
+	call	bbline	; get line from user
+	ora	a	; no input?
+	rz
+	call	eval	; evaluate
+	mov	b,d	; result in BC
+	mov	c,e
+	lxi	d,extpth	; pt to path address
+	call	ptr
+	mov	m,c	; store low
+	inx	h
+	mov	m,b	; store high
+	ret
+
+;
+;  Set Flag
+;
+setf:
+	call	print
+	db	cr,lf,'  Do you want to Enable this Flag (Y or N, <CR>=No '
+	db	'Change)? ',0
+setfx:
+	call	capin
+	cpi	'Y'	; Yes?
+	jz	setfon
+	cpi	'N'	; No?
+	rnz
+	xra	a	; A=0 to turn off flag
+	mov	m,a	; store off
+	ret
+setfon:
+	mvi	a,0ffh	; A=0FFH to turn on flag
+	mov	m,a	; store on
+	ret
+capin:
+	call	cin	; get response
+	call	caps	; capitalize
+	call	cout	; echo response
+	jmp	crlf	; new line
+
+	end
+   

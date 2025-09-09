@@ -1,0 +1,10 @@
+;detect Zero flag
+	ENTRY IOER
+;LOGICAL FUNCTION IOER(disregard)
+IOER:	JR	Z,ZE
+	XOR	A
+	RET
+ZE:	LD	A,-1
+	RET
+	END
+

@@ -1,0 +1,447 @@
+>>>>>>>>>>>>>>>>>>>>> CP/M-Net News <<<<<<<<<<<<<<<<<<<<<<<<
+
+============================================================
+Number 8               August, 1981        Volume 1, Issue 8
+============================================================
+
+                      In This Issue
+                      =============
+
+              Contacting the RCPMs- An Update
+                       by: Al Byrne
+
+      SIG/M Diskette Fix for CP/M 1.4 Incompatibility
+              By: Kelly Smith, CP/M-Net "SYSOP"
+
+                    CP/M Book Reviews
+                   By: Mark Wehmhoefer
+
+     A First...Amateur Radio Digital Communications!
+  By: The Vancouver Amateur Digital Communications Group
+
+               CP/M-Net "Tip-of-the-Month"
+Patch to make ZSID.COM the same Dump Display as DDT and SID
+           By: Bob Fisher - De Paul University
+
+ Printed  monthly  (at worst quarterly) to inform user's  of 
+RCPM Systems to the latest software news,  information,  and 
+updates   of   public   domain   software   accessible   via 
+telephone/modem transfer.  Yearly subscription for copies of 
+the  CP/M-Net News may be obtained by mailing $18.00  (check 
+or money orders only) to Kelly Smith,  CP/M-Net,  3055  Waco 
+Street,  Simi Valley,  California 93063.  CP/M-Net is a non-
+profit  orginization and all money received on subscriptions 
+are utilized for the sustaining and enhancments of the CP/M-
+Net System.
+
+ If  you  would  like to contribute an  article,  include  a 
+column  containing your area of interest and  expertise,  or 
+participate  in an open forum for conversation and  transfer 
+of  ideas,  feel free to send it to the CP/M-Net System  and 
+indicate that you would like it to be included in the  CP/M-
+Net  News...if possible,  use WordStar (trademark,  MicroPro 
+International)  or  Electric  Pencil   (trademark,   Micheal 
+Shrayer) in 60 column format.
+ 
+
+NOTE:   CP/M is a registerd trademark of Digital Research
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+               Contacting the RCPMs- An Update
+               ===============================
+
+                        by: Al Byrne
+
+ Though I am using MODEM4, it was my intention to get MODEM7 
+because  of the AUTODIAL feature.  But I thought I'd try  to 
+add  that myself,  so I now have six phone numbers stored in 
+my  MODEM4 program that I can dial by simply pressing a  key 
+on  the keyboard- five are RCPMs and the sixth is the  local 
+computer store that I used for checking out the  routine.  I 
+did it this way just to see if I could do it.
+
+ I  also changed the buffer from 2K to 16K since the  memory 
+was  just  sitting  there  doing nothing but  I  don't  know 
+whether this has helped anything or not.
+   
+ I  don't  use a commercial terminal but a modified  TV  for 
+display and a surplus keyboard for entries so I don't have a 
+BELL.  But I had a spare serial output port and a speaker in 
+the  junk  box  so  I  tied  them  together  to  give  me  a 
+programmable buzzer.  I use this to alert me to a  completed 
+RCPM  contact  so that I can get those carriage returns  out 
+before  the  connection is broken.  Though I have  a  screen 
+message,  the  buzzer  is useful since I no longer  have  to 
+devote full attention to the screen.
+
+ I wasn't able to find DISPLAY.ASM, as mentioned in the June 
+VCC Newsletter,  but I did find DISPLAYP.ASM. I was sure the 
+second P stood for PAGE but,  alas,  it stands for PATCH. If 
+you  aren't  an RCPM Sysop,  you  don't  need  DISPLAYP.ASM. 
+Anyhow,  I  got  DISPLAY.OBJ and it worked perfectly  except 
+that  it displays 23 lines and I have a 16  line  screen!  I 
+lucked  out  in  finding  the locations  of  this  value  by 
+scanning  through the code.  If you're in the same position, 
+change  the bytes at 0212,  0576 and 05CF from 17H  to  0FH. 
+This  seems  to  do the job unless you're looking at  an  80 
+column file with a 64 column screen.  In this case,  a  line 
+with more than 64 bytes will require 2 lines to display, but 
+DISPLAY  counts it as one,  so you may want to change  those 
+bytes to 0E or 0D.
+
+ I  also  changed the disconnect,  if there's a D  secondary 
+option,  so that the computer does it automatically (just as 
+if  by  magic) instead of having the program wait for  a  CR 
+from the operator.
+
+ I  have  continued to record the number of checksum  errors 
+and  timeouts  that  occur on each transfer  but  have  been 
+unable to extract any significant information from the data. 
+On only one occasion,  out of more than twenty,  were  there 
+enough errors to cause an abort and nearly all contacts were 
+at  600  BAUD.  The one that aborted was on a call  to  Dave 
+Hardy  in the Detroit area and the TV stated there was  some 
+very bad weather in the area, including a tornado in
+Ohio.
+
+ Using my expensive,  aerospace-age timepiece (I didn't know 
+a  solid gold band would leave a ring on your arm!),  I  was 
+able  to accurately time the transfer of two files  and,  in 
+each  case,  the throughput was slightly less than 49  bytes 
+per  second  at  600  BAUD.  This  reflects  the  additional 
+housekeeping  that has to be done in addition to sending the 
+program- SOHs,  ACKs,  NAKs, checksum comparisons, etc. I am 
+convinced that if I can't get it at 600 BAUD ,  I can't  get 
+it  at  300  BAUD  either so I now  use  600  BAUD  whenever 
+possible.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+       SIG/M Diskette Fix for CP/M 1.4 Incompatibility
+       ===============================================
+       
+              By: Kelly Smith, CP/M-Net "SYSOP"
+
+ If  you have received copies of the SIG/M diskettes and are 
+using CP/M version 1.4 (or any CP/M version less than  2.0), 
+you will be unable to execute,  rename,  assemble, erase, or 
+pip certain files on the following SIG/M diskettes:
+
+        SIG/M Volume 4 -  File 4.18: SURVEY.COM
+                          File 4.19: SURVEY3.ASM
+
+        SIG/M Volume 9 -  File 9.05: DISPLAY.COM
+                          File 9.06: DISPLAY.DOC
+                          File 9.07: DISPLAYP.ASM
+
+        SIG/M Volume 17 - File 17.1: SCRAMBLE.DOC
+                          File 17.2: SCRAMBLE.ASM
+                          File 17.3: SORTV.DOC
+                          File 17.4: SORTV-12.ASM
+
+ These files are "tagged" as READ ONLY files on CP/M version 
+2.0  (or  greater) and as such,  are not recognized by  CP/M 
+version 1.4 (or less) as compatible files.  They will appear 
+in your directory but as such,  are useless.  The files  are 
+recoverable however by RESETTING the "tagged" T1 byte of the 
+most  significant bit (bit 8) of the first character of  the 
+file  type  (for instance,  the "C" in "COM" is normally  an 
+ASCII 43 hex,  but when "tagged" as READ ONLY,  it becomes a 
+C3 hex). Possible fixes to recover the files are:
+
+1.  Find  a friend using CP/M version 2.0 (or  greater)  and 
+    have him/her reset the READ ONLY files as follows:
+
+    STAT filename.type $R/W<cr>  <--- set file to read/write
+
+2.   "Patch"  the diskette directly with DU (DU-V75.COM from 
+    SIG/M Volume 16, File: 16.4).
+
+3.    "Patch" the diskette directly with DUMP (DUMP.COM from 
+    CPMUG Volume 14, File: 14.6).
+
+4. "XMODEM" the files from the CP/M-Net System; Volume 4 and 
+   9 are on disk E:,  User 0,  and Volume 17 is on disk  F:, 
+   User 0.
+
+             FURTHER NOTES FROM KEITH PETERSEN
+
+There is a simpler way:   use DIR-FIX.   That's a program  I 
+wrote  quite some time ago which corrects this problem.   It 
+is meant to run on CP/M 1.4,  CDOS or MDOS.  It examines the 
+directory to find any files with high-order bits in the file 
+names,  builds  a  table of these names and  does  a  simple 
+"rename"  function  of  NEWFILE (without high  bits)  equals 
+OLDFILE (with high bits).  It works great and avoids all the 
+hassles of doing it the ways Kelley mentioned.
+
+		Keith Petersen, W8SDZ
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+                      CP/M Book Reviews
+                      =================
+
+                     By: Mark Wehmhoefer
+
+
+               --- Summarized Rating Chart ---
+
+                           (1)     (2)    (3)    (4)    (5)
+Index                       x       x      x      x      no
+CP/M User group address     x       no     x      no     x
+Software list               x       no     x      no     x
+Hardware list               x       no     no     no     x
+Command summary             x       x      x      x      x
+CP/M version differences    x       x      no     no     no
+Glossary                    no      no     no     no     x
+
+(1) Osborne CP/M User Guide (The best overall)
+(2) The CP/M Handbook (Excellent reference guide)
+(3) CP/M Primer (Best to read before buying CP/M)
+(4) Using CP/M (Read before buying a computer)
+(5) How to Get Started with CP/M (Read only if you like to
+    read books)
+
+          --- Review 1: Osborne CP/M User Guide ---
+
+Hogan,    Thom,    OSBORNE   CP/M   USER   GUIDE,   Berkely: 
+Osborne/Mcgraw-Hill 1981.  Price $12.99  - 283 Pages.
+
+ Chapters  one  thru  eight:  Intro to  CP/M  and  Operating 
+systems,  CP/M  built-in commands,  CP/M transient commands, 
+Assembly  language utilities,  Other transient programs  and 
+CP/M,  MP/M,  CP/NET and CP/M derivatives, Technical aspects 
+of  CP/M,  Putting it all together:  the  systems  approach.  
+
+ Appendices:  CP/M  command summary,  ASCII character  codes, 
+Comparisions  of  CP/M  versions  1.3,  1.4  and  2.0,  CP/M 
+prompts, Diskette selection, Annotated bibliography and CP/M 
+address book.
+
+ I  rate this book the best overall because its easy reading 
+style will get you familiar with all the CP/M commands  very 
+quickly.  And  it  explains  some of the more  difficult  to 
+understand  CP/M  facilities  (e.g.   modifying  the  BIOS), 
+without  talking  over  the  beginner's  head.   Appropriate 
+comments  on  the different versions of CP/M  are  liberally 
+used  in this book and will not confuse  the  beginner.  Its 
+best features include: an extensive magazine article list on 
+CP/M, languages, and utilities, error messages for each CP/M 
+command  are  listed immediately after  its  description,  a 
+brief  description of the more popular languages and a  list 
+of  different CPU diskette formats.  Also explains the CP/M, 
+MP/M,  CP/NET  commands  as  well as  describes  other  CP/M 
+derivatives.
+ Boo-boos   - In   chapter  7,   page  222   "Routine   from 
+MODEM527.ASM by Ward Christiansen(sic)".
+
+            --- Review 2: The CP/M Handbook ---
+
+Zaks,  Rodney,  THE CP/M HANDBOOK with MP/M, Berkeley: Sybex 
+1980.  Price $14.95 - 321 Pages.
+
+ Chapters one thru eight:  Intro to CP/M and MP/M,  CP/M and 
+MP/M facilities,  Handling files with pip, Using the editor, 
+Inside  CP/M  (and MP/M),  Reference guide to CP/M and  MP/M 
+commands and programs, Practical hints, and The future.
+
+ Appendices:  Common  CP/M error  messages,  Hex  conversion 
+table,  ASCII  conversion table,  Ed control characters,  ED 
+commands,  Pip device names,  Pip keywords,  Pip parameters, 
+CP/M  (and MP/M) commands,  Command editing  controls,  CP/M 
+extension  types,   Supplies  (checklist),   Computer   room 
+organization (checklist),  Failure checklist,  Basic trouble 
+shooting rules.
+
+ This book is the best reference guide of all the CP/M books 
+because  CP/M  versions  1.4,  2.2  and  MP/M  commands  are 
+distinguished  throughout.  It uses a brute force method  of 
+explaining  the  various command options otherwise  I  would 
+rate  it equal to the Osborne CP/M User Guide.  This is  the 
+only  book that describes the MP/M commands and it should be 
+next to the console when using CP/M.
+
+              --- Review 3: CP/M Primer ---
+
+Murtha,   Steven  M  and  Waite,   Mitchell,   CP/M  PRIMER, 
+Indianapolis: Howard Sams Co 1980.  Price $11.95 - 92 pages
+
+ Chapters   one   thru  eight:   Intro  to  CP/M,   A   CP/M 
+microcomputer:  Hardware and Software concepts,  Starting up 
+and  first  using  a  CP/M  system,  System  initialization: 
+FORMAT, SYSGEN and MOVCPM, STAT and PIP, ED the CP/M editor, 
+ASM the CP/M assembler,  and DDT: the CP/M dynamic debugging 
+tool.
+
+ Appendices: The internal structure of CP/M, CP/M compatible
+software, CP/M reference.
+
+ This  book  is recommended for the person deciding  to  buy 
+CP/M.   Liberal  use of charts,  diagrams and  illustrations 
+make it read like a novel,  yet all the basics are  covered. 
+Unfortunately,  the  cover states "Latest CP/M Version  2.0" 
+yet I could find only two minor references to version 2.0 in 
+the book and most command examples are in version  1.4.  Its 
+best features include a very handy cut-out reference card of 
+CP/M  commands and its description of ASM and DDT.  In fact, 
+you  are walked thru an actual session of both ASM  and  DDT 
+with a sample program.
+
+                 --- Review 4: Using CP/M ---
+
+Fernandez,  Judi  N and Ashley,  Ruth,  USING CP/M - A  SELF 
+TEACHING GUIDE,  New York:  John Wiley & Sons,  1980.  Price 
+$8.95 - 243 pages.
+
+ Chapters one thru ten: Intro to CP/M, Typing CP/M commands, 
+CP/M  built-in commands,  CP/M transient programs,  The STAT 
+command,  Using PIP,  Intro to ED,  Editing existing  files, 
+Advanced ED functions, and Submitting command files.
+
+ Appendices:  Changing device assignments,  Pip  parameters, 
+and Reference summary.
+
+ I  cannot stand the style of this book because after  every 
+one or two paragraphs,  five or six questions are asked. All 
+the  CP/M commands are covered but much detail is lacking on 
+the majority of commands. This book contains only one or two 
+slight  blurbs  on version 2.0.  Its best feature  is  three 
+chapters  on  the editor but it could  have  been  presented 
+better by walking the reader through a complete session.
+
+       --- Review 5: How to Get Started with CP/M ---
+
+Townsend,  Carl,  HOW  TO GET STARTED WITH CP/M,  Beaverton: 
+Dilithium 1981.  Price $9.95 - 127 pages.
+
+ Chapters one thru ten:  Who needs an operating system, CP/M 
+overview,  Shopping  for  CP/M  hardware,  Your  first  CP/M 
+session,  Files,  records  and disks,  Using the  utilities, 
+Backup procedures and disk care,  The editor  - Introduction 
+Word   processing   and  spoolers,   and   CP/M   compatible 
+programming languages.  
+
+ Appendices:  CP/M memory map, CP/M hardware suppliers, CP/M 
+software  suppliers,  CP/M diagnostics,  CP/M Users's Group, 
+and Glossary.
+
+ I  cannot  understand whether the author wanted to  explain 
+CP/M or instead promote all the various commercial and  user 
+group  CP/M  programs.  The  chapters  lack  continuity  and 
+meaning  to the beginner,  although in there somewhere is  a 
+paragragh  on  all the CP/M commands.  Nothing is ever  said 
+about the different versions of CP/M.  This book is supposed 
+to be part one of two books,  with the next book  containing 
+all  "The more complex features"?.  Also it is the only book 
+without an index,  but it does contain a glossary of  terms, 
+most of which the beginner could care less about.
+
+ Boo-boos - Chapter 10,  page 82, Table 5 "peak/poke (sic)".  
+And  in appendix C there is this note:  "..because the Radio 
+Shack  TRS-80  has a prom,  standard CP/M programs  must  be 
+modified...the  prom limits the CP/M usefulness..".  If  the 
+author went to so much trouble to place that note here,  why 
+didn't  he tell the whole story?  The Mapper I from  OMIKRON 
+allows TRS-80 users to run standard CP/M and very little, if 
+any, modification to programs is needed.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+     A First...Amateur Radio Digital Communications!
+     ===============================================
+
+  By: The Vancouver Amateur Digital Communications Group
+
+ Another  first for Amateur Radio Digital Communications was 
+accomplished  today  (July 8,  1981)  when  the  information 
+packets   were  passed  between  Ottawa  and  Vancouver  via 
+satellite as the first step in an experiment to interconnect 
+Amateur  packet  radio networks in  these  two  cities.  The 
+satellite   used  was  the  Anik-B  geostationary  satellite 
+operated  by the Canadian Department of Communication  which 
+is providing communications channels for the experiment. The 
+packets exchanged were in HDLC format using the ASCII  code. 
+The digital equipment used at both ends was the packet radio 
+controller   developed  by  the  Vancouver  Amateur  Digital 
+Communications  Group.  The purpose of the experiment is  to 
+develop  efficent  hardware  and  software  techniques   for 
+interconnecting local communication networks over widespread 
+geographical   areas   and  additionally,   to   demonstrate 
+satellite  packet  techniques.   It  is  expected  that  the 
+expertise  developed  will be of direct application  to  the 
+amateur environment in the near future.
+
+ The  Canadian DoC has installed a 20 watt  TWT  (Travelling 
+Wave  Tube) transmitter at one of their Earth Stations  near 
+Vancouver  to  provide  an additional telephony  channel  to 
+conduct  the experiment.  This transmitter operates  in  the 
+14/12 GHz. satellite band.
+
+ This  project  is jointly sponsored by the  Canadian  Radio 
+Relay   League   (CRRL)  and  the  Canadian  Amateur   Radio 
+Federation  (CARF).  However,  the  funding,  equipment  and 
+technical work to interface the channel to the amateur radio 
+networks is being provided by the Vancouver Amateur  Digital 
+C,mmunications  Group (VADCG) and by the Ottawa packet radio 
+group.
+
+ For further information contact either Hugh  Pett,  VE3FLL, 
+36LLismer Cr.,  Kanata ON, K2K 1A2 or Doug Lockhart, VE7APU, 
+1263  Balfour Ave.,  Vancouver BC,  V6H 1X6  (Tel.  604-738-
+5683).
+
+[Editor:  I have been following the efforts of the VADCG for 
+over  a  year,  and thought you might be interested in  some 
+additional  information:   A  Terminal  Node  Controller  is 
+available from the VADCG (blank board only) for  $30.  Write 
+to:  VADCG, 1263 Balfour Ave., Vancouver, BC, Canada V6H 1X6 
+or telephone (604) 738-5683. The board is 7.75 by 8.5 inches 
+made  of double-sided G-10 glass epoxy,  with plated-through 
+holes...well worth the price! The board needs: an Intel 8085 
+CPU,  an Intel 8273 Data Link Controller,  an Intel 8255 for 
+parallel  I/O,  a National INS8250 for serial I/O,  4k  2708 
+EPROM,  and  4k 2114 RAM...further details are available  in 
+the  Amateur  Radio  Research  and  Development  Corporation 
+(AMRAD)  Newsletters of June and November.  You can  contact 
+AMRAD at 1524 Springvale Avenue, McLean, Virginia 22101]
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+               CP/M-Net "Tip-of-the-Month"
+               ===========================
+
+Patch to make ZSID.COM the same Dump Display as DDT and SID
+
+           By: Bob Fisher - De Paul University
+
+A>ZSID ZSID.COM<cr> <--- Load ZSID into memory with ZSID
+ZSID VERS 1.4
+NEXT  PC  END
+2900 0100 A9FF
+#S125F<cr>
+125F 5F AF<cr>   <--- Put in XOR A
+1260 ?? .<cr>    <--- End substitution
+#S12C0<cr>
+12C0 CD 18<cr>   <--- Put in a relative jump
+12C1 ?? 01<cr>
+12C2 ?? 00<cr>
+12C3 06<cr>      <--- No change, here
+12C4 06 01<cr>
+12C5 ?? .<cr>    <--- End substitution
+#S12E1<cr> 
+12E1 CD 18<cr>	 <--- Another relative jump
+12E2 ?? 04<cr>
+12E3 ?? 00<cr>
+12E4 CD 18<cr>   <--- Yet another relative jump
+12E5 ?? 01<cr>
+12E6 ?? .<cr>    <--- End substitution
+#G0<cr>  (or Control-C<cr>)   <---Exit ZSID, return to CP/M
+A>SAVE 40 ZSID-FIX.COM<cr>    <---Save fixed version of ZSID
+
+ When  ZSID  relocates itself,  an offset is added to  bytes 
+12C2, 12E3, and 12E6 hex.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+

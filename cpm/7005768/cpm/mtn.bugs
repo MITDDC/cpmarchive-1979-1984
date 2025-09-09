@@ -1,0 +1,94 @@
+Date: 30 May 1981 at 0324-EDT
+From: w8sdz at BRL
+Subject: Automatic timeout help
+To: BUG-MTN at MC
+ 
+The help screen that is supposed to come up after five seconds
+when the intercept character is typed does not come up if direct
+CBIOS I/O is used.
+-------
+
+Date: 23 May 1981 19:45-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  List Buffer/File Bug
+To: BUG-MTN at MIT-MC
+cc: FJW at MIT-MC
+
+The code to be deleted is the two lines just above the label LIST10 in
+LISTCMD.MAC.
+
+Date: 23 May 1981 19:43-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Minor Bug in List Buffer/File
+To: INFO-MTN at MIT-MC
+cc: FJW at MIT-MC, BUG-MTN at MIT-MC
+
+In trying to be clever and using Kelley Smith's trick to record ^Z's
+(1AH) in the buffer by changing them to 9AH (in TEXT MODE), I left
+code in the List Buffer/File routine which strips the parity bit
+before checking to see if it is 1AH, the CP/M text EOF mark.  This
+turns out to be redundant anyway, as it is checked at another point
+(without the masking) before it is returned to this routine.
+
+Since my terminal sees ^Z as the cursor up command from EMACS, a List
+Buffer or File will display a premature and false End of File message
+when that character has been recorded as 9AH.  However, the buffer is
+actually much longer as is still recording, and, more importantly, the
+entire buffer WILL be written to disk past the false ^Z.
+
+Here are the patches for MTN 2.1:
+
+	11E2  FE => 00   (11E4 for 2.2)
+	11E3  1A => 00   (11E5 for 2.2)
+	11E4  28 => 00   (11E6 for 2.2)
+	11E5  3F => 00   (11E7 for 2.2)
+
+Sorry for any inconvenience this may have caused you.
+
+--Frank
+
+Date: 22 May 1981 00:17-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Short buffers
+To: BUG-MTN at MIT-MC
+
+It seems that MTN22 (not double-checked in MTN21) short sheets the
+buffer after filling it a decent amount.  List Buffer shows it shorter
+than it is.  Need to double-check that bit 7 is set for any random
+^Z's received in Text mode and that pointers are not being screwed up
+somewhere.
+
+Date: 25 April 1981 04:32-EST
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject:  Northstar/modem conflict
+To: MMD at SU-AI
+cc: BUG-MTN at MIT-MC, W8SDZ at MIT-MC
+
+This is not an "official answer" from BUG-MTN, but I noticed your
+message there and wanted to pass along a bit of info you may find
+useful.  If you are using a Horizon mainframe, you cannot use port C0H
+for the PMMI modem.  The reason is that that port is used by the
+mother board for some sort of parity business with Northstar memory.
+Everyone I know who has a Horizon II has had this problem.  It doesn't
+seem to matter whether you have the parity option on your memory
+boards or not.  The symptom is unexplained bombing of programs used
+with the modem.  Anytime the program does an output to port C0H, it
+messes up the system memory.
+   Around here, Horizon owners have standaradized on port B0H.
+
+Date: 17 Apr 1981 2234-PST
+From: Max Diaz <MMD at SU-AI>
+To:   bug-mtn at MIT-MC
+
+I copied, loaded and checked (CRC) MTN21.COM and MTNMSGS.OVR.  The former
+goes amuck as soon as I attempt to run it (prints "[" without stop).
+
+I'm running standard CP/M 2.2 on a 56K North Star and have a PMMI-103 
+installed and dutifully tested (addr=0C0H).
+
+Can you tell me what could be wrong?   
+
+Thanx --- Max
+
+
+

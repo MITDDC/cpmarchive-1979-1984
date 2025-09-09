@@ -1,0 +1,190 @@
+			     EX 1.4 - 11/20/82
+
+
+  Thanks to Joe Cutler, Stan Hanson, and Ron Fowler for EX.* and the
+  information used to create this version.  This file and the source for
+  EX14 are based upon the previous EX*.* files.
+
+
+  EX 1.4 is a maintenance update to EX 1.2 and EX 1.3 (never released).
+
+  Problem:	BASCOM would not execute under EX.
+
+  Reason:	BASCOM is doing system integrity checks using the
+		BDOS+1 address.  EX was not preserving the required
+		information so that BASCOM would execute.
+
+  Resolution:	See next problem resolution.
+
+
+  Problem:	Unpredictable results when executing MBASIC under EX.
+
+  Reason:	MBASIC (and others) were not subtracting 6 from the
+		BDOS+1 address when determining available memory.
+
+  Resolution:	EX now refreshes the storage in the 6 bytes below the
+		BDOS+1 address during any warmboot request.
+
+
+  The enhancements added with EX 1.2 are:
+
+	   ^:		EX runtime re-execution function
+	   ^?		EX runtime wait for carriage return
+			`Xsub Already Present' logic
+			Input/EX buffer overlap detection
+			EX runtime recursion prevention (Ex Already Present)
+			EX runtime prompt mode character logic
+
+  The enhancements added with EX 1.1 are:
+
+	   ;;		EX only comment support
+	   ^.		Print suppression toggle
+	   ^<..^>	Immediate print function
+	   ^#		EX message suppression toggle
+	   ^|		Carriage return/line feed function
+	   ^$		Default parameters' support
+			Logic to prevent ZCPR re-entrance to EX.COM
+			(EX.COM is not reentrant)
+
+				--Larry Steeger
+				  [70315,1120] on CompuServe
+
+
+  [note: The changes from file EXFIX.DOC have been incorporated into EX12.*]
+
+
+  EX is a nifty and fast way of executing .SUB files,
+  (uses ram as the SUB file buffer rather than spreading
+  it out on disk).  EX also allows batch entry of a series
+  of commands which it stores in memory for subsequent
+  continuous execution.  EX relocates itself and its buffer
+  to high memory just below CCP and adjusts the CP/M BDOS
+  entry to protect itself.
+
+				--Stan Hanson	   05/24/82
+
+  EX replaces the functions of both SUBMIT.COM and XSUB.COM
+  from Digital Research, Inc.
+
+				--Larry Steeger    08/06/82
+
+
+  The files used to assemble EX14.ASM using EX14.SUB are:
+
+      ED.COM
+      EX14.ASM
+      EX14.SUB
+      MAC.COM
+      RELS.UTL (or REL.UTL see note in EX14.SUB)
+      SID.COM
+      SUBMIT.COM and XSUB.COM (or a previous version of EX.COM may be used)
+
+      [note: REL.UTL is available on CP/MUG Volume #38]
+      [note: RELS.UTL is available on CP/MIG XA1 ACCESS database]
+
+  The files used to test EX14.COM are:
+
+      EX14.COM
+      EX14.TST (must be renamed to .SUB before executing test)
+      XSUB.COM
+
+  The files used to execute EX14.COM are:
+
+      EX14.COM
+      SUB.COM  (used to generate simple *.SUB files)
+
+      [note: Any good CP/M editor may be used to create *.SUB files]
+
+
+  (cr is carriage return)
+
+  EX14.COM may be invoked two ways:
+
+	1. EX14 cr
+
+	   This form will cause EX to prompt with a line number and `:'
+	   for each command line to be executed.  A carriage return
+	   entered by itself terminates the prompting and starts
+	   execution of the command lines that have been entered.
+
+
+	2. EX14 <submit file> <parameters> cr
+
+	   This form will cause EX to load the <submit file> into
+	   memory and perform <parameters> substitution the same as
+	   SUBMIT, with the addition of the `^$' support for missing
+	   parameters.	After all parameters have been substituted
+	   the text from the file is executed as if was entered from
+	   the console.
+
+
+  EX14.COM may be terminated during execution by entering control-C from
+  the console.
+
+
+  EX14.COM submit file conventions are:
+
+	[note: unless otherwise stated, the `<.......>' sequences
+	       are used only to indicate character strings that
+	       must be replaced with the values described.]
+
+	^<a character: A thru underscore>  generates the corresponding
+					   control character.
+
+					   Lowercase letters a thru z
+					   are converted to uppercase.
+
+	$<1 thru 9> generates parameter <1 thru 9> substitution
+		    the same as SUBMIT, unless `^$' is being used
+		    as described below.
+
+	^$<parm1 parm2 . . . parm9>  will generate a list of parameters
+				     that will be used in the $<1 thru 9>
+				     parameter substitution if the user
+				     does not provide any parameters or
+				     only some of the parameters on the
+				     EX command line.
+
+	;; generates an EX only comment (the ;; and the remainder of
+					 the current line are not
+					 moved to the EX command buffer.).
+
+	|  generates a Carriage Return.
+
+	^|  generates a Carriage Return and Line Feed.
+
+	|,cr,lf,1AH(EOF)  will eliminate all characters from the last |
+			  thru this sequence.
+
+	^.  toggles print suppression for characters from SUBMIT file.
+
+	   (Example:  DIR ^.*.COM^. will execute DIR *.COM but only DIR
+		      will be echoed to the console.)
+
+	^<  forces immediate display of the characters following it
+	    until ^> is encountered.  ^<char> control support, $<1 thru 9>
+	    parameter substitution, and $<char> escape support continues
+	    during this display mode.
+
+	   (Example:  ^<^[ETest EX 1.4^|^> will generate the sequence to
+		      clear the screen on the H/Z19 terminal and display
+		      `Test EX 1.4' at the upper-lefthand corner of the
+		      screen and the cursor will be on the next line.)
+
+	^: causes EX to re-execute the .SUB file from the beginning.
+
+	^? causes EX to wait for a carriage return response from the
+	   console.  Control-C will terminate EX at this point also.
+
+	$$ generates the $ (dollar-sign).
+
+	$^ generates the ^ (caret or up-arrow).
+
+	$| generates the | (broken vertical bar).
+
+
+  EX14.COM(.BIN or .OBJ) was generated from EX14.ASM using EX14.SUB and
+  the files mentioned above.
+
+				--Larry Steeger     11/20/82
+BIN or .OBJ) was generated from EX14.ASM using

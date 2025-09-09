@@ -1,0 +1,461 @@
+title MENU
+.z80
+aseg
+;
+; Originally published in Creative Computing, December 1979
+; by James J. Frantz who wrote this on May 31, 1979.
+; Converted to Z80 code by Frank J. Wancho, August, 1980, and
+; removed the BASIC dependencies - i.e. .COM files are the only
+; file type examined and displayed.
+;
+; This program is designed to be automatically executed
+; by CP/M immediately after a cold (or warm) boot.  This
+; program then displays the contents of the disk in a
+; menu fashion.  All files of specified type are sorted and
+; displayed alphabetically in four columns.  The user then
+; selects the desired program by its menu number.  The
+; selected program is then run.
+;
+PAGE
+	org	0100h
+;
+; First, the CP/M "Search" command is used to find the
+; file of the specified type.  The pointer to the File
+; Control Block is put in <DE>, and the command number is
+; put in <C>.  The File Control Block is pre-constructed to
+; the form '????????XXX0'.  The XXX is the specified file
+; 'type', and the '?' force a match to any file name of that
+; file type.
+;
+start	equ	$
+	ld	sp,stack	; Set up a stack
+again	equ	$
+	ld	c,17		; 'Search First' Comand
+;
+; This next routine sorts the file names as they are found
+; on the disk directory.  A name is read from the disk and
+; its location is found in the directory table by comparing
+; alphabetically.
+;
+sortlp	equ	$
+	ld	de,srcfcb	; Point File Control Block
+	call	bdos		; Use CP/M entry point
+;
+; CP/M returns the disk address of the next match in <A>.
+; This is a value between 0 and 64, or -1 if no match was
+; found.  Test for -1 and quit when no more files of the
+; specified file 'type' are found on the disk.  The disk
+; address is converted to a pointer to the file name
+; within the sector by multiplying by 32 and adding the
+; base address of the sector.
+;
+	cp	255		; Test for -1
+	jp	z,assign	; Print empty menu
+	rrca			; This is the same as
+	rrca			; 5 ADD A's
+	rrca
+	and	60h		; Mask correct bits
+	add	a,80h		; Add base address (0080h)
+	ld	e,a		; Put pointer in <DE>
+	ld	d,0		; as a 16 bit value
+	ld	hl,dirtab	; Point to start of table of
+				; sorted names
+	inc	de		; Point past erase field
+cmplop	equ	$
+	push	de		; Save pointer to next
+				; entry from disk directory
+	ld	c,8		; Length of compare
+	push	hl		; Save pointer to table
+cmp1	equ	$
+	ld	a,(de)		; Get trial name char
+	cp	(hl)		; Match?
+	jr	nz,endcmp	; If not, try next entry
+	inc	hl		; Advance pointers
+	inc	de
+	dec	c
+	jr	nz,cmp1		; Keep testing
+endcmp	equ	$
+	pop	bc		; Restore table pointer
+	jr	c,insnam	; Directory name goes in
+				; front of the current table
+				; if lower (CY=1)
+	ld	hl,14		; Length of table entry
+	add	hl,bc		; <HL> to next table entry
+	pop	de		; Recover trial name point
+	jr	cmplop		; Loop again
+;
+; This next portion makes room in the directory table for
+; the new entry by moving all alphabetically higher names
+; upward in memory.
+;
+insnam	equ	$
+	ld	hl,filcnt	; Count the number of files
+	inc	(hl)		; to be displayed
+	ld	hl,(eot)	; Get pointer to table end
+	ex	de,hl
+	ld	hl,14		; Distance to move
+	add	hl,de		; <HL> point destination
+	ld	(eot),hl	; Save the new End of Table
+	inc	hl
+	inc	de
+;
+moveup	equ	$
+	dec	de
+	dec	hl
+	ld	a,(de)		; Get byte to move
+	ld	(hl),a		; Put in new spot
+	ld	a,c		; Test for done
+	cp	e		; <BC>=<DE>?
+	jr	nz,moveup
+	ld	a,b
+	cp	d
+	jr	nz,moveup
+	pop	hl		; Recover pointer
+	ld	c,8
+	call	blkmov		; Insert name in table
+;
+; The menu number field is inserted in the directory table
+; at this point but the actual menu number will be assigned
+; after all the files are sorted.
+;
+	ld	hl,menbuf	; Point menu number block
+	ld	c,6		; Length of move
+	call	blkmov		; Insert text in table
+;
+; The command number for subsequent searches of the disk
+; directory must be altered to cause CP/M to search from
+; where it left off.
+;
+	ld	c,18		; 'Search Next' command
+	jp	sortlp
+PAGE
+;
+;
+; This is the second major portion of the program.  At this
+; point, all files have been inserted in the directory table
+; in alphabetical order.  Now the menu numbers are assigned
+; and inserted in the proper place in preparation for
+; display on the terminal.
+;
+assign	equ	$
+	ld	a,(filcnt)
+	ld	b,a		; Save in <B>
+	push	af		; and on stack
+	ld	c,0		; Initial file number
+	ld	hl,dirtab+11	; Point first file number
+	ld	de,13		; Offset to other numbers
+numfil	equ	$
+	ld	a,c		; Put file number in <A>
+	add	a,1		; Increment
+	daa			; Decimal convert
+	ld	c,a		; Resave in <C>
+	rrca			; Get tens digit into
+	rrca			; proper place
+	rrca
+	rrca
+	and	0fh		; and mask
+	jr	z,useblk	; Suppress leading zero by
+	add	a,10h		; add either 20H (ASCII ' ')
+useblk	equ	$
+	add	a,' '		; or 20H + 10H for numeric
+	ld	(hl),a		; Put in text stream
+	ld	a,c		; Get units portion
+	and	0fh		; Mask off tens portion
+	add	a,'0'		; Convert to ASCII
+	inc	hl
+	ld	(hl),a
+	add	hl,de		; Repeat until all files
+	djnz	numfil		; are sequentially numbered
+;
+	pop	af		; Get FILCNT from stack
+	push	af		; and save again for later
+;
+; This algorithym ensures the columns are as even in length
+; as possible.  Don't worry, it works.
+;
+	add	a,nbrcol-1
+	ld	b,-1		; <B> accumulates quotient
+				; So set to -1 for at least
+				; one pass thru gives 0
+divx	equ	$
+	inc	b
+	sub	nbrcol		; Divide (FILCNT+3) by
+				; four to get OFSET1
+	jp	p,divx
+	add	a,nbrcol	; Subtracted once too much
+				; so add it back in
+	ld	hl,ofset1
+	ld	(hl),b		; Insert OFSET1 into table
+	inc	hl		; Point OFSET2 location
+	jr	nz,setof2	; Same as OFSET2 if non-
+				; zero remainder
+	dec	b		; Else OFSET2=OFSET1-1
+setof2	equ	$
+	ld	(hl),b		; Put OFSET2 in table
+	inc	hl		; Point OFFSET for Col. 3
+	dec	a		; Test for remainder of 1
+	jr	nz,setof3	; If remainder <> 1, use
+				; OFSET3=OFSET2
+	dec	b		; Else OFSET3=OFSET2-1
+setof3	equ	$
+	ld	(hl),b		; Offset to Col. 4
+;
+; Now that the offsets for the columns have been determined
+; the actual print out can be made
+;
+reprt	equ	$
+	pop	af		; Recover FILCNT
+reprt1	equ	$
+	push	af		; Save again for later use
+	ld	(filcnt),a	; Save for counting
+	ld	a,scrhgt	; Set for video display size
+	ld	(lincnt),a
+	call	clear		; Clear screen
+	ld	de,hdg
+	call	print
+;
+	ld	hl,dirtab-14	; Point dummy 0th entry
+;
+prtlin	equ	$
+	push	hl		; Save base address
+	ld	de,ofset0	; Point offset table
+	ld	a,nbrcol	; 4 columns per line
+prtnam	equ	$
+	ld	(colcnt),a	; Save count of columns
+	push	hl		; Save current name pointer
+	push	de		; Save offset table pointer
+;
+	ld	de,trplsp	; Print 3 blanks
+	call	print		; Use CP/M facility
+	pop	de		; Get offset table pointer
+	pop	hl		; Get name pointer
+	ld	a,(de)		; Get offset value
+;
+; The offset value is the number of file names from the
+; current name pointer to move the print buffer.
+;
+	ld	bc,14		; Each name is 14 long
+mult14	equ	$
+	add	hl,bc		; Add 14 for each offset
+	dec	a		; Until offset = 0
+	jr	nz,mult14
+	push	hl		; Save new name pointer
+	push	de		; Save offset pointer
+	ex	de,hl		; Point name to print w/<DE>
+	call	print		; Print the file name and
+				; its menu number
+;
+tesfin	equ	$
+	ld	hl,filcnt	; See if done printing
+	dec	(hl)		; by testing count of files
+	pop	de		; Get offset pointer
+	pop	hl		; Get pointer to last name
+	jr	z,finish	; No more to print
+	inc	de		; Advance offset pointer
+	ld	a,(colcnt)
+	dec	a		; See if columns left = 0
+	jr	nz,prtnam	; Print another same line
+	call	crlf		; Move to next line
+	pop	hl		; Get base of previous line
+	ld	de,14		; Add offset
+	add	hl,de
+	jr	prtlin
+;
+; The file names and their menu numbers have been printed.
+; This next loop outputs sufficient linefeeds to put the
+; heading at the top of a 16 line video display (thereby
+; clearing the screen), and puts the request for user
+; selection at the bottom of the screen.
+;
+;
+finish	equ	$
+	pop	hl		; Unjunk stack
+lfloop	equ	$
+	call	crlf
+	jp	p,lfloop	; Omit this line if desired
+	ld	de,prompt	; Point instruction msg
+	call	print		; Again CP/M prints message
+	ld	de,inbuf
+	ld	a,10		; Ten characters max
+	ld	(de),a
+	ld	c,10		; 'Read Buffer' Command
+	call	bdos
+;
+; On return from BDOS line input function, the digits
+; typed by the user are in the buffer at INBUF+2.
+; Convert to binary
+;
+	ld	hl,inbuf+1	; Point character count
+	ld	a,(hl)		; Get it and see if > 2
+	cp	3
+	jr	nc,reprt	; Reprint the menu
+	ld	c,a		; Count of digits to <C>
+	ld	b,0		; Zero <B>
+;
+getnum	equ	$
+	inc	hl		; Point ASCII digit
+	ld	a,(hl)		; Get it
+	call	ascbin		; Convert to binary
+	jr	c,reprt		; Redisplay on error
+	dec	c
+	jr	nz,getnum
+;
+; <B> has the menu number.  To be sure this is still a legal menu
+; request, compare with FILCNT (still in stack).
+;
+	pop	af		; Recover file count
+	cp	b		; FILCNT-request number
+	jp	c,reprt1	; Redisplay menu if illegal
+;
+;
+	ld	de,14		; Increment between names
+	ld	hl,dirtab-14	; Point dummy 0th entry
+finame	equ	$
+	add	hl,de		; Add offset <B> times
+	djnz	finame
+;
+; At this point <HL> points to the selected file name.  Now find
+; the address of CP/M so the proper command name and the selected
+; filename can be put into the command buffer.
+;
+	ex	de,hl		; Save pointer to file name
+	ld	hl,(6)		; Get BDOS entry point
+	ld	bc,-ccplen	; Offset to start of CP/M
+	add	hl,bc
+	push	hl		; Save CP/M entry point
+				; on stack for branch.
+	ld	bc,7		; Offset to command buffer
+	add	hl,bc		; <HL> points place to put
+				; name of .COM file to be executed.
+	ld	a,8		; Get default length of file name
+	ld	(hl),a		; Store in CCP
+	inc	hl
+	push	de		; Save pointer to file name
+	ex	de,hl		; <DE> points command buffer
+;
+; Since the scan pointer is not reset by reentry into CP/M,
+; the scan pointer must be reset by this program.  The scan
+; pointer is stored by CP/M at the end of the command buffer.
+;
+	ld	hl,128		; Offset to end of cmd buff
+				; where pointer is stored
+	add	hl,de		; <HL> points storage place
+	ld	(hl),e		; Update buffer pointer to
+	inc	hl		; to start of the command
+	ld	(hl),d		; buff so CP/M will read.
+;
+; (The insertion of the BASIC command name goes here.  Removed
+; from original version.)
+;
+	pop	hl		; Point selected file name
+	ld	c,8		; Length of file name
+	call	blkmov
+;
+; (The insertion of file type goes here if your version of BASIC
+; requires it.)
+;
+	xor	a		; Need a zero at end
+	ld	(de),a		; of command line
+;
+; The address of CP/M is on the stack, so a simple RETurn
+; will execute CP/M and in turn execute 'filename'.
+;
+	ret
+;
+; Subroutines
+;
+blkmov	equ	$
+	ld	a,(hl)
+	ld	(de),a
+	inc	de
+	inc	hl
+	dec	c
+	jr	nz,blkmov
+	ret
+;
+ascbin	equ	$
+	sub	'0'		; Subtract ASCII bias
+	cp	9+1		; Be sure it's numeric
+	ccf
+	ret	c		; Set CY=1 if illegal
+	ld	d,a		; Save in <D>
+	ld	a,b		; Get previous result
+	rlca			; Multipy by 2
+	rlca			; then 4
+	rlca			; then 8
+	add	a,b		; then 9
+	ret	c		; out of bounds
+	add	a,b		; Then finally by 10
+	ret	c		; CY=1 always means error
+	add	a,d		; Add in new result
+	ld	b,a		; Save in <B>
+	ret
+;
+crlf	equ	$
+	ld	de,crlfmsg
+	call	print
+	ld	hl,lincnt
+	dec	(hl)
+	ret
+;
+print	equ	$
+	ld	c,9		; Buffer print command
+	call	bdos		; CP/M prints heading
+	ret
+;
+clear	equ	$
+	ld	de,clrs
+	call	print
+	ret
+;
+crlfmsg	equ	$
+	defm	0dh,0ah,'$'
+clrs	equ	$
+	defm	30,30,'$'	; Clear Screen
+hdg	equ	$
+	defm	9,9,9,'     MENU',0dh,0ah,0ah,'$'
+;
+prompt	equ	$
+	defm	'Enter MENU Number and press RETURN: $'
+;
+trplsp	equ	$
+	defm	'   $'
+;
+menbuf	equ	$
+	defm	' -  0$'
+;
+;
+ofset0	equ	$
+	defb	1
+ofset1	equ	$
+	defm	0,0,0
+;
+eot	equ	$
+	defw	dirtab
+;
+filcnt	equ	$
+	defb	0
+colcnt	equ	$
+	defb	4
+lincnt	equ	$
+	defb	0
+;
+srcfcb	equ	$
+	defm	0,'????????COM',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+;
+dirtab	equ	$
+	defb	-1		; Force first file to be put here
+;
+stack	equ	dirtab+64*14+30
+;
+inbuf	equ	stack
+;
+; Equates
+;
+bdos	equ	5
+nbrcol	equ	4
+ccplen	equ	3106h-2900h
+scrsiz	equ	24
+scrhgt	equ	scrsiz-4
+	end	start
+

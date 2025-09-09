@@ -1,0 +1,242 @@
+BABYL OPTIONS:
+Version:4
+Append
+
+10003
+*** EOOH ***
+Date: 28 Jun 1980 0947-PDT (Saturday)
+From: Lauren at UCLA-SECURITY (Lauren Weinstein)
+To:   FJW
+Re:   CP/M info request
+
+AUTO BOOT and GO:
+
+If you have SID:
+
+Load an image of your OS (SID CPMnn.COM)
+Type "I"
+   followed by the command line as you would like the CCP to execute
+   it at startup.  I.E.:
+
+	ISTAT.COM
+
+Type M80,90,987
+^C (reboot) and sysgen in normal manner to save new OS.
+
+If you don't have SID or want a command line longeïr than 16 chars:
+
+Load OS image using DDT (DDT CPMnn.COM)
+Patch the length of your command line into location 987H.
+Patch the ASCII of your command line into memory starting at
+    location 988H. (you are supposed to follow this with the digital
+    research copyright message to be legit).
+Boot and sysgen.
+
+--Lauren
+
+10003
+*** EOOH ***
+Date: 29 Jun 1980 2342-EDT
+From: CLEMENTS at BBNA
+To:   FJW
+Re:   CP/M info request
+
+In response to your message of 28 Jun 1980 0118-EDT
+
+I don't have my listing at home, but scanning it remotely, it appears
+you want a file called "$$$.SUB" on the disk from which you boot.
+It will be executed, and then deleted. So keep a copy under some
+other name too. Those are Dollarsigns, not ESC's.
+/Rcc
+
+10003
+*** EOOH ***
+Date: 06/30/80 03:03:47
+From: POURNE at MIT-MC
+Re:   CP/M info request
+
+Just put the file name in the proper place as [part of the BIOS.
+Then call BDOS to execute the file.
+
+10003 {answered}
+*** EOOH ***
+Date: 30 Jun 1980 1258-EDT
+From: CLEMENTS at BBNA
+To:   FJW
+cc:   CLEMENTS at BBNA
+Re:   CP/M info request
+
+In response to your message of 30 Jun 1980 0029-EDT
+
+OK, I had forgotten the exact details of the SUBMIT stuff. 
+If you could get it to work except for the delete of the $$$.SUB file,
+you can try removing the call at 2AD5, a CALL 29FC, which does
+the delete. (Replace with 3 NOP's obviously). Those addresses assume
+the CCP starts at 2900, and are for a 1.4 CPM. Alternately, a command
+in the SUB file might be to create a new SUB file before it finishes.
+Or to toggle between two SUB files, maybe. The FCB for "$$$.SUB" is
+at 3086, so you might have your program adjust the name field of that
+FCB to shift among SUB files and/or delete different ones at completion.
+Then if a clean $$$.SUB is left, a re-boot would work. Good luck.
+/Rcc
+
+10003
+*** EOOH ***
+Date: 07/02/80 13:19:06
+From: LEO at MIT-ML
+To:   FJW
+
+On North * CP/M (the stuff written by Lifeboat) there is just
+a byte that has to be patched to tell CP/M to run "AUTO.COM"
+on either warm or cold boot. If you are not running one of the
+packaged versions it is just a quick cbios hack. I also have 
+a north star and a tarball system.
+					Leo
+
+10003
+*** EOOH ***
+Date: 07/02/80 13:33:19
+From: LEO at MIT-ML
+To:   FJW
+Re:   CP/M info request
+
+
+Continued from last message:
+ If you are into hacking the CBIOS (I assume that you have the
+source) all you have to do is the following (let us assume that
+'CONIN' is the lable used for the routine to get characters from the
+console.
+
+Patch this into the routine that is run before jumping to the CCP:
+	lhld	conin+1	;save old address
+	shld	oldaddr
+	lxi	h,frotz	;the address of the new routine
+	shld	conin+1
+			;continue with the code and jump to the CCP
+	.
+	.
+	.
+	jmp	ccp
+oldaddr	ds	2	;a place to save the old addr
+chrcnt	db	0	;a count of the characters sent
+command	db	'The command line',0
+frotz	lxi	h,command
+	lda	chrcnt
+	mvi	b,0
+	mov	c,a
+	inr	a	;increment character count
+	sta	chrcnt
+	dad	b
+	mov	a,m
+	ora	a
+	rnz		;with character in A
+	xra	a
+	sta	chrcnt	;reset in case we want this again
+	lhld	oldaddr
+	shld	conin+1	;un patch the routine
+	mvi	a,0dH	;set the CCP a C/R
+	ret
+
+That should do it.
+					Leo
+
+10003 {answered}
+*** EOOH ***
+Date: 07/03/80 01:21:59
+From: LEO at MIT-ML
+To:   FJW
+
+The MODE byte is located at 23FF Hex in the sysgen position (assuming
+CP/M 1.4.
+The following bits seem to have the meaning (one is un-documented
+and is easily found; I did it once and forgot)
+Numbering the bits from 0..7
+
+Run Auto after cold boot (the bit position is not given)
+Run Auto after warm boot (Bit 1 (set with an OR 2))
+Enable interupts after disk access (Bit 4)
+Read after write (bit 6)
+
+					Leo
+
+10003
+*** EOOH ***
+Date: 4 July 1980 00:53-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+To:   INFO-MICRO at MIT-AI
+cc:   FJW
+Re:   N* CP/M AUTO Start
+
+My thanks to those who responded to my plea for help:
+LAUREN@UCLA-SECURITY, CLEMENTS@BBNA, POURNE@MC, and especially to
+LEO@ML.  The replies are in MC:FJW;CP/M AUTO.
+
+The final solution, courtesy of LEO (and also from LifeBoat, who
+neglected to send along a set of notes for their version which I just
+received today):
+
+For N* CP/M version 1.4 and up from LifeBoat there is a MODE byte at
+SYSGEN location 23FFH which is defaultly set to 10H.  The values of
+the bits are, when set:
+
+    0 - n/a
+    1 - Run AUTO.COM after cold start (default: OFF)
+    2 - Run AUTO.COM after warm start (default: OFF)
+    3 - n/a
+    4 - n/a
+    5 - Enable Interrupts after disc access (default: ON)
+    6 - n/a
+    7 - Do read after write to disc (default: OFF)
+
+To turn on all effective bits (53H):
+
+    MOVCPM * *
+    SAVE 36 CPMxx.COM
+    DDT CPMxx.COM
+    S23FF
+    53
+    .
+    ^C
+    SYSGEN
+
+    A
+    (reset)
+    SAVEUSER
+
+Then REN whatever you want to run as AUTO.COM and there you have it!
+
+--Frank
+
+10003
+*** EOOH ***
+Date: 26 July 1980 00:56-EDT
+From: "James Lewis Bean, Jr." <BEAN at MIT-MC>
+To:   INFO-MICRO
+Re:   CP/M auto Start
+
+I use two different methods for auto-Starting CP/m's.
+
+The first of these methods is to use the SUBMIT command.  If
+you wanted to have your system execute the command `AUTO' you
+create a file, the name doesn't matter but for this example
+call it `START.SUB',  with the following instructions in it.
+AUTO
+SUBMIT START
+and type SUBMIT START.  Now until you stop the submit program,
+by typing a charecter while it is loading a new command, the
+CP/M will read from the SUB file.      
+
+The second method is more complicated and impossible to stop.
+If inplace of the DRC copyright notice you place a command name
+and replace the 0ffh before the copyright notice to a 0 that
+command will be executed on each warm boot.  To get this to
+happen you must get a copy of your CP/M into ram.  Then you
+will find the Copyright notice starting at 701h and the 0ffh is
+at 700h.  Once this is finished you must sysgen this system off
+to disk.  Good luck.
+
+
+
+				Bean at Mit-Mc
+				James Lewis Bean, Jr
+

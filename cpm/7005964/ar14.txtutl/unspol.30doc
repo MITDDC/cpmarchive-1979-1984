@@ -1,0 +1,211 @@
+UNSPOOL.ASM			81-11-21
+for CP/M 2.0 and up.
+
+AUTHOR:			Gary P. Novosielski
+			Rutherford, NJ
+
+			(201) 935-4087
+
+INTRODUCTION:
+
+	UNSPOOL (Ver 3.0) is a program to send a standard
+CP/M file such as a .PRN or .ASM file to the system's list
+or punch device, while still allowing other system operations
+to take place.  The file is transferred during periods when
+console is waiting for input.
+
+SYNTAX:
+
+	UNSPOOL [d:]filename.ext [dev]
+		or
+	UNSPOOL dummy OFF
+
+	[square brackets denote optional parameters]
+
+	Where	d:		is an optional drive spec
+				such as A: or B:.  If not
+				entered, the current default
+				drive is assumed.
+
+		filename.ext	is the name of the CP.M file
+				to be printed/punched
+
+		dev		is the symbolic name of the
+				output device to be used.
+				Valid devices are LST and
+				PUN.  Note that the colon
+				(:) usually present in these
+				names is NOT entered.  If not
+				specified, the LST: device is
+				assumed.
+		OFF		If OFF is specified
+				instead of a device name, the
+				operator will be offered the
+				option of cancelling UNSPOOL
+				if it is already running.
+		dummy		Because the word OFF is the
+				second parameter, a filespec
+				is still needed.  A dummy name
+				of "." will suffice as a place
+				holder.
+
+Examples:
+	UNSPOOL TEST.PRN
+		will send the file TEST.PRN from the current
+default drive to the current LST: device.
+
+	UNSPOOL A:TEST.PRN LST
+		is exactly equivalent to the above, assuming
+drive A is the default drive.  Note that the device name has no
+trailing colon.
+
+	UNSPOOL B:ZINGER.HEX PUN
+		will send the file ZINGER.HEX from the B drive
+to the current PUN: device regardless of which drive is
+currently the default.  Note that the device is "PUN"
+not "PUN:".
+
+	UNSPOOL . OFF
+	UNSPOOL *.* OFF
+	UNSPOOL OFF OFF
+		all cause an operator prompt: "Do you want to
+cancel UNSPOOL?"  A single "Y" or "N" (Yes or No) is accepted
+from the console as a response.  Any other character is assumed
+to mean "No".
+
+	UNSPOOL OFF
+		causes the file "OFF.   " to be sent to the
+list device.
+ 
+OPERATION:
+
+	Upon loading, the program checks to see that the
+the BIOS vector table pointed to by the word at location
+0001H is valid, i.e. is a table of JMP instructions containing
+at least 16 entries.  If an error is detected, the program
+will display an error message on the console and attempt to
+warm-boot CP/M.
+	If found, the BIOS vector table is copied into the
+program segment which will remain active during unspooling
+so that subsequent application programs running concurrently
+with UNSPOOL will still have access to the BIOS.
+	This table is modified to trap attempts to warm boot
+the system or perform direct console input.
+	The address of the old BIOS vector table, the BDOS
+entry address, and the CCP return address (from the top of the
+stack on entry) are saved in memory.
+	The "dev" parameter from the command line is checked.
+If not valid, an error message is typed and control returns
+to the CCP.
+	If the "dev" parameter is the literal OFF, the program
+executes a BDOS funcion 0 (System Reset) and terminates.
+	The file named in the command line is opened for
+input.  If not present, the command is echoed to the console
+followed by a "?" and control returns to CCP.
+	If the drive is not explicit, the current default
+drive number is recorded internally in case the default drive
+is changed while UNSPOOL is active.
+	The current user number and IOBYTE values are checked
+and stored internally so that if the user number is changed,
+UNSPOOL will still be able to read the input file.  If the
+device is changed (using STAT LST:=TTY: for example) unspool
+will continue to use the physical device in effect at the
+time the program was initiated.  Any application programs
+will, however, use the new values of the user number and the
+new physical device assignments.
+	If no errors were detected, the active program segment
+which monitors all calls to BDOS is relocated into high memory
+just below the CCP.  This reduces the available user program
+area by 3 K:  4 pages for the UNSPOOL supervisor segment,
+and 8 pages for the CCP which is commonly overwritten by user
+program buffers.  The BOOT and BDOS jumps in low memory are
+modified to protect the CCP and UNSPOOL supervisor segment.
+	Control is then returned to the console.  Normal
+CP/M operation will then be possible. Characters will be
+sent from the input file to the output device whenever the
+console is idle.
+
+	Whenever an application program or the CCP requests
+console input using BDOS functions 1 or 10, or a direct call
+into the jump table at C(BOOT + 1) + 6, the supervisor
+segment intercepts these requests and checks to see if the
+console is idle.  If it is, characters are transferred from
+the input file to the output device until the console becomes
+ready, i.e. a key is actually pressed.  At that time the
+BDOS function or BIOS call is executed normally, and control
+returns to the application program.
+	If a jump to BOOT is attempted, this is also
+intercepted by the UNSPOOL supervisor segment.  The message
+"Unspooling in progress" is displayed on the console, and
+no actual boot takes place.  Control is returned to the
+protected copy of the CCP instead.  Before returning, a disk
+reset is performed and the default DMA address is reset to
+0080H to simulate a true warm-boot as closely as possible.
+	If warmboot is attempted using BDOS function 0, the
+program will prompt the operator with the option to cancel.
+If the response is "Y", warmboot is performed using BDOS
+function 0 as requested.    Otherwise the request is handled
+as with normal warmboot, above.
+	When the input file is completely transferred, or
+a 1AH end-of-file character is detected, the supervisor
+becomes inactive, and passes on all previously intercepted
+requests immediately, without checking console status.  When
+the next warm-boot request is detected, the supervisor removes
+itself from memory by executing a true warm-boot, and informs
+the operator with the message "UNSPOOL completed.".
+
+NOTES:
+
+	While UNSPOOL makes every effort to restore the values
+of the DMA address, USER number, IOBYTE, and default disk drive
+before returning control to the program, a hardware reset may
+leave these values in an undetermined state if unspooling was
+actually taking place at the time.
+	When function 10, Read Console Buffer is used, UNSPOOL
+will transfer characters only until the first key is pressed.
+At that time, no characters will be transferred until the
+input line is completed by pressing a carriage return.
+	UNSPOOL requires that the List Status function in
+the BIOS was properly implemented at system installation time.
+UNSPOOL will not send characters to the LST: device unless it
+recieves a ready condition from the List Status routine.  If
+the PUN: device is used, no status check is provided for by
+CP/M, so a not-ready condition on the punch may cause the
+system to hang up if PUN was specified on the command line.
+See the CP/M Alteration Guide for a discussion of the BIOS
+List Status routine.
+	Although the console is polled frequently during the
+unspooling of the file, some of the diskette operations may
+take a second or two to complete, for example when a new extent
+is opened.  Since the console is not polled during this period,
+high speed typing may cause one or more characters to be lost.
+This effect will vary depending upon the program being run,
+the types of input reqests (character or line) it uses, and
+the relative locations on disk of the spool file and any
+files in use by the program.  As a result, heads-down typing
+is not reccommended while UNSPOOL is running.  Some experience
+with UNSPOOL will teach the user when caution is required.
+
+INSTALLATION:
+
+	The source file is written for assembly with the
+MAC assembler.  The .HEX file produced is LOADed to a .COM
+file and executed just as any normal program.  Relocation is
+done at execution time as described above.
+	If the assembly option EXPAND is set to TRUE, tab
+characters in the input file will be expanded to spaces with
+assumed tab stops at every eighth print position.  This option
+should be set to FALSE if the printer driver or the printer
+itself can properly handle the tab character.  If the option
+PHYSBS is set to TRUE, a backspace character will cause the
+tab expansion algorithm to recognize backspace characters
+and decrement the column count when a backspace is encountered
+in the input file.  This option should be set to FALSE if
+backspace characters are ignored by the printer.  All other
+control codes except carriage return are assumed to be non-
+printing, and are ignored by the algorithm.
+	If tab expansion is included, the version number
+in the signon message will be followed by "/T".
+
+			Gary Novosielski
+

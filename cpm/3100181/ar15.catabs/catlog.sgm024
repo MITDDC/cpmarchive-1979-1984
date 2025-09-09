@@ -1,0 +1,48 @@
+Sig/M volume 24          miscellaneous Pascal Z utilities
+
+                    (original material from Pascal Z UG volume 6)
+
+     -CATALOG.024             catalog of Sig/M volume 24
+     -CATALOG.ACK             acknowledgement file
+     ABSTRACT.024             descriptive contents of volume 24
+     CRCKFILE.024             CRC of volume 24
+
+24.1      COMPLEX.LIB     5K  complex number utility
+24.2      CURSOR.LIB      2K  cursor control for SD Sales video
+24.3      CURSOR.PAS      3K   /
+24.4      CURSOR.COM      7K  /
+24.5      FINDBAD.MAC     7K  locate bad sectors under CP/M 2.X
+24.6      FINDBAD.COM     2K  /
+24.7      LONGLINE.PAS    2K  concatenation demo
+24.8      LONGLINE.COM    7K  /
+24.9      NAD4.PAS        9K  name address data entry
+24.10     NAD4.COM        9K  /
+24.11     OTHELLO.PAS     6K  Othello - UCSD version
+24.12     OTHELL1.PAS     8K    /
+24.13     OTHELL2.PAS     8K   /
+24.14     OTHELLIN.PAS    8K  /
+24.15     PTABLE.PAS      1K  table generating demo
+24.16     PTABLE.COM      8K  /
+24.17     PTRS2.PAS       4K  pointer demo program
+24.18     PTRS2.COM       5K  /
+24.19     QQSORT.PAS      4K  Pascal - Quicker Sort
+24.20     QQSORT.LIB      3K   /
+24.21     QQSORT.COM      8K  /
+24.22     QSORT.COM       7K  Pascal - Sort
+24.23     QSORT.PAS       3K   /
+24.24     QSORT.LIB       1K  /
+24.25     RCPDAT.XXX      2K  recipe program
+24.26     RCPDAT.YYY      1K     /
+24.27     RCPDAT.MST      1K    /  
+24.28     RECIPE.COM     15K   /
+24.29     RECIPE.PAS     20K  /
+24.30     SHELL.PAS       3K  Pascal Shell sort
+24.31     SHELL.COM       7K   /
+24.32     SHELL.LIB       1K  /
+24.33     SNOOPY81.CAL    5K  1981 calendar
+24.34     XREF.PAS       10K  cross reference program
+24.35     XREF.COM       14K  /
+24.36     ZCOMPAR.PAS     2K  Pascal file compare utility
+24.37     ZCOMPAR.COM     7K    /
+24.38     F1.DAT          1K   /
+24.39     F2.DAT          1K  /

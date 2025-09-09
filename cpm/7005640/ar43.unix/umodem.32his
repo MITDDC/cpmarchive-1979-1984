@@ -1,0 +1,77 @@
+/*
+ *  UMODEM -- Implements the "CP/M User's Group XMODEM" protocol, 
+ *	      the TERM II File Transfer Protocol (FTP) Number 1,
+ *	      and the TERM II File Transfer Protocol Number 4 for
+ *            packetized file up/downloading.    
+ *
+ *    Note: UNIX System-Dependent values are indicated by the string [SD]
+ *          in a comment field on the same line as the values.
+ *
+ *
+ *         -- Lauren Weinstein, 6/81
+ *	   -- (Version 2.0) Modified for JHU/UNIX by Richard Conn, 8/1/81
+ *	   -- Version 2.1 Mods by Richard Conn, 8/2/81
+ *		. File Size Included on Send Option
+ *	   -- Version 2.2 Mods by Richard Conn, 8/2/81
+ *		. Log File Generation and Option Incorporated
+ *	   -- Version 2.3 Mods by Richard Conn, 8/3/81
+ *		. TERM II FTP 1 Supported
+ *		. Error Log Reports Enhanced
+ *		. CAN Function Added to FTP 3
+ *		. 'd' Option Added to Delete umodem.log File before starting
+ *	   -- Version 2.4 Mods by Richard Conn, 8/4/81
+ *		. 16K-extent sector number check error corrected
+ *		. Count of number of received sectors added
+ *	   -- Version 2.5 Mods by Richard Conn, 8/5/81
+ *		. ARPA Net Flag added
+ *		. ARPA Net parameter ('a') added to command line
+ *		. ARPA Net BIS, BIE, BOS, BOE added
+ *		. ARPA Net FFH escape added
+ *	   -- Version 2.6 Mods by Bennett Marks, 8/21/81 (Bucky @ CCA-UNIX)
+ *		. mods for UNIX V7 (Note: for JHU compilation define
+ *		  the variable JHU  during 'cc'
+ *		. added 'mungmode' flag to protect from inadvertant
+ *		  overwrite on file receive
+ *		. changed timeout handling prior to issuing checksum
+ *	   -- Version 2.7 Mods by Richard Conn, 8/25/81 (rconn @ BRL)
+ *		. correct minor "ifndef" error in which ifndef had no arg
+ *		. restructured "ifdef" references so that other versions
+ *		  of UNIX than Version 7 and JHU can be easily incorporated;
+ *		  previous ifdef references were for JHU/not JHU;
+ *		  to compile under Version 7 or JHU UNIX, the following
+ *		  command lines are recommended:
+ *			"cc umodem.c -o umodem -DVER7" for Version 7
+ *			"cc -7 umodem.c -o umodem -DJHU" for JHU
+ *		. added 'y' file status display option; this option gives
+ *		  the user an estimate of the size of the target file to
+ *		  send from the UNIX system in terms of CP/M records (128
+ *		  bytes) and Kbytes (1024 byte units)
+ *		. added '7' option which modifies the transmission protocols
+ *		  for 7 significant bits rather than 8; modifies both FTP 1
+ *		  and FTP 3
+ *	   -- Version 2.8 Mods by Richard Conn, 8/28/81
+ *		. corrected system-dependent reference to TIOCSSCR (for
+ *		  disabling page mode) and created the PAGEMODE flag which
+ *		  is to be set to TRUE to enable this
+ *		. added -4 option which engages TERM II, FTP 4 (new release)
+ *	   -- Version 2.9 Mods by Richard Conn, 9/1/81
+ *		. internal documentation on ARPA Net protocols expanded
+ *		. possible operator precedence problem with BITMASK corrected
+ *		  by redundant parentheses
+ *	   -- Version 3.0 Mods by Lauren Weinstein, 9/14/81
+ *              . fixed bug in PAGEMODE defines (removed PAGEMODE define
+ *	          line; now should be compiled with "-DPAGEMODE" if
+ *		  Page Mode is desired)
+ *		. included forward declaration of ttyname() to avoid problems
+ *		  with newer V7 C compilers
+ *         -- Version 3.1 Mods by Lauren Weinstein, 4/17/82
+ *		. avoids sending extraneous last sector when file EOF
+ *	          occurs on an exact sector boundary
+ *	   -- Version 3.2 Mods by Michael M Rubenstein, 5/26/83
+ *	        . fixed bug in readbyte.  assumed that int's are ordered
+ *		  from low significance to high
+ *		. added LOGDEFAULT define to allow default logging to be
+ *		  off.  compile with -DLOGDEFAULT=0 to set default to no
+ *		  no logging.
+ *
+

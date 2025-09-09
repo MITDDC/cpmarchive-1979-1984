@@ -1,0 +1,1537 @@
+;**********************************************************
+;							  *
+;	          EXTENDED CPM-- 12/13/81		  *
+;	  DESIGNED TO BE PORTABLE TO ANY CP/M 2.2	  *
+;       SYSTEM THAT IS IN ORIGINAL 8080 CODE FOR CCP.	  *
+;	(will work with others also, but you will	  *
+;	have to find all of the CCP equates.)		  *
+;			 RLP				  *
+;							  *
+;		will assemble w/ASM.COM			  *
+;							  *
+;	Donated 11/22/81 for the benefit of hobby	  *
+;	computing, but may not be sold or copied	  *
+;	for a profit.					  *
+;							  *
+MSIZE	EQU	61		;MEMORY SIZE THIS VERS	  *
+				;CHANGE TO YOUR SIZE HERE *
+OVERLAY	EQU	OVERLAY		;COMPUTED SYSGEN OVERLAY  *
+;							  *
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+;						>>
+;	*** I M P O R T A N T ***		>>
+;						>>
+; You must obtain the address for CBOOT from	>>
+; the argument of the first jump at the		>>
+; beginning of YOUR BIOS and place it in the 	>>
+; conditional equate assembled for your system.	>>
+; Make it relative to the beginning of the	>>
+; BIOS as shown.				>>
+;						>>
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+;
+;**********************************************************
+;
+;		   XTCPM.ASM  VERS 1.5
+;
+;	THIS PROGRAM PROVIDES FOR AN EXPANSION OF YOUR
+;	SYSTEM BY EITHER ONE OR 2 KBYTES WITHOUT THE NEED
+;	FOR A SPECIAL SYSGEN.  JUST ADD THIS CODE TO YOUR
+;	SYSTEM BY OVERLAYING YOUR CPMxx.COM FILE USING DDT.
+;	AFTER YOU HAVE OVERLAYED THE CODE INTO CPMxx.COM
+;	WITH DDT, DO TWO SAVES. ONE, SAVE YOUR CPMxx.COM
+;	FILE AS USUAL. TWO, DO A SAVE OF THE CODE WHICH
+;	WILL BE IN THE IMAGE AT 100H. THIS WILL BE A TRAN-
+;	SIENT THAT YOU MUST KEEP ON YOUR 'A' DRIVE AND CON-
+;	TAINS THE ADDITIONAL CODE - SO SAVE IT WITH ENOUGH
+;	SECTORS TO WRITE 1 OR 2 KB DEPENDING ON THE SIZE.
+;	NAME THE TRANSIENT 'XTCPM.COM'. BE SURE THAT YOUR
+;	BIOS IS SET TO DO A TURNKEY START BY HAVING IT
+;	JMP TO THE FIRST ENTRY POINT (CCP+0H) AFTER BIOS
+;	INITIALIZATION.  SOME PROPRIETARY BIOS'S DO THIS
+;	THROUGH A MODE BYTE. FINALLY USE YOUR NORMAL 
+;	'SYSGEN' TO WRITE THE CPMxx.COM TO YOUR SYSTEM
+;	TRACKS. IT IS PREFERABLE THAT YOUR BIOS DO A JUMP
+;	TO THE SECOND ENTRY POINT IN THE CCP (CCP+3H) ON
+;	A WARM BOOT, HOWEVER THIS CODE WILL PROPERLY HANDLE
+;	THE SITUATION EVEN IF YOUR BIOS IS NOT IMPLEMENTED
+;	THAT WAY.
+;
+;	THE EXPANDED CODE SHOWN HERE PROVIDES FOR AN
+;	EXTENDED CCP THAT CAN CONTAIN ADDITIONAL USER
+;	DEFINED CCP COMMANDS AS WELL AS TO MAKE TRANSIENTS
+;	APPEAR AS CCP-LIKE IN THAT THEY CAN BE INVOKED
+;	REGARDLESS OF LOGGED DRIVE/USER AREA. THUS IT IS
+;	COMPLETELY UN-NECESSARY TO PLACE THESE TRANSIENTS
+;	IN MULTIPLE USER AREAS.  IT ALSO PROVIDES FOR
+;	TWO LEVELS OF PASSWORD PROTECTION.  ADD A TURNKEY
+;	START OF WARD'S 'BYE' W/O PASSWORD TO MAKE A VERS-
+;	ATILE ON-LINE SYSTEM. JUST PUT 'BYE' AT 'FILNAM'
+;	PRECEEDED BY A '3' AND ADD A TEMINATING NULL.
+;	THEN PLACE 'BYE.COM' IN USER 13 ON YOUR 'A' DRIVE
+;	AND SET TNKY2 EQUAL TO TRUE.
+;
+;	AS DISTRIBUTED HERE, ALL OF THE FEATURES ARE
+;	AVAILABLE WITH LESS THAN ONE KILOBYTE OF SPACE ABOVE
+;	CP/M. THE CODE REQUIRES A Z80 CPU BUT MAY BE
+;	CONVERTED TO 8080 OR 8085. STUFF THE HOLES W/CARE.
+;
+;	TESTED OK WITH LIFEBOAT CP/M FOR NORTH STAR AND
+;	NORTH STAR'S CP/M PRODUCT. IF YOU ARE USING THE
+;	NORTH STAR CP/M WITH HARD DISK OR NON-STANDARD
+;	PROM, BE CAREFUL NOT TO OVERWRITE THE LAST 80H
+;	OF THE USER AREA CODE STARTING AT 3380H IN IMAGE.
+;	ALSO BE SURE TO SAVE 54 FOR A CPMXX.COM FILE SINCE
+;	THE IMAGE STARTS HIGHER THAN THE USUAL STANDARD.
+;
+;	ALSO TESTED WITH A STANDARD CP/M USING 8 IN DISKS
+;	AND A MICROMATION DOUBLER.
+;
+;	YOU CAN APPEND YOUR OWN CUSTOMIZED VERSION OF 'BYE'
+;	WITHOUT A MOVER INTO THE USER2 AREA IF YOU ARE CARE-
+;	FUL TO AVOID LABEL CONFLICTS. IF YOU DO SO, THEN ADD
+;	A COMMAND STRING AT THE 0 PASSWORD LEVEL AND POINT
+;	TO THE ADDRESS OF YOUR 'BYE' ENTRY POINT. ALSO,
+;	REDIRECT THE STACK IN 'BYE' TO BE THE SAME AS THE
+;	STACK IN THIS CODE AND ELIMINATE THE SEPARATE STACK.
+;	ALSO SEE THE NOTE AT LABEL CCPINIT.
+;
+;	NOTE....THIS PROGRAM DOES NOT CLOBBER ANYTHING IN THE
+;	TPA EXCEPT WHEN LOADING 'BYE' AS A TRANSIENT WHICH
+;	CAN BE AVOIDED AS ABOVE.
+;
+;	YOU CAN ELIMINATE THE USER1 CODE AREA IN ITS ENTIRETY
+;	IF YOU ARE ALREADY HAPPY WITH YOUR I/O DRIVERS. THERE
+;	IS A CONDITIONAL ASSEMBLY EQUATE TO ACCOMPLISH THIS.
+;
+;	12/13/81 Now patches the CCP to allow changing user
+;	area on the command line. i.e, A: 2 or C: 12 changes
+;	the user area on A to 2 or on C to 12. Logging a
+;	drive with for example B: if you are already in user
+;	x will log you to the B drive, user x. The USER command
+;	still works also but will not give an error message
+;	if there is no user number on the command line.
+;
+;	12/6/81 Fixed warm boot branch address in CCPINIT.
+;	Added second DIR string and address so that CCP code
+;	for DIR will run at 0 password level and a DIR.COM
+;	transient will run above that level if it is on the
+;	system disk.  See NOTE just above label DIR1.
+;	Changed location of PASBYTE vector to the buffer at
+;	the end of the BDOS (spare location) so that if the
+;	CCP is crashed by DDT or anything else, BYE will still
+;	be able to find the PASBYTE to reset it. Former loc-
+;	ation of this vector was at a spare location in the CCP.
+;	Clarified USER2 equate for IF STDCPM.   RLP
+;
+;	12/4/81 Major revision, see the DOC file. Also
+;	cleaned up the code.			RLP
+;
+;	11/30/81 Added code to make USERs 13, 14, & 15 on 'A'
+;	universal depending on password level achieved at
+;	log-on time. Removed nested IF's. Cleaned up code so
+;	that a warm boot will properly initialize the CCP.
+;	Also removed bug that would have prevented a file
+;	from being executed by a transient that loads the
+;	command line, sets the buffer pointer, and jumps to
+;	the beginning of the CCP.		RLP
+;
+;	11/25/81 Added conditional assembly equate to
+;	allow removal of i/o drivers and added routines
+;	to link the code in USER2 to your own customized
+;	BIOS.					RLP
+;	
+***********************************************************
+;
+;		SYSTEM EQUATES
+;	IMPORTANT   You must check these system equates to
+;be sure that they are valid for your system and change them
+;if they are not.  You may choose to integrate the USER1 code
+;with your open BIOS if you have one and thus eliminate the
+;USER1 equate.  USER2 will usually be just above CP/M including
+;any buffer and will usually be MSIZE*1024+32. 32 is to allow
+;room for stack. Change the value of ADJUST until the values
+;for CCP, BDOS and BIOS are correct for your system. The value
+;0D00H for Lifeboat on North Star and for North Star CP/M is
+;correct, and the value 600H is correct for standard CP/M.
+;
+FALSE	EQU	0
+TRUE	EQU	NOT FALSE	;SEE OPTIONS BLOCK
+				;TO SELECT ALL OPTIONS
+;
+IOBYTE	EQU	0003H		;I/O BYTE ADDRESS
+DRIVE	EQU	0004H		;LOC OF CURR DRV BYTE
+STAKSIZ	EQU	32		;15 LEVEL STACK + BOOT FLAG
+				;AND PASBYTE
+;
+;		- - - - - - - - - - - - -
+;
+;select only one of these true except that if Lifeboat BIOS
+;then make decision on S22X
+;
+STDCPM	EQU	FALSE	;true if standard CP/M on IBM
+			;compatible floppy disk.
+NSTRCPM	EQU	FALSE	;true if North Star CP/M
+LIFBOAT	EQU	TRUE	;true if Lifeboat CP/M for North
+			;Star DQ.
+S22X	EQU	TRUE	;TRUE FOR 2.21A & 2.22. THIS IS A
+			;SPECIAL EQUATE FOR LIFEBOAT BIOS'S
+			;AND ANY OTHERS THAT HAVE ADDED AN
+			;ADDITIONAL JMP FOR WINIT IN THE 
+			;USER1 JUMP TABLE. SET TO FALSE
+			;FOR ALL OTHERS. BE SURE THAT YOUR
+			;BIOS JMP TABLE IS PROPERLY LINKED
+			;TO USER1 OR JUST FORGET IT IF YOU
+			;INTEGRATE THIS CODE INTO YOUR 
+			;OPEN BIOS.
+M2BIOS	EQU	FALSE	;true if micromation bios
+			;
+;		- - - - - - - - - - - -
+			;
+;
+SKIP	EQU	0	;EQUATE THIS TO SIZE OF ROM TO SKIP
+	;NOTE:  This will add an additional offset to the
+	;	USER2 equate if you wish to place the USER2
+	;	code above any PROM or ROM areas. Thus, it
+	;	will be unecessary to reserve space between
+	;	the top of CP/M and ROM
+	;
+	IF	LIFBOAT
+	;
+ADJUST	EQU	0D00H
+BIOS	EQU	(MSIZE*1024)-ADJUST	;BASE OF BIOS
+USER1	EQU	BIOS+0700H		;BASE 1RST USER AREA
+USER2	EQU	MSIZE*1024+STAKSIZ+SKIP	;BASE 2ND USER AREA
+RAMEND	EQU	0FC00H			;CHANGE TO YOUR VALUE
+CBOOT	EQU	BIOS+80H		;COLDBOOT VECTOR FOR 2.22
+CCPIMAGE EQU	0A00H			;CHANGE THIS TO EQUAL THE
+					;ADDRESS OF YOUR CCP IN
+					;THE DDT/SYSGEN IMAGE.
+OVERLAY	EQU	2000H-BIOS		;COMPUTED OVERLAY
+	;
+	ENDIF
+	;
+	IF	NSTRCPM
+	;
+ADJUST	EQU	0D00H
+BIOS	EQU	(MSIZE*1024)-ADJUST	;BASE OF BIOS
+USER1	EQU	BIOS+0700H		;BASE 1RST USER AREA
+USER2	EQU	MSIZE*1024+STAKSIZ+SKIP	;BASE 2ND USER AREA
+RAMEND	EQU	0FC00H			;CHANGE TO YOUR VALUE
+CBOOT	EQU	BIOS+0xxH
+CCPIMAGE EQU	1500H
+OVERLAY	EQU	2B00H-BIOS		;COMPUTED OVERLAY
+	;
+	ENDIF
+	;
+	IF	STDCPM
+	;
+ADJUST	EQU	600H
+BIOS	EQU	(MSIZE*1024)-ADJUST	;BASE OF BIOS
+;USER1	EQU	BIOS + (YOUR OFFSET TO USER1 PATCH AREA) 
+USER2	EQU	MSIZE*1024+STAKSIZ+SKIP	;*NOTE* IF YOUR BIOS CODE
+					;INCLUDING ITS BUFFER SPACE
+					;HAS SPACE LEFT BELOW
+					;MSIZE*1024, YOU CAN SUBTRACT
+					;THE AMOUNT OF SPACE YOU HAVE
+					;LEFT FROM THIS USER2 EQUATE.
+					;SEE THE CODE AT 'IF M2BIOS'
+					;BELOW FOR AN EXAMPLE OF THIS. 
+;RAMEND	EQU	(PUT YOUR VALUE HERE)
+CBOOT	EQU	BIOS+0xxH
+CCPIMAGE EQU	980H			;ADDR OF CCP IN DDT IMAGE
+OVERLAY	EQU	1F80H-BIOS		;COMPUTED OVERLAY
+	;
+	ENDIF
+	;
+	IF	M2BIOS
+	;This is for a particular user's CBIOS that uses a
+	;Micromation Doubler and has a user code area begin-
+	;ning at BIOS+23DH.  Make your own conditional ass-
+	;embly equates for your values.
+ADJUST	EQU	600H
+BIOS	EQU	(MSIZE*1024)-ADJUST
+USER1	EQU	BIOS+23DH		;BASE 1RST USER AREA
+USER2	EQU	MSIZE*1024+STAKSIZ-256+SKIP ;BASE 2ND USER AREA
+RAMEND	EQU	0F400H			;CHANGE TO YOUR VALUE
+					;USED ONLY IN PARITY
+					;SETTING CODE IN 'INITIAL'
+CBOOT	EQU	BIOS+0ABH
+CCPIMAGE EQU	980H			;ADDR OF CCP IN DDT IMAGE
+OVERLAY	EQU	1F80H-BIOS		;COMPUTED OVERLAY
+	;
+	ENDIF
+	;
+BOOTFLG	EQU	USER2-1			;LOC OF BOOT FLAG
+					;IF NOT 0, then a
+					;cold boot is in progress.
+PASBYTE	EQU	USER2-2			;LOC OF PASBYTE
+STACK	EQU	USER2-2			;TOP OF STACK
+CCP	EQU	BIOS-1600H		;BASE OF CCP
+BDOS	EQU	CCP+800H		;BASE OF BDOS
+;
+;
+IOBYT	EQU	00000001B	;VALUE OF IOBYTE
+		; ; ; ;---------;CONSOLE IS TTY:	00
+		; ; ;		;	    CRT:	01
+		; ; ;		;	    BAT:	10
+		; ; ;		;	    UC1:	11
+		; ; ;-----------;READER IS  TTY:	00
+	 	; ;		;	    RDR:	01 
+		; ;		;	    UR1:	10 
+		; ;		;	    UR2:	11 
+		; ;-------------;PUNCH IS   TTY:	00 
+		;		;	    PUN:	01 
+		;		;	    UP1:	10 
+		;		;	    UP2:	11  
+		;---------------;LIST IS    TTY:	00 
+				;	    CRT:	01 
+				;	    LPT:	10 
+				;-----------UL1:	11 
+;
+DRIVERS	EQU	TRUE	;WANT THE I/O DRIVERS? (CONTAINED
+			;IN USER1 CODE AREA)
+BGTST	EQU	TRUE	;WANT BACKGROUND MEMORY TEST?
+;							   
+PARITY	EQU	TRUE	;WANT TO SET PARITY MEMORY	   
+;							   
+TNKY2	EQU	TRUE	;WANT 2ND TURNKEY START
+;
+MAXUSER	EQU	2	;FOR EXAMPLE..MAX PUBLIC USER AREA 
+;
+MAXDRIV	EQU	4	;FOR EXAMPLE..NUMBER OF DRIVES
+;							   
+SGNON	EQU	FALSE	;NEED SIGN ON MESSAGE?
+;
+PASBYT	EQU	00100100B	;PASSWORD BYTE	   
+		  ;  ;----------;PASSWORD 2 REQUIRED	   
+		  ;-------------;PASSWORD 1 REQUIRED	   
+;							   
+;END OF OPTIONS BLOCK					   
+;***********************************************************
+;***********************************************************
+;
+;		PORT ASSIGNMENTS
+;
+;Be sure to check port assignments for your system.
+;
+PARAL	EQU	0	;PARALLEL I/O PORT
+SER1D	EQU	2	;LEFT SERIAL PORT DATA
+SER1ST	EQU	3	;LEFT SERIAL PORT STATUS
+SER2D	EQU	4	;RIGHT SERIAL PORT DATA
+SER2ST	EQU	5	;RIGHT SERIAL PORT STATUS
+MOTHER	EQU	6	;MOTHERBOARD COMMAND/STATUS
+MEMORY	EQU	0C0H	;PARITY MEMORY PORT unique to
+			;North Star
+;
+;**********************************************************
+;START OF USER1 CODE
+;
+;		JUMP TABLE LINKS BIOS TO XTCPM
+;		The rest of the jumps are at base
+;		of the BIOS.
+;
+;NOTICE.  The IOBYTE processor in this code saves and re-
+;stores BC, DE, and HL registers.
+;
+;**********************************************************
+;
+	IF	DRIVERS
+	;
+	ORG	USER1
+	JMP	INITIAL		;USER INIT ROUTINE
+	;
+	ENDIF
+	;
+	IF	S22X
+	;
+	DS	3		;SPACE FOR JMP TO WINIT
+				;USED BY 221A & HIGHER ONLY
+	ENDIF
+	;
+	IF	DRIVERS AND NOT (STDCPM OR M2BIOS)
+	;
+	JMP	CONST		;CONSOLE STATUS ROUTINE
+	JMP	CONIN		;CONSOLE INPUT
+	JMP	CONOUT		;CONSOLE OUTPUT
+	;
+	ENDIF
+	;
+	IF	DRIVERS
+;
+;***********************************************************
+;
+;		IOBYTE PROCESSOR
+;
+;***********************************************************
+;
+CONSOL:
+	MVI	A,CONCNT	;SHIFT COUNTER
+;
+DISPAT:	;I/O DISPATCHER - TO MAP LOGICAL TO PHYSICAL
+	XTHL	 		;GET RETURN ADDR & SAVE HL
+	PUSH	B		;SAVE BC
+	PUSH	D		;SAVE DE
+ 	MOV	B,A		;PUT COUNTER VALUE IN B
+	LDA	IOBYTE		;GET THE IO BYTE
+	;
+DISPAT1:
+	DCR	B		;SHIFT IOBYTE UNTIL
+DB	JRZ,	DISPAT2-$-1	;COUNT IN B=0
+	RRC
+	RRC
+DB	JR,	DISPAT1-$-1 AND 0FFH ;SHIFT NEXT TWO BYTES
+	;
+DISPAT2:
+	ANI	03H		;MASK OUT BITS 0,1
+	RLC			;DOUBLE
+	MVI	D,0		;CLEAR D
+	MOV	E,A		;
+	DAD	D		;H,L POINTS TO ENTRY
+	MOV	A,M		;GET LOW BYTE
+	INX	H		;POINT TO HIGH BYTE
+	MOV	H,M		;GET HIGH BYTE
+	MOV	L,A		;H,L POINTS TO SUBR.
+	POP	D		;RESTORE DE
+	POP	B		;RESTORE BC
+	XTHL			;RSTR HL & PUT RET ON STACK
+	RET
+;
+CONST:	;CONSOLE STATUS, RETURN 0FFH IF READY ,0 IF NOT
+	CALL	CONSOL		;COMMON ROUTINE
+	DW	TTYST		;TTY STATUS
+	DW	CRTST		;CRT STATUS
+	DW	RDRST		;READER STATUS 
+	DW	UC1ST		;USER CONSOLE STATUS
+;
+CONIN:
+	ENDIF
+	;
+	IF	BGTST AND DRIVERS
+	;
+	CALL	TEST		;BACKGROUND MEMORY TEST
+	;
+	ENDIF
+	;
+	IF	DRIVERS
+	;
+	CALL	CONST
+	ORA	A		;SET CC
+DB	JRZ,	CONIN-$-1 AND 0FFH
+	;CONSOLE INPUT ROUTINE
+	CALL	CONSOL		;COMMON CONSOLE ROUTINE
+	DW	TTYIN		;TTY INPUT
+	DW	CRTIN		;CRT INPUT
+	DW	READER		;READER INPUT 
+	DW	UC1IN		;USER CONSOLE INPUT
+	;
+CONOUT: ;CONSOLE OUTPUT ROUTINE
+	CALL	CONSOL		;COMMON ROUTINE
+	DW	TTYOUT		;TTY OUTPUT
+	DW	CRTOUT		;CRT OUTPUT
+	DW	LIST		;LIST OUTPUT 
+	DW	UC1OUT		;USER CONSOLE OUTPUT
+;
+READER0:
+	ENDIF
+	;
+	IF	BGTST AND DRIVERS
+	;
+	CALL TEST		;BACKGROUND MEM TEST
+	;
+	ENDIF
+	;
+	IF	DRIVERS
+	;
+READER:	;READER INPUT ROUTINE
+	MVI	A,RDRCNT	;SHIFT COUNTER
+	CALL	DISPAT		;GO TO LOOKUP ROUTINE
+	DW	TTYRDR		;READER IS TTY KBD.
+	DW	HSRIN		;IS HIGH SPEED READER
+	DW	UR1IN		;USER READER ONE
+	DW	UR2IN		;USER READER TWO
+;
+PUNCH:	;PUNCH OUTPUT ROUTINE
+	MVI	A,PCHCNT	;SHIFT COUNTER
+	CALL	DISPAT		;LOOK UP ROUTINE
+	DW	TTYOUT		;PUNCH IS TTY
+	DW	PUNOUT		;HIGH SPEED PUNCH
+	DW	UP1OUT		;USER PUNCH ONE
+	DW	UP2OUT		;USER PUNCH TWO
+;
+LIST:	;LIST OUTPUT ROUTINE
+	MVI	A,LSTCNT	;SHIFT COUNTER
+	CALL	DISPAT		;GO TO DISPATCHER
+	DW	TTYOUT		;LIST DEVICE IS TTY
+	DW	CRTOUT		;LIST DEVICE IS CRT
+	DW	LPTOUT		;LINE PRINTER
+	DW	UL1OUT		;USER LIST DEVICE
+;
+LISTST:	;LIST DEVICE STATUS ROUTINE
+	MVI	A,LSTCNT	;SHIFT COUNTER
+	CALL	DISPAT		;LOOK UP ROUTINE
+	DW	TTYST		;RETURN TTY STATUS
+	DW	CRTST		;RETURN CRT STATUS
+	DW	LPTST		;LINE PRINTER STATUS
+	DW	UL1ST		;USER LIST DEVICE STATUS
+;
+;**********************************************************
+;
+;	       INPUT/OUTPUT DRIVERS
+;
+;**********************************************************
+;
+;		CRT DRIVERS 
+;
+CRTST:	;CRT STATUS
+	IN 	SER1ST	;GET SERIAL ONE STATUS
+DB	JR,	TSTSTAT-$-1
+;
+CRTIN:	IN	SER1D	;GET DATA
+STRPRET: ANI	7FH	;STRIP PARITY
+	RET
+;
+CRTOUT:	;CRT OUTPUT
+	IN	SER1ST	;GET STATUS FOR 1RST SERIAL
+	ANI	OUTRDY	;READY TO RECEIVE DATA?
+DB	JRZ,	CRTOUT-$-1 AND 0FFH	;NO, LOOP TIL READY
+	MOV	A,C	;GET DATA
+      	OUT	SER1D	;SEND TO DATA PORT
+	RET
+;
+;		TTY DRIVERS 
+;
+TTYST:		;TTY INPUT STATUS
+	IN	SER2ST	;GET SERIAL TWO STATUS
+DB	JR,	TSTSTAT-$-1
+;
+TTYRDR:	;TTY KEYBOARD AS READER
+	IN	SER2ST
+	ANI	INRDY
+	JZ	READER0
+TTYIN:	IN	SER2D	;GET DATA
+DB	JR,	STRPRET-$-1 AND 0FFH	
+;
+TTYOUT:	;TTY OUTPUT
+	IN	SER2ST	;GET STATUS FOR SERIAL PORT 1
+	ANI	OUTRDY	;READY FOR DATA?
+DB	JRZ,	TTYOUT-$-1 AND 0FFH	;NO, WAIT TIL READY
+	MOV	A,C	;GET DATA
+	OUT	SER2D	;SEND TO SERIAL 2 DATA PORT
+	RET
+;
+;		READER DRIVER (PARALLEL INPUT PORT)
+;
+RDRST:				;READER STATUS
+	IN	MOTHER		;GET STATUS
+TSTSTAT:
+	ANI	INRDY		;MASK FOR READY
+	RRC			;SHIFT TO LSB
+DCRCMA:
+	DCR	A		;IF ZERO, MAKE FF
+	CMA			;COMPLEMENT THE ACC.
+	RET
+
+HSRIN:				;HIGH-SPEED READER INPUT 
+	IN	MOTHER		;GET STATUS
+	ANI	INRDY		;READY WITH DATA?
+	JZ	READER0		;LOOP UNTIL PI FLAG
+	IN	PARAL		;GET PARALLEL INPUT DATA
+	ANI	07FH		;STRIP PARITY
+	MOV	B,A		;SAVE
+	MVI	A,30H		;LOAD COMMAND BYTE TO A
+	OUT	MOTHER		;RESET PI FLAG
+	MOV	A,B		;RECOVER DATA
+	RET
+;
+;		PUNCH DRIVER (PARALLEL OUTPUT PORT)
+;
+PUNOUT:				;HIGH-SPEED PUNCH OUTPUT 
+LPTOUT:				;LINE PRINTER OUT
+	;PUNOUT AND LPTOUT ARE SAME ROUTINE
+	IN	MOTHER		;GET STATUS
+	ANI	OUTRDY		;READY FOR DATA
+DB	JRZ, 	LPTOUT-$-1 AND 0FFH	;NO, WAIT TIL READY
+	MOV	A,C		;GET DATA
+	OUT	PARAL		;SEND TO PARALLEL PORT
+	MVI	A,20H		;COMMAND BYTE
+	OUT	MOTHER		;RESET PO FLAG
+	MOV	A,C		;GET DATA AGAIN
+	RET
+;
+LPTST:				;LINE PRINTER STATUS 
+	IN	MOTHER		;GET STATUS
+	ANI	OUTRDY		;READY TO RECEIVE CHAR
+DB	JR,	DCRCMA-$-1 AND 0FFH
+;
+;**********************************************************
+;
+;		USER DEFINED I/O DEVICE DRIVERS
+;
+;**********************************************************
+;
+UC1ST:	;USER CONSOLE 1 STATUS
+UL1ST:	;USER LIST DEVICE STATUS
+	MVI	A,0FFH		;ALWAYS READY
+	RET
+;
+UC1OUT:	;USER CONSOLE 1 IN (NULL)	
+UP1OUT:	;USER PUNCH ONE OUT (NULL)
+UP2OUT:	;USER PUNCH TWO OUTPUT "
+UL1OUT:	;USER LIST OUTPUT (NULL)
+	MOV	A,C		;CHARACTER INTO A
+	RET
+;
+UC1IN:	;USER CONSOLE 1 IN (NULL)
+UR1IN:	;USER READER ONE INPUT
+UR2IN:	;USER READER TWO INPUT
+	MVI	A,EOF		;END OF FILE FOR NOW
+	RET
+;
+;**********************************************************
+;THIS IS THE INIT ROUTINE....You should change this for
+;your hardware.  Usually you should make it the same as
+;the init routine that came with the version of CP/M that
+;is customized for your system. The init routine below is
+;for a North Star Horizon.
+;
+INITIAL:
+	MVI	A,IOBYT		;THE VALUE
+	STA	IOBYTE		;THE LOCATION
+;
+	XRA	A		;SET TO CLEAR MOTHERBOARD
+	OUT	MOTHER
+	OUT	MOTHER		;EXTRAS FOR TIMING, 
+	OUT	MOTHER
+	OUT	MOTHER		;DON'T ASK
+	;
+;
+	MVI	A,40H		;DISABLE PARITY LOGIC
+	OUT	MEMORY		;BEFORE READING RAM
+	;
+	ENDIF
+	;
+	IF	PARITY	
+	;
+	LXI	H,RAMEND	;PARITY SETTING CODE
+	MOV	D,H
+	MOV	E,L
+	LXI	B,RAMEND+1	;NUMBER OF BYTES TO CLEAR
+DW	LDDR			;SET PARITY ON ALL RAM
+	MVI	A,41H		;PARITY ENABLE CODE
+	OUT	MEMORY		;REARM PARITY LOGIC
+	;
+	ENDIF
+	;
+	IF	DRIVERS
+	;
+	MVI	A,0CEH		;INITIALIZE UARTS
+				;2 STOPS, 16X CLOCK
+				;8 BITS, NO PARITY
+	OUT	SER1ST
+	OUT	SER2ST
+;
+	MVI	A,37H		;COMMAND: RTS, ER,
+				;RXF, DTR, TXEN
+	OUT	SER1ST
+	OUT	SER2ST
+;
+	IN	PARAL
+	IN	SER1D
+	IN	SER2D
+;
+;
+	MVI	A,30H		;RESET PI FLAG
+	OUT	MOTHER
+	;
+	RET
+	;
+;
+USR1END: EQU	$		;END OF USER1 CODE FOR NOW
+USR1SIZE EQU	USR1END-USER1	;MUST NOT EXCEED SPACE 
+				;ALLOCATED IN USER1
+	ENDIF
+;
+;**********************************************************
+; USER2 code starts here. Will be loaded to just above
+; CP/M by the CCP.
+;The following ORG statement will provide for loading of
+;USER2 code just above CP/M by the specially initialized
+;CCP(which this program does); AND, will provide for the
+;memory image to appear at 100H when the OVERLAY offset
+;is used with DDT to patch in your code to a CPMxx.COM
+;file. Save your USER2 code as a transient called XTCPM.COM
+;and keep it on your A drive since it will be needed for all
+;cold boots.  Also save your CPMxx.COM file after patching
+;with DDT and use your normal SYSGEN program to write it
+;to the system tracks. Save both files to appropriate size.
+;
+;Any code placed in this area should have the EQU  $+OFFSET
+;at each label and Z80 jump relatives should use the FR and
+;BR post-fixes as shown.
+;
+;THIS ORG STATEMENT SHOULD CAUSE THE FOLLOWING CODE TO APPEAR
+;AT 100H IN THE DDT IMAGE AFTER OFFSETTING WITH THE OVERLAY
+;BIAS THAT YOU USE IN PATCHING YOUR BIOS INTO CPMxx.COM.
+;
+	ORG	CCP-(CCPIMAGE-100H)
+SOURCE:	EQU	$		;SOURCE OF USER2 CODE
+OFFSET:	EQU	USER2-SOURCE	;OFFSET FOR USER2 CODE
+FR:	EQU	-1-OFFSET	;FORWARD RELATIVE
+BR:	EQU	FR+0FFH+1	;BACKWARD RELATIVE
+;
+	
+;**********************************************************
+;This routine is the first to be called when going to the
+;TPA on a coldboot turnkey start.  It simply changes the
+;CCP parameters to restore the dma and address for the TPA
+;back to 100H and resets the address tested for CCP overwrite.
+;The turnkey start in the mean time has loaded the rest of
+;the code in the USER2 area to a location just above CP/M
+;and all properly linked to the code in the USER1 area.
+;
+	RET			;TO RET IF EXECUTED FROM
+				;THE COMMAND LINE.
+;This is the entry point when called by the CCP.
+XTCPM:	EQU	$+OFFSET	;ROUTINE TO RESTORE CCP DMA
+				;AND TPA ADDRESSES TO 100H
+	LXI	H,TPA
+	SHLD	CCPDMA
+	SHLD	TPASUB
+	LXI	H,CCP
+	SHLD	TSTOVWR
+	;
+	MVI	A,PASBYT ;GET THE PASSWORD BYTE
+			 ;If you use Ward's 'BYE' ,then
+			 ;you should restore the PASBYT
+			 ;to its initial value in the
+			 ;HANGUP routine of 'BYE'.
+			 ;Use the following code:
+			 ;LHLD	0001H	;get bios vector
+			 ;LXI	D,-28H 	;set to subtract (SEARA+2)
+			 ;DAD	D	;hl pnts to PASBYTE address
+			 ;MOV	A,M	;load hl with address
+			 ;INX	H
+			 ;MOV	H,M
+			 ;MOV	L,A
+			 ;MVI	M,24H	;reset PASBYTE
+			 ;
+	STA	PASBYTE	 ;STORE IT
+	;
+	CALL	RSTPRMS
+	;
+	IF	SGNON
+	;
+	MVI	C,WRBUF		;GIVE SYSTEM SIGNON MESSAGE
+	LXI	D,SIGNON
+	CALL	BDOSFNC
+	;
+	ENDIF
+	;
+	IF	NOT TNKY2
+	;
+	RET
+	;
+	ENDIF
+	;
+	IF	TNKY2
+	;
+	LXI	H,COMBUF+1
+	SHLD	BUFPTR
+	DCX	H
+	XCHG
+	LXI	H,FILNAM
+	LXI	B,5
+DW	LDIR
+	MVI	C,0
+	JMP	CCP
+	;
+FILNAM:	EQU	$+OFFSET
+	DB	3,'BYE',0
+	;
+	ENDIF
+	;
+	IF	SGNON
+	;
+SIGNON: EQU	$+OFFSET
+	DB	CR,LF
+	DB	MSIZE/10+30H
+	DB	MSIZE MOD 10 + 30H
+	DB	'K CP/M 2.2 - XTCPM$'
+	;
+	ENDIF
+;
+;**********************************************************
+;The password checking routine- uses string comparator
+;that is contained in the CCP.
+;
+CKPASS0: EQU	$+OFFSET
+	LXI	H,PASBYTE
+DW	BIT2M
+DB	JRZ,	OK-$+FR
+	LXI	H,PAS2
+	SHLD	STRPTR
+	LXI	H,PASTBL2
+	SHLD	CMDPTR
+DB	JR,	CKPASS-$+FR
+	;
+PASSINT: EQU	$+OFFSET
+	CALL	LOGTST
+DB	JRZ,	OK-$+FR
+	LXI	H,PAS1
+	SHLD	STRPTR
+	LXI	H,PASTBL1
+	SHLD	CMDPTR
+	;
+CKPASS:	EQU	$+OFFSET
+	MVI	A,1
+	STA	CMDCNT
+	MVI	A,10
+	STA	CMDLEN
+	MVI	C,4	;GIVES 4 TRIES
+	PUSH	B
+	;
+CKAGIN:	EQU	$+OFFSET
+	CALL	ILPRT
+	DB	'Password:',0
+	POP	B
+	MVI	B,14	;TO KEEP HIM FROM CLOBBERING
+			;THE CODE
+	LXI	H,NAME
+DRCON:	EQU	$+OFFSET
+	CALL	VCONIN
+	CPI	CR
+DB	JRNZ,	DRCN2-$+FR
+	MVI	A,20H
+	MVI	B,1
+DRCN2:	EQU	$+OFFSET
+	MOV	M,A
+	INX	H
+	DCR	B
+DB	JRNZ,	DRCON-$+BR	
+	;
+	DCR	C
+	JZ	RELOG0
+	PUSH	B
+	JMP	SRCHCMD
+	;
+OK:	EQU	$+OFFSET
+	CALL	ILPRT
+	DB	'Ok.',0
+	JMP	RETCCP
+;
+PASTBL1: EQU	$+OFFSET
+	DW	OK1
+	DW	CKAGIN
+PASTBL2: EQU	$+OFFSET
+	DW	OK2
+	DW	CKAGIN
+;
+;**********************************************************
+;This is the in-line print subroutine.
+;
+ILPRT:	EQU	$+OFFSET
+DB	EXX	
+	CALL	CRLF
+DB	EXX
+	;
+ILPRT2:	EQU	$+OFFSET
+	XTHL		;SAVE HL, GET MSG
+ILPLP:	EQU	$+OFFSET
+	MOV	C,M	;GET CHAR
+	CALL	VCONOUT	;OUTPUT IT
+	INX	H	;POINT TO NEXT
+	MOV	A,M	;TEST
+	ORA	A	;..FOR END
+DB	JRNZ,	ILPLP-$+BR
+	XTHL		;RESTORE HL, RET ADDR
+	RET		;RET PAST MSG
+;
+;***********************************************************
+;ROUTINE TO TEST LOG IN
+;
+LOGTST:	EQU	$+OFFSET
+	LXI	H,PASBYTE
+DW	BIT5M
+	RET
+;
+;**********************************************************
+;
+RELOG0:	EQU	$+OFFSET
+	CALL	CRLF
+RELOG:	EQU	$+OFFSET
+	CALL	LOGTST
+DB	JRZ,	EXIT-$+FR
+	CALL	LGMSG
+EXIT:	EQU	$+OFFSET
+	JMP	RETCCP
+	;
+LGMSG:	EQU	$+OFFSET
+	CALL	ILPRT2
+DB	'Login please. ',CR,LF,0
+	RET
+;
+;**********************************************************
+;Routines to trap transient files if they are resident
+;on drive A.  If DIR.COM not present, then the CCP code for
+;the DIR command will be executed. If TYPE.COM not present,
+;then the CCP code for the TYPE command will be executed.
+;This trapping is useful for SD.COM and MLIST.COM re-named
+;to DIR.COM and TYPE.COM respectively.
+;**NOTE**  Do not use a Directory transient that scans user
+;areas such as SD-21 or SD-22. KDIR is ok.  You can use SD-42
+;if you set AOPT to FALSE and add an IF AOPT and ENDIF around
+;the [lda,newusr; cmp m; jnz mordir] sequence at the label,
+;SYSFOK. Otherwise you will defeat the universal user area
+;features in this program so far as directories are concerned,
+;although the universallity will still apply to execution and
+;finding of files in users 13, 14, and 15.
+;
+DIR1:	EQU	$+OFFSET
+	LXI	H,TRAPBYT
+DW	SET0M			;SET DIR TRAP
+	JMP	GETRANS
+	;
+TYPE1:	EQU	$+OFFSET
+	LXI	H,TRAPBYT
+DW	SET1M
+	JMP	GETRANS
+	;
+HUH0:	EQU	$+OFFSET
+	LXI	H,TRAPBYT
+DW	BIT0M			;SEE IF DIR TRAP SET
+	JNZ	DIR		;CCP DIR CODE IF NOT
+DW	BIT1M			;SEE IF TYPE TRAP SET
+DW	RES1M
+	JNZ	TYPE		;CCP TYPE CODE IF NOT
+	CALL	ILPRT
+	DB	'No!, ',BELL,0
+	CALL	LOGTST
+DB	JRNZ,	RELOG-$+BR
+	JMP	HUH+3		
+	;
+;**********************************************************
+;This is the command string which is divided into private
+;and public sections. Do not use more than five letters for
+;the name of any command/transient and fill out each string
+;to exactly five characters by using spaces below. Strings
+;must occur at 5 character intervals.  If you use some
+;other string length such as 4 as in the original CCP, just
+;change string lengths below and change the LENCMD equate
+;from 5 to 4.  I use 5 below so that LOGIN & LOGON can fit.
+;
+CMDSTR2: EQU	$+OFFSET
+	DB	'ERA  REN  SAVE '
+CMDSTR1: EQU	$+OFFSET
+	DB	'TYPE USER PASS DIR  '
+CMDSTR0: EQU	$+OFFSET
+	DB	'DIR  LOGINLOGON'
+;
+;**********************************************************
+;This is the command address table which is divided into
+;private and public areas. The address of the routine to be
+;jumped to must be here for CCP-included code as well as
+;any that you put in your customized BIOS.
+;You can expand the table to any extent that you have space
+;and the command string above must be expanded in synchronism.
+;
+CMDTBL2: EQU	$+OFFSET
+	DW	ERA	;ERA....PRIVATE COMMANDS
+	DW	REN	;REN
+	DW	SAVE	;SAVE
+CMDTBL1: EQU	$+OFFSET
+	DW	TYPE1	;TYPE..In case MLIST.COM renamed
+			;to 'TYPE.COM'. Put the transient
+			;in USER 14 on drive A.
+	DW	USER	;USER
+	DW	CKPASS0	;PASS(word) to gain access to
+			;private user areas. Can also
+			;be set at LOGIN by entering the
+			;second password.
+	DW	DIR1	;DIR....If you wish to use SD or
+			;KDIR as a CCP transient instead of
+			;the CCP DIR code, just change the
+			;name of your transient to DIR.COM
+			;and put it in USER 14 on drive A.
+			;The transient will run only if 1rst
+			;password level has been achieved.
+			;If transient not present then CCP
+			;'DIR' code will run.
+;These commands will be the only ones allowed until the user
+;logs in to the system with LOGIN.
+CMDTBL0: EQU	$+OFFSET
+	DW	DIR	;WILL RUN THE CCP 'DIR' CODE
+	DW	PASSINT	;LOGIN
+	DW	PASSINT	;LOGON
+GETRAN0: EQU	$+OFFSET ;This must be last entry in table.
+	DW	GETRANS	;GET THE TRANSIENT AND EXECUTE OR
+			;RETURN TO CCP W/HUH MESSAGE IF NOT
+			;ON DISK.
+;
+;**********************************************************
+;This patch which is called from the CCP provides for a
+;report of USER number at the prompt....i.e. A2> for USER 2,
+;'A' drive.
+;
+UPATCH:	EQU	$+OFFSET
+	CALL	GETUSR		;GET USER NUMBER
+	ANI	0FH		;KILL UNWANTED BITS
+DB	JRZ,	UPA2-$+FR	;IF USER 0, DON'T REPORT
+	CPI	10
+DB	JRC,	UPA1-$+FR	;JIF USER NUM = 0 THRU 9
+	SUI	10		;USER NUM = 10 THRU 15
+	PUSH	PSW
+	MVI	C,'1'
+	CALL	VCONOUT		;PRINT A '1'
+	POP	PSW
+	;
+UPA1:	EQU	$+OFFSET
+	ADI	'0'
+	MOV	C,A
+	CALL	VCONOUT		;PRINT DIGIT
+	;
+UPA2:	EQU	$+OFFSET
+	MVI	C,'>'
+	CALL	VCONOUT		;PRINT '>', EXIT
+	XRA	A
+	STA	TRAPBYT		;CLEAR THE TRAPS
+	;FALL THROUGH TO RESET PARAMETERS & RETURN
+;
+;**********************************************************
+;Routines to reset parameters for string matching and other
+;purposes.
+;
+RSTPRMS: EQU	$+OFFSET
+	MVI	A,0C3H		;SET BDOS TO TREAT USERS 
+	STA	BDOS+75EH	;..13, 14 AND/ OR 15 AS
+	LXI	H,UNIV		;..UNIVERSAL DEPENDING ON
+	SHLD	BDOS+75FH	;..PASSWORD LEVEL.
+	;
+	MVI	A,LENCMD
+	STA	CMDLEN
+	LXI	H,PASBYTE
+DW	BIT5M
+DB	JRNZ,	RST0-$+FR
+DW	BIT2M
+DB	JRNZ,	RST1-$+FR
+	;
+RST2:	EQU	$+OFFSET
+	LXI	H,CMDSTR2
+	SHLD	STRPTR
+	MVI	A,(GETRAN0-CMDTBL2)/2
+	STA	CMDCNT
+	LXI	H,CMDTBL2
+	SHLD	CMDPTR
+	MVI	A,16
+	STA	TSTUSR
+	RET
+	;
+RST1:	EQU	$+OFFSET
+	LXI	H,CMDSTR1
+	SHLD	STRPTR
+	MVI	A,(GETRAN0-CMDTBL1)/2
+	STA	CMDCNT
+	LXI	H,CMDTBL1
+	SHLD	CMDPTR
+	MVI	A,MAXUSER+1
+	STA	TSTUSR
+	RET
+	;
+RST0:	EQU	$+OFFSET
+	MVI	A,(GETRAN0-CMDTBL0)/2
+	STA	CMDCNT
+	LXI	H,CMDSTR0
+	SHLD	STRPTR
+	LXI	H,CMDTBL0
+	SHLD	CMDPTR
+	MVI	A,1
+	STA	TSTUSR
+	RET
+;
+;**********************************************************
+;BIOS routines called herein.
+;
+VCONIN:	EQU	$+OFFSET
+DB	EXX
+	CALL	BIOS+9H
+DB	EXX
+	RET
+	;
+VCONOUT: EQU	$+OFFSET
+	PUSH	H
+	PUSH	D
+	PUSH	B
+	CALL	BIOS+0CH
+	POP	B
+	POP	D
+	POP	H	
+	RET
+;
+;**********************************************************
+;This routine will make USER 13, 14, and/or 15 universal on
+;drive A only depending on password level. Files placed in
+;user 13 will be universal without any password. Files placed
+;in user 14 will additionally be universal on drive A at the
+;first password level, and files placed in user 15 will be
+;universal at the second password level in addition to those
+;in users 13 and 14.
+;	***** WARNING! *****
+;NEVER have two files by the same name & extension on the
+;same disk (one in USER 15 and the other in some other
+;USER) because CP/M will take which ever one comes first
+;in the directory.
+;
+UNIV:	EQU	$+OFFSET
+	MOV	A,B		;duplicate instruction overlayed
+	ORA	A		;check pointer for zero byte
+DB	JRNZ,	UNIV1-$+FR	;skip if not zero byte of fcb
+	;
+	LDA	CURDSK	;get current disk
+	ANI	0FH		;mask out high nibble
+	CPI	0		;is it drive A? (may be changed
+				;to any drive. 0,1,2.. = A,B,C..)
+DB	JRNZ,	UNIV1-$+FR	;skip if not
+	;
+	LDAX	D		;get fcb first byte
+	CPI	0E5H		;check for erased
+DB	JRZ,	UNIV1-$+FR	;skip if erased
+	;
+	LDA	PASBYTE
+DW	BIT5A
+DB	JRNZ,	DFU13-$+FR
+DW	BIT2A
+DB	JRNZ,	DFU14-$+FR
+	;
+	MOV	A,M
+	CPI	15		;and check for user 15
+DB	JRZ,	MATCH0-$+FR	;jump if zero
+	;
+DFU14:	EQU	$+OFFSET
+	MOV	A,M
+	CPI	14		;check for user 14
+DB	JRZ,	MATCH0-$+FR
+	;
+DFU13:	EQU	$+OFFSET
+	MOV	A,M
+	CPI	13		;check for user 13
+MATCH0:	EQU	$+OFFSET
+	JZ	MATCH
+	;
+UNIV1:	EQU	$+OFFSET
+	MOV	A,B		;duplicate instuction overlayed
+	CPI	0DH		;	"	"	"
+	JMP	TINUSRCH	;and return where routine left off
+	;
+;**********************************************************
+;This is a background memory test that runs whenever the
+;current console (including remote) is waiting for an input
+;character to be typed.
+;
+;TEST ROUTINE TO CONSTANTLY TEST MEMORY
+;
+	IF	BGTST AND DRIVERS
+;
+TSTPT:	EQU	$+OFFSET
+	DW	0
+TEST:	EQU	$+OFFSET
+	DI
+	PUSH	H
+	LHLD	TSTPT
+	INX	H
+	MOV	A,H
+	CPI	($+OFFSET)/100H-SKIP/100H
+DB	JRNZ,	TEST1-$+FR
+	LXI	H,0
+;
+TEST1:	EQU	$+OFFSET
+	SHLD	TSTPT
+	MOV	A,M
+	CMA
+	MOV	M,A
+	CMP	M
+DB	JRZ,	TEST2-$+FR
+	XRA	M
+	PUSH	PSW
+	PUSH	H
+	CALL	CRLF
+	POP	H
+	POP	PSW
+	PUSH	PSW
+	CALL	PRTHX
+	CALL	ILPRT2
+	DB	'H Bits bad at: ',0
+	MOV	A,H
+	CALL	PRTHX
+	MOV	A,L
+	CALL	PRTHX
+	POP	PSW
+;
+TEST2:	EQU	$+OFFSET
+	CMA
+	MOV	M,A
+	POP	H
+	EI
+	RET
+;
+PRTHX:	EQU	$+OFFSET
+	PUSH	PSW
+	RRC
+	RRC
+	RRC
+	RRC
+	CALL	PRTHX1
+	POP	PSW
+;
+PRTHX1:	EQU	$+OFFSET
+	ANI	0FH
+	CPI	10
+DB	JRC,	PRTHX2-$+FR
+	ADI	7
+;
+PRTHX2:	EQU	$+OFFSET
+	ADI	'0'
+	MOV	C,A
+DB	JR,	VCONOUT-$+BR
+	;
+;END OF CONSTANT MEMORY TEST
+;
+	ENDIF
+;
+USR2END: EQU	$+OFFSET	;END OF USER2 CODE FOR NOW
+INITSIZE EQU	INITSIZE	;
+USR2SIZE EQU	USR2END-USER2	;DO NOT EXCEED SPACE ALLOCAT-
+				;ED ABOVE YOUR RUNNING CP/M. 
+;
+;**********************************************************
+;	EQUATES FOR CCP PATCHES
+LENCMD	EQU	5		;LENGTH OF CCP CMD STRINGS
+GETUSR	EQU	CCP+113H	;GET USER #
+SETUSR	EQU	CCP+115H	;SET USER #
+TSTUSR	EQU	CCP+692H	;TEST USER #
+USRSAV	EQU	CCP+118H
+UPATCH0	EQU	CCP+390H
+UPATCH1	EQU	CCP+393H
+HUH	EQU	CCP+209H	;CCP HUH RESPONSE
+CRLF	EQU	CCP+98H		;CCP CR/LF FUNCTION
+RCCPNL	EQU	CCP+789H	;RSTRT CCP W/O LOG OF DFLT DRV
+RETCCP  EQU	CCP+382H	;RE-ENTRY TO CCP
+GETCMD	EQU	CCP+398H	;GET THE ENTERED COMMAND
+SRCHCMD	EQU	CCP+3B1H	;ENTRY TO SEARCH OF COMMANDS
+COMBUF	EQU	CCP+7H		;LOC OF CMD BUFFER
+BUFPTR	EQU	CCP+88H		;LOC OF CMD BUFFER POINTER
+CMDPTR	EQU	CCP+3B5H	;LOC OF CMD ADDR TBL PTR
+GETRPTR	EQU	CCP+3AFH	;LOC OF GET TRANS PTR
+STRPTR	EQU	CCP+32FH	;POINTER TO CCP CMD STRINGS
+CMDCNT	EQU	CCP+335H	;BYTE VALUE = # OF COMMANDS
+CMDLEN	EQU	CCP+33BH	;BYTE VALUE = LENGTH OF EACH
+				;COMMAND STRING.
+TSTOPN	EQU	CCP+6DCH	;TEST FILE OPEN FUNCTION
+CMDDRV	EQU	CCP+7F0H	;BYTE INDICATES DRV IN CMD
+CMDERR	EQU	CCP+76BH	;HUH RESPONSE IF DR #
+NAME	EQU	CCP+7CEH	;LOC FOR FN IN FCB
+XTNSN	EQU	CCP+7D6H	;STORAGE LOC FOR FILE TYPE,
+				;EXT #, AND RECORD COUNT
+RELOOK	EQU	CCP+6CDH	;RELOOK W/INDICATED DRIVE
+TSTOVWR	EQU	CCP+6F5H	;TEST OVERWRITE OF CCP
+CCPDMA	EQU	CCP+6DFH	;LOC TO SUBSTITUTE FOR
+				;DMA ADDRESS
+TPASUB	EQU	CCP+75DH	;LOC TO SUSTITUTE BEFORE
+  				;CALLING THE TPA
+CLDBOOT	EQU	CCP+35CH	;COLDBOOT ENTRY POINT
+CONTINUE EQU	CCP+75FH	;CONTINUE AFTER CALL TO TPA
+GETRANS	EQU	CCP+6A8H	;GET TRANS OR CCP COMMAND
+ERA	EQU	CCP+51FH	;ADDR OF ERA ROUTINE
+REN	EQU	CCP+610H	;ADDR OF REN ROUTINE
+SAVE	EQU	CCP+5ADH	;ADDR OF SAVE ROUTINE
+DIR	EQU	CCP+477H	;ADDR OF DIR ROUTINE
+TYPE	EQU	CCP+55DH	;ADDR OF TYPE ROUTINE
+USER	EQU	CCP+68EH	;ADDR OF USER ROUTINE
+TPA	EQU	100H		;OR YOUR TPA ADDRESS
+STKPTR1	EQU	CCP+35DH
+STKPTR2	EQU	CCP+760H
+STKPTR3	EQU	CCP+383H
+PRNSTR1	EQU	CCP+0A7H	;PRINT STRING WITH LEADING
+				;CR/LF..POINT TO IT WITH BC
+PRNSTR2	EQU	CCP+0ACH	;PRINT STRING..POINT WITH HL
+CCPSPARE EQU	CCP+7F2H	;14 SPARE BYTES AT END CCP
+	;Addresses of holes left in CCP that are filled in
+	;with patches.
+HOLE1	EQU	CCP+79BH	;16 BYTES
+HOLE2	EQU	CCP+310H	;30 BYTES	
+HOLE3	EQU	CCP+3C1H	;24 BYTES
+HOLE4	EQU	CCP+1F5H	;20 BYTES
+HOLE5	EQU	CCP+6A5H	;3 BYTES
+;
+;**********************************************************
+;	CCP patches
+;**********************************************************
+;These two patches allow changing the user area on the
+;command line after X: where X is drive letter.
+;
+	ORG	CCP+6C2H
+	DW	USER
+	ORG	CCP+69DH
+	DW	RCCPNL
+;
+;**********************************************************
+;
+	ORG	GETRPTR
+	DW	GETRANS
+	;
+	ORG	CMDCNT
+	DB	0
+	;
+	ORG	CMDPTR
+	DW	GETR0
+	;
+	ORG	HOLE5
+GETR0:	DW	GETRANS
+	DB	0	;3 BYTES AT HOLE5
+;
+;Patch the turnkey start string into the CCP command buffer.
+	ORG	COMBUF
+TNKY:	DB	05,'XTCPM',0       
+;
+;**********************************************************
+;To trap the HUH message.
+;
+	ORG	HUH
+	JMP	HUH0
+;
+;**********************************************************
+;To redirect the CCP stack so a larger stack is available.
+;
+	ORG	STKPTR1
+	DW	STACK
+	ORG	STKPTR2
+	DW	STACK
+	ORG	STKPTR3
+	DW	STACK
+;
+;**********************************************************
+; This patch is used to restrict access to the higher user
+; areas while leaving the lower user areas public. The high-
+; est available public user area is defined by MAXUSER.
+;
+	ORG	HOLE1
+OK2:	LXI	H,PASBYTE
+DW	RES2M
+	;
+OK1:	LXI	H,PASBYTE
+DW	RES5M
+	JMP	OK
+;
+TRAPBYT:
+	DB	0
+	DB	0,0	;SPARES
+			;DO NOT EXPAND
+			;16 BYTES AT HOLE1
+;***********************************************************
+;The following sequence of statements are to patch the CCP
+;so that the transient 'XTCPM.COM' will be loaded above CP/M
+;by the CCP without the need for a special 'sysgen' routine.
+;Use the normal SYSGEN program with your system.
+	ORG	CCP+1
+	DW	CCPINIT
+	;
+	ORG	HOLE2
+CCPINIT:
+	LXI	H,CCP+35CH
+	SHLD	CCP+1
+	;
+	LXI	H,BOOTFLG
+DW	BIT1M			;SEE IF COLD BOOT
+DW	RES1M
+	JZ	CCP+358H	;ELSE GOTO WARM BOOT ENTRY 
+	;
+	LXI	H,USER2+800H	;TO MOVE OVERWRITE TEST LOC
+				;TO TOP OF SYS MEMORY
+	SHLD	TSTOVWR
+	LXI	H,USER2		;TO SUBSTITUTE DMA AND TPA
+				;TO USER2 ADDRESS TEMPORARILY
+	JMP	BRIDGE
+;
+	DB	0,0		;SPARES
+;Do not expand, 30 bytes available here.
+;
+;**********************************************************
+	ORG	USRSAV
+	DW	SAVUSR
+	;
+	ORG	HOLE3
+SAVUSR:	MOV	A,E
+	CPI	0FFH
+	JZ	BDOSFNC
+	RLC
+	RLC
+	RLC
+	RLC
+	MOV	B,A
+	LDA	DRIVE
+	ANI	0FH
+	ORA	B
+	STA	DRIVE
+	JMP	BDOSFNC
+	DB	0	;DO NOT EXPAND, 24 BYTES HERE
+;
+;**********************************************************
+;These are the passwords for entry to CP/M from BYE	   
+;and to USER area and command privileges above MAXUSER	   
+;repectively. Passwords may be up to 10 characters, and   
+;must be filled out to this value with spaces.		   
+	ORG	HOLE4
+PAS1:	DB	'PASSWORD1 '
+PAS2:	DB	'PASSWORD2 '		   
+			;DO NOT EXPAND, EXACTLY 20 BYTES
+			;ARE AVAILABLE HERE.
+;							   
+;**********************************************************
+; This patch causes user number to be reported at the cp/m
+; prompt.....i.e. - A2>.  User 0 report is suppressed.
+;
+	ORG	UPATCH0
+	MVI	C,USRFNC
+	;
+	ORG	UPATCH1
+	DW	UPATCH
+	;the routine UPATCH is located in the USER2 area
+;**********************************************************
+; This patch causes the CCP of a cp/m 2.x system to look on
+; drive A when you are logged into a drive other than A and
+; call for a .COM file that does not exist on that drive.
+; Giving an explicit drive reference overrides this feature,
+; so that you can always force the file to be loaded from a
+; specific drive.
+;
+	ORG	TSTOPN
+	DW	APATCH		;REPLACES 'CMDERR'
+;
+	ORG	CCPSPARE
+APATCH:	LXI	H,CMDDRV	;GET DRIVE FROM CURRENT CMD.
+	ORA	M		;FETCHES DRIVE
+	JNZ	CMDERR		;GIVE ERR IF CMD HAS DRIVE #
+	INR	M		;FORCE TO DRIVE A
+	LXI	D,XTNSN		;UNDO WHEN...
+	JMP	RELOOK		;REENTERING
+	;DON'T EXPAND. 14 BYTES HERE.
+;
+;**********************************************************
+;	BDOS patches
+;**********************************************************
+;
+BDOSPARE EQU	BDOS+0DEEH	;18 SPARE BYTES AT END BDOS
+MATCH	EQU	BDOS+077CH
+CURDSK	EQU	BDOS+342H
+TINUSRCH EQU	BDOS+761H
+;
+	ORG	BDOS+0DDBH	;SEARA+2
+	DW	PASBYTE		;ADDRESS OF PASS WORD BYTE
+;
+	ORG	BDOSPARE
+BRIDGE:	SHLD	CCPDMA
+	INX	H
+	SHLD	TPASUB
+	JMP	CLDBOOT  	;COLDBOOT ENTRY POINT
+;end of CCP initialization
+;
+CBOOT0:	LXI	H,BOOTFLG
+DW	SET1M	
+	JMP	CBOOT
+		;DO NOT EXPAND, EXACTLY 18 BYTES HERE
+;
+;**********************************************************
+;	BIOS patches
+;**********************************************************
+;This jump table overlays the table at the base of the BIOS
+;thus making it unecessary to have all of the jumps in the 
+;jump table at the base of the USER1 area.
+;
+	ORG	BIOS
+	JMP	CBOOT0
+	;
+	IF	DRIVERS	AND NOT (STDCPM OR M2BIOS)
+	;
+	ORG	BIOS+0FH
+	JMP	LIST
+	JMP	PUNCH
+	JMP	READER
+	;
+	ORG	BIOS+2DH
+	JMP	LISTST
+	;
+	ENDIF
+	;
+	IF	DRIVERS AND (STDCPM OR M2BIOS)
+	;
+	ORG	BIOS+6H
+	JMP	CONST
+	JMP	CONIN
+	JMP	CONOUT
+	JMP	LIST
+	JMP	PUNCH
+	JMP	READER
+	;
+	ORG	BIOS+2DH
+	JMP	LISTST
+	;
+	ENDIF
+	;
+;************************************************************
+;
+;		SPECIAL ASCII CODES
+;
+LF	EQU	0AH	; LINE FEED
+CR	EQU	0DH	; CARRIAGE RETURN
+EOF	EQU	1AH	; END OF FILE
+BELL	EQU	07H	; DING
+NULL	EQU	00H	; NOTHING
+ESC	EQU	1BH	; ESCAPE - USED IN TWO CHAR COMMANDS
+LIN	EQU	6CH	; CHAR AFTER ESCAPE TO CLEAR LINE
+SCRN	EQU	45H	; CHAR AFTER ESCAPE TO CLEAR SCREEN
+;
+;		STATUS MASKS
+;
+INRDY	EQU	02H	;INPUT READY MASK
+OUTRDY	EQU	01H	;OUTPUT READY MASK
+;
+;	POSITION OF BIT PAIR IN IOBYTE
+;
+CONCNT	EQU	1	;CONSOLE BITS 0,1
+RDRCNT	EQU	2	;READER  BITS 2,3
+PCHCNT	EQU	3	;PUNCH   BITS 4,5
+LSTCNT	EQU	4	;LIST    BITS 6,7
+;
+;**********************************************************
+;
+;		Z80 EQUATES
+;
+JR	EQU	18H	;JUMP RELATIVE
+JRZ	EQU	28H	;JUMP RELATIVE ON ZERO
+JRNZ	EQU	20H	;JUMP RELATIVE ON NOT ZERO
+JRC	EQU	38H	;JUMP RELATIVE ON CARRY
+JRNC	EQU	30H	;JUMP RELATIVE IF CARRY RESET
+LDIR	EQU	0B0EDH	;MEMORY BLOCK MOVE
+LDDR	EQU	0B8EDH	;MOVE BLOCK UNTIL COUNTER=0
+MOVIVA	EQU	47EDH	;MOVE ACC TO INTERRUPT REGISTER
+IM2	EQU	5EEDH	;SET INTERRUPT MODE 2
+BIT2A	EQU	57CBH	;TEST BIT 2 IN ACC.
+BIT5A	EQU	6FCBH	;TEST BIT 5 IN ACC.
+BIT0M	EQU	46CBH	;TEST BIT 0 IN MEM
+BIT1M	EQU	4ECBH	;TEST BIT 1 IN MEM
+BIT2M	EQU	56CBH	;TEST BIT 2 IN MEM
+BIT5M	EQU	6ECBH	;TEST BIT 5 IN MEM
+SET0M	EQU	0C6CBH	;SET BIT 0 IN MEM
+SET1M	EQU	0CECBH	;SET BIT 1 IN MEM
+RES1M	EQU	8ECBH	;RESET BIT 1 IN MEM
+RES2M	EQU	96CBH	;RESET BIT 2 IN MEM
+RES5M	EQU	0AECBH	;RESET BIT 5 IN MEM
+EXX	EQU	0D9H	;EXCH REG PAIRS B, D, & H
+;
+;
+;BDOS EQUATES
+;
+BDOSFNC	EQU	BDOS+6H
+USRFNC	EQU	32
+WRBUF	EQU	9
+
+

@@ -1,0 +1,267 @@
+;;; -*- lisp -*-
+
+;; Now uses FAIL-ACT error channel rather than explicit BREAK
+;; for better interaction with ERRSET.
+
+;; An error produced with macros in this file has three
+;; basic parts:
+;;   <print error header>
+;;   <print error message>
+;;   <enter error loop>
+;; (ER-ERROR <format> ... args ...) does all of these.
+;; (ER-ERROR-HEADER) does only the header.
+;; (ER-ERROR-NO-HEADER <format> ... args ...) omits the header.
+;; (ER-ERROR-0) enters the error loop.
+;; ER-CONTINUE-WARN can be used to print additional error messages
+;; if needed.
+
+;; Similarly, for warnings there are
+;; (ER-WARN <format> ... args ... ),
+;; (ER-WARN-HEADER),
+;; (ER-WARN-NO-HEADER <format> ... args ...),
+;; (ER-CONTINUE-WARN <format> ... args ...).
+;; The last two are identical.
+
+;; In addition, there are ER-CONDITIONAL- versions of the
+;; all of these macros.  They take an additional first
+;; argument that is a Boolean.
+
+
+;; Environment Setup
+
+(eval-when (compile eval)
+   (or (get 'loop 'macro)
+       (load '((liblsp) loop))))
+
+(defvar er-topfn-symbol)
+
+(eval-when (eval load)
+   (and (status feature complr)
+	(setq er-topfn-symbol
+	      (let ((obarray sobarray))
+		 (implode '(T O P F N))))))
+
+(eval-when (eval load)
+   (or (fboundp 'format)
+       (status feature complr)
+       (load '((lisp)format))))
+
+(declare (*lexpr format ?format))
+
+(eval-when (eval load)
+   (if (status nofeature complr) nil
+       (*lexpr format ?format)))
+
+;; Parameter Definitions
+
+(defvar er-error-pre-arg '|~%; Error in ~S:~%; |)
+(defvar er-warn-pre-arg '|~%; Warning from ~S:~%; |)
+
+
+;; Stack-Crawling Functions
+
+(defun er-unique (x)
+   (loop for zt on x
+    unless (memq (car zt)(cdr zt)) 
+    collect (car zt)))
+
+(defun er-walk-find (form superform)
+   (cond ((eq form superform) t)
+	 ((atom superform) nil)
+	 ((loop for x in superform 
+                when (er-walk-find form x)
+		return t)
+	   t)
+	 (t nil)))
+
+(defun er-find-form-in-defs (form fns)
+   (loop while fns
+     with temp
+     as f /= (pop fns)
+     do (setq temp (getl f '(expr fexpr subr lsubr)))
+        (cond ((not (memq (car temp) '(expr fexpr)))
+	       'continue-iteration)
+	      ((atom (setq temp (cadr temp)))
+	       (push temp fns)
+	       'continue-iteration)
+	      ((er-walk-find form (cddr temp))
+	       (return f))
+	      (t 'continue-iteration))))
+
+(defun er-find-macro-caller (form)
+  ;; Crock function to attempt to determine in what function a 
+  ;; macro call appears.  Returns NIL if it can't tell.
+  ;; Assumes that FORM is currently under evaluation or compilation.
+  ;; Remember, there might be forms getting EVAL'ed in the compiler!
+  ;; If COMPILER-STATE is NIL or DECLARE we want to search
+  ;; the stack, otherwise use TOPFN.
+   (cond ((memq compiler-state '(NIL DECLARE))
+	  (cond ((null *rset)
+		 (format msgfiles
+ '|~&;Setting *RSET to T for convenience of error macros~%|)
+		 (*rset t)
+		 nil)
+		((er-find-form-in-defs form (mapcar 'car (baklist))))
+		(t nil)))
+	 (t (symeval er-topfn-symbol))))
+
+
+;; Functions to Augment Format Arguments
+
+(defun er-expression-type (x)
+   ;; Returns LIST, QUOTED-LIST, QUOTED-ATOM, VARIABLE, 
+   ;; or CALL.
+   (cond ((atom x) 'VARIABLE)
+	 ((memq (car x) '(cons xcons ncons append nconc list list*))
+	  'LIST)
+	 ((eq (car x) 'QUOTE)
+	  (if (atom (cadr x))
+	      'QUOTED-ATOM
+	      'QUOTED-LIST))
+	 (t 'CALL)))
+
+(defun er-make-listify-var (var)
+   `(if (atom ,var)
+	(ncons ,var)
+	,var))
+
+(defun er-add-format-strings (x expression y)
+   (prog (type)
+     (setq type (er-expression-type expression))
+     (and (null x)(go try-y))
+     (caseq type
+	(variable 
+           (setq type 'list
+		 expression `(cons ',x
+				   ,(er-make-listify-var expression))))
+	(list
+	   (setq type 'list
+		 expression `(cons ',x ,expression)))
+	(quoted-atom
+	   (setq type 'quoted-list
+		 expression `(quote (,x ,(cadr expression)))))
+	(quoted-list
+	   (setq type 'quoted-list
+		 expression `(quote (,x ,@ (cadr expression)))))
+	(call
+	   (setq type 'list
+		 expression 
+		   (let ((s (gensym)))
+		      `((lambda (,s)
+			   ,(er-add-format-strings x s nil))
+			,expression)))))
+   try-y
+     (and (null y)(go return))
+     (caseq type
+	(variable 
+	   (setq expression `(append ,(er-make-listify-var expression)
+				     '(,y))))
+	(list (setq expression `(append ,expression '(,y))))
+	(quoted-atom (setq expression `(quote (,(cadr expression) ,y))))
+	(quoted-list (setq expression `(quote (,@ (cadr expression) ,y))))
+	(call (setq expression
+		(let ((s (gensym)))
+	          `((lambda (,s)
+		       ,(er-add-format-strings nil s y))
+		    ,expression)))))
+   return
+     (return expression)))
+
+
+;; ER-ERROR group of macros
+
+(defmacro ER-ERROR-0 ()
+    '(progn (error '|| 'error 'fail-act)
+	    (^G)))
+
+(defprop er-error |ER-ERROR MACRO| macro)
+   ;; evaluates all arguments
+
+(defun |ER-ERROR MACRO| (form &aux caller format)
+   (cond ((macrofetch form))
+	 ((setq caller (er-find-macro-caller form))
+	  (setq format (er-add-format-strings
+			  er-error-pre-arg (cadr form) nil))
+	  (macromemo form `(progn 
+			     (format msgfiles ,format
+				              ',caller
+					      ,@ (cddr form))
+			     (er-error-0))
+		     'er-error))
+	 (t (setq format (er-add-format-strings '|~%; | (cadr form) nil))
+	    `(progn (format msgfiles ,format ,@ (cddr form))
+		    (er-error-0)))))
+
+(defmacro ER-ERROR-NO-HEADER (msg &rest args)
+   `(progn (format msgfiles ,msg ,@ args)
+	   (er-error-0)))
+
+(defprop ER-ERROR-HEADER |ER-ERROR-HEADER MACRO| macro)
+
+(defun |ER-ERROR-HEADER MACRO| (form &aux caller format)
+   (cond ((macrofetch form))
+	 ((setq caller (er-find-macro-caller form))
+	  (setq format er-error-pre-arg)
+	  (macromemo form `(format msgfiles ,format ',caller)
+		     'er-error-header))
+	 (t '(progn nil))))
+
+
+;; ER-WARN group of macros
+
+(defprop er-warn |ER-WARN MACRO| macro)
+   ;; evaluates all arguments
+
+(defun |ER-WARN MACRO| (form &aux caller format)
+   (cond ((macrofetch form))
+	 ((setq caller (er-find-macro-caller form))
+	  (setq format (er-add-format-strings
+			  er-warn-pre-arg (cadr form) '|~%|))
+	  (macromemo form `(format msgfiles ,format
+				           ',caller
+					   ,@ (cddr form))
+		     'er-warn))
+	 (t (setq format (er-add-format-strings '|~%; | (cadr form) '|~%|))
+	    `(format msgfiles ,format ,@ (cddr form)))))
+
+(defmacro ER-WARN-NO-HEADER (msg &rest args)
+   `(er-continue-warn ,msg ,@ args))
+
+(defprop ER-WARN-HEADER |ER-WARN-HEADER MACRO| macro)
+
+(defun |ER-WARN-HEADER MACRO| (form &aux caller format)
+   (cond ((macrofetch form))
+	 ((setq caller (er-find-macro-caller form))
+	  (setq format er-warn-pre-arg)
+	  (macromemo form `(format msgfiles ,format ',caller)
+		     'er-warn-header))
+	 (t '(progn nil))))
+
+(defmacro ER-CONTINUE-WARN (msg &rest args)
+   `(format msgfiles ,(er-add-format-strings '|~&; | msg '|~%|) ,@ args))
+
+
+
+;; Conditional versions of the ER-WARN macros.
+
+(declare (setq defmacro-for-compiling nil))
+
+(defmacro er-define-conditional (what)
+   `(progn 'compile
+       (defmacro ,(symbolconc 'ER-CONDITIONAL- what) 
+		 (condition &rest args)
+	  `(and ,condition 
+		(,',(symbolconc 'ER- what)
+		 ,@ args)))))
+
+(declare (setq defmacro-for-compiling t))
+
+(er-define-conditional WARN)
+(er-define-conditional WARN-HEADER)
+(er-define-conditional WARN-NO-HEADER)
+(er-define-conditional CONTINUE-WARN)
+
+(er-define-conditional ERROR)
+(er-define-conditional ERROR-HEADER)
+(er-define-conditional ERROR-NO-HEADER)
+(er-define-conditional ERROR-0)

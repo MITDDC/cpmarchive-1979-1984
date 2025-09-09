@@ -1,0 +1,34 @@
+-> File: L2LINK.FIX
+
+	By:	Harvey Fishman
+		1408 East 49th Street
+		Brooklyn, New York 11234
+		212-CL8-7276
+
+
+
+The L2 Linker for BDS C (written by Scott Layson of Mark of the Unicorn)
+is an interesting package.  However, I received it in source form and ran
+into several problems compiling it.  This file documents the problems that
+I ran into and the solutions for them.
+
+First, if you are compiling it to run under CP/M, you must make sure that
+the line "#define MARC" in L2.C is commented out.  It leads to wierd problems
+if it is not.  
+
+The second problem may have arisen from the fact that I received Version 2.2
+of the source, but Version 2.1 of the documentation, but in any case, it is
+something to watch out for.
+
+The documentation says to compile the file L2.C with a command of:
+
+		"cc l2.c -e 4500"
+
+This is sort of true and not true at the same time.  It will work fine IF (and
+only if) you link the file with L2.  If you are going to use CLINK to link,
+the minimum address for the externals must be 4700h, because otherwise the
+externals will overwrite part of the program file.  (That little fact cost a
+LOT of torn out hair!)  AFTER you link L2 for the first time with CLINK, and
+have a working copy of L2, you can go back and recompile L2.C with the 4500h
+address and THEN link with the preliminary copy of L2, and it all will work.
+

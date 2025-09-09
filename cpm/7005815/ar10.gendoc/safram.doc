@@ -1,0 +1,194 @@
+*	safram.doc			Roy Lipscomb
+*	version 1.0			Aug 1, 1982
+*
+*	Secures CCP and relocated modules against destruction until
+*	system reset.  Operates as is with any standard CP/M-80.
+*
+*	Copyright 1982 by Roy Lipscomb, Logic Associates, Chicago
+*	Copying permitted only for non-commercial/non-profit uses.
+*
+*	Original distributor:  HP/RCPM, (312) 955-4493
+*
+*
+********************************************************************
+*
+* FUNCTION
+*
+*	SAFRAM creates a safe zone or partition below BDOS in which
+*	the CCP and trap modules can reside without fear of being
+*	overwritten by transient programs.  The protection lasts until
+*	the system is reset.
+*
+*	SAFRAM makes it possible to load any module below the CCP that
+*	previously had to be loaded above CP/M to be secure against
+*	warm boots.  Thus, one-size CP/M can now be used with utilities
+*	like IOCAP or self-installing drivers for hard disks.
+*
+*	SAFRAM also makes it possible to create BDOS and/or BIOS
+*	extensions without actually installing them in the BDOS and/or
+*	BIOS.  This allows them to be RAM-resident only when they are
+*	needed.  It also makes possible extensions that are too long
+*	to include in the allotted BIOS space on disk.
+*
+*	Installed, the SAFRAM module occupies less that 128 bytes of
+*	RAM.  Each additional execution of SAFRAM will add another
+*	3 bytes of overhead.  The CCP (2K) will also be resident
+*	whenever SAFRAM has been installed.
+*
+********************************************************************
+*
+* BACKGROUND
+*
+*	Various utility modules or "traps" install themselves
+*	just below the CCP before they begin operation.  This
+*	allows other programs to load and execute normally,
+*	without overlaying and disrupting operation of the traps.
+*
+*	Essential to this technique is changing location boot+6
+*	to point to the start of the trap.  This is necessary because
+*	boot+6 tells the next program what the upper end of the
+*	available work space is.
+*
+*	This technique has been hobbled by the fact that warmboot
+*	alters the boot+6 address back to its original coldboot
+*	value.  This strips away the module's protection.
+*
+*	SAFRAM operates by making the address at boot+6 "permanent."
+*
+********************************************************************
+*
+* THEORY OF OPERATION
+*
+*	In its simplest terms, SAFRAM operates by patching two traps
+*	into the BIOS jump table.  The "WARMBOOT" trap sets a flag
+*	indicating that a warmboot has been requested, and then
+*	jumps to the normal warmboot routine.  The "CONSOLE OUT"
+*	trap checks the warmboot flag.  If the flag is set, this trap
+*	resets the flag, and restores boot+6 to the way it was just
+*	before the last warmboot.  Whether the flag was set or not,
+*	this trap finishes by jumping to the normal CONOUT routine.
+*
+*	Operation of these traps is disrupted only by pressing reset.
+*
+*	At installation, the SAFRAM trap module relocates itself to
+*	just below the CCP (or the currently protected address), and
+*	creates the "safe ram" partition around itself.
+*
+*	SAFRAM will not install if the CCP is not resident and intact.
+*	This is to avert any address contention between the CCP and
+*	resident traps.  It is recommended that SAFRAM be executed
+*	prior to installing any other traps, thus insuring that
+*	that the CCP is protected and secured.
+*
+*	Once SAFRAM is executed, any number of self-relocating
+*	utilities may be installed normally.  Simply follow up each
+*	installation with an fresh execution of SAFRAM
+*	(without pressing the reset button, of course).  SAFRAM
+*	will reuse the resident copy of the SAFRAM trap module, rather
+*	than create a new copy.
+*
+*	SAFRAM has two modes of execution.  Executed without param-
+*	eters, it will secure the current address in location boot+6
+*	(or secure the CCP if boot+6 points higher than the CCP start).
+*	Executed with a hex address as its parameter, it will secure
+*	that explicit address instead.  Examples:
+*
+*		Implicit mode:			A>SAFRAM
+
+*		Explicit mode:			A>SAFRAM A000
+*
+*
+********************************************************************
+*
+* ASSEMBLING
+*
+*	This source uses the LINK pseudo-operation featured in
+*	Ward Christensen's LASM.COM (available on RCPM's) and
+*	its predecessor LINKASM.COM (available from CPM Users
+*	Group as 36.11 and 36.12).  This feature is used here to
+*	link SAFRAM.ASM to itself, and thus introduce two
+*	(partial) copies to the assembler.  The two copies are used
+*	by the resultant SAFRAM.COM to produce a relocatable module.
+*
+*	If neither of the above assemblers is available, this
+*	source can be assembled in a more roundabout fashion.
+*
+*	First, delete these three statements from the end of
+*	SAFRAM.ASM:
+*
+*		if not copy1
+*		link safram
+*		endif
+*
+*	Next, execute the following commands:
+*
+*		PIP  SAFRAM2.ASM=SAFRAM.ASM,SAFRAM.ASM
+*		ASM  SAFRAM2      (using any standard assembler)
+*		LOAD SAFRAM2
+*
+*	You should now use SAFRAM2 instead of SAFRAM.
+*
+********************************************************************
+*
+* CUSTOMIZING
+*
+*	Customizing of SAFRAM.ASM is accomplished through several
+*	variables:
+*
+*	VARIABLE		VALUE
+*	--------		-----
+*
+*	BOOT			0 for standard CP/M
+*
+*	NOTIFY			"yes" for notification of what is
+*				the currently secured address.
+*				(Displayed at each warmboot.)
+*
+*	HOTBOOT			0 if not active.  Otherwise gives
+*				displacement from start of bios to
+*				the first instruction after the end
+*				of the CCP/BDOS/BIOS-loading code.
+*
+*				Used to bypass unnecessary reloading
+*				of the CCP and BDOS, which are saved
+*				by SAFRAM from being overlaid (with 99%
+*				assurance:  somewhere there may be
+*				some unlikely program that ignores
+*				location boot+6).
+*
+*	(See document SAFRAM.H for more information on HOTBOOT.)
+*
+********************************************************************
+*
+* APPLICATION NOTES
+*
+*   []  Self-relocating utility modules that will be protected by
+*	SAFRAM should insure that they are not overlaying the CCP.
+*
+*   []  When securing a module that does not protect itself by changing
+*	location boot+6, you should use the explicit-address mode
+*	of SAFRAM.  (See THEORY OF OPERATION above.)
+*
+*   []  There is no option to individually "de-secure" a module.  The
+*	only way to nullify security is to press the reset button.
+*	The de-securing option was deemed infeasible, since there is
+*	no simple way to keep track of what patches may have been
+*	intalled by any given trap module, so that they could be
+*	reversed if the module were de-secured.
+*
+*   []  To inspect the CCP using DDT (which normally overlays the CCP),
+*	execute SAFRAM before invoking DDT.  The CCP will be intact
+*	after DDT has been loaded.
+*
+*   []  It is sometimes desirable to secure DDT (for instance, for
+*	use with BACK2DDT, available on RCPM's).  Use this procedure:
+*
+*		SAFRAM			(to secure the CCP)
+*		DDT SAFRAM.COM
+*		-G			(to secure DDT itself)
+*
+*		(DDT may now be used in the normal fashion.)
+*
+*
+*								(end)
+

@@ -1,0 +1,330 @@
+;	     SCRAMBLE.ASM ver 2.0
+;	
+;SCRAMBLE is a program to scramble CP/M files
+;using an 8 byte password.
+;
+;03/14/79 Originally written by Ward Crhistensen
+;
+;07/13/81 Moved stack init to beginning so default
+;	  stack not used.  Added fix to write routine
+;	  for proper operation under CP/M 2.x.  Expanded
+;	  Macros so program may be assembled with ASM.
+;	  By Keith Petersen, W8SDZ
+;
+MONTH	EQU	7	;LAST..
+DAY	EQU	13	;..MODIFICATION..
+YEAR	EQU	81	;..DATE
+;
+;Scrambling is done in place, i.e. the file is
+;modified on top of itself.  The same password
+;used to scramble the file is used to unscramble
+;it, using the exact same command.  This is because
+;the scrambling code is exclusive-ORed with the
+;data file, and two same exclusive ORs result
+;in the original value being returned.
+;
+;Command format:
+;
+;	SCRAMBLE filename.type PASSWORD
+;
+;Where PASSWORD is any 8 character string which
+;is allowable as a file name (i.e. no '.', etc).
+;
+	ORG	100H
+;
+;Init local stack
+	LXI	H,0
+	DAD	SP
+	SHLD	STACK
+	LXI	SP,STACK
+;
+;Print sign-on message
+	CALL	START
+	DB	'SCRAMBLE.COM as of '
+	DB	'0'+MONTH/10
+	DB	'0'+MONTH MOD 10,'/'
+	DB	'0'+DAY/10
+	DB	'0'+DAY MOD 10,'/'
+	DB	'0'+YEAR/10
+	DB	'0'+YEAR MOD 10
+	DB	0DH,0AH,'$'
+;
+START	POP	D	;GET ID
+	MVI	C,PRINT
+	CALL	BDOS	;PRINT ID
+;
+;Start of program execution
+;
+;Scramble awhile to mix up the seed
+	MVI	H,0	;GET 256 #'S
+;
+MIXUP	CALL	PSEURAN	;GET A #
+	DCR	H	;MORE?
+	JNZ	MIXUP	;LOOP IF SO
+;
+;See that the password is 8 characters
+	LDA	FCB2+8
+	CPI	' '
+	JNZ	PWIS8
+	CALL	ERXIT
+	DB	'++ PASSWORD NOT 8 BYTES ++$'
+;
+;Save the password
+;
+PWIS8	LXI	H,FCB2+1 ;POINT TO PASSWORD
+	LXI	D,PASSWD ;OUR PASSWORD AREA
+	LXI	B,8	 ;8 CHARS
+	CALL	MOVER	 ;MOVE IT
+;
+;Password is 8 bytes, now make sure no character
+;is repeated more than 2 times
+	LXI	H,PASSWD
+	MVI	B,8	;8 CHARS TO TEST
+;
+DUPTEST	CALL	CKDUP	;ABORTS IF 3 = CHARS
+	INX	H	;TO NEXT CHAR
+	DCR	B
+	JNZ	DUPTEST
+;
+;See that the input file exists
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	MVI	C,OPEN
+	LXI	D,FCB
+	CALL	BDOS
+	POP	H
+	POP	D
+	POP	B
+	INR	A	;OK?
+	JNZ	SCRAMLP	;YES, SCRAMBLE IT
+	CALL	ERXIT
+	DB	'++NO SUCH FILE++$'
+;
+;Read the file, scramble a sector, re-write it.
+;
+SCRAMLP	CALL	RDSECT	;READ A SECTOR
+	JC	FINISH	;EXIT LOOP IF EOF
+	CALL	SCRAMBL	;SCRAMBLE IT
+	CALL	BACKUP	;RE-POSITION FOR WRITE
+	CALL	WRSECT	;RE-WRITE THE SECTOR
+	JMP	SCRAMLP	;LOOP UNTIL EOF
+;
+;All done - on a "normal" CP/M system we wouldn't
+;have to do anything because we re-wrote in place.
+;However, for systems which use sector deblocking
+;we must explicitly close the file in order to flush
+;the memory-resident disk buffers.
+;
+FINISH	PUSH	B
+	PUSH	D
+	PUSH	H
+	MVI	C,CLOSE
+	LXI	D,FCB
+	CALL	BDOS
+	POP	H
+	POP	D
+	POP	B
+	INR	A	;THIS BETTER WORK..
+	JNZ	EXIT
+	DB	'++ CLOSE ERROR - FILE LEFT IN '
+	DB	'UNKNOWN CONDITION ++$'
+;
+;Sector read routine
+;
+RDSECT	PUSH	B
+	PUSH	D
+	PUSH	H
+	MVI	C,READ
+	LXI	D,FCB
+	CALL	BDOS
+	POP	H
+	POP	D
+	POP	B
+	ORA	A
+	RZ		;ALL OK
+;
+;Read error or EOF
+;
+	CPI	1	;EOF?
+	STC		;CARRY SHOWS EOF
+	RZ		;RET, CARRY SET
+	CALL	ERXIT
+	DB	'++ READ ERROR - FILE MAY BE '
+	DB	'DESTROYED ++$'
+;
+;Scramble the sector
+;
+SCRAMBL	LXI	H,80H	;POINT TO SECTOR
+;
+SCRLP	CALL	PSEURAN	;GET PSEUDO RANDOM #
+	XRA	M	;SCRAMBLE
+	MOV	M,A
+	INR	L	;MORE IN SECTOR?
+	JNZ	SCRLP
+	RET
+;
+;Backup the file pointer for the re-write
+;
+BACKUP	LDA	FCBRNO	;GET SECTOR #
+	DCR	A	;BACK UP
+	STA	FCBRNO
+	RP		;RETURN IF OK
+;
+;We backed up into previous extent, will have
+;to re-open it (this only works for 16k extent
+;size systems).
+;
+	LDA	FCBEXT	;GET EXTENT
+	DCR	A	;BACK UP 1
+	STA	FCBEXT
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	MVI	C,OPEN	;RE-OPEN
+	LXI	D,FCB
+	CALL	BDOS
+	POP	H
+	POP	D
+	POP	B
+	INR	A
+	JNZ	OPEN2OK
+	CALL	ERXIT
+	DB	'++ RE-OPENING EXTENT FAILED',0DH,0AH
+	DB	'++ FILE IS CLOBBERED $'
+;
+OPEN2OK	MVI	A,7FH	;GET HI SECTOR
+	STA	FCBRNO
+	RET
+;
+;Write back the sector
+;
+WRSECT	LDA	FCB+14
+	ANI	1FH	;RESET S2 FLAG FOR CP/M 2.x
+	STA	FCB+14
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	MVI	C,WRITE
+	LXI	D,FCB
+	CALL	BDOS
+	POP	H
+	POP	D
+	POP	B
+	ORA	A
+	RZ
+	CALL	ERXIT
+	DB	'++ WRITE ERROR - FILE CLOBBERED ++$'
+;
+;Get a Pseudo-Random 8 bit number using the password
+;as a seed
+;
+;	For speed, this routine does no register
+;	PUSHes and POPs, however HL aren't used.
+;
+PSEURAN	MVI	C,4	;GRAB EVERY 4TH PSEU. #
+;
+PSEULP0	MVI	B,8	;SHIFT THRU 8 BYTES
+	LXI	D,PASSWD
+	ORA	A	;CLEAR INITIAL CARRY
+;
+PSEULP1	LDAX	D	;GET A CHAR
+	RAR		;SHIFT
+	STAX	D
+	INX	D
+	DCR	B
+	JNZ	PSEULP1
+;Exclusive-OR the last few bits into the first one
+	DCX	D	;BACK UP TO LAST
+	RAR
+	RAR		;SHIFT A FEW MORE
+	XCHG
+	XRA	M
+	RRC		;SHIFT LO BIT INTO HI
+	ANI	80H	;ISOLATE SINGLE BIT
+	LXI	H,PASSWD ;GET FIRST BYTE
+	ORA	M	;'OR' IN THE BIT
+	MOV	M,A	;MOVE IT BACK
+	XCHG		;RESTORE HL
+	DCR	C
+	JNZ	PSEULP0	;LOOP IF MORE PASSES
+	RET
+;
+;Routine to check for duplicate chars in password
+;
+CKDUP	MVI	C,3	;DUP CHAR COUNTER
+	LXI	D,PASSWD
+	MVI	A,8	;CHAR COUNT
+;
+CKDLP	PUSH	PSW	;SAVE COUNT
+	LDAX	D	;GET CHAR
+	CMP	M	;DUP?
+	JNZ	CKNDUP
+	DCR	C	;COUNT DUPS
+	JNZ	CKNDUP
+	STA	DUPCHAR	;SAVE FOR PRINT
+	CALL	ERXIT
+	DB	'++ NO CHARACTER MAY APPEAR MORE '
+	DB	'THAN TWICE IN THE PASSWORD.  ',0DH,0AH
+	DB	''''
+DUPCHAR	DB	$-$,''' DOES IN YOURS ++$'
+;
+CKNDUP	INX	D
+	POP	PSW	;GET COUNT
+	DCR	A
+	JNZ	CKDLP
+	RET		;OK, NOT 3 DUP
+;
+;Move subroutines
+;
+MOVER	MOV	A,M
+	STAX	D
+	INX	H
+	INX	D
+	DCX	B
+	MOV	A,B
+	ORA	C
+	JNZ	MOVER
+	RET
+;
+;Exit with error message
+;
+MSGEXIT	EQU	$	;EXIT W/"INFORMATIONAL" MSG
+ERXIT	POP	D	;GET MSG
+	MVI	C,PRINT
+	CALL	BDOS
+;
+;Exit, restoring stack and return
+;
+EXIT	LHLD	STACK
+	SPHL
+	RET		;TO CCP
+;
+PASSWD	DS	8	;PASSWORD KEPT HERE
+	DS	40H	;STACK AREA
+STACK	DS	2
+;
+;BDOS equates
+;
+RDCON	EQU	1
+WRCON	EQU	2
+PRINT	EQU	9
+CONST	EQU	11
+OPEN	EQU	15
+CLOSE	EQU	16
+SRCHF	EQU	17
+SRCHN	EQU	18
+ERASE	EQU	19
+READ	EQU	20
+WRITE	EQU	21
+MAKE	EQU	22
+REN	EQU	23
+STDMA	EQU	26
+BDOS	EQU	5
+FCB	EQU	5CH 
+FCB2	EQU	6CH
+FCBEXT	EQU	FCB+12
+FCBRNO	EQU	FCB+32
+;
+	END
+

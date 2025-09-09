@@ -1,0 +1,230 @@
+begin "xmodem"
+
+comment			XMODEM program---to transfer CP/M files
+
+		Written by Max Diaz (MMD@SAIL) based on Keith Petersen's
+				 XMODEM.ASM v. 4.3;
+
+
+
+
+	require "{}" delimiters;
+	define # = {comment};
+
+
+	define  WAITS    = {true},
+		TENEX   = {false};      # select only one;
+
+	define errlim = {10};           	# max errors allowed;
+	define nakslp = {75};           	# max wait for initial NAK;
+	define ackslp = {10};           	# max wait for receiving ACK;
+	define sixbit!DSK8! = {'446353300000};	# 1st word in binary files;
+
+	define	soh!	= {'1},
+		eot!	= {'4},
+		ack!	= {'6},
+		lf!	= {'12},
+		cr!	= {'15},
+		nak!	= {'25},
+		cpmeof	= {'32},
+		crlf	= {cr!&lf!};
+
+	define  history = {false};       	# true if tracing desired;
+		define his(stmt) = {ifc history thenc stmt endc};
+
+	define ttyuuo	= {'51000000000};	# WAITS only?;
+	define finis(m) = {begin print(m&crlf); go to fin; end};
+
+	integer ttychn,
+		dskchn,dskeof,flag,
+		csum,errct,sectno;
+	boolean image;				# true for binary files;
+	integer array sector[0:128];
+	label abort;
+	his(string hist);
+# Special Text Translation (weird character sets);
+
+ifc waits thenc
+	define	schr(chr) =
+		   {if sai!asc[tc:=((chr) land '177)] then sai!asc[tc] else tc},
+		rchr(chr) =
+		   {if asc!sai[tc:=((chr) land '177)] then asc!sai[tc] else tc};
+	integer tc;
+	preload!with [4]0,'136,['23]0,'137,0,'176,['143]0,'175,0;
+		integer array sai!asc[0:'177];
+	preload!with ['136]0,'4,'30,['35]0,'176,'32,0;
+		integer array asc!sai[0:'177];
+elsec
+	define	schr(c) = {c},
+		rchr(c) = {c};
+endc
+# SubRoutines;
+
+simple procedure sleep(integer ssecs);	# in 60ths of a sec;
+	begin "sleep"
+		integer t0, t, e;
+		define timer(v) = {begin	# identical to TIMER uuo;
+				      e:=location(v);
+				      quick!code CALLI '13,'22;MOVEM '13,@e;end;
+				   end};
+		timer(t0);
+		do timer(t) until abs(t-t0) geq ssecs;
+	end "sleep";
+
+simple procedure ini!tty;
+	begin
+		sleep(300);
+		open(ttychn:=getchan,"tty",'10,1,1,0,0,0); # open for i/o, dump mode;
+		clrbuf;
+	end;
+
+simple procedure close!tty;
+	release(ttychn);
+
+define inskip(goto) = 
+	{quick!code TTYUUO '13,;JRST goto; end};	# uuo = INSKIP;
+
+simple procedure out8(integer chr);
+	outchr(chr land '377);
+	# Or wordout(ttychn,chr).  This buffers (?), though;
+
+simple integer procedure in8(reference integer chr;integer secs);
+	# Returns true if timed out (SECS secs).  Otherwise result in CHR;
+	begin "in8"
+		integer tic;
+		label notyet;
+		for tic:=59 step -1 until 0 do
+		begin
+			inskip(notyet);
+			chr := wordin(ttychn) land '377;
+			return(false);
+		notyet:	sleep(secs);	# i.e., (secs/60)*60  60ths;
+		end;
+		return(true);
+	end "in8";
+
+simple integer procedure timout!chr(integer chr;integer secs);
+	# True if char received isn't CHR, or if none received in SECS secs;
+	begin "timout!char"
+		integer char;
+		his(hist:=hist&"w"&cvs(secs)&":"&cvos(chr));
+		if in8(char,secs) then
+		begin
+			his(hist:=hist&"*");
+			return(true);
+		end else
+		begin
+			his(hist:=hist&"="&cvos(char));
+			return(char neq chr);
+		end;
+	end "timout!char";
+
+define getack(xmit) =
+	{do begin	# garbage delete needed?;
+		if (errct:=errct+1) > errlim then abort!program;
+		xmit;
+	 end until not timout!chr(ack!,ackslp)};
+
+simple procedure abort!program;
+	begin
+		close!tty;
+		his(inchwl; print(hist));
+		go to abort;
+	end;
+simple procedure sndfile(string filnam);
+begin "sndfile"
+	label fin;
+	string str;
+	integer aa,ee,nn,lastsec;
+
+	simple integer procedure rdsect;
+	begin "rdsect"
+		errct := 0;
+		if lastsec then return(true);
+		csum := 0;
+		if image then
+			for nn:= 1 step 1 until 128 do
+			begin
+				if ee:=(nn-1)mod 4 then else aa:=wordin(dskchn);
+				sector[nn] := aa rot ((ee+1)*8) land '377;
+				csum := csum + sector[nn];
+			end
+		else begin "ascii"
+			str := input(dskchn,0);
+			aa := length(str);
+			for nn:=aa step -1 until 1 do
+			begin
+				sector[nn] := schr(cvasc(str[nn for 1]) rot 7);
+				csum := csum + sector[nn];
+			end;
+			if dskeof then
+			begin   # note 1 <= aa+1 <= 128;
+				sector[aa+1] := cpmeof;
+				for nn:=aa+2 step 1 until 128 do sector[nn]:=0;
+				csum := csum + cpmeof;
+			end;
+		end "ascii";
+		lastsec := dskeof;
+		return(false);
+	end "rdsect";
+
+	if image then open(dskchn:=getchan,"dsk",'14,3,0,0,0,dskeof)
+		 else open(dskchn:=getchan,"dsk",0,3,0,128,0,dskeof);
+	lookup(dskchn,filnam,flag);
+	if flag then finis("> File "&filnam&" not found.  Try again");
+	if image and (wordin(dskchn) xor sixbit!DSK8!) then
+	   finis("> Invalid (binary?) file");
+	print("> Ready to send "&filnam);
+	if image then print(" (IMAGE)"&crlf) else print(" (ASCII)"&crlf);
+	lastsec := false;
+	ini!tty;
+	if timout!chr(nak!,nakslp) then abort!program;
+	sectno := 0;
+	while not rdsect do
+	begin
+		sectno := sectno + 1;
+		his(hist:=hist&"["&cvs(sectno)&"]");
+		getack(begin
+			out8(soh!);
+			out8(sectno);
+			out8(lnot sectno);
+			for nn:=1 step 1 until 128 do out8(sector[nn]);
+			out8(csum);
+		end);
+	end;
+	his(hist:=hist&"[#]");
+	getack(out8(eot!));
+	close!tty;
+fin:	release(dskchn);
+end "sndfile";
+
+simple procedure rcvfile(string filnam);
+begin "rcvfile"
+		# sorry, not implemented yet;
+end "rcvfile";
+
+# Execution;
+
+	string com, lin;
+
+	print("> XMODEM  version 1.0  (July, 1981)"&crlf);
+	image := true;	# silly, but safer;
+	while true do
+	begin
+		print("< ");
+		lin := inchwl;
+		com := lin[1 for 1];	# command;
+		do lin := lin[2 to ] until lin[1 for 1] neq " ";
+		his(hist:=hist&lin&"/";
+		    if com = "#" then begin print(hist,crlf);hist:=null;end else)
+		if com = null then else
+		if com = "s" then sndfile(lin) else
+		if com = "r" then rcvfile(lin) else
+		if com = "i" then image:=true else
+		if com = "a" then image:=false else
+		if com = "q" then done else
+		print("> Whaaat?  Only: s(end) r(eceive) i(mage) a(scii) or q(uit)"&crlf);
+	end;
+	print("> Ciao"&crlf);
+abort:
+end "xmodem";

@@ -1,0 +1,306 @@
+;****************************************************************************
+; FILE UPLOAD UTILITY FOR CIS A PROTOCOL.
+; WRITTEN 3/17/82 BY BOB RICHARDSON
+; COPYRIGHT (C) 1982 PERFORMANCE BUSINESS MACHINES
+; program distributed by permission- further distribution must contain this
+; notice, the copyright notice and the authors name
+;
+; INVOKED BY "UPLOAD FNAME.FTP" AND USES DEFAULT FCB AND COMMAND LINE 
+; *************************************************************************        
+.z80
+;    equates
+soh	equ	01h	; start of header
+etx	equ	03h	; end of text 
+eot	equ	04h	; end of transmission
+enq	equ	05h	; enq char - not used
+si	equ	0fh	; shift in - starts protocol on terminal
+so	equ	0eh	; shift out - ends protocol
+;
+knak	equ	15h	; nak
+dle	equ	10h	; data link escape - used to mask chars for transparency
+esc	equ	1bh	; escape
+eof	equ	1ah	; ctl-z
+ctlz	equ	1ah	; also
+cr	equ	0dh	; carriage return
+lf	equ	0ah	; line feed
+tof	equ	0ch	; top of form
+;
+cldboot	equ	00h	; bios coldboot vector
+iobyte	equ	0003h	; addr of iobyte
+deffcb	equ	05ch	; addr of default fcb
+command	equ	080h	; addr of command line	
+bdos	equ	05h	; addr of bdos jmp 
+; BDOS FUNCTIONS
+prnstg  equ	09h	; print string delimited by $
+rdcbuf	equ	0ah	; read console buffer function
+fn$opn	equ	0fh	; open disk file
+fn$cls	equ	010h	; close disk file
+fn$del	equ	013h	; delete disk file
+fn$rds	equ	014h	; read sequential
+fn$wts	equ	015h	; write sequential
+fn$mak	equ	016h	; make file
+fn$ren	equ	017h	; rename file
+fn$std	equ	01ah	; set dma function
+
+;
+; BIOS OFFSETS FOR VARIOUS CALLS
+const	equ	03h	; constat call
+conin	equ	06h	; conin
+conout	equ	09h	; character out to console
+list	equ	0ch	; character to line printer
+punch	equ	0fh	; char to punch device
+rdr	equ	12h	; get char from reader device
+reader	equ	12h	; alternate spelling
+; FCB OFFSETS
+current equ	32	; offset to current record number
+ftype	equ	09	; and offset to type
+; Version info
+vers	equ	'1'	; ascii version
+rev	equ	'2'	; and rev level  
+; History info
+; 		3/20/1982     FIRST COMPLETE VERSION RELEASED 
+;				BY THE AUTHOR  BOB RICHARDSON OF MICROPRO INTL
+;				CORPORATION - FURTHER DISTRIBUTION MUST CONTAIN
+;				THIS COMMENT - this file made available courtesy
+;				of MicroPro International Corp. and the author
+;
+;**************************************************************************
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+; code begins:
+; MAIN DRIVER LOOP FOR THE UPLOAD PROTOCOL
+;
+upld:
+	ld	sp,upld		; the Charlie Strom memorial local stack 	
+	call	announce	; copyrite and vers, rev level
+	call	dskinit		; initialize disk buffer
+	call 	procol		; turn on protocol, open file, and start
+upldrt:
+	call	sndhdr		; then send the header for file xfer
+	call	waitack		; and wait for ack response
+	jp	c,upldrt	; retry if nak response
+	jp	nz,comfail	; error so dump job
+	call	sendack		; else prompt for first record
+uplp:
+	call	getrec		; get terminals record
+	jp	c,uplp		; wait for resend if nak	
+	ld	a,(seeneot)	; get eotflag
+	cp	00h		; and test for completion
+	jp	nz,fin		; eof - recd eot record
+upl1:
+	call	putrec		; write rec(s) to disk
+	jp	c,dspacen	; no space on host disk - send fail message
+	call	z,sendack
+	jp	uplp		; loop till eof
+;
+fin:
+	call	sendack		; ack eot message
+	call	complete	; turn off protocol and send all done message 
+	call	fclose		; dump buffer tailings if any
+	jp 	cldboot 	; terminate
+;************************************************************************
+; end of driver     beginning of subroutines
+biosvct:
+	ld	hl,(cldboot+1)	;get start of bios table
+	add	hl,de		; get addr for branch
+	jp	(hl)		; return handled to inline location
+;************************************************************************
+; Get rev and version and copyright notice to operator
+announce:
+	ld	de,cpyrite		; copyright notice
+	call	prnmes			; to console
+	ret				; to caller
+;
+cpyrite:
+	defb	cr,lf,'Upload Vers. ',vers,'.',rev,cr,lf
+	defb	' Copyright (C) 1982  PBM Division MicroPro International Corporation ','$'
+;
+; **************************************************************************
+;  Kudos to Russ Renshaw for inventing this protocol
+;  and special thanks to charlie, tom, and dave - sysops of the CIS CP-MIG
+;  without whose help none of this code would be here	
+; ***************************************************************************
+; INITIALIZE THE PROTOCOL AND OPEN FILES
+procol:
+	ld	de,deffcb	; get default fcb
+	ld	c,fn$opn	; open file function
+	call	bdos		; see if we can open file
+	cp	04h		; test for successful open
+	jp	c,isfil		; send file exists message if file there 
+	ld	a,(command)	; get count of oper supplied chars
+	or	a		; and insure non zero value
+	jp	z,nospec	; complain if not right
+	ld	hl,deffcb+ftype ; addr of file type
+	push	hl		; and save for next use
+	ld	de,typsav	; save area
+	ld	bc,03h		; length of file type
+	ldir 			; move to save area - operator supplied file type
+	pop	de		; here is the next use of filetype addr in fcb
+	ld	hl,dollar	; $$$ for temporary file type
+	ld	bc,03h		; length of file type
+	ldir			; move it in
+;  the above added for pip compatibility 
+	ld	a,0		; get zero
+	ld	(masking),a	; and start masking ctl chars in msg text
+	call	rmtnm		; prompt operator for name at his end
+	ld	a,(conbuff+1)	; start of data - contains byte count
+	ld	c,a		; is count for move
+	ld	b,0		; with high order=0
+	ld	hl,conbuff+2	; start of actual name
+	call	noblnk		; bypass all blanks
+	jp	z,comfail	; if this passes machine is broken - get a new
+				; one.
+	ld	de,filespec	; addr in esc a message
+	push	bc		; save the number of non blanks
+	ldir			; move filespec to message
+	pop	hl		; restore count
+	ld	a,cr		; get cr to terminate the esc a string
+	ld	(de),a		; and move it to the esc a message buffer end
+	inc	hl		; update count to reflect this fact
+	ld	(tmpsav),hl	; and save for next routine
+; here we create the temporary $$$ file on the disk
+	ld	de,deffcb	; so make the file - all is well	
+	ld	c,fn$del	; first delete it just in case
+	push	de		; save for next call
+	call	bdos		; to pyramid building routine
+	pop	de		; restore fcb pointer		
+	ld	c,fn$mak	; make function
+	call	bdos		; mush
+	cp	04h		; test sucessful completion 
+	jp	nc,nodirsp	; else give error for no directory space
+	ld	a,0		; get zero
+	ld	(deffcb+current),a	; to current record
+	ret			; to caller
+;
+tmpsav:
+	defw	00h		; save area for operator count from 
+				; remote file name
+; **********************************************************************
+; send the esc a header to the terminal - refer to the protocol document
+; for the format of this record - is essentially the same as normal
+; but fields have special meanings.
+sndhdr:
+; and then turn on protocol in terminal
+	ld	a,si		; get shift in char
+	call 	punout		; send it
+	ld	a,esc		; send esc
+	call	punout		; charge
+	ld	a,'A'		; esc a for message
+	call	punout		; mush ye huskies mush
+	ld	hl,(tmpsav)	; get count from operator answer for name
+	push 	hl		; move to bc
+	ld	hl,escames	; get message balance addr
+	pop	bc		; restore count from command line
+	ld	a,c		; get count in accumulator
+	add	a,escalen	; and add in normal length
+	ld	b,a		; get in byte counter
+	call	prmesout	; send message as normal
+	xor	a		; set z flag
+	ret			; and return
+; bypass leading blanks in command line
+noblnk:
+	ld	a,(hl)		; get char
+	cp	20h		; test blank
+	ret	nz		; non blank
+	dec	c		; reduce count
+	ret	z		; return error if exhausted
+	inc	hl		; increment buffer pointer
+	jp	noblnk
+
+; file exists on host- blow off terminal as security measure
+;
+isfil:
+	ld	de,isflmes	; file found message
+	call	prnmes		; to console
+	jp	cldboot		; and terminate abnormally
+;
+isflmes:
+	defb	cr,lf,'FILE ALREADY EXISTS ON HOST- CHECK DIRECTORY$'
+; nospec is issued when user omits the 
+; filespec in the command line
+nospec:
+	ld	de,nospecm	; file found message
+	call	prnmes		; to console
+	jp	cldboot		; and terminate abnormally
+;
+nospecm:
+	defb	cr,lf,'I am sorry- you must specify a name for upload$'
+
+; error - the host has no directory space
+nodirsp:
+	ld	de,nodirmes	; no directory space
+	call	prnmes		; to console
+	jp	cldboot		; and terminate
+;
+nodirmes:
+	defb	cr,lf,'NO DIRECTORY SPACE ON HOST !!!','$'
+;
+; message for ESC A header - sent if all is well to start upload
+escames:
+	defb	'U'		; upload
+	defb	'B'		; Binary transfer
+escalen equ	$-escames	; length for send routine
+filespec:
+	defs	16h 		; name of file to upload
+typsav:
+	defs	03h		; save area for file type until sucessfull
+dollar:
+	defb	'$$$'		; temporary file type in case of io error	
+;
+;**************************************************************************
+;get name for remote computer
+; a <cr> response will cause the same name to be used as on host
+rmtnm:
+	ld	de,remquery		; ask the terminal what it wants to call it
+	call	prnmes			; to the operating system such as it is
+	ld	de,conbuff		; get a response
+	call	rdcon			; and then
+	ld	hl,conbuff+2		; convert to insure upper case
+	ld	a,(conbuff+1)		; get char count xferred
+	cp	0			; insure some characters
+	jp	z,naminv		; else take default value
+	ld	c,a			; get counter for blank test to 
+	call	noblnk			; further insure no error
+	jp	z,naminv		; else use same name as on host
+	ld	b,a			; in byte counter
+; roll lower to upper case if necessary
+rmtnm1:
+	ld	a,(hl)			; pick up char	
+	cp	061h			; test for lower case
+	jr	c,rmtntl		; not lower if carry
+	cp	07bh			; still looking if less than z
+	jr	nc,rmtntl		; so go on about business
+	and	05fh			; else roll
+	ld	(hl),a			; and save
+rmtntl:
+	inc	hl			; bump character pointer
+	djnz	rmtnm1			; and get next character
+	ret				; and return to caller
+; use same name as host for remote file
+;
+naminv:
+	ld	hl,command+1		; use the command line input
+	ld	de,conbuff+2		; for the remote name
+	ld	a,(command)		; length
+	ld	c,a			; to counter with
+	ld	(conbuff+1),a		; count in command line
+	ld	b,0			; zero high order
+	ldir				; move characters
+	ret				; to caller
+;
+; buffer for response to filename question 
+conbuff:
+	defb	010h			; sixteen bytes max I'll allow
+	defb	00h			; initial count
+	defs	16			; and blank buffer
+;
+remquery:
+	defb	cr,lf,' I need the file name on your computer',cr,lf,'->','$'
+;
+;			
+;***************************************************************************
+; TRANSMIT ACK OR NAK TO TERMINAL
+sendack:
+	ld	a,'.'		; get ack character
+	jp	acknak		; branch to common code
+;
+sendn                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         

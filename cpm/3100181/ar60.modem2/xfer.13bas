@@ -1,0 +1,102 @@
+10 '             XFER UTILITY FOR BUILDING SUBMIT FILES
+15 '                           version 1.3
+20 '                       11/11/81 AL JEWER
+25 '
+30 '        This program will create the submit file "XFER.SUB" used
+35 '  to transfer programs over the phone lines with a minimum of
+40 '  delays, using the SENDOUT and MODEM programs.
+45 '  1.  Use the Command to Remote line for commands such as User disk etc.
+50 '  2.  FILENAME is the file you wish to send or receive.
+55 '  3.  If you need more than one command to the remote, such as move to
+60 '      user 2 then to disk B:, type 'USER 1', then type '$$$' for the
+65 '      filename and the Command line will reappear. Type 'B:' and continue.
+66 '  4.  Added option of a command to local. Type 'XXX' instead of '$$$'.
+70 '  5.  Enter other modem options if you desire. (CR to skip)
+75 '  6.  Specify YOUR (local) disk when asked. (A:,B:,etc) Use the colon!
+80 '  7.  A CR for filename will end input.
+85 '  8.  SPECIAL NOTE:  Be sure to use the (O) originate  MODEM option!
+90 '      Certain versions of BYE require the (Q)uiet mode.
+95 '
+99 '===================================================================
+100 ' Modifications listed in reverse order to minimize read time.
+135 '
+140 ' 12/15/81  Added ability for remote to utilize 'C' option for
+145 '   CRC. Added COM FILE warning notice since most XMODEM pgms
+150 '   don't allow COM file xfers. Change line 392 to a REM to
+155 '   disable the COM trap. Changed to version 1.3    (wmh)
+160 ' 12/01/81  Added routine to freeze Modem in Disk options so that
+165 '   program only asks these questions once if selected. (this is
+175 '   similar to the original version, but now you have the choice.)
+180 '   Changed to Version 1.2 (wmh)
+185 ' 11/29/81  Added routine to insert any command to the local, such as
+190 '   a DIR to check space, or Modem T or Modem D.  Useful if you make the
+195 '   last command BYE the last command to the remote. Just type 'XXX'
+210 '   at the FILE NAME prompt. (wmh)
+215 ' 11/19/81  Added routine to allow user to select additional modem
+220 '   options. (wmh)
+225 '       Added routine to allow user to select drive to send or
+230 '   receive from or to. Original version would default to remote
+235 '   drive. ie if you received a file from drive D it would try to
+240 '   write that file on YOUR drive D! That's bad news if you only have
+245 '   two drives! (The only other alternative was to write to the default
+250 '   drive, and I like to be able to speficy such things.)
+255 '       Renamed prompts to make them more accurate.
+260 '       Added routine to enable more than one command to the remote
+265 '   per file by using $$$ as a filename to get additional command prompts.
+270 '   Usefull when you want to move to a differnt drive AND user area.
+275 '       Added REM's for clearer documentation
+280 '       Re-wrote header and DOC file to reflect changes and enhance-
+285 '   ments. Cleaned up file and Revised version number to 1.1 and
+290 '   re-numbered to allow room for future revisions.   (Wayne M. Hammerly)
+295 '
+299 '=====================================================================
+300 CLEAR 1000:MO=0
+310 INPUT "DO YOU WANT TO SEND OR RECIEVE (S/R) ";A$
+312 IF A$="R" THEN 320
+314 INPUT "DOES REMOTE ACCEPT 'C' OPTION  (Y/N) ";Q$
+320 IF A$="S" THEN B$="R" ELSE B$="S"
+330 INPUT "WHAT BAUD RATE (110, 300, 450, 600, 710) ";BR$
+334 IF Q$="Y" THEN B$="RC"
+340 INPUT "WANT TO FREEZE MODEM/DISK OPTIONS? (Y/N) ";F$
+342 IF F$="Y" THEN GOSUB 600:IF F$="y" then GOSUB 600
+345 ON ERROR GOTO 360
+350 KILL "XFER.SUB"
+360 OPEN "O",#1,"XFER.SUB"
+365 IF MO=1 THEN MO=2
+370 GOTO 510                                 'make command to remote first
+380 PRINT"FILE NAME >";                      'filename.filetype for xfer
+390 LINE INPUT X$
+392 IF RIGHT$(X$,3)="COM" THEN 800           'make this a REM if sending COM files
+395 IF X$="$$$" THEN 510                     'type $$$ to get another cmd to remote
+400 IF LEN(X$)=0 THEN 570                    'no more files? then done
+402 IF X$="XXX" THEN 700                     'type XXX for a cmd to local
+405 IF MO=2 THEN 470
+410 PRINT "OTHER MODEM OPTIONS >";           '++NOTE++ many XMODEM prgms require the
+420 LINE INPUT O$                            'the local to use the O option!!!!
+430 IF LEN(O$)=0 THEN 440                    'if no option then continue
+440 PRINT "DISK TO SEND/RECEIVE FROM/TO >";  'your disk, not the remote's
+450 LINE INPUT D$
+460 IF LEN(D$)=0 THEN 570
+470 S$="SENDOUT XMODEM "+B$+" "+X$
+480 G$="MODEM "+A$++O$+"."+BR$+" "+D$++X$
+490 PRINT #1, S$                             'write XMODEM command line to SUB
+500 PRINT #1, G$                             'write MODEM command line to SUB
+510 PRINT"COMMAND TO REMOTE >";              'log to different disk, user area etc.
+520 LINE INPUT X$
+530 IF LEN(X$)=0 THEN 380
+540 X$="SENDOUT "+X$
+550 PRINT #1, X$
+560 GOTO 380
+570 CLOSE                                    'close the open sub file
+580 SYSTEM                                   'all done, do a warmboot!!
+600 PRINT "MODEM OPTION TO FREEZE >";        'routine to freeze options so prgm
+610 LINE INPUT O$                            'only asks once
+620 PRINT "DISK TO SEND TO/RECEIVE FROM >";
+630 LINE INPUT D$
+640 MO=1:RETURN
+700 PRINT "COMMAND TO LOCAL >";              'to insert a local command, such
+710 LINE INPUT L$:IF LEN(L$)=0 THEN 380      'as MODEM D
+720 PRINT #1,L$:GOTO 380                     'return to file name prompt
+800 PRINT:PRINT TAB(5) "+++WARNING! XMODEM MAY REJECT A COM FILE+++"
+810 PRINT TAB(11)   "+++RENAME TO OBJ TO BE SAFE+++":PRINT:GOTO 380
+

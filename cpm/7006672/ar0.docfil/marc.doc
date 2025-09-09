@@ -1,0 +1,146 @@
+   MARC is a new operating  system for 8080/Z80 systems which  is
+booted up under  an existing CP/M  system (either  single-density
+1.4 or any  version 2.X  CP/M).  MARC then  absorbs the  existing
+CP/M Basic  I/O  System (BIOS)  to  become a  separate  operating
+system completely independent from CP/M itself.
+
+   MARC is  patterned closely  after the  extremely popular  UNIX
+operating system.  But  MARC is  not UNIX.  MARC  is designed  to
+provide the  basic functionality,  in  terms of  user  interface,
+filesystem, and many other system features of UNIX.
+
+   No bank switching  memories are required.   Most any  8080/Z80
+system with at least 48K of memory can successfully run MARC.
+
+   MARC transparently supports the vast majority of existing CP/M
+programs, without  any  changes  required.   In  particular,  any
+programs which  access CP/M  system calls  via the  standard  low
+memory calling sequence will generally run under MARC.
+
+   The  only   other   consideration   regarding   CP/M   program
+compatibility relates to program  size.  MARC is somewhat  larger
+than  CP/M,  but   it  allows  user   programs  to  overlay   the
+"unnecessary" segments of  itself during  execution.  VERY  large
+programs may require special considerations and not be executable
+without some modification.
+
+   When  a  CP/M  program  is  installed  under  MARC,  the  user
+specifies that  it  is a  CP/M  type command.   From  then,  MARC
+automatically takes  the proper  actions to  emulate CP/M  system
+calls  whenever   that  program   is  executed   --  no   further
+specifications are required after initial installation.
+
+   Alternatively,  the  user  may  activate  the  CP/M   emulator
+directly -- in which case some special features (such as  command
+completion and  the  like)  are  available  for  use  within  the
+simulated CP/M environment.
+
+   The hierachical (tree-structured) MARC filesystem requires  an
+efficient disk  format, therefore  it differs  considerably  from
+those of  CP/M.   However, MARC  includes  a variety  of  utility
+commands to allow the simple transfer of files between CP/M disks
+and MARC disks -- so one will always be able to take advantage of
+any CP/M software which might be of interest.
+
+
+The main features of MARC are:
+
+1) Unix-like hierarchical filesystem,  with full  ownership/group
+   and  selectable  protection   modes  for   every  file.    The
+   filesystem is a large structured  tree.  Users may create  new
+   nodes and  subnodes as  desired,  allowing for  efficient  and
+   convenient organization of  files.  The user  can at any  time
+   set his or  her "current" directory  to any node  in the  tree
+   (subject to protections along the way).
+
+   Each file  in  the system  has  an owner,  a  group  identity,
+   various  protections,  and   the  creation/last   modification
+   time/dates for the file.
+
+   If the system has a realtime clock, MARC can use it to provide
+   full updating of date/time once a second.  Even if there isn't
+   a clock available, manual entry  of this information at  login
+   will be used throughout the session for setting file  creation
+   and modification dates/times.
+
+   Other  information,  such  as  special  execution   priviledge
+   information, and  various other  data, is  also supported  for
+   each file.
+
+2) Full user/group protections.  Users login to MARC with a  name
+   and password,  and  are  automatically  connected  to  "their"
+   portion of the filesystem tree by default.  File  protections,
+   sharing, etc.  are  based upon  the  user's identity  and  the
+   "group" identity associated with the user.
+
+3) Unix-like user interface.  MARC's user interface is  patterned
+   after  the  popular  Unix  command  interpreter  (called   the
+   "shell").  Full I/O  indirection is  supported (meaning  that,
+   when desired, program input and output can be taken and placed
+   in files instead of to/from the terminal).
+
+   Another feature is the ability  to use "wildcards" (i.e.  "*")
+   in the parameters given to ANY command.
+
+   Many other features,  such as "shell  files" (which allow  for
+   execution of a predetermind sequence of commands) and  "pipes"
+   (which permit programs to pass  data to/from each other in  an
+   organized manner) are also implemented.
+
+4) User-customizable terminal  modes  and  control  codes.   MARC
+   allows the user to select the operations and characters to  be
+   used for aborting  a program or  output pause/resume, and  for
+   many others.  Of  course, items  such as "number  of lines  on
+   screen" and such are also completely selectable.  All of these
+   modes may be set interactively  during a session, or the  user
+   may  also  elect  to   have  their  selections   automatically
+   initialized during login. (In fact, each user may specify  any
+   number   of   actions   including   initializations,   program
+   executions, etc.  to take  place automatically  whenever  they
+   login.)
+
+5) "Clean" assembly language interface.  MARC is oriented  around
+   a complete  set  of  system calls,  accessible  from  assembly
+   language or native higher level languages (such as the BDS "C"
+   compiler). These include routines for all aspects of  terminal
+   and disk I/O (including BOTH byte and sector oriented I/O), as
+   well as most every  other function a user  would care to  have
+   available.  The disk I/O calls in particular are simple to use
+   -- the user need not  be concerned about "file control  block"
+   formats and calculations for  figuring file "extents" --  MARC
+   handles such  items internally  and automatically.  (The  MARC
+   filesystem doesn't even use the concept of extents.)
+
+   There is  no  restriction to  using  the MARC  systems  calls.
+   CP/M-style system calls are transparently handled as well.
+
+6) Utilities.  Included are:
+
+        -- programs to manage disks
+        -- a text formatting package
+        -- a simple (but effective) assembler
+        -- a lineprinter output program
+        -- a text editor patterned after the Unix "ed" editor 
+        -- and many more...
+
+   The vast libraries  of CP/M software  are still available  for
+   use under  MARC  ...  with  the added  features  of  the  MARC
+   filesystem, user interface, and many other benefits even  when
+   working with CP/M programs.
+
+7) MARC comes with a special version of the BDS C compiler  which
+   has been specifically designed for  use with MARC.  This is  a
+   subset of the UNIX  C compiler, and includes  a vast array  of
+   I/O library  routines and  features oriented  toward the  MARC
+   user.  It includes a  subroutine librarian program, a  linking
+   loader. Also  included are  a set  of floating  point  library
+   routines, automatic execution and overlay capability, features
+   for generating  ROMable  code, calling  of  assembly  language
+   subroutines, etc.
+
+8) MINCE display editor.   As an option,  MARC is available  with
+   the MINCE CRT-oriented  display editor.  This  editor has  the
+   ability to edit multiple files  simultaneously, in one or  two
+   separate windows, and is  patterned upon EMACS, the  mainframe
+   editor from MIT.
+

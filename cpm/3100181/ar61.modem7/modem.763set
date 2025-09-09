@@ -1,0 +1,154 @@
+
+		SET UP ROUTINE FOR THE CP/M MODEM PROGRAM
+			Version 7.63  5/16/82
+			modified   by     RLP
+
+This information is given for those who do not wish to re-assemble
+the modem program for their system because they do not have MAC, do
+not have the source code, or are lazy. If you have a PMMI Modem board,
+with base port set at 0E0H, and do not want backup (.BAK) copies (if the
+file being received already exists), the program will run as is. Else,
+make the patches listed below.
+
+Use the L command ( L100 ) of DDT or SID to list the program and
+use the S command to make the following changes:
+
+0100 C3 4104	JMP 0441H  <---  Do not change
+
+(Note: The L command of DDT or SID displays 0FFH as "RST 07" and 0 as "NOP")
+
+0103 FF			   <--- 0FFH if PMMI modem, else zero.
+				SuperBrain users should put zero here.
+
+0104 00			   <--- 0FFH if Imsai with front panel,
+				else zero.
+				SuperBrain users should put zero here.
+
+0105 FF			   <--- 0FFH if 4 MHz Z-80 (or maybe fast 8085)
+				else 0.
+				SuperBrain users should use 0FFH
+
+0106 00			   <--- Zero if you want files that exist
+				to be deleted if a file of the same
+				name is sent in multifile transfer.
+				0FFH if you want the existing file
+				to be changed to type "BAK".
+
+				Note: In CP/M 2 existing R/O or
+				      SYS files	are changed to
+				      type BAK whether this byte
+				      is set or not.
+
+0107 FF			   <--- 0FFH if you want program to come
+				up in expert (XPR) mode without
+				calling A>MODEM X else zero if
+				you want menu or X command. You
+				will probably want to leave this
+				at 0FFH since new users can toggle
+				this on with the XPR command.
+
+0108 FA			   <--- 0FAH for 20 pulses/sec dialing
+		PMMI		(PMMI modem only). 7DH if your
+		ONLY		phone exchange is older and needs
+				a slower dialing rate.
+
+0109 FF			   <--- 0FFH if you want to be sure not
+				to overwrite the CCP when in file
+				transfer or file capture mode.
+				Upon return to CP/M, the program
+				will properly return to the CCP.
+				00H if CCP space is allowed to be
+				used for buffer.  In this case the
+				RAM space up to the BDOS will be
+				used and return to CP/M will be via
+				a warm boot.
+
+010A DB 00H		   <--- Low byte of boot prom address
+
+010B DB 0FCH               <--- High byte of boot prom address
+
+010C DB XX	IN  XX     <--- Put modem status port in 010BH
+				(Base port if PMMI).
+				SuperBrain users should put 59H
+				here for main status.
+010E C9		RET
+
+If you do not have a PMMI modem, make the following patches also:
+
+010F D3 XX	OUT XX	   <--- Put modem data port in 010EH.
+				SuperBrain users should put 58H
+				here for main data.
+0111 C9		RET	
+
+0112 E6 XX	ANI XX	   <--- Put bit tested when modem ready to
+				send in 0113H.
+				SuperBrain users need make no change.
+0114 C9		RET		
+
+0115 FE XX	CPI XX	   <--- Same as 0113H if port uses positive logic (JZ).
+				Hex zero if port uses negative logic (JNZ).
+				SuperBrain users need make no change.
+0117 C9		RET
+
+0118 DB XX	IN XX	   <--- Put modem data port (again) in 0119H.
+				SuperBrain users should put 58H
+				here for main data.
+011A C9		RET
+
+011B E6 XX	ANI XX	   <--- Put bit tested when modem ready to receive
+				in 011CH.
+				SuperBrain users need make no change.
+011D C9		RET
+
+011E FE XX	CPI XX	   <--- Same as 011AH if port uses positive logic.
+				Hex zero if port uses negative logic.
+				SuperBrain users need make no change.
+0120 C9		RET
+
+0121 C3 XXXX	JMP XXXX   <--- 0121H contains a jump to a modem or port
+				initialization routine. If your modem does
+				not need to be initialized, put a RET (C9H)
+				in 0121H .If you need initialization, write
+				your routine for the memory location addressed
+				by the jump. The initialization routine
+				must end with a RET instruction. You have
+				approximately 190 (decimal) bytes for the
+				routine. 
+				SuperBrain users would probably want to put
+				a RET in 0121H if they have properly set the
+				number of data and stop bits and the parity
+				with CONFIGUR or ACTIVATE.
+
+The following are useful changes to make to run on MIT's ITS machines; they
+allow more efficient operation with EMACS, etc.
+
+0581 FE 05	CPI 05	   <--- Change the 05H (control-E or move cursor to
+				end of line in EMACS) to a less likely EMACS
+				hit. I use 1CH (control-\). You now type
+				control-\ to return to the MODEM76 command
+				level. Note that you can still send 1CH by
+				typing control-^ followed by control-\. 
+
+0586 FE 04	CPI 04	   <--- If you do not have a PMMI modem I advise
+				changing the 04H (control-D or delete char-
+				acter in EMACS) to 08H (control-H or CP/M 2.2
+				backspace-delete-backspace). Then insert the
+				code on the following lines to convert this
+				to a RUB (7FH). This prevents mistaken use of
+				this control character when RUB is intended.
+
+0588 CA BE 21	JZ 21BE    <--- Assuming you don't have a PMMI change this
+				to CC 32 04 (CZ 0432). This is a call to the
+				region where the PMMI phone numbers are
+				stored and is therefore free if you don't
+				have a PMMI.
+
+0432 20 20	'  '	   <--- Insert 3E 7F (MVI A,7F)
+
+0434 20		' '	   <--- Insert C9 (RET)
+	
+You are finished. Leave DDT (using ^C) and type
+
+		SAVE 38 MODEM.COM
+
+END of FILE.

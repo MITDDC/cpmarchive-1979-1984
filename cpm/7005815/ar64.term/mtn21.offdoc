@@ -1,0 +1,23 @@
+ 
+	This file is intended to explain what the
+files:
+	       AR5:CPM;MTN21 OFFCOM
+	       AR5:CPM;MTN21 OFFHEX
+	       AR5:CPM;TRSURT ASM
+are.
+
+	The first file is the COM file of MTN21 offset
+to load at 4300H. The second is the HEX of the first.
+The offset program is intended to run on the TRS80 Model I.
+Note that AR1:CPM;MTNMSG OVR will work fine with the offset
+version, be sure and rename it to MTNMSGS.OVR on you system.
+The third file in the list is an initiation program which
+does a master reset of the TRS80 UART, sets the baud rate
+and sets the control port.
+
+	Related files you should be aware of are:
+
+		AR0:CPM;MTN INFO
+		AR0:CPM;MTN22A DOC
+		AR0:CPM;TRSMDM EQUS
+

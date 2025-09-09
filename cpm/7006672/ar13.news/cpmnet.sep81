@@ -1,0 +1,1064 @@
+>>>>>>>>>>>>>>>>>>>>> CP/M-Net News <<<<<<<<<<<<<<<<<<<<<<<<
+
+============================================================
+Number 9             September, 1981       Volume 1, Issue 9
+============================================================
+
+                      In This Issue
+                      =============
+
+          Assembly Language Interface to PL/I-80
+          By:  Michael J. Karas, MICRO RESOURCES
+
+               CP/M-Net "Tip-of-the-Month"
+ The Absolute Minimum Typing, to Run a CP/M Submit File...
+             By: Mike Karas and Kelly Smith
+
+ Printed  monthly  (at worst quarterly) to inform user's  of 
+RCPM Systems to the latest software news,  information,  and 
+updates   of   public   domain   software   accessible   via 
+telephone/modem transfer.  Yearly subscription for copies of 
+the  CP/M-Net News may be obtained by mailing $18.00  (check 
+or money orders only) to Kelly Smith,  CP/M-Net,  3055  Waco 
+Street,  Simi Valley,  California 93063.  CP/M-Net is a non-
+profit  orginization and all money received on subscriptions 
+are utilized for the sustaining and enhancments of the CP/M-
+Net System.
+
+ If  you  would  like to contribute an  article,  include  a 
+column  containing your area of interest and  expertise,  or 
+participate  in an open forum for conversation and  transfer 
+of  ideas,  feel free to send it to the CP/M-Net System  and 
+indicate that you would like it to be included in the  CP/M-
+Net  News...if possible,  use WordStar (trademark,  MicroPro 
+International)  or  Electric  Pencil   (trademark,   Micheal 
+Shrayer) in 60 column format.
+ 
+Note:      CP/M is a registerd trademark of Digital Research
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+           Assembly Language Interface to PL/I-80
+           ======================================
+
+                    by: Michael J. Karas
+                       MICRO RESOURCES
+                      2468 Hansen Court
+                Simi Valley, California 93065
+
+
+     The  advent  of  the  PL/I-80  high  level  programming 
+language for CP/M based machines has opened up the wide wide 
+world of easy, sophisticated, and structured programming for 
+business,   commercial  and  scientific  applications.   The 
+language  features offer the most capable development  tools 
+of any microprocessor programming language available in  the 
+marketplace  today.  Through  extended use of the  language, 
+others like my self, are going to find out that the features 
+of PL/I-80 offer far more than just programming niceity  for 
+applications software development.  The structure,  speed of 
+execution,   self  documentation  features,  and  full  CP/M 
+compatability  make  PL/I-80  the obvious  choice  for  many 
+systems utility and dedicated function processor programming 
+exercises. 
+
+     The one main disadvantage of any high level language is 
+the isolation from the "guts" of the computer machinery that 
+results for the programmer.  Don't get me wrong in that this 
+is  an altogether disadvantage.  After all,  it is the whole 
+idea  behind the use of a high level language in  the  first 
+place.  But  for  certain  aspects of  systems  utility  and 
+dedicated function processor programming, more access to the 
+internals  of the computer are generally needed.  The normal 
+manner  to obtain this capability is through development  of 
+programs  in machine language.  But we all know what a  pain 
+that  can  be for very large programs in  the  thousands  of 
+bytes  in  size.  It  always  seems that  when  an  assembly 
+language program gets over about 2000 bytes, that there is a 
+screaming need for easy access to disk files,  the  operator 
+interfaces,  and  simplified development of complex  logical 
+structures.  PL/I-80 offers all of the things the heavy duty 
+assembly  language programmer needs to make life  easy.  The 
+next  obvious  question is...  How do I handle that  special 
+interface?..or  How can I do IN and OUT in PL/I-80?..or  How 
+can  PL/I-80  access  the SYSTEM tracks  of  a  CP/M  floppy 
+disk?...and the list of questions goes on and on and on. The 
+answer  to  all  these  questions is  to  use  the  assembly 
+language  interface facilities offered through the mechanism 
+of external procedure calls in PL/I-80.
+
+
+CP/M is a registered TRADEMARK and PL/I-80,  RMAC, and LINK-
+80  are TRADEMARKS of Digital Research Inc.  Pacific  Grove, 
+California.
+
+     The  Digital Research LINK-80 manual describes  how  it 
+all works but doesn't make it very easy to understand.  Here 
+in example form,  I intend to present an easy explanation of 
+how  to implement an assembly language interface to PL/I-80. 
+I have chosen to implement "hooks" to allow direct access to 
+the CP/M BIOS vector table of CP/M 2.2 to allow the  PL/I-80 
+programmer  to  make those special system  utility  packages 
+with  a  minimum  of  pain yet leaving the  avenue  open  to 
+perform  all those special I/O functions that  the  standard 
+CP/M  BDOS interface never seems to have enough of.  I  have 
+chosen  to write a diskette copy utility program in  PL/I-80 
+and  let the compiler make it easy to write all the operator 
+prompting  messages  and  to  allow  quick  human   readable 
+presentation  of the logical structure of the program  while 
+at  the  same time allowing direct high speed access to  the 
+disk drivers in the BIOS.
+
+     The  start  of this project resulted  in  the  assembly 
+language module given below.  This module provides interface 
+translation   between   the   external   procedure   calling 
+mechanisms of PL/I-80 and the entry/exit requirements of the 
+various  assembly language hardware interface drivers of the 
+CP/M  2.2 BIOS.  Detailed discussion of all aspects  of  the 
+interface  conventions  are  well beyond the scope  of  this 
+article but a few general comments are in order. Readers who 
+desire  to  "understand to the MAX" are  encouraged  to  (1) 
+study the examples given here carefully while (2) consulting 
+the PL/I-80 LINK-80 Users Manual and (3) consulting the CP/M 
+2.2 System Alteration Guide.  As a start, to become the most 
+familiar  with the mechanisms,  I would suggest implementing 
+the examples given here on your own computer system. It only 
+takes a few days or evenings and the experience can be quite 
+rewarding.
+
+     The  interface  to the BIOS,  in general,  is  done  as 
+follows:  The  location  of the BIOS vector table  of  entry 
+points  is determinable in any CP/M system by looking at the 
+address  in locations 1 and 2 of low  memory.  This  address 
+gives  the  pointer  to the warm boot address  of  the  BIOS 
+vector table.  All other BIOS entry points are accessable by 
+adding  an  offset  to the warm boot  pointer  vector.  Some 
+functions are console status,  line printer output, and disk 
+track  selection.  All of the offsets necessary are given in 
+the  assembly  language  source  code  below.   The  typical 
+procedure  to  get  to a BIOS  subroutine,  with  8080  type 
+machine language, would be like this:
+
+function:
+
+     lhld 0001      ;get warm boot vector table pointer
+     lxi d,offset   ;get offset for desired BIOS entry point
+     dad d          ;make address of entry point
+     pchl           ;branch indirect through (HL) to BIOS 
+                    ;subroutine 
+
+     If the label entry "function" had been CALLed from some 
+main  program,  then  the  return at the  end  of  the  BIOS 
+subroutine  would get program execution back to the  calling 
+program assuming we use the callers stack all along the way. 
+If   the  entry  to  the  interface  routine  required  post 
+processing  of BIOS return parameters before returning  back 
+to the main calling program,  then the above program segment 
+becomes: 
+
+function:
+
+     lhld 0001      ;get warm boot vector table pointer
+     lxi d,offset   ;get offset for desired BIOS entry point
+     dad d          ;make address of entry point
+     lxi d,backhere ;put return address to here on stack
+     push d
+     pchl           ;branch indirect through (HL) to BIOS 
+                    ;subroutine 
+    backhere:
+          <.... post processing
+              instructions....>
+    ret            ;back to main program call point
+
+     All  parameter information entered at the BIOS  follows 
+the following general set of rules:
+
+a)  If entry parameter is a single byte it is placed in  the 
+    (C) register.
+
+b)  If entry parameter is a double byte or an address it  is 
+    entered in the (BC) register pair.
+
+c)  Return parameters of one byte values are brought back in    
+    the (A) register.
+
+d)  Return address of double byte parameters are returned in 
+    the (HL) register.
+
+     For now, that should give the reader the information to 
+understand  the  BIOS part of the assembly  language  module 
+given below.  The full set of PL/I-80 rules are complicated, 
+so  I  will  only touch on the concept here as  to  the  few 
+interface types used by the BIOS module to return parameters 
+to  PL/I-80.  For  character string  variables,  the  return 
+parameter is put on the stack with the length of the  string 
+given  back in the (A) register.  This scheme applies to the 
+CONIN and READER routines which bring a byte character  back 
+from  the BIOS.  These push the character onto the stack and 
+send a 01 length back to the calling PL/I-80 program.
+
+     If the return parameter is a PL/I-80 data type that  is 
+one  byte in size,  but a numerical type variable,  then the 
+value  is  returned to PL/I-80 in the  (A)  register.  If  a 
+numerical  type variable of two bytes or an address is being 
+passed back then the PL/I-80 program gets the parameter back 
+in the (HL) register pair. 
+
+     All  entry  data sent from the PL/I-80 program  to  the 
+assembly language module comes as follows, if a parameter is 
+defined  for  passage to the BIOS.  The rule  is  that  when 
+called, the assembly language program receives an address in 
+the  (HL)  register  pair that points to a table  of  memory 
+locations  (in our case a single pair).  These two bytes  of 
+memory contain another address that points right at the data 
+parameter.  The  type,  size,  and number of parameters  are 
+defined  by design of the assembly language program and  the 
+statement of external entry point characteristics.  No  type 
+coding  is passed or error check done.  In other words  both 
+sides  have to agree to what is trying to be done before the 
+call and return parameter passing will work properly.
+
+     The program module "PLIBIOS.ASM", given below in source 
+code form,  establishes the names for sixteen small programs 
+that  translate procedure calls from within a  main  PL/I-80 
+program  to the forms required by the BIOS.  The  subsequent 
+module  below,  "BIOSCALL.DCL"  is  a small file  the  fully 
+defines,  in a manner compatible with the assembly  language 
+program,  the form that the PL/I-80 program must use to call 
+the  entry  point definitions to make the parameter  passing 
+work.
+
+     The assembly language program is meant to be  assembled 
+into  a  relocatable file of the ".REL" type by use  of  the 
+Digital  Research  relocating macro  assembler,  RMAC.  This 
+assembler, seeing the psuedo opcodes "PUBLIC" on the program 
+names builds the .REL file with a table to tell  the,  later 
+utilized,  link  program where the relative addresses of the 
+subroutines in the module are located.  After the host PL/I-
+80  program,  like the disk copy utility given later in  the 
+article,  is compiled into a relocatable object module, that 
+.REL  module  also  contains  a  table  of  subroutine  call 
+addresses  which  were known to be external to  the  PL/I-80 
+program. The external nature if the labels is defined by the 
+included  declare  statement from  the  file  "BIOSCALL.DCL" 
+which  simply  told the compiler that I intended to  provide 
+another  ".REL" module that had these program names  in  it, 
+specifically "PLIBIOS.REL". The Link program LINK 80 is used 
+to hook the two modules together and make an absolute object 
+module  out  of  them.  The absolute object  module  happens 
+simply to be the executable CP/M type ".COM" file.
+
+
+File PLIBIOS.ASM
+
+
+;***********************************************************
+;  Direct CP/M 2.2 Bios access Interface Module For PL/I-80
+;***********************************************************
+;
+;      This module to be asembled with Digital Research RMAC 
+;  provides  interface conversion between PL/I-80 calls  and 
+;  function references and the Bios vector table entries.The 
+;  file   "BIOSCALL.DCL" should be included in your  PL/I-80 
+;  source   program  with a %include statement  to  properly 
+;  establish  the  external  entry  point names and  calling 
+;  format  definition.   Most bios entry point routines  are 
+;  treated  as  function call modules.    The user of  these 
+;  routine  in  PL/I-80  calls  should be  aware  that  some 
+;  differences     exist    between   the  CP/M   2.2   BIOS 
+;  implementations that  are available from various software 
+;  and   hardware  vendors.  In  particular,  not  all  BIOS 
+;  routines   perform sector  translation with  the  SECTRAN 
+;  routine.   Secondly, If the BIOS performs the function of 
+;  physical   sector  deblocking,  and  the sector translate 
+;  function  is   not used,   then  logical  sector  numbers 
+;  entered   at  the  BIOS settrk  entry point  may  require 
+;  numbering   from  zero  instead of the usual  start  with 
+;  locical sector number 1.   This assembly language routine 
+;  makes  no  assumption about the sector number start. Also 
+;  no  translation is done. The calling PL/I-80 program must 
+;  anticipate  the  characteristics of the host system BIOS. 
+;  (BEWARE:  especially with tricky utilities being upgraged 
+;  from   CP/M  1.4,  including  Digital  Research's  SYSGEN 
+;  program).   Hopefully CP/M 3.0 coming out soon will fully 
+;  resolve this problem.    Note that CP/M 3.0 will probably 
+;  fully   eliminate  the need to have direct BIOS access at 
+;  all.
+;
+;***********************************************************
+;
+;
+;
+        name    'PLIBIOS'
+        title   'Direct CP/M BIOS Vector Calls From PL/I-80'
+;
+;
+;***********************************************************
+;*                                                         *
+;*      bios direct calls from pl/i for direct i/o         *
+;*                                                         *
+;***********************************************************
+;
+        public  cboot           ;cold boot reload of cp/m entry
+        public  wboot           ;warm boot reload of ccp
+        public  cstat           ;return byte for console status
+        public  conin           ;return character input from console
+        public  conout          ;write character to console
+        public  list            ;write character to list device
+        public  punch           ;write character to punch device
+        public  reader          ;return character input from reader
+        public  home            ;home selected disk unit
+        public  seldsk          ;select disk unit and return parameter
+                                ;table pointer
+        public  settrk          ;select track 
+        public  setsec          ;select sector number
+        public  setdma          ;set disk i/o data buffer pointer
+        public  read            ;read selected sector and return status
+        public  write           ;write selected sector and return status
+        public  lstat           ;return byte for console status
+        public  sectran         ;translate sector number
+;
+;
+;     Bios vector table offsets from the warm boot vector to 
+; access  the  vector table entry points off the loc 1 and 2 
+; warm boot vector.
+;
+cbooto  equ     -3              ;cold boot offset
+wbooto  equ     0               ;warm boot offset
+cstato  equ     3               ;console status offset
+conino  equ     6               ;console input offset
+conouto equ     9               ;console output offset
+listo   equ     12              ;list device output offset
+puncho  equ     15              ;punch device offset
+readero equ     18              ;reader ddevice offset
+homeo   equ     21              ;disk home offset
+seldsko equ     24              ;select disk offset
+settrko equ     27              ;select disk offset
+setseco equ     30              ;select sector offset
+setdmao equ     33              ;set dma address offset
+reado   equ     36              ;read logical sector offset
+writeo  equ     39              ;write logical sector offset
+lstato  equ     42              ;list status offset
+strano  equ     45              ;sector translate offset
+;
+;
+; Define position of CP/M 2.2 warm boot vector location
+;
+wbvect  equ     0               ;addr of warm boot jump
+;
+;
+;***********************************************************
+;*                                                         *
+;*       general purpose routines used upon entry          *
+;*                                                         *
+;***********************************************************
+;
+;
+; get single byte parameter to register c
+;
+getp1:
+        mov     e,m             ;low (addr)
+        inx     h
+        mov     d,m             ;high(addr)
+        xchg                    ;hl = .char
+        mov     c,m             ;to register c
+        ret
+;
+;
+; get single word value to BC
+;
+getp2:
+        call    getp1           ;get low byte of parameter
+        inx     h
+        mov     b,m             ;get high byte as well
+        ret
+;
+;
+; transfer control to indexed bios vector table entry
+; enter with DE = entry offset index
+;
+gobios:
+        lhld    wbvect+1        ;get cp/m warm boot vector
+        dad     d               ;add in vector table offset
+        pchl                    ;go to table entry
+;
+;
+;
+;***********************************************************
+;                                                          *
+;      direct bios access routines for pl/i-80 calls       *
+;                                                          *
+;***********************************************************
+;
+;
+;
+; routine to enter bios cold boot to completely reload cp/m
+;
+cboot:
+        lxi     d,cbooto        ;get offset
+        jmp     gobios          ;on our way
+;
+;
+; routine to enter bios warm boot to reload ccp and bdos
+;
+wboot:
+        lxi     d,wbooto        ;get offset
+        jmp     gobios          ;go reload
+;
+;
+; routine to return console status byte
+; return byte value to stack
+;
+cstat:
+        lxi     d,cstato        ;status offset
+        jmp     gobios          ;return bit(8) in (a) from bios
+;
+;
+; routine to get character from the console for input
+;
+conin:
+        lxi     d,conino        ;conin offset
+;
+ret1chr:                        ;entry point for one character 
+                                ;return to pl/1-80 on stack
+        call    gobios          ;go get the status to (a)
+        pop     h               ;return address
+        push    psw             ;character to stack
+        inx     sp              ;delete flags
+        mvi     a,1             ;character length is 1
+        pchl                    ;back to calling routine
+;
+;
+; routine to output one character to the console
+;
+conout:
+        call    getp1           ;get single output char to (c)
+        lxi     d,conouto       ;console output offset
+        jmp     gobios          ;return to pl/1 direct from bios
+;
+;
+; routine to output one character to the list device
+;
+list:
+        call    getp1           ;get single output char to (c)
+        lxi     d,listo         ;list output offset
+        jmp     gobios          ;return to pl/i direct from bios
+;
+;
+; output routine to send one character to the punch
+;
+punch:
+        call    getp1           ;get single output char to (c)
+        lxi     d,puncho        ;punch output offset
+        jmp     gobios          ;return to pl/i direct from bios
+;
+;
+; routine to get character from the reader for input
+;
+reader:
+        lxi     d,readero       ;reader input offset
+        jmp     ret1chr         ;let common code do rest
+;
+;
+; routine to get list device status 
+;
+lstat:
+        lxi     d,lstato        ;list status offset
+        jmp     gobios          ;return bit(8) status in (a) from bios
+;
+;
+; home selected disk entry point
+;
+home:
+        lxi     d,homeo         ;home offset
+        jmp     gobios          ;return direct from bios
+;
+;
+; entry  point  to select disk and return  parameter  table 
+; pointer for selected drive in (hl)
+;
+seldsk:
+        call    getp1           ;get single byte drive select byte
+        lxi     d,seldsko       ;select disk offset
+        jmp     gobios          ;return addr pointer in (hl) from bios
+;
+;
+; routine to send double byte track number to bios
+;
+settrk:
+        call    getp2           ;get track number to (bc)
+        lxi     d,settrko       ;set track offset
+        jmp     gobios          ;return through bios
+;
+;
+; routine to send double byte sector number to bios
+;
+setsec:
+        call    getp2           ;get sector number to (bc)
+        lxi     d,setseco       ;set sector offset
+        jmp     gobios          ;return through bios
+;
+;
+; routine to send data buffer pointer to bios
+;
+setdma:
+        call    getp2           ;get dma address to (bc)
+        lxi     d,setdmao       ;setdma offset
+        jmp     gobios          ;return through bios
+;
+;
+; sector translate routine.
+;
+sectran:
+        call    getp2           ;get logsec to (bc)
+        lxi     d,strano        ;sectran offset
+        jmp     gobios          ;return through bios
+;
+;
+; routine to read sector of 128 bytes
+;
+read:
+        lxi     d,reado         ;read sector offset
+        jmp     gobios          ;return error status through bios
+;
+;
+; write sector routine. entry parameter of write type
+;
+write:
+        call    getp1           ;get write type to (c)
+        lxi     d,writeo        ;write sector offset
+        jmp     gobios          ;return error status through bios
+;
+;
+;+++...end of file
+
+
+
+     The following short file is a single statement  PL/I-80 
+declare statement that defines in PL/I-80 syntax,  all entry 
+points  that  are given in the preceeding assembly  language 
+program.  The file is used so that the same set of  declared 
+variable  names  can  be  used in  multiple  PL/I-80  source 
+programs  without  having  to type them  in  all  the  time, 
+risking  making errors or ommissions.  The PL/I-80  lanugage 
+contains  a  feature  called the "%include"  statement  that 
+allows the following file to be put in as part of the source 
+code as simple as typing the following code as part of  your 
+program:
+
+     %include 'bioscall.dcl';
+
+     This  will  insert the following text into the  program 
+source  code at the point where the %include  appears.  Note 
+that in the above syntax the file "BIOSCALL.DCL" is expected 
+to  be  contained  upon the same disk drive  as  the  source 
+program.   Explanation  of  the  statement  formats  of  the 
+declared  entry points will be left for the examples  below. 
+An  example of the "%include" function appears in  the  disk 
+copy program below.
+
+
+File "BIOSCALL.DCL"
+
+/* Define names and procedure characteristics for the     */
+/* MICRO RESOURCES Direct BIOS Access Procedures of       */
+/* "PLIBIOS.ASM" and PL/I-80 linkable module "PLIBIOS.REL'*/
+
+
+   dcl
+           cboot   entry,
+           wboot   entry,
+           cstat   entry           returns (bit(8)),
+           conin   entry           returns (char(1)),
+           conout  entry           (char(1)),
+           list    entry           (char(1)),
+           punch   entry           (char(1)),
+           reader  entry           returns (char(1)),
+           home    entry,
+           seldsk  entry           (binary fixed(7)),
+           settrk  entry           (binary fixed(15)),
+           setdma  entry           (ptr),
+           read    entry           returns (bin fixed(7)),
+           write   entry           (bin fixed(7)) 
+                                       returns (bin fixed(7)),
+           lstat   entry           returns (bit(8)),
+           sectran entry           (bin fixed(15))
+                                       returns (bin fixed(15));
+
+     An  example of how to make use of the assembly language 
+BIOS  access  routines is presented below in the form  of  a 
+PL/I-80  source program that is a floppy disk copy  program. 
+First  let  me describe the intent of the program  and  then 
+show  a few examples of how the external BIOS  entry  points 
+are accessed.  The diskette copy program allows full copying 
+of  a  diskette  in Drive A:  to the diskette in  Drive  B:. 
+Tracks are buffered in memory in track buffer arrays so that 
+a whole track may be read at a time to make the program  run 
+reasonably  fast.  (Incidently,  this  copy  operation  runs 
+almost  as  fast  as  most assembly  language  copy  utility 
+programs  I've seen except for those that buffer  more  that 
+one track at a time).  Tracks are read sequentially from the 
+HOME  position of Drive A:  and written to the corresponding 
+positions of Drive B:.  After writing,  the Track is  reread 
+from Drive B: and compared byte for byte with the image read 
+in  originally from Drive A:.  Any errors are reported as to 
+track  and  sector  number to inform  the  operator  of  any 
+difficulties encountered along the way. At the completion of 
+the  copy process the operator is prompted to see if another 
+copy  is desired before rebooting the system disk  in  Drive 
+A:.
+
+     All  console  interface and program logic structure  is 
+implemented  in the easy to program  PL/I-80  syntax.  Speed 
+dependant  and  hardware specific I/O access in the  program 
+makes  use  of the BIOS access external  entry  points.  The 
+following  examples  show  some of  the  external  procedure 
+references made to the entry points defined in "PLIBIOS". In 
+the  following paragraphs some familiarity with the  PL/I-80 
+language structure is assumed.  A tutorial on the  structure 
+and  syntax of the language is somewhat beyond the  intended 
+subject of this article.
+
+EXAMPLE ONE -  Calling The CONSOLE INPUT ENTRY POINT (CONIN)
+
+     The  console  input  entry  point  is  declared  as  an 
+external  entry  point in the BIOSCALL.DCL include  file  as 
+follows:
+
+     DCL conin     entry returns(char(1));
+
+     This   defines  conin  as  a  function  procedure  with 
+procedure invocation by name in an expression.  The implicit 
+CALL to the routine will return the declared type of  value, 
+CHAR(1) in this case,  to the point of the call. The example 
+from  the disk copy program has the conin call at the  point 
+of  waiting  for an operator response.  A character  string, 
+declared as follows:
+ 
+     DCL  resp    char(80)  /* operator response buf */ ;       
+
+...is  designated to receive one console character with  the 
+following   statement.   The  NULL   parentheses   reference 
+designates  conin  as  a function procedure with  no  passed 
+parameters.  In this case  resp
+
+     resp=conin();
+ 
+...becomes  a string of one entered character padded on  the 
+right with 79 blanks.
+
+
+EXAMPLE TWO - Calling the SET SECTOR ENTRY POINT (SETSEC)
+
+     The set sector function queues the BIOS to a sector  to 
+read  on  a  subsequent  call  to  the  read  routine.  This 
+procedure  is  very similar in operation to the  set  track, 
+select  disk,  and set dma address entry points in that  all 
+are  defined  in the BIOSCALL.DCL file with declares of  the 
+form:
+
+     DCL   settrk  entry           (bin fixed(15));
+
+     This defines settrk as a subroutine procedure that  has 
+an  entry parameter consisting of a double byte binary fixed 
+point number that must be referenced with the following type 
+of statement:
+
+     CALL settrk(n);
+
+...where  n is a variable of the fixed binary  variety  that 
+contains  the value of the track number to send to the BIOS. 
+Note  that  no  return  parameters  are  involved  with  the 
+procedure invocation.  Makes direct BIOS access quite simple 
+doesn't it !
+
+EXAMPLE THREE - Calling the DISK READ SECTOR ENTRY (READ)
+
+     The  read sector entry point is defined as  a  function 
+procedure  in  that  it  returns  a  binary  fixed(7)  value 
+pertaining  to  the  status  of  the  disk  read  operation. 
+(Defined   by  standard  BIOS  entry  definition,   assembly 
+language structure of the PLIBIOS program,  and the  declare 
+in the BIOSCALL.DCL file as follows:
+
+     DCL  read      entry returns(bin fixed(7));
+
+     Since read is a function call,  the read entry point is 
+referenced by name and the binary fixed(7) return error code 
+is  returned  to  the point of invocation simply as  in  the 
+statement  below.  This one statement causes the read  of  a 
+previously  selected logical 128 byte sector into the buffer 
+defined  by  a previous "setdma" call and at the  same  time 
+defines what action to perform if the read was  unsuccessful 
+and returned a non-zero error code.
+
+
+     if read() ^= 0 then do;
+                put edit('Read Error On Control Disk - Track ',
+                          trkno,' Sector ',secno)
+                          (col(1),a,f(3),a,f(3));
+                put skip(2) edit('Restart Copy ',
+                          'Process with new Source Diskette.')
+                           (col(1),a,a);
+                go to copyloop;
+                end;
+ 
+     Other  BIOS  entry  points are referenced in  a  manner 
+similar to the examples above.  The "write" for instance has 
+an  entry parameter as well as a return error code like  the 
+read call.  The write entry parameter informs the  BIOS,  if 
+physical sector deblocking is done,  of the type of write to 
+perform (see the Digital Research CP/M 2.2 System Alteration 
+Guide  for more information on the exact definition of  BIOS 
+entry  point and return value definitions).  A special  note 
+concerning  the select disk entry point "seldsk" is that  it 
+returns  a  pointer value that defines the position  of  the 
+disk  parameter  table for the drive selected in  the  entry 
+parameter.  (Note  that a PL/I-80 NULL pointer return  value 
+defines an illegal drive designator).
+
+     Careful  examination  of  the  following  program  will 
+reveal  all instances of direct BIOS entry point invocation. 
+The  rest  of  understanding of this program is  left  as  a 
+learning exercise for the interested reader.
+      
+
+File dskcpy.pli
+
+/***********************************************************
+ Full disk copy program to demonstrate the direct CP/M  Bios 
+access  facilities  presented in the  accompanying  article, 
+"Assembly Language Interface to PL/I-80."                           
+
+ Track by track copying is utilized through the direct  bios 
+access  facilities  of the linked assembly language  program 
+"PLIBIOS".
+***********************************************************/
+
+dskcpy:
+        proc options(main);
+
+        %replace
+                trk_per_disk    by      77, /* logical bios tracks/diskette */
+                sec_per_trk     by      26; /* logical cp/m sectors/track */
+
+        /* external CP/M bios entry points */
+        %include 'bioscall.dcl';        /* bring in the bios entry point 
+                                           definition file that defines
+                                           bios function entry points*/
+        dcl
+                resp                    char(80), /* operator response buf */
+                inbuf(sec_per_trk)      char(128)
+                                           based(p), /* input buffer */
+                outbuf(sec_per_trk)     char(128)
+                                           based(q), /* output buffer */
+                trkno                   bin fixed(15),
+                secno                   bin fixed(15),
+                (i,j,k,l)               bin fixed(15), 
+                (p,q,s)                 pointer,
+                e5var                   bit(8) based(s),
+                e5char                  char(1) based(s),
+                e5trk                   bit(1),
+                skew(sec_per_trk)       bin fixed(15) static init(
+                                        1,7,13,19,25,5,11,17,23,3,09,15,21,
+                                        2,8,14,20,26,6,12,18,24,4,10,16,22),
+                e5string                char(128),
+                partab                  pointer; /* disk parameter table ptr */
+                
+
+        /* Print initial message for Diskette copy from drive A: to B: */
+
+        put edit('MICRO RESOURCES Diskette Copy program in PL/I-80 ',
+                 '^m^j',
+                 'Version 1.1 of August 3,1981')
+                 (col(1),3(a));
+                 
+copyloop:
+        put skip edit('Insert Source Diskette in Drive A:',
+                      '^iDepress <cr> when ready ')(col(1),a);
+        resp=conin();
+
+newdisk:
+        put skip(1) edit('Insert Destination Diskette in Drive B:',
+                         '^iDepress <cr> when ready or <ctl-C> to quit')
+                        (col(1),a);
+        resp=conin();
+        if resp='^C' then do;
+                        put edit('Remember to Re-Insert your CP/M ',
+                                'System Diskette in Drive A:',
+                                '^iDepress <cr> when ready ')
+                                (col(1),a,a);
+                        resp=conin();
+                        stop;
+                        end;
+
+        put skip(1) edit('Copy in Progress...')(col(1),a);
+
+        allocate inbuf set(p);  /* setup buffer storage */
+        allocate outbuf set(q);
+        allocate e5var set(s);          /* setup simple 0EH insertion */
+
+        partab=seldsk(0);               /* select disk a: (0) */
+        call home;                      /* restore it */
+        partab=seldsk(1);               /* select disk b: (1) */
+        call home;                      /* restore that too */
+
+        e5trk='0'b;                     /* e5 end track scan switch off */
+        e5var='e5'b4;
+
+        do i=1 to 128;                  /* fill e5 record check string */
+        substr(e5string,i,1)=e5char;
+        end;
+
+trklp:
+        do trkno = 0 to trk_per_disk-1 while( ^ e5trk);
+        
+        partab=seldsk(0);               /* select source */
+        call settrk(trkno);
+
+        j=0;                            /* set empty sector counter off */
+
+        /* read source track loop */
+
+                do secno = 1 to sec_per_trk;
+                call setdma(addr(inbuf(secno)));
+                call setsec(skew(secno));     
+                                        /* sectors are zero based     */
+                                        /* for some CP/M 2.2 BIOS's   */
+                                        /* if so replace (secno) with */
+                                        /* (secno-1)                  */
+
+                if read() ^= 0 then do;
+                                put edit('Read Error On Control Disk - Track ',
+                                        trkno,' Sector ',secno)
+                                        (col(1),a,f(3),a,f(3));
+                                put skip(2) edit('Restart Copy ',
+                                        'Process with new Source Diskette.')
+                                        (col(1),a,a);
+                                go to copyloop;
+                                end;
+                end;
+
+        partab=seldsk(1);               /* select destination */
+        call settrk(trkno);
+
+        /* write destination track loop */
+
+                do secno = 1 to sec_per_trk;
+                call setdma(addr(inbuf(secno)));
+                call setsec(skew(secno));
+                                        /* sectors are zero based     */
+                                        /* for some CP/M 2.2 BIOS's   */
+                                        /* if so replace (secno) with */
+                                        /* (secno-1)                  */
+                if write(2) ^= 0 then do;
+                                put edit ('Write Error On Destination',
+                                        ' Disk - Track ',trkno,
+                                        ' Sector ',secno)
+                                        (col(1),a,a,f(3),a,f(3));
+                               put skip(2) edit ('Bad Diskette in Drive ',
+                                        'B:, try another.')(col(1),a,a);
+                                go to newdisk;
+                                end;
+                end;
+
+        /* read back destination loop */
+
+                do secno = 1 to sec_per_trk;
+                call setdma(addr(outbuf(secno)));
+                call setsec(skew(secno));
+                                        /* sectors are zero based     */
+                                        /* for some CP/M 2.2 BIOS's   */
+                                        /* if so replace (secno) with */
+                                        /* (secno-1)                  */
+
+                if read() ^= 0 then do;
+                                put edit ('Read Verify Error On Destination',
+                                        ' Disk - Track ',trkno,
+                                        ' Sector ',secno)
+                                        (col(1),a,a,f(3),a,f(3));
+                                put skip(2) edit ('Bad Diskette in Drive ',
+                                        'B:, try another.')(col(1),a,a);
+                                go to newdisk;
+                                end;
+                end;
+                                
+        /* data compare loop */
+
+                do secno = 1 to sec_per_trk;
+
+                if inbuf(secno) ^= outbuf(secno) then do;
+                                put edit ('Verify Data Compare Error ',
+                                        trkno)
+                                        (col(1),a,f(3));
+                                put skip(2) edit ('Bad Data on Diskette ',
+                                        'in Drive B:, retry same diskette.')
+                                        (col(1),a,a);
+                                go to newdisk;
+                                end;
+                if inbuf(secno) = e5string then j=j+1; /* empty sector */
+                end;
+
+        if j=sec_per_trk then do;
+                        e5trk='1'b;
+                        put edit ('Track by track copy complete ',
+                                'at track number ',trkno)
+                                (col(1),a,a,f(3));
+                        end;
+        end trklp;
+
+        free inbuf;
+        free outbuf;
+        free e5var;
+
+        put skip edit('Do you wish to Copy This Another Diskette (Y/N) ')
+               (col(1),a);
+        resp=conin();
+        if (resp = 'Y') ! (resp = 'y') then go to newdisk;
+                                       else stop;
+        end dskcpy;
+
+
+
+
+     To   compile  the  PL/I-80  program  given  above   the 
+following  operational sequence would be used to invoke  the 
+Digital  Research  PL/I-80 compiler to process  source  file 
+"DSKCPY.PLI".  Lower  case characters after the "A>"  prompt 
+are  those  typed by you the operator.  Other  text  is  the 
+output of the compiler to the console screen.
+
+A>pli dskcpy<cr>               <== Extent of .PLI is assumed
+
+
+PL/I-80   V1.3   COMPILATION OF:  DSKCPY
+
+
+%include 'bioscall.dcl';     <== Complier brings in prev-
+                                 iously edited DCL file for
+                                 all external entry points
+                                 in the "PLIBIOS.REL"module.
+
+   NO  ERROR(S) IN PASS 1
+
+   NO  ERROR(S) IN PASS 2    <== Compiler informs us of
+                                 pass completions.
+
+CODE SIZE  =  05A9           <== Compile statistics for
+DATA AREA  =  044F               "REL" file of "DSKCPY".
+FREE SYMS  =  2BBF
+END COMPILATION
+
+A>
+
+
+     The  next step to get a final disk copy program out  of 
+all  of  this work is to link the "REL" (relocatable  object 
+code)  modules of "DSKCPY",  "PLIBIOS",  and  the  necessary 
+subroutines  from  the  Digital Research  PL/I-80  run  time 
+library together into a ".COM" file. The LINK 80 linker from 
+Digital  Research  does  the job nicely with  the  following 
+console  operational "look".  As before,  the text in  lower 
+case following the A> prompt was that typed by the  operator 
+performing  the link process.  (Please note that the  symbol 
+values  given  may not necessarily coincide with  those  for 
+your  version  of  the  above  program;  especially  if  you 
+slightly  modify the text strings and signon messages in the 
+PL/I-80 source code listing).
+
+A>
+A>link dskcpy,plibios          <== ".REL" extensions assumed
+                                    and output to DSKCPY.REL
+                                    is the default output.
+LINK 1.3
+
+PLILIB   RQST   DSKCPY    0100   CONIN    06CC   SELDSK   0705
+HOME     06FF   SETTRK    070E   SETDMA   0720   SETSEC   0717
+READ     0732   WRITE     0738   CBOOT    06BA   WBOOT    06C0
+CSTAT    06C6   CONOUT    06D8   LIST     06E1   PUNCH    06EA
+READER   06F3   LSTAT     06F9   SECTRA   0729   /SYSIN/  27E7
+/SYSPRI/ 280C
+
+ABSOLUTE    0000                  <== Link prints out module
+CODE SIZE   266B   (0100-276A)        size and address statistics
+DATA SIZE   06E2   (285A-2F3B) 
+COMMON SIZE 00EF   (276B-2859)
+USE FACTOR    95                  <== Hex percent of symbol table
+                                      usage.
+A>
+
+     The  rest is up to you.  I have provided an example  of 
+how  assembly  language routines can be tied to  PL/I-80  to 
+implement  special  functions that are beyond the  scope  or 
+capability  of the language.  In this case they were  simple 
+examples  of interface conversions for  BIOS  access.  Other 
+examples  of  assembly language routines that could be  made 
+include "IN and OUT" functions for direct language access to 
+machine dependant input and output ports, high speed special 
+access  drivers for math chips such as the  Intel  8087,  or 
+tightly coded interrupt service routines to increase program 
+performance  where  PL/I-80 is used as the host  development 
+language in a real-time application.
+
+     Operation  of the above example should be self  evident 
+from a detailed study of the source listing. The best way to 
+tackle your own problem is to dive right in.  For those  who 
+feel  that  they need a little more structured  approach  or 
+partly implemented feel for getting started, I am willing to 
+provide  the source code for all of the modules described in 
+this  article  on a single density CP/M  compatible  8  inch 
+diskette free of charge if you just send a diskette, mailer, 
+and  return postage to the address given at the beginning of 
+this article. Feel free to make use of any new ideas you see 
+here however you see fit.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+               CP/M-Net "Tip-of-the-Month"
+               ===========================
+
+ The Absolute Minimum Typing, to Run a CP/M Submit File...
+
+             By: Mike Karas and Kelly Smith
+
+     On  occasion,  you  may need to run consecutive  SUBmit 
+files,  under  'attended' operation,  and MAY have to do  it 
+numerous  times...well  here is a trick to  enter  only  two 
+characters  on  your keyboard (S and  Carriage  Return),  to 
+minimize the amount of typing required.
+
+     Edit  your SUBmit file as normally do...  end the edit, 
+and then:
+
+A>REN .SUB=LAZY.SUB<cr>    <-- Rename your .SUB to ONLY .SUB
+A>REN S.COM=SUBMIT.COM<cr> <-- Rename SUBMIT.COM to S.COM
+A>S<cr>                    <-- Run '.SUB'!!!
+
+     How's  it work?  Easy...SUBMIT "see's" a temporary  FCB 
+entry  of  the file "        .    " (eight  spaces  for  the 
+filename  and  three  spaces for  the  filetype),  and  goes 
+"searching"  for  a filetype of ".SUB"...and  low-and-behold 
+FINDS IT!
+
+     Now  to really speed things up for your SUBMIT,  we use 
+that old trick of fooling the CCP (Command Console Processor 
+with a 'null file'...you remember,  'SAVE 0 @.COM'...and use 
+it  to   minimize  the  'loading  time'  of  some  redundant 
+operation.  For  example,  when generating a pile of  system 
+disks you might edit a SUBMIT file like this:
+
+sysgen           <--- Let's SYSGEN...
+pip b:=pip.*[v]  <--- And PIP some goodies we need to B:
+@ b:=xdir.*[v]   <--- And use PIP still in memory
+@ b:=stat.*[v]   <--- And use PIP again...
+@ b:=asm.*[v]    <--- And again...
+@ b:=ed.*[v]     <--- Again..
+@ b:=load.[v]    <--- Well, you get the point by now!
+
+     Keep  in mind however,  that you may only use the  LAST 
+file that was loaded into memory...for instance,  if you had 
+placed  something  like ABORTSUB.COM in the  middle  of  the 
+PIP's,  and then intended to CONTINUE PIPing, you MUST again 
+invoke  PIP explicitly as a filename...THEN you can continue 
+using '@' as illustrated here.
+

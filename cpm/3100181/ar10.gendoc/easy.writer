@@ -1,0 +1,58 @@
+Date: 8 Jun 82 20:37:53-EDT (Tue)
+From: decvax!harpo!presby!aron at Berkeley
+To:   info-micro at mit-ai
+Re:   Perfect Writer
+Article-I.D.: presby.168
+Via:  news.usenet; 8 Jun 82 20:11-PDT
+
+A while ago I posted a request to get more info on Perfect Writer, a
+new word processor for CP/M micros.  I recieved the following replies.
+The first may seem overly biased, but the substance of his message
+seems to be confirmed by a review in this weeks Infoworld. (the sender
+requests anonymity to avoid a deluge of mail)
+
+I.
+     I am the chief programmer for the Perfect Writer system.  I think
+that it's absolutely fabulous. The editor is like (MIT) EMACS and the
+formatter i like (CMU) SCRIBE. There are extensions and limitations,
+most of which have to do with the fact that the system is meant to be
+run on a dink machine (CP/M and 56K). There is a menu system for
+beginners which can be disabled when you get 'expert'. there is a help
+system. There is a facility for rebinding the commands to any keys you
+want WITHOUT ANY PROGRAMMING or patching. support is for terminals
+ranging in size from 9x51 to 60x132. printers supported include most
+popular daisy wheel models, and nearly any plain printer. the
+formatter allows true proportional spacing without patching the
+printer drivers with code you have to write (a la W*).
+
+    Perfect Speller is integrated with PW, allowing in-context spelling
+checking and correction. PS has a 20,000 word dictionary and strips
+one prefix and two suffixes (if applicable) thereby extending it's
+usable vocabulary. both the affix table and the dictionary are user
+modifiable. the dictionary itself is stored as a hash table thereby
+reducing it's size and increasing the speed of the checker.
+
+    PW compares favorably with W* in speed and PS is as fast as SpellGuard.
+
+II.
+
+>From houxs!hansen Mon May 17 17:12:39 1982 remote from harpo
+
+I saw Perfect Writer demonstrated at a recent micro show. It is an
+Emacs clone, with a documentation preparation language (very!) similar
+to Scribe and a built-in spelling program, written by a couple of
+people who went to (where else?) MIT. It's price is around $200-300,
+with an extra $130-200 for the spelling system, depending on who you
+buy it from.
+
+It is supposed to work on any CP/M based system. It allows editing of
+multiple files/buffers with one or two windows and has its own virtual
+memory system built in. It is no very modifiable; you can buy the
+source for parts of the system (it's written in C), and modify that,
+but that's as close as you get to writing your own commands. I think
+it requires 48k, but I'm not sure.
+
+Overall it looked like a fairly good system for a micro, it you can
+stand Emacs and Scribe (no flames, please, I use them both) and have
+the memory to support it.
+

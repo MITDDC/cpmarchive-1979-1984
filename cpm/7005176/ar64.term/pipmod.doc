@@ -1,0 +1,154 @@
+			PIPMODEM.DOC
+		   P. L. Kelley - 10/29/82
+
+	PIPMODEM.ASM is a routine to modify CP/M-80's PIP (1) to
+become a communications terminal program as well as to download
+to your disk a text file from another computer.
+
+	PIPMODEM.ASM is short enough that it can be easily typed
+in if you have a printed copy or be hand copied from a display
+terminal while in communication with a remote computer. The
+comments in lower case do not need to be copied. Normally only
+three or four equates need to be modified. 88 bytes of object
+code are generated.
+
+	PIPMODEM.ASM makes use of PIP's :INP (input) feature. The
+:INP function is invoked by typing UFN=:INP to PIP (UFN stands
+for Unambiguous File Name). PIP reserves locations 106H-108H for
+a jump to a user written routine and locations 10AH-1FFH are
+reserved for the user written routine. The user routine RETs
+after loading location 109H with an input byte; PIP then stores
+the byte in its memory buffer and calls location 106H to get the
+next byte. If the user routine puts control-Z in 109H and RETs,
+PIP will write the memory buffer to the disk file and return to
+the command level.
+
+	The routine is written so that the memory buffer is only
+loaded after control-O is typed; this allows you to log on to the
+remote system and search for the file before opening the memory
+buffer. To write the file and exit you simply type control-Z.
+
+	You make the modified version of PIP as follows:
+
+		1) Use a text editor to make a disk file of
+		   PIPMODEM.ASM, be sure to change the four
+		   modem equates for you computer, note that
+		   validity checks are given at the end of
+		   this file,
+
+		2) Do the following
+	
+			A>asm pipmodem.aaz<cr>
+			CP/M ASSEMBLER - VER 2.0
+			015C
+			000H USE FACTOR
+			END OF ASSEMBLY
+	
+			A>ddt pip.com<cr>
+			NEXT  PC
+			1E00 0100
+			-ipipmodem.hex<cr>
+			-r<cr>
+			NEXT  PC
+			1E00 0000
+			-g0<cr>
+
+			A>save 29 pipmodem.com<cr>
+
+The lower case characters are your inputs, where <cr> stands for
+carriage return, and the upper case characters are the computer's
+responses.
+
+
+	This routine should work on the majority of machines
+running CP/M. However, some warning needs to be given concerning
+the general validity of PIPMODEM.ASM; unfortunately, in this
+pluralistic world it is impossible to write a routine that is
+universal. Some microcomputer's have hardware which require
+memory mapped I/O to modems; the file will then have to be
+modified to load and store to memory locations instead of
+inputting and outputting to ports. In addition, some BIOSs poll
+the ports on keyboard status checks and put the input byte from
+the ports into a buffer where it will be lost to PIP. Other
+systems may use interrupts on ported input; again the input byte
+is buffered and lost to PIP. There are ways around these problems
+but the solutions vary.
+	
+	Not all computers you may connect your micro to behave in
+the way the this routine assumes; however, Bulletin Board Systems
+(BBSs) and Remote CP/Ms (RCP/Ms) do. If the computer you connect
+to doesn't echo what you send, you will need to add some code to
+echo to your console what you type in; this can be readily
+accomplished by adding a call to the BIOS console output vector
+after the line labeled MODOUT. If you make the line of the form
+CNOUT2 CALL $-$, add SHLD CNOUT2+1 just before the JMP OLDSTRT
+line. There are also systems to which you might connect which
+don't send a linefeed as well as echo a carriage return after a
+carriage return is sent to them; this requires additional code to
+test for your input of a carriage return and send a linefeed as
+well as the carriage return. In order to keep the program simple,
+to avoid getting hung up if the modem is not working properly and
+because no one can type as fast as a modem sends characters, no
+transmit ready checking was implemented. Unfortunately, the
+computer works faster than the modem and unless you do transmit
+ready checking the linefeed it sends after the carriage return
+will be lost. Finally, some systems require the parity bit to be
+set on any byte sent to them; add ORI 80 before you output but be
+sure to strip parity back off before you store at 109H or locally
+echo.
+
+	Perhaps the first thing you will want to do after you
+have the modified version of PIP working is to communicate with
+an RCP/M and download the short (~10K) file MBOOT.ASM. PIPMODEM
+can only be used to obtain, without loss of characters, text
+files up to the length of PIP's memory buffer, thus, the
+requirement that the file transferred be short. MBOOT does error
+checking and can be used to obtain files of any size and type
+assuming the other computer has the appropriate software. Once
+you have MBOOT working it is then desirable to obtain an even
+more versatile modem program from an RCP/M, such as MODEM7XX or
+MODEM2XX (the X's stand for version numbers).
+
+	RCP/Ms are remote CP/M microcomputers which you can call
+to obtain public domain software; you will find that the latest
+versions of popular, useful software are available. On your end
+you normally use MBOOT or MODEM7XX/2XX in conjunction with XMODEM
+on the RCP/M. The numbers of RCP/Ms can usually be found on
+computer BBSs.
+
+	As an example of PIPMODEM's use, communication with an
+RCP/M, including transfer of a short text file, will be
+described. To use a modem you must first configure your modem
+ports to the proper settings; typically, 300 baud, 8 bit word, 1
+stop bit, no parity. Some computers come with configuration
+programs which do this for you in a simple fashion. Next, do
+PIPMODEM MBOOT.ASM=INP: (assuming you want MBOOT.ASM). Call up an
+RCP/M, connect your modem to the telephone and hit RETURN a few
+times. If the remote computer responds you will get a message
+and, depending on the system, the RCP/M operating program may go
+directly to CP/M so that it appears that you are at the remote
+system's console or you may be led to CP/M through a bulletin
+board program. After you have searched the disks/user areas for
+MBOOT.ASM, do control-O then TYPE MBOOT.ASM. MBOOT.ASM will be
+displayed on your console. When the type out is finished and the
+remote system gives you its CP/M prompt, type control-Z.
+MBOOT.ASM will then be written to your disk. Hang up the
+telephone; the RCP/M operating program will sense the loss of
+your modem carrier and will recycle for the next caller. Be sure
+and edit out the extraneous commands, prompts, etc. at the
+beginning and end of the file.
+
+	Before you assemble PIPMODEM.ASM make a note of the
+following checks on the validity of your copy.
+
+	There are:
+		1) 8  EQUates,
+		2) an ORG statement,
+		3) 40 lines of assembly code, and
+		4) an END statement.
+
+	 The file generates code up to the location before 15CH.
+
+
+(1) CP/M-80, PIP, ASM, and DDT are products of Digital Research Inc.
+

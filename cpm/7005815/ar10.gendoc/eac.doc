@@ -1,0 +1,427 @@
+EAC -- A Calculator For High Accuracy Arithmetic              page 1
+
+
+Copyright 1982  Michael M Rubenstein
+Version 1.0  25 Apr 82
+
+This  document and the accompaning software  may  be 
+distributed  freely provided there is no charge  for 
+distribution and the copyright notice is retained.
+
+Description:
+
+EAC performs arithmetic calculations on binary  num-
+bers up to 127 bytes long.   This allows a magnitude 
+of  approximately  10**308.   EAC includes the  fol-
+lowing features:
+
+    - entry is by algebraic formula
+
+    - 26 variables are available
+
+    - functions may be defined
+
+    - input may be taken from a file
+
+EAC requires a Z80 processor.
+
+EAC  is based on the arithmetic routines  by  M.  G. 
+Dinely which appeared in the March 1977 issue of Dr. 
+Dobb's  Journal.   The error handling has been modi-
+fied,  a few bugs were fixed, and the code was modi-
+fied for the Z80.  An interface routine was added to 
+allow invocation of these routines from pl/i-80.
+
+The calculator program itself is written in pl/i-80.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EAC -- A Calculator For High Accuracy Arithmetic              page 2
+
+
+Expressions.
+
+An  EAC expression is written in standard  algebraic 
+notation,  similar to an expression in  BASIC.   The 
+operators implemented are
+
+        =            assignment
+        + (binary)   addition 
+        - (binary)   subtraction 
+        *            multiplication
+        /            division
+        ^            exponentiation
+        %            modulo
+        + (unary)    identity
+        - (unary)    negation
+        ! (unary)    factorial
+
+Note that assignment may be used as an operator,  as 
+in
+
+        5+(x=3)
+
+This  will assign the value 3 to x and then  compute 
+5+3 (=8).
+
+In  addition,  two functions,  each of one argument, 
+are included
+
+        sqr          square root
+        fct          smallest factor
+
+A   function  reference  must  be  followed   by   a 
+parenthesized argument (e.g. sqr(9)).
+
+In  addition,  special  forms  are  implemented  for 
+exponentiation ("^") and factorial ("!").  If either 
+is  followed  by  a  parenthesized  expression,  the 
+computation  will  be done modulo  that  expression.  
+For example, one would write
+
+        3^100(101)
+
+to  calculate 3 to the 100 power modulo  101.   This 
+differs from
+
+        (3^100)%101
+
+in  that  the entire arithmetic is done modulo  101, 
+preventing overflow.
+
+The standard hierarchy of operators is used:
+
+        =               (lowest)
+        + -
+        * / %
+
+
+
+EAC -- A Calculator For High Accuracy Arithmetic              page 3
+
+
+        ^ 
+        + - !           (highest)
+
+with  all  operators  grouping from left  to  right, 
+except  assignment  ("="),  exponentiation("^")  and 
+unary operators which group from right to left.
+
+There  are  26 variables,  a-z.   There  is  also  a 
+pseudo-variable,  @, which takes on the value of the 
+last expression computed.
+
+Note  that  upper or lower case may  be  used.   All 
+input  is  converted to upper case.   Blanks may  be 
+used where desired for readability.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EAC -- A Calculator For High Accuracy Arithmetic              page 4
+
+
+Factoring.
+
+A number may be factored with the command
+
+        .factor <expr>
+
+where  expr  is any legal expression.   If  omitted, 
+expr  is taken as @ (the last expression  computed).  
+Factoring  is  very slow for numbers larger than  12 
+digits unless there are small factors.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EAC -- A Calculator For High Accuracy Arithmetic              page 5
+
+
+Defined Functions.
+
+Functions  of several variables may be defined  with 
+the command
+
+        .def <funcname>(arg1,arg2,...)=<expr>
+
+where
+
+        funcname is the name of the function.   Must 
+                    be 2-8 letters.
+
+        argi    are the symbolic arguments.  Must be 
+                    single letters.
+
+        expr     is an expression.
+
+The arguments are local.  That is, if the expression 
+contains  an assignment to an argument,  it will not 
+be  effective after the function  is  computed.   Of 
+course,  no  two  symbolic arguments in  a  function 
+definition may be the same.   A function may have no 
+arguments; the parentheses are still required.
+
+Example:
+
+        .def ptest(n,a) = a^((n-1)/2) (n)
+
+As  always,  spaces are ignored and case is  immate-
+rial.
+
+If a new function is entered with the same name as a 
+previous  function,  the  new definition  will  take 
+precedence.   If the new definition is deleted,  the 
+old one will be used again.
+
+To delete a function, use the command
+
+        .undef <funcname>
+
+To  display the names of all defined functions,  use 
+the command
+
+        .list
+
+To display a specific function definition,  use  the 
+command
+
+        .list <funcname>
+
+
+
+
+
+
+
+
+
+EAC -- A Calculator For High Accuracy Arithmetic              page 6
+
+
+File input.
+
+Input  may  be  taken from a file  by  entering  the 
+command
+
+        read <filename>,<echo>
+
+where
+
+        filename is a  legal  CP/M  file  name  with 
+                    optional drive indicator.  If no 
+                    extension is specified, "EAC" is 
+                    used as the extension.
+
+        echo     is an   optional  one  letter  echo 
+                    indicator.   If  "E",  then  the 
+                    file will be displayed as it  is 
+                    read.   If  anything  else,  the 
+                    file will not be displayed.
+
+If  a read file contains another read  command,  the 
+new  file  will  be used,  but at end  control  will 
+return  to  the console,  not to the  previous  file 
+(reads are chained, not nested.)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EAC -- A Calculator For High Accuracy Arithmetic              page 7
+
+
+End of Document
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

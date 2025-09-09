@@ -1,0 +1,304 @@
+/********************************************************************
+     SWEEP version 3.8, October 18, 1982
+			by Robert Fisher
+			   DePaul University
+			   243 S. Wabash
+			   Chicago, Illinois 60604
+
+Released to the Public Domain by the author.
+***********************************************************************
+SWEEP is a utility program for maintaining file directories, and 
+transferring files between drives and user areas under CP/M2.2.  SWEEP
+will not run under CP/M 1.4, but it will run under MP?M .  When running
+under MP/M, the calculation of remaining space in a directory produces
+a meaningless number and should be ignored. (This also applies to
+the Size function.) SWEEP is probably incompatible with extended file
+features (like passwords) under MP/M.
+
+Invoking SWEEP and moving about the directory.
+----------------------------------------------
+When SWEEP is invoked, you will see a menu of 'commands' and the first
+entry in the directory.  You will also be given the total space (in k)
+occupied by the files and the remaining space on the disk.  SWEEP also
+reports the current user area in the prompt, or an asterisk if you have
+selected all user areas.
+
+Typing 'space' or 'return' moves you forward in the directory, typing 
+B (or b) moves you backward.  The directory is circular, so typing space
+at the end of the directory moves you to the beginning. (A line is skipped.)
+
+When you first invoke SWEEP, you can specify a drive and a starting place
+in the directory.  The user area can be specified as a second parameter.
+
+SWEEP B:FOO.COM
+
+will begin with drive B: logged in, and the cursor on the first entry
+in the directory which is >= FOO.COM in alphabetical order.  In the latest
+version, both file name and file type are recognized.
+
+SWEEP B:FOO.COM 8 
+
+will log in user area 8.  Selecting user area * will cause all user
+areas to be "swept" at once.
+
+NEW: If the starting file contains wild card symbols (* or ?), then it
+will be treated as a directory wild card specification.  Only those
+files in the selected user area will be handled.
+
+At any time, you can recover the menu of functions by typing a
+question mark (?).
+
+Simply typing 'x' exits the program.
+
+Note that all characters can be entered in upper or lower case.
+
+
+Functions that act on one file.
+_______________________________
+
+C   This allows you to copy the file to the drive and user area of your
+    choice.  You will be prompted for the drive and user area.  Just
+    enter 'b3', say, to transfer the file to drive B: user area 3.
+    If you omit the user area, the current user area of the file is used.
+    Any file of the same name in the target area is first erased, an
+    exception being when you are transferring to the current drive and
+    user area.  In the latter case, the transferred file is copied with
+    its named changed by putting a $ in the last letter of the file type.
+
+    If an existing file in the target area that must be erased is marked
+    read-only (R/O), then the copy is simply not made.  You will be told.
+    You may use the delete function to delete the file, and then retry
+    the copy.
+
+    As an option, sweep will perform a CRC verification of the copy. 
+    When you are prompted for the drive and user, add a 'v' or 'V' to
+    request verification.  Thus specifying: b3 v  will copy the file
+    to drive b:, user area 3, with verification. See below for a 
+    description of the verification method.
+
+    BUG:  CP/M does not allow two files of the same name to be open on
+    the same drive, even in different user areas.  Thus, when transferring
+    between user areas on the same drive, the target file is first named
+    with the $ convention and then renamed.  This can result in an
+    extra file being erased.
+
+    If there is too little room on the target drive, the transfer is 
+    aborted and the directory entry is erased.  Any previous file of
+    the same name in the target area is also erased.(Sorry.)
+
+D   The current file is deleted.  You will be asked if you really want
+    it erased.  If the file is read-only (R/O), then you will be given
+    a second chance to back out.
+
+R   The current file is renamed to the name you specify.  Lower case
+    will be converted to upper case, but other 'illegal' characters are
+    not trapped.  It is quite possible to give names to files that
+    CP/M won't recognize.  (You can also change them back again later,
+    however, so no harm is done.)  Responding with "*" to the prompt will 
+    put you in the batch wildcard  renaming mode.  See below.
+
+    If the file is read-only, you will be asked if you still want it 
+    renamed.  It will no longer be read-only after renaming.
+
+V   The current file is displayed at the terminal.  ^S will stop the display
+    until any other key is typed.  Otherwise, any keypress will abort.
+
+T   Tag a file for later transfer.  (See below.)
+    After being tagged, the file will be marked with an asterisk,'*'.
+    The total of all tagged files is displayed both in units they
+    occupy on the current disk and in units they would occupy on
+    a single-density disk with a 1k block size.
+
+U   Undo the effect of T (and take away the '*' or '#').
+
+
+Commands that act on many files.
+--------------------------------
+M   Mass transfer of all tagged files to a selected drive and user area.
+    This is the main reason for the program.  If the target drive fills,
+    the operation is aborted, with the untransferred files remaining 
+    tagged.  This function invokes the copy function used by C, so 
+    everything said above applies here.
+
+    If any key is typed while files are being transferred, the transfer
+    is aborted after the current file. The remaining files remain tagged.
+
+    After transferring a tagged file, the tag is changed to '#' so 
+    you can tell what has been sent.  This is for display only, the 
+    file is otherwise considered untagged, but see the A command. The '#'
+    can be removed with the U command, if desired.
+
+    If no user area is specified, or if "*" is specified, the current user
+    area of the file is used.
+
+    You may request verification on mass transfers just as in the single
+    file copy.  Just follow the drive and user specification with a space
+    and a 'v' or 'V'.
+
+A   Retags all the files currently marked with '#'.  This allows you to
+    repeat the transfers on another disk.  Useful when the same batch of
+    files must be sent to several disks.
+
+E   The E command erases all untagged files or all tagged files. 
+    You will be asked whether you want to erase the tagged files or the
+    untagged files.  Any answer other than T or t means untagged. 
+    
+    You will then be asked whether you want to be prompted or not.
+    If you ask to be prompted, you will be asked for a Y or N on each
+    file.  Otherwise, the untagged files will be deleted.
+
+    Be very careful with this one.  You can wipe out an entire directory
+    very quickly.
+
+    You can abort this operation by responding A to the prompt, or typing
+    any key in the unprompted mode (if you are quick enough).
+
+    The TAGGED option is useful after a mass transfer.  Use the A command
+    to retag all the transferred files, then use the E command to erase 
+    them.
+
+    The UNTAGGED option is useful if you want to clean up a disk or user
+    area, but retain a few key files.  Just tag the files you want to retain
+    and use the E command to erase the others.
+
+R * Batch rename.  You will be prompted for an "Old name:" and a "New name:".
+    In each case you may give any "ambiguous file name" in response.  The
+    logged-in directory, as currently displayed, is searched for matches
+    with "Old name", and the files are renamed, if possible, by the formula
+    specified in "New name". A '?' in "New name" means keep that character of
+    the current file name, an * is equivalent to filling out the remainder of
+    the field (filename or filetype) with "?"'s. Any other character replaces
+    the corresponding character in the current file name.  When the 
+    substitutions are done, embedded spaces are removed. 
+
+    You will be asked to approve each substitution before it is actually 
+    made.
+
+Old name: SWEEP???.*
+New name: TEST ???.*
+
+   These responses would result in SWEEP.COM being renamed TEST.COM, and
+   SWEEP30.PLI being renamed TEST30.PLI.
+
+
+Other commands.
+---------------
+
+B   Move to previous file. Moves to last file if you are currently on the
+    first file.
+
+L   Login new drive and user area. If the user area is ommitted, the 
+    current user area is used.  You can specify a starting place in
+    the directory. Responding 'b3 foo' will put you in user area 3
+    of drive B:, beginning at the first file >= FOO in alphabetical
+    order. Selecting "*" for user area, logs in all user areas at once.
+
+    If the starting file is a wild card specification, it is instead used
+    to select the files to be used.  Thus:
+
+	l New drive (and user area): b1:*.PLI
+
+    will log you into drive b, user area 1, and select only PLI source
+    files. 
+
+
+S   Calculates space remaining on a drive.
+
+X   Exit to CP/M.
+
+?   Redisplay menu of commands.
+
+
+Tags.
+-----
+*   Marks a tagged file.  See M and E commands.
+
+#   Marks a previously tagged file that has been transferred by the
+    M command.  It is logically untagged, and the # can be removed
+    with the U command if it bothers you. Files marked with '#' can
+    be retagged with the A command.
+
+    Unmarked files are untagged.
+
+
+Remarks.
+--------
+Whenever a drive is asked for (and on start-up), the disk system is
+reset.  This is to prevent a disk from being 'read only' under CP/M,
+and to allow you to repeat operations on fresh disks (e.g., finish a
+mass transfer after a disk fills by inserting a second disk). It also
+means that you should be free to switch density and/or number of sides
+of a disk in a particular drive.  This, however, depends on how well
+your BIOS is written.It does mean, however that a system disk must be 
+present in drive A:.
+
+
+There is no logical upper limit to directory size, nor to the size of a file
+that may be transferred.  The directory size is limited by available
+memory, though, as certain information must be kept on each entry. You should
+be able to use well over 1500 entries in a 64k system.  Figure 20 bytes
+per entry starting at 26k and running up to within 1k, or so,of the BDOS. 
+(Note: later versions of SWEEP are about 2k larger.)
+
+The sort is done with quicksort, so it will not deteriorate too badly
+with large directories.  (On the order of n*log(n).)  The rest of the
+log-on stuff is either fixed - displaying the menu - or linear in the
+directory size - reading the directory and compressing it after sorting.
+On my system, a directory of about 99 entries takes 3.5 seconds to come up.
+Of this, about 1.1 seconds is used in the sort with the rest split about
+evenly between the operations before the sort and after the sort. (Disk
+access is not figured here, since my system uses the Intersystems CACHE
+BIOS with track buffering.  Once the directory is read, it doesn't need
+to be read again. Using the standard system raises the total time to 4.9
+seconds, the difference being the physical disk access.)
+
+File transfers make use of as much memory as possible to buffer 
+data.
+
+The V command buffers only 4k (or what's available, if 4k is too much
+for either your file or your RAM).This allows large files to be sampled 
+quickly, without reading in the full file.
+
+Invalid or empty answers to any prompt will result in no action being
+taken.  Exceptions are specifying a drive you do not have (see patch
+points below) or an illegal file name under the R command.
+
+It is legal to include the colon when specifying a drive and user 
+area.  Thus responding  "B3:" is equivalent to just "B3", and
+"B3:FOO.COM" is the same as "B3 FOO.COM".
+
+Copy verification is done by computing a CRC checksum while writing the
+file. SWEEP then reads the copied file back computing it's checksum.  The
+two checksum's are compared and you are told if they don't match.
+The algorithm used is based on the standard CRC-CCITT polynomial:
+	x^16 + x^12 + x^5 + 1.
+The algorithm is similar to the one in D. Barker's corrections to CRCK,
+and it is now table driven.  It is coded in 8080 assembler for speed, and
+is found in the file SWEEPIO.ASM.
+
+The second crc computation is done with a buffer that is offset 3 bytes
+from the original buffer.  This is to help catch memory errors. Any CRC 
+errors which appear but are not flagged as bad disk sectors are probably
+due to bad memory.
+
+The CRC verification takes approximately 2.5 times as long as the straight
+copy.
+
+Patch points.
+-------------
+Two parameters should be set for your system.  If you do not have a
+PL/I compiler, they can be set with DDT.
+
+number_of_drives  should be set to the number of drives in your system.
+     This will eliminate SELECT errors.  Patch the byte at location 107H.
+     It is currently set to 4.
+
+max_user   Set this if you want a number other than 16 (0-15). Patch the
+     byte at location 10CH.
+
+In addition, you may want to patch:
+
+CRC_polynomial If you prefer a different choice of polynomial, patch the
+     bytes at locations 356CH and 3570H.  If you know enough to have a
+     preference, I assume you know what values to put in.
+

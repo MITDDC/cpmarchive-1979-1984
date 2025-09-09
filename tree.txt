@@ -1,0 +1,3616 @@
+[Sep  5 16:42]  .
+├── [Sep  5 16:41]  cpm
+│   ├── [Sep  5 13:21]  100244
+│   │   └── [Aug 11 10:40]  fjw
+│   │       ├── [Dec 11  1983]  lmodem.258
+│   │       └── [Mar 11  1984]  lmodem.261
+│   ├── [Aug 11 10:40]  3100046
+│   │   └── [Aug 11 10:40]  cpm
+│   │       └── [Mar 24  1981]  dch.h
+│   ├── [Aug 11 10:40]  3100117
+│   │   └── [Aug 11 10:40]  cpm
+│   │       ├── [Nov 13  1980]  -read-.-this-
+│   │       ├── [Nov 15  1980]  bbs.nos
+│   │       ├── [Dec  3  1980]  cpm.archiv
+│   │       ├── [Nov 29  1980]  cpyfil.asm
+│   │       ├── [Dec  1  1980]  cpyfil.hex
+│   │       ├── [Dec  4  1980]  cp{m.list
+│   │       ├── [Nov  5  1980]  crck.hex
+│   │       ├── [Nov 28  1980]  d.doc
+│   │       ├── [Nov 28  1980]  d.hex
+│   │       ├── [Dec  3  1980]  down.load
+│   │       ├── [Nov  5  1980]  fmap.hex
+│   │       ├── [Nov 24  1980]  mboot.asm
+│   │       ├── [Nov  1  1980]  mtn.doc
+│   │       ├── [Nov 20  1980]  mtn.info
+│   │       ├── [Nov 12  1980]  mtn13.hex
+│   │       ├── [Nov 20  1980]  mtn13.patch
+│   │       ├── [Nov 13  1980]  mtnmsg.hex
+│   │       ├── [Nov 29  1980]  sd.asm
+│   │       ├── [Nov 24  1980]  sd.hex
+│   │       ├── [Nov 10  1980]  unload.asm
+│   │       ├── [Nov  8  1980]  unload.hex
+│   │       ├── [Dec  3  1980]  up.load
+│   │       ├── [Dec  3  1980]  updown.doc
+│   │       └── [Nov  5  1980]  xd.hex
+│   ├── [Aug 11 10:40]  3100167
+│   │   └── [Aug 11 10:40]  eb
+│   │       └── [Oct 28  1981]  errmac.83
+│   ├── [Aug 11 10:40]  3100171
+│   │   └── [Aug 11 10:40]  eb
+│   │       └── [Nov 11  1979]  errmac.3
+│   ├── [Sep  4 17:03]  3100181
+│   │   ├── [Sep  4 17:15]  ar10.gendoc
+│   │   │   ├── [Apr  8  1981]  22cpm.doc
+│   │   │   ├── [Jan 30  1982]  22cp{m.crclst
+│   │   │   ├── [Apr 28  1982]  22dblk.doc
+│   │   │   ├── [Apr 29  1982]  22dblk.morrow
+│   │   │   ├── [Jul  8  1982]  atsign.doc
+│   │   │   ├── [Feb  7  1982]  auto.start
+│   │   │   ├── [Apr 16  1982]  bakspc.patch
+│   │   │   ├── [Jun 23  1981]  batch.doc
+│   │   │   ├── [May 15  1982]  cache.disks
+│   │   │   ├── [Nov 21  1981]  ccsbio.fix
+│   │   │   ├── [Apr 15  1982]  chain.doc
+│   │   │   ├── [Sep 14  1980]  cpm.doc
+│   │   │   ├── [Nov 11  1981]  cpyrit.doc
+│   │   │   ├── [Jun 27  1981]  crcart.doc
+│   │   │   ├── [Jun 22  1982]  eac.doc
+│   │   │   ├── [Jun 10  1982]  easy.writer
+│   │   │   ├── [Jul 19  1982]  epson.specs
+│   │   │   ├── [Apr 29  1982]  h19cod.doc
+│   │   │   ├── [Oct 20  1981]  hammin.doc
+│   │   │   ├── [Aug 25  1981]  heath.option
+│   │   │   ├── [Apr  1  1982]  hedcln.doc
+│   │   │   ├── [Nov 21  1981]  howto.hack
+│   │   │   ├── [Oct  6  1981]  lasm.doc
+│   │   │   ├── [Aug 30  1981]  libray.contrl
+│   │   │   ├── [Jun 21  1981]  marc.doc
+│   │   │   ├── [Jun 22  1981]  maron.patch
+│   │   │   ├── [Feb 21  1982]  mbasic.fre
+│   │   │   ├── [May 13  1982]  micro.shell
+│   │   │   ├── [Sep 10  1981]  modems.doc
+│   │   │   ├── [Nov 11  1981]  quikie.hints3
+│   │   │   ├── [Sep 19  1981]  supsub.11doc
+│   │   │   ├── [May 30  1981]  umpire.doc
+│   │   │   ├── [Apr 21  1982]  ws30.doc
+│   │   │   ├── [Jun  7  1982]  wsmx80.pat
+│   │   │   ├── [Apr  2  1982]  xsub.pat
+│   │   │   └── [Jul  3  1981]  zsid.patch
+│   │   ├── [Sep  5 16:36]  ar11.genasm
+│   │   │   ├── [Feb 23  1982]  banner.asm
+│   │   │   ├── [Jun 24  1981]  carry.12asm
+│   │   │   ├── [Sep 11  1981]  debug.mac
+│   │   │   ├── [Oct 20  1981]  decxha.asm
+│   │   │   ├── [Jun 19  1982]  ex.asm
+│   │   │   ├── [Jun 19  1982]  ex.com
+│   │   │   ├── [Jun 19  1982]  ex.doc
+│   │   │   ├── [Mar 29  1982]  formha.1asm
+│   │   │   ├── [Mar  6  1982]  inuse.11asm
+│   │   │   ├── [May 29  1982]  jnztes.asm
+│   │   │   ├── [Sep 12  1981]  makfcb.asm
+│   │   │   ├── [Nov 10  1980]  maksub.asm
+│   │   │   ├── [Apr 27  1982]  mdmpat.asm
+│   │   │   ├── [May  2  1982]  spttim.10asm
+│   │   │   ├── [Mar  3  1982]  sub.asm
+│   │   │   ├── [Sep 19  1981]  supsub.11asm
+│   │   │   ├── [Mar  6  1982]  time.11mac
+│   │   │   ├── [Dec  4  1981]  u.asm
+│   │   │   ├── [Apr  2  1982]  whoder.1asm
+│   │   │   └── [Oct 21  1981]  worm.21asm
+│   │   ├── [Sep  5 16:36]  ar12.gencom
+│   │   │   ├── [Jul  8  1982]  atsign.com
+│   │   │   ├── [Jun 23  1981]  batch.com
+│   │   │   ├── [Jun 22  1982]  eac.com
+│   │   │   ├── [Jun 23  1981]  exampl.bat
+│   │   │   ├── [Mar  6  1982]  inuse.11com
+│   │   │   ├── [Oct  6  1981]  lasm.com
+│   │   │   ├── [Nov 23  1981]  ramtes.com
+│   │   │   ├── [Mar  3  1982]  sub.com
+│   │   │   ├── [Mar  7  1982]  time.11com
+│   │   │   ├── [May 30  1981]  umpire.com
+│   │   │   └── [Jun 23  1981]  varbat.com
+│   │   ├── [Sep  5 16:36]  ar13.hex
+│   │   │   ├── [Nov 27  1981]  cpyfil.hex
+│   │   │   ├── [Aug  1  1982]  crck.42bhex
+│   │   │   ├── [Nov 28  1981]  fls-11.hex
+│   │   │   ├── [Apr 13  1982]  lasm.hex
+│   │   │   ├── [Feb  2  1982]  sd.42hex
+│   │   │   ├── [Nov 28  1981]  sq-15.hex
+│   │   │   ├── [Aug  1  1982]  sweep.36hex
+│   │   │   ├── [Nov 26  1981]  umpire.hex
+│   │   │   ├── [Nov 27  1981]  unload.hex
+│   │   │   └── [Nov 28  1981]  usq-15.hex
+│   │   ├── [Sep  5 16:36]  ar14.news
+│   │   │   ├── [Mar 19  1982]  cpmnet.apr81
+│   │   │   ├── [Sep 16  1981]  cpmnet.aug81
+│   │   │   ├── [Mar 19  1982]  cpmnet.feb81
+│   │   │   ├── [Mar 19  1982]  cpmnet.jan81
+│   │   │   ├── [Jul 15  1981]  cpmnet.jul81
+│   │   │   ├── [Jun 16  1981]  cpmnet.jun81
+│   │   │   ├── [Mar 19  1982]  cpmnet.mar81
+│   │   │   ├── [Apr 28  1981]  cpmnet.may81
+│   │   │   ├── [Sep 27  1981]  cpmnet.sep81
+│   │   │   └── [May 27  1981]  sig{m.jun81
+│   │   ├── [Sep  5 16:37]  ar15.catabs
+│   │   │   ├── [Jul 18  1981]  absrct.cpm048
+│   │   │   ├── [Jul 18  1981]  absrct.cpm050
+│   │   │   ├── [Jul 18  1981]  absrct.cpm051
+│   │   │   ├── [Jul 18  1981]  absrct.sgm011
+│   │   │   ├── [Jul 18  1981]  absrct.sgm019
+│   │   │   ├── [Jul 18  1981]  absrct.sgm020
+│   │   │   ├── [Jul 18  1981]  absrct.sgm021
+│   │   │   ├── [Jul 18  1981]  absrct.sgm022
+│   │   │   ├── [Jul 18  1981]  absrct.sgm023
+│   │   │   ├── [Jul 18  1981]  absrct.sgm024
+│   │   │   ├── [Jul 18  1981]  absrct.sgm025
+│   │   │   ├── [Jul 18  1981]  catlog.cpm046
+│   │   │   ├── [Jul 18  1981]  catlog.cpm048
+│   │   │   ├── [Jul 18  1981]  catlog.cpm050
+│   │   │   ├── [Jul 18  1981]  catlog.cpm051
+│   │   │   ├── [Jul 19  1981]  catlog.cpm052
+│   │   │   ├── [Jul 18  1981]  catlog.sgm011
+│   │   │   ├── [Jul 18  1981]  catlog.sgm012
+│   │   │   ├── [Jul 18  1981]  catlog.sgm013
+│   │   │   ├── [Jul 18  1981]  catlog.sgm014
+│   │   │   ├── [Jul 18  1981]  catlog.sgm015
+│   │   │   ├── [Jul 18  1981]  catlog.sgm016
+│   │   │   ├── [Jul 18  1981]  catlog.sgm017
+│   │   │   ├── [Jul 18  1981]  catlog.sgm018
+│   │   │   ├── [Jul 18  1981]  catlog.sgm019
+│   │   │   ├── [Jul 18  1981]  catlog.sgm020
+│   │   │   ├── [Jul 18  1981]  catlog.sgm021
+│   │   │   ├── [Jul 18  1981]  catlog.sgm022
+│   │   │   ├── [Jul 18  1981]  catlog.sgm023
+│   │   │   ├── [Jul 18  1981]  catlog.sgm024
+│   │   │   └── [Jul 18  1981]  catlog.sgm025
+│   │   ├── [Sep  5 16:37]  ar16.msoft
+│   │   │   ├── [Sep 12  1981]  bascom.53doc
+│   │   │   ├── [Apr 29  1982]  msftnw.apr82
+│   │   │   ├── [Apr 29  1982]  msftnw.mar82
+│   │   │   └── [Feb 21  1982]  msoft.call
+│   │   ├── [Sep  5 16:37]  ar20.dskutl
+│   │   │   ├── [Jun 20  1981]  bitmap.asm
+│   │   │   ├── [Jan  4  1982]  disk.bugcom
+│   │   │   ├── [Jan  4  1982]  disk.bugdoc
+│   │   │   ├── [Jul 23  1981]  du.v75doc
+│   │   │   ├── [Jul 23  1981]  du.v77com
+│   │   │   ├── [Feb 10  1982]  du.v78asm
+│   │   │   ├── [Mar 16  1981]  dvrpat.asm
+│   │   │   ├── [May 26  1981]  fndbad.54asm
+│   │   │   ├── [May 21  1981]  fndbad.54com
+│   │   │   └── [Apr 27  1982]  pas2cp.asm
+│   │   ├── [Sep  5 16:37]  ar21.txtutl
+│   │   │   ├── [Aug  8  1981]  df.com
+│   │   │   ├── [Nov 20  1981]  dif.2c
+│   │   │   ├── [Nov 20  1981]  dif.2com
+│   │   │   ├── [Nov 20  1981]  dif.2doc
+│   │   │   ├── [May 30  1981]  filprt.asm
+│   │   │   ├── [Jan 28  1981]  filter.11asm
+│   │   │   ├── [May  5  1981]  filter.com
+│   │   │   ├── [Mar 25  1981]  filtex.11asm
+│   │   │   ├── [May  5  1981]  filtex.com
+│   │   │   ├── [Mar 13  1982]  find.318asm
+│   │   │   ├── [Mar 13  1982]  find.318com
+│   │   │   ├── [Jan 15  1982]  index.c
+│   │   │   ├── [Jan  4  1982]  index.com
+│   │   │   ├── [Jan 15  1982]  index.doc
+│   │   │   ├── [Mar  1  1982]  roff.com
+│   │   │   ├── [Feb  1  1982]  roff.doc
+│   │   │   ├── [Nov 20  1981]  ssed.2c
+│   │   │   ├── [Nov 20  1981]  ssed.2com
+│   │   │   ├── [Oct 18  1981]  tabify.4c
+│   │   │   ├── [Oct 23  1981]  tabify.4com
+│   │   │   ├── [Feb 15  1982]  unspol.32doc
+│   │   │   └── [Feb 15  1982]  unspol.33asm
+│   │   ├── [Sep  5 16:37]  ar22.dirutl
+│   │   │   ├── [Jun 20  1981]  clenup.com
+│   │   │   ├── [Jun 23  1981]  d.27aasm
+│   │   │   ├── [Jun 13  1981]  d.27acom
+│   │   │   ├── [Dec 19  1980]  dirf.asm
+│   │   │   ├── [Dec 19  1980]  dirf.mac
+│   │   │   ├── [Oct 31  1981]  dupusr.2asm
+│   │   │   ├── [Aug  5  1982]  eraq.com
+│   │   │   ├── [Aug  5  1982]  eraq.mac
+│   │   │   ├── [Mar  3  1982]  erase.com
+│   │   │   ├── [Mar  3  1982]  erase.mac
+│   │   │   ├── [Aug  3  1981]  filfnd.11asm
+│   │   │   ├── [Mar  1  1982]  mdir.21asm
+│   │   │   ├── [Sep  2  1980]  menu.mac
+│   │   │   ├── [Feb 27  1982]  nindex.com
+│   │   │   ├── [Feb 27  1982]  nindex.doc
+│   │   │   ├── [Mar  3  1982]  protec.asm
+│   │   │   ├── [Mar  3  1982]  protec.com
+│   │   │   ├── [Mar  3  1982]  rename.asm
+│   │   │   ├── [Mar  3  1982]  rename.com
+│   │   │   ├── [Nov  3  1981]  sd.41doc
+│   │   │   ├── [Nov 28  1981]  sd.42com
+│   │   │   ├── [May 31  1982]  sd.43asm
+│   │   │   ├── [May 31  1982]  sd.43doc
+│   │   │   ├── [Mar  1  1982]  xd.282asm
+│   │   │   └── [Mar  1  1982]  xd.282com
+│   │   ├── [Sep  5 16:37]  ar23.syslib
+│   │   │   ├── [Feb 26  1982]  debug.mac
+│   │   │   ├── [Feb 23  1982]  s1file.mac
+│   │   │   ├── [Feb 23  1982]  s2file.mac
+│   │   │   ├── [Feb 26  1982]  s3file.mac
+│   │   │   ├── [Feb 26  1982]  sbdos.mac
+│   │   │   ├── [Feb 26  1982]  scaps.mac
+│   │   │   ├── [Feb 26  1982]  scath.mac
+│   │   │   ├── [Feb 26  1982]  sccout.mac
+│   │   │   ├── [Feb 26  1982]  scin.mac
+│   │   │   ├── [Feb 26  1982]  scio.mac
+│   │   │   ├── [Feb 26  1982]  sclout.mac
+│   │   │   ├── [Feb 26  1982]  scomp.mac
+│   │   │   ├── [Feb 26  1982]  scomph.mac
+│   │   │   ├── [Feb 26  1982]  scondi.mac
+│   │   │   ├── [Feb 26  1982]  scout.mac
+│   │   │   ├── [Feb 26  1982]  scpout.mac
+│   │   │   ├── [Feb 26  1982]  scrlf.mac
+│   │   │   ├── [Feb 26  1982]  scst.mac
+│   │   │   ├── [Feb 26  1982]  sdir.mac
+│   │   │   ├── [Feb 26  1982]  sen.mac
+│   │   │   ├── [Feb 26  1982]  seval.mac
+│   │   │   ├── [Feb 26  1982]  seval1.mac
+│   │   │   ├── [Feb 26  1982]  seval2.mac
+│   │   │   ├── [Feb 26  1982]  seval3.mac
+│   │   │   ├── [Feb 26  1982]  seval4.mac
+│   │   │   ├── [Feb 26  1982]  sfclos.mac
+│   │   │   ├── [Feb 26  1982]  sfdel.mac
+│   │   │   ├── [Feb 26  1982]  sfilei.mac
+│   │   │   ├── [Feb 26  1982]  sfill.mac
+│   │   │   ├── [Feb 26  1982]  sfmake.mac
+│   │   │   ├── [Feb 26  1982]  sfopen.mac
+│   │   │   ├── [Feb 26  1982]  sfread.mac
+│   │   │   ├── [Feb 26  1982]  sfwrit.mac
+│   │   │   ├── [Feb 26  1982]  sinitf.mac
+│   │   │   ├── [Feb 26  1982]  sinlin.mac
+│   │   │   ├── [Feb 26  1982]  sinstr.mac
+│   │   │   ├── [Feb 26  1982]  sla2hc.mac
+│   │   │   ├── [Feb 26  1982]  sladc.mac
+│   │   │   ├── [Feb 26  1982]  slcrlf.mac
+│   │   │   ├── [Feb 26  1982]  slhl4h.mac
+│   │   │   ├── [Feb 26  1982]  slhl5d.mac
+│   │   │   ├── [Feb 26  1982]  slout.mac
+│   │   │   ├── [Feb 26  1982]  slprin.mac
+│   │   │   ├── [Feb 26  1982]  slpstr.mac
+│   │   │   ├── [Feb 26  1982]  sma2hc.mac
+│   │   │   ├── [Feb 26  1982]  smadc.mac
+│   │   │   ├── [Feb 26  1982]  smhl4h.mac
+│   │   │   ├── [Feb 26  1982]  smhl5d.mac
+│   │   │   ├── [Feb 26  1982]  smove.mac
+│   │   │   ├── [Feb 26  1982]  spa2hc.mac
+│   │   │   ├── [Feb 26  1982]  spadc.mac
+│   │   │   ├── [Feb 26  1982]  sphl4h.mac
+│   │   │   ├── [Feb 26  1982]  sphl5d.mac
+│   │   │   ├── [Mar  3  1982]  spout.mac
+│   │   │   ├── [Feb 26  1982]  sprint.mac
+│   │   │   ├── [Feb 26  1982]  spstr.mac
+│   │   │   ├── [Mar  3  1982]  srin.mac
+│   │   │   ├── [Feb 26  1982]  sscann.mac
+│   │   │   ├── [Feb 26  1982]  syslib.hlp
+│   │   │   ├── [Mar  3  1982]  syslib.rel
+│   │   │   └── [Feb 26  1982]  systes.mac
+│   │   ├── [Sep  5 16:37]  ar24.filutl
+│   │   │   ├── [May 30  1981]  compar.asm
+│   │   │   ├── [May 30  1981]  compar.com
+│   │   │   ├── [Nov 29  1980]  cpyfil.15asm
+│   │   │   ├── [May  5  1981]  cpyfil.15com
+│   │   │   ├── [Oct 17  1981]  crc.120asm
+│   │   │   ├── [Jul  6  1982]  crck.42basm
+│   │   │   ├── [Jul  6  1982]  crck.42bcom
+│   │   │   ├── [Apr 27  1982]  crck.sort
+│   │   │   ├── [Oct 22  1981]  fmhard.asm
+│   │   │   ├── [Aug  8  1981]  hexdif.com
+│   │   │   ├── [Jul 30  1981]  mft.46aasm
+│   │   │   ├── [Nov 28  1980]  move.asm
+│   │   │   ├── [Mar 25  1982]  paswrd.30asm
+│   │   │   ├── [Apr 22  1982]  rt11.c
+│   │   │   ├── [Apr 22  1982]  rt11.doc
+│   │   │   ├── [Apr 22  1982]  rt11.h
+│   │   │   ├── [Jul 11  1982]  rt11.msg
+│   │   │   ├── [Apr 22  1982]  rtfile.c
+│   │   │   ├── [Apr 22  1982]  rtmisc.c
+│   │   │   ├── [Jul 14  1981]  scrmbl.2asm
+│   │   │   ├── [May 30  1981]  scrmbl.doc
+│   │   │   ├── [Jul  6  1982]  sweep.35doc
+│   │   │   ├── [Aug  1  1982]  sweep.36com
+│   │   │   ├── [Oct 22  1981]  tohard.asm
+│   │   │   ├── [Nov 10  1980]  unload.asm
+│   │   │   └── [May  5  1981]  unload.com
+│   │   ├── [Sep  5 16:37]  ar25.disasm
+│   │   │   ├── [Apr 24  1982]  dasm.tdl
+│   │   │   ├── [Apr 24  1982]  dasm.zlg
+│   │   │   ├── [Apr 17  1982]  resorc.com
+│   │   │   ├── [Apr 18  1982]  resorc.hex
+│   │   │   ├── [Jun 13  1982]  zdasm.com
+│   │   │   ├── [Jun 13  1982]  zdasm.mac
+│   │   │   ├── [Jun 13  1982]  zdasmt.mac
+│   │   │   ├── [May 16  1982]  zdasmz.mac
+│   │   │   └── [Apr 24  1982]  zzsorc.asm
+│   │   ├── [Sep  5 16:37]  ar26.sort
+│   │   │   ├── [Apr 29  1982]  sortv.14asm
+│   │   │   └── [Apr 29  1982]  sortv.doc
+│   │   ├── [Sep  5 16:37]  ar27.list
+│   │   │   ├── [Mar  3  1982]  list.asm
+│   │   │   ├── [Mar  3  1982]  list.com
+│   │   │   ├── [Jul  8  1981]  mlist.50asm
+│   │   │   ├── [Nov 24  1981]  mlist.50com
+│   │   │   ├── [Jun 27  1982]  print2.35asm
+│   │   │   ├── [Jun 27  1982]  print2.35com
+│   │   │   └── [Jun 27  1982]  print2.35hex
+│   │   ├── [Sep  5 16:37]  ar28.cpmarc
+│   │   │   ├── [Jul 23  1982]  arcadd.10com
+│   │   │   ├── [Jul 23  1982]  arccpy.10com
+│   │   │   ├── [Jul 25  1982]  arcdir.12com
+│   │   │   ├── [Jul 23  1982]  arcget.11com
+│   │   │   ├── [Jul 23  1982]  archiv.hlp
+│   │   │   └── [Jul 23  1982]  arctyp.10com
+│   │   ├── [Sep  5 16:37]  ar30.basic
+│   │   │   └── [Oct 30  1981]  xref.bas
+│   │   ├── [Sep  5 16:37]  ar31.pascal
+│   │   │   ├── [Feb  4  1982]  cal.com
+│   │   │   ├── [Feb  4  1982]  cal.pas
+│   │   │   ├── [Apr 27  1982]  cpmcop.pas
+│   │   │   ├── [Mar 11  1982]  modem3.8080io
+│   │   │   ├── [Mar 11  1982]  modem3.pas
+│   │   │   ├── [Mar 11  1982]  modem3.z80-io
+│   │   │   ├── [Apr  6  1982]  xydemo.pas
+│   │   │   └── [Apr  6  1982]  xyplot.pas
+│   │   ├── [Sep  5 16:37]  ar32.forth
+│   │   │   ├── [Nov  6  1981]  forth.asm
+│   │   │   ├── [Nov  7  1981]  forth.z80com
+│   │   │   ├── [Nov  7  1981]  forth.z80mac
+│   │   │   └── [Dec 20  1981]  nit4th.asm
+│   │   ├── [Sep  5 16:37]  ar33.ratfor
+│   │   │   ├── [Nov  9  1981]  asmdef.rat
+│   │   │   ├── [Nov  9  1981]  consts.rat
+│   │   │   ├── [Nov  9  1981]  f77.doc
+│   │   │   ├── [Nov  9  1981]  f77def.rat
+│   │   │   ├── [Nov  9  1981]  f77lib.for
+│   │   │   ├── [Nov  9  1981]  index.z80
+│   │   │   ├── [Nov  9  1981]  indext.for
+│   │   │   ├── [Nov  9  1981]  ioer.z80
+│   │   │   ├── [Nov  9  1981]  lcat.doc
+│   │   │   ├── [Nov  9  1981]  lcat.rat
+│   │   │   ├── [Nov  9  1981]  ratcmn.rat
+│   │   │   ├── [Nov  9  1981]  ratfor.doc
+│   │   │   ├── [Nov  9  1981]  ratfor.for
+│   │   │   ├── [Nov  9  1981]  ratfor.rat
+│   │   │   └── [Nov  9  1981]  trnslt.z80
+│   │   ├── [Sep  5 16:37]  ar34.bdsc-1
+│   │   │   ├── [Mar 15  1982]  bds.46lib
+│   │   │   ├── [Jan 30  1982]  bdscio.h
+│   │   │   ├── [Jan 30  1982]  c.ccc
+│   │   │   ├── [Mar  3  1982]  casm.c
+│   │   │   ├── [Mar  3  1982]  casm.doc
+│   │   │   ├── [Mar  3  1982]  casm.sub
+│   │   │   ├── [Jan 30  1982]  ccc.asm
+│   │   │   ├── [Jan 30  1982]  deff.crl
+│   │   │   ├── [Mar 14  1982]  deff2.crl
+│   │   │   ├── [Mar 23  1982]  deff2.csm
+│   │   │   ├── [Mar 23  1982]  deff2a.csm
+│   │   │   ├── [Feb  1  1982]  dio.c
+│   │   │   ├── [Jan 30  1982]  dio.h
+│   │   │   ├── [Jan 30  1982]  float.c
+│   │   │   ├── [Jan 30  1982]  float.doc
+│   │   │   ├── [Jan 30  1982]  fltsum.c
+│   │   │   ├── [Mar 18  1982]  noboot.c
+│   │   │   ├── [Jan 30  1982]  sieve.c
+│   │   │   ├── [Jan 30  1982]  stdlb1.c
+│   │   │   ├── [Jan 30  1982]  stdlb2.c
+│   │   │   ├── [Jul  6  1982]  wildex.14c
+│   │   │   └── [Mar 22  1982]  wildex.c
+│   │   ├── [Sep  5 16:37]  ar35.bdsc-2
+│   │   │   ├── [Jan 29  1982]  chario.c
+│   │   │   ├── [Jul 11  1982]  crypt.c
+│   │   │   ├── [Jul 11  1982]  crypt.com
+│   │   │   ├── [Jan 29  1982]  l2.c
+│   │   │   ├── [Jan 28  1982]  l2.doc
+│   │   │   ├── [Mar 23  1982]  l2link.fix
+│   │   │   ├── [Jan 31  1982]  load.c
+│   │   │   ├── [Jan 30  1982]  lpr.c
+│   │   │   ├── [Jan 27  1982]  lprint.c
+│   │   │   ├── [Jan 31  1982]  makovl.c
+│   │   │   ├── [Mar 22  1982]  nl2.c
+│   │   │   ├── [Mar 22  1982]  portio.c
+│   │   │   ├── [Mar 24  1982]  portio.h
+│   │   │   ├── [Jan 29  1982]  scott.c
+│   │   │   ├── [Mar 23  1982]  teled.c
+│   │   │   ├── [Mar 20  1982]  teled.doc
+│   │   │   ├── [Jun 24  1982]  uniq.c
+│   │   │   ├── [Jan 31  1982]  untip.c
+│   │   │   ├── [Jan 30  1982]  wavy.c
+│   │   │   └── [Feb  6  1982]  xc.c
+│   │   ├── [Sep  5 16:37]  ar36.bdsc-3
+│   │   │   ├── [Mar 18  1982]  alph.c
+│   │   │   ├── [Mar  3  1982]  casm.com
+│   │   │   ├── [Mar 18  1982]  cat.c
+│   │   │   ├── [Jul  6  1982]  cdir.c
+│   │   │   ├── [Mar 11  1982]  cio.c
+│   │   │   ├── [May 31  1982]  config.c
+│   │   │   ├── [Mar 19  1982]  cp.c
+│   │   │   ├── [Mar 18  1982]  echo.c
+│   │   │   ├── [Apr 26  1982]  fs.c
+│   │   │   ├── [May 30  1982]  lcheck.c
+│   │   │   ├── [Feb 24  1982]  qsort.tip
+│   │   │   ├── [Mar 24  1982]  rm.c
+│   │   │   ├── [Mar 18  1982]  rmf.c
+│   │   │   ├── [Mar 25  1982]  rmx.c
+│   │   │   ├── [Feb 28  1982]  sample.csm
+│   │   │   ├── [Mar 18  1982]  sd.c
+│   │   │   ├── [Mar  8  1982]  stdlib.doc
+│   │   │   ├── [Mar 18  1982]  stripc.c
+│   │   │   ├── [Mar 18  1982]  symp.c
+│   │   │   ├── [May 31  1982]  tinit.c
+│   │   │   ├── [Jan 27  1982]  usrcod.c
+│   │   │   ├── [Jan 30  1982]  v143.doc
+│   │   │   ├── [Jan 30  1982]  v144.doc
+│   │   │   ├── [Jan 29  1982]  v145.doc
+│   │   │   ├── [Mar  8  1982]  v146.doc
+│   │   │   └── [Mar 17  1982]  wc.c
+│   │   ├── [Sep  5 16:37]  ar40.apple
+│   │   │   ├── [Oct 31  1981]  apbdsc.patchs
+│   │   │   ├── [Jun  5  1981]  apboot.mac
+│   │   │   ├── [Apr 27  1982]  apbye.69asm
+│   │   │   ├── [Jun  5  1981]  aphigh.memasm
+│   │   │   ├── [Mar 10  1981]  apmbot.asm
+│   │   │   ├── [Jun  5  1981]  apmodm.21asm
+│   │   │   ├── [Apr 27  1982]  apmodm.2asm
+│   │   │   ├── [Jun  5  1981]  apmodm.doc
+│   │   │   ├── [Apr 26  1982]  apunsp.msg
+│   │   │   ├── [Sep 27  1981]  apxmdm.41asm
+│   │   │   ├── [Apr  1  1982]  cpmxfr.com
+│   │   │   ├── [Apr  1  1982]  cpmxfr.doc
+│   │   │   ├── [Apr  1  1982]  cpmxfr.hex
+│   │   │   └── [May  4  1982]  lksmth.list
+│   │   ├── [Sep  5 16:37]  ar41.osborn
+│   │   │   ├── [Apr 26  1982]  bdscio.h-osb
+│   │   │   ├── [Apr 27  1982]  mdio.c-osb
+│   │   │   ├── [May 30  1982]  modem7.osbcom
+│   │   │   ├── [Jan  9  1982]  modema.osborn
+│   │   │   ├── [Jan  9  1982]  modemc.osborn
+│   │   │   ├── [May 31  1982]  omodem.216hex
+│   │   │   ├── [May 28  1982]  osbtrx.10doc
+│   │   │   ├── [Jun 30  1982]  oterm.303com
+│   │   │   ├── [Jun 30  1982]  oterm.303msg
+│   │   │   ├── [May 31  1982]  oterm.30doc
+│   │   │   ├── [May 30  1982]  oterm.doc
+│   │   │   ├── [Jan  6  1982]  plink.osborn
+│   │   │   └── [Apr 26  1982]  rain.c
+│   │   ├── [Sep  5 16:37]  ar42.trs-80
+│   │   │   ├── [Feb  6  1982]  trs-ii.modem
+│   │   │   └── [Nov  8  1981]  trsurt.asm
+│   │   ├── [Sep  5 16:37]  ar43.unix
+│   │   │   ├── [Jun  9  1982]  cpmutl.6c
+│   │   │   ├── [Jul 11  1982]  cpmutl.6cmsg
+│   │   │   ├── [Jun  9  1982]  tmodem.c
+│   │   │   ├── [Apr 17  1982]  umodem.c
+│   │   │   └── [Apr 17  1982]  umodem.his
+│   │   ├── [Sep  5 16:37]  ar44.heath
+│   │   │   ├── [Jun  8  1982]  consol.h
+│   │   │   ├── [Jun  8  1982]  szofrm.c
+│   │   │   ├── [Jun  8  1982]  teledt.abs
+│   │   │   ├── [Jun  8  1982]  teledt.c
+│   │   │   ├── [Jun  8  1982]  teledt.doc
+│   │   │   ├── [May 31  1982]  zb4mhz.asm
+│   │   │   └── [May 31  1982]  zb4mhz.doc
+│   │   ├── [Sep  5 16:37]  ar44.heath_0
+│   │   │   ├── [Jun  8  1982]  consol.h
+│   │   │   ├── [Aug  9  1982]  proms.msg
+│   │   │   ├── [Jun  8  1982]  szofrm.c
+│   │   │   ├── [Jun  8  1982]  teledt.abs
+│   │   │   ├── [Jun  8  1982]  teledt.c
+│   │   │   ├── [Jun  8  1982]  teledt.doc
+│   │   │   ├── [May 31  1982]  zb4mhz.asm
+│   │   │   └── [May 31  1982]  zb4mhz.doc
+│   │   ├── [Sep  5 16:37]  ar45.atari
+│   │   │   ├── [Aug  1  1982]  amodem.3bas
+│   │   │   └── [Aug  1  1982]  aut850.bas
+│   │   ├── [Sep  5 16:37]  ar50.help
+│   │   │   ├── [Jun 26  1981]  algolm.hlp
+│   │   │   ├── [Jun 26  1981]  asm2.hlp
+│   │   │   ├── [Jun 26  1981]  c.hlp
+│   │   │   ├── [Jul 24  1981]  catlog.hlp
+│   │   │   ├── [Jun 26  1981]  cbas.hlp
+│   │   │   ├── [Jun 26  1981]  cbas2.hlp
+│   │   │   ├── [Jul 24  1981]  cpm2.hlp
+│   │   │   ├── [May 27  1981]  du-v75.hlp
+│   │   │   ├── [Jun 26  1981]  fortra.hlp
+│   │   │   ├── [Nov  2  1981]  help.20asm
+│   │   │   ├── [Nov  2  1981]  help.20com
+│   │   │   ├── [Nov  5  1981]  help.20hlp
+│   │   │   ├── [Jul 24  1981]  link.hlp
+│   │   │   ├── [Jun  3  1981]  mac.hlp
+│   │   │   ├── [Jun  3  1981]  masm.hlp
+│   │   │   ├── [Jul 24  1981]  mbasic.hlp
+│   │   │   ├── [Nov 20  1981]  pascal.hlp
+│   │   │   ├── [Jul 25  1981]  phelp.com
+│   │   │   ├── [Nov 20  1981]  phelp.mac
+│   │   │   └── [May 27  1981]  resour.hlp
+│   │   ├── [Sep  5 16:37]  ar51.sq{usq
+│   │   │   ├── [Jun 28  1981]  bdscio.h
+│   │   │   ├── [Nov 19  1981]  chnges.doc
+│   │   │   ├── [Jan 12  1982]  dio.h
+│   │   │   ├── [Jan 12  1982]  dio2.c
+│   │   │   ├── [Sep 11  1981]  fls-11.com
+│   │   │   ├── [Jan 12  1982]  fls.c
+│   │   │   ├── [Nov 19  1981]  histry.doc
+│   │   │   ├── [Jan 12  1982]  io.c
+│   │   │   ├── [Nov 19  1981]  readme.doc
+│   │   │   ├── [Sep 11  1981]  sq-15.com
+│   │   │   ├── [Apr  2  1982]  sq.c
+│   │   │   ├── [Nov 19  1981]  sq.h
+│   │   │   ├── [Jun 28  1981]  sqcom.h
+│   │   │   ├── [Nov 19  1981]  sqdbug.c
+│   │   │   ├── [Nov 19  1981]  sqezer.doc
+│   │   │   ├── [Nov 19  1981]  sq{usq.15doc
+│   │   │   ├── [Jun 28  1981]  tr1.c
+│   │   │   ├── [Nov 19  1981]  tr2.c
+│   │   │   ├── [Aug 26  1981]  typesq.14c
+│   │   │   ├── [Aug 26  1981]  typesq.14com
+│   │   │   ├── [Aug 26  1981]  typesq.14crc
+│   │   │   ├── [Nov 19  1981]  typesq.14doc
+│   │   │   ├── [Aug 26  1981]  typesq.40bcom
+│   │   │   ├── [Aug 27  1981]  typesq.80bcom
+│   │   │   ├── [Aug 26  1981]  typesq.ntcom
+│   │   │   ├── [Sep 11  1981]  usq-15.com
+│   │   │   ├── [Nov 19  1981]  usq.c
+│   │   │   ├── [Jun 28  1981]  usq.h
+│   │   │   └── [Jun 28  1981]  utr.c
+│   │   ├── [Sep  5 16:37]  ar52.voice
+│   │   │   ├── [Nov 19  1981]  speech.bas
+│   │   │   ├── [Oct 26  1981]  talk@.lib
+│   │   │   ├── [Oct 26  1981]  vmac.asm
+│   │   │   ├── [Oct 26  1981]  voic@.crc
+│   │   │   ├── [Oct 22  1981]  voic@.doc
+│   │   │   ├── [Oct 26  1981]  voic@.equlib
+│   │   │   ├── [Oct 26  1981]  voic@.lib
+│   │   │   ├── [Dec  1  1981]  voice.c
+│   │   │   ├── [Dec  1  1981]  voice.c-doc
+│   │   │   ├── [Oct 26  1981]  vrmac.asm
+│   │   │   └── [Feb  6  1982]  yesmst.voc
+│   │   ├── [Sep  5 16:37]  ar53.catlog
+│   │   │   ├── [Nov 14  1981]  cat.asm
+│   │   │   ├── [Nov 14  1981]  catlog.doc
+│   │   │   ├── [Nov 14  1981]  crsref.asm
+│   │   │   ├── [Nov 14  1981]  fmap.asm
+│   │   │   ├── [Aug 22  1981]  fmap.com
+│   │   │   ├── [Nov 14  1981]  qcat.asm
+│   │   │   ├── [Nov 14  1981]  ucat.asm
+│   │   │   └── [Nov 20  1981]  ucat2.asm
+│   │   ├── [Sep  5 16:37]  ar54.fast2
+│   │   │   ├── [Oct 10  1981]  discus.patasm
+│   │   │   ├── [Oct 10  1981]  dms.patasm
+│   │   │   ├── [Oct 10  1981]  fast.manual
+│   │   │   ├── [Oct 10  1981]  fast2.asm
+│   │   │   ├── [Oct 10  1981]  fast2.com
+│   │   │   ├── [Oct 10  1981]  fast2.comdoc
+│   │   │   ├── [Oct 10  1981]  instal.doc
+│   │   │   ├── [Oct 10  1981]  microp.patasm
+│   │   │   ├── [Oct 10  1981]  pakup2.asm
+│   │   │   ├── [Oct 10  1981]  rel.asm
+│   │   │   ├── [Oct 10  1981]  rel.utl
+│   │   │   ├── [Oct 10  1981]  relcpm.doc
+│   │   │   ├── [Oct 10  1981]  relcpm.sub
+│   │   │   ├── [Oct 10  1981]  reled.sub
+│   │   │   ├── [Oct 10  1981]  relhdr.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.com
+│   │   │   ├── [Oct 10  1981]  skew2.patasm
+│   │   │   ├── [Oct 10  1981]  skew3.patasm
+│   │   │   └── [Oct 10  1981]  utl.lib
+│   │   ├── [Sep  5 16:37]  ar55.ccp
+│   │   │   ├── [Sep 10  1981]  22pub.asm
+│   │   │   ├── [Sep  8  1981]  autox.asm
+│   │   │   ├── [Mar 14  1981]  ccppat.asm
+│   │   │   ├── [Apr  2  1982]  fifos.mac
+│   │   │   ├── [Dec 15  1981]  gendoc.31
+│   │   │   ├── [Oct  5  1981]  gensys.32asm
+│   │   │   ├── [Jan 15  1982]  genusr.37asm
+│   │   │   ├── [Oct 10  1981]  nsusr5.zasm
+│   │   │   ├── [Dec 15  1981]  xtcpm.15asm
+│   │   │   ├── [Dec 15  1981]  xtcpm.15doc
+│   │   │   └── [Mar 28  1982]  xtcpm.msg
+│   │   ├── [Sep  5 16:37]  ar56.zcpr
+│   │   │   ├── [Jul  3  1981]  bdloc.asm
+│   │   │   ├── [Jun 24  1982]  nzcpr.14bdif
+│   │   │   ├── [Mar 18  1982]  pass.asm
+│   │   │   ├── [Dec 11  1981]  zcpr.asm
+│   │   │   ├── [Dec 13  1981]  zcpr.doc
+│   │   │   ├── [Aug  1  1982]  zcpr.eramod
+│   │   │   ├── [Dec 13  1981]  zcpr.hlp
+│   │   │   ├── [Dec 13  1981]  zcpr.msg
+│   │   │   └── [Mar 15  1982]  zcprbf.asm
+│   │   ├── [Sep  5 16:37]  ar58.maclib
+│   │   │   ├── [Oct 24  1981]  macro.lib
+│   │   │   ├── [Apr  2  1982]  macros.tip
+│   │   │   ├── [Feb 19  1982]  macroz.mac
+│   │   │   ├── [Jul  8  1981]  seqio.lib
+│   │   │   ├── [Mar  7  1982]  xmac.asm
+│   │   │   ├── [Oct 10  1981]  z80-v3.lib
+│   │   │   └── [Oct 10  1981]  z80ext.lib
+│   │   ├── [Sep  5 16:37]  ar60.modem2
+│   │   │   ├── [Oct 22  1981]  batcom.com
+│   │   │   ├── [Jun 24  1981]  cmodem.13c
+│   │   │   ├── [Jun 26  1981]  dch.h
+│   │   │   ├── [Nov 24  1980]  mboot.3asm
+│   │   │   ├── [Nov 11  1981]  modem.216asm
+│   │   │   ├── [Apr 27  1982]  modem.221asm
+│   │   │   ├── [Mar  8  1981]  modem.doc
+│   │   │   ├── [Apr  9  1982]  modem.tops20
+│   │   │   ├── [Apr 29  1981]  modem2.proto
+│   │   │   ├── [Mar 25  1982]  modem2.protoc
+│   │   │   ├── [Jun 24  1981]  pmmi.h
+│   │   │   ├── [Feb  2  1982]  sndout.7asm
+│   │   │   ├── [Mar  8  1982]  xfer.13bas
+│   │   │   ├── [Mar  8  1982]  xfer.13doc
+│   │   │   ├── [May 15  1982]  xmodem.sai
+│   │   │   └── [Apr  8  1982]  xmodem.saimsg
+│   │   ├── [Sep  5 16:37]  ar61.modem7
+│   │   │   ├── [May 17  1982]  modem.763set
+│   │   │   ├── [May 29  1982]  modem.765asm
+│   │   │   ├── [Feb 27  1982]  modem.76lib
+│   │   │   ├── [May 29  1982]  modem.7xxhis
+│   │   │   └── [Nov 22  1981]  modem7.doc
+│   │   ├── [Sep  5 16:37]  ar62.yam
+│   │   │   ├── [Feb 23  1982]  yam.h
+│   │   │   ├── [Feb 23  1982]  yam.sub
+│   │   │   ├── [Feb 23  1982]  yam1.c
+│   │   │   ├── [Dec  8  1981]  yam8.asm
+│   │   │   ├── [Dec  8  1981]  yam9.asm
+│   │   │   └── [Feb 23  1982]  yamapl.h
+│   │   ├── [Sep  5 16:37]  ar63.rcpm
+│   │   │   ├── [Apr 14  1982]  bye.79asm
+│   │   │   ├── [Jun  3  1982]  bye.79fix
+│   │   │   ├── [Nov 23  1981]  chat.17asm
+│   │   │   ├── [Jun 24  1982]  paswrd.fun
+│   │   │   ├── [Jul 14  1981]  rbbs.25asc
+│   │   │   ├── [Mar 24  1981]  rbbs.usedoc
+│   │   │   ├── [Dec  5  1981]  rbsutl.22asc
+│   │   │   ├── [Nov 24  1981]  scurty.2asm
+│   │   │   ├── [Jul 14  1981]  secure.sysdoc
+│   │   │   ├── [Nov 24  1981]  tag.2asm
+│   │   │   ├── [Mar 14  1981]  user.88asm
+│   │   │   ├── [Nov 11  1981]  userpw.34asm
+│   │   │   ├── [May 20  1982]  xmodem.49asm
+│   │   │   ├── [May 20  1982]  xmodem.49fix
+│   │   │   └── [Jul 15  1981]  xmodem.c
+│   │   ├── [Sep  5 16:37]  ar64.term
+│   │   │   ├── [Aug 11  1981]  dial.3asm
+│   │   │   ├── [Jan  8  1982]  mtn.22bcom
+│   │   │   ├── [Feb  1  1982]  mtn.22bdoc
+│   │   │   ├── [May 23  1981]  mtn.info
+│   │   │   ├── [Nov  4  1981]  mtn21.offcom
+│   │   │   ├── [Nov  9  1981]  mtn21.offdoc
+│   │   │   ├── [Aug  9  1981]  mtn21.offhex
+│   │   │   ├── [May 20  1981]  mtnmsg.ovr
+│   │   │   ├── [Jul  7  1981]  plink.65asm
+│   │   │   ├── [Jul  4  1981]  plink.65doc
+│   │   │   ├── [Apr  2  1982]  ubpmmi.asm
+│   │   │   └── [Apr 21  1982]  z19.asm
+│   │   ├── [Sep  5 16:37]  ar65.smodem
+│   │   │   ├── [Apr  8  1982]  smodem.38doc
+│   │   │   ├── [Apr  8  1982]  smodem.38fix
+│   │   │   ├── [Apr  8  1982]  smodem.38mac
+│   │   │   └── [Sep 10  1981]  smodem.doc
+│   │   ├── [Sep  5 16:37]  ar66.micnet
+│   │   │   ├── [Jun 13  1982]  bufexc.asm
+│   │   │   ├── [Apr 21  1982]  cis.proto
+│   │   │   ├── [Mar 20  1982]  cis.sysdoc
+│   │   │   ├── [Apr  2  1982]  dow.12com
+│   │   │   ├── [Apr  2  1982]  dow.12hex
+│   │   │   ├── [Apr  2  1982]  dow.12mac
+│   │   │   ├── [Apr 23  1982]  dowpmm.dif
+│   │   │   ├── [Mar 22  1982]  mnet.proto
+│   │   │   ├── [Jul  6  1982]  mnet.signup
+│   │   │   ├── [Mar 15  1982]  mnexec.doc
+│   │   │   ├── [Apr  2  1982]  upload.12com
+│   │   │   ├── [Apr  2  1982]  upload.12hex
+│   │   │   ├── [Apr  2  1982]  upload.12mac
+│   │   │   └── [Apr 23  1982]  uppmmi.dif
+│   │   └── [Aug 11 10:40]  cpm
+│   │       ├── [Aug  9  1982]  _file_.(dir)_0
+│   │       ├── [Jul 26  1982]  ar10.gendoc
+│   │       ├── [Jun 19  1982]  ar11.genasm
+│   │       ├── [Jul  8  1982]  ar12.gencom
+│   │       ├── [Aug  1  1982]  ar13.hex
+│   │       ├── [Mar 19  1982]  ar14.news
+│   │       ├── [Jul 19  1981]  ar15.catabs
+│   │       ├── [Apr 29  1982]  ar16.msoft
+│   │       ├── [Apr 28  1982]  ar20.dskutl
+│   │       ├── [May 31  1982]  ar21.txtutl
+│   │       ├── [Aug  5  1982]  ar22.dirutl
+│   │       ├── [Mar  3  1982]  ar23.syslib
+│   │       ├── [Aug  1  1982]  ar24.filutl
+│   │       ├── [Jun 13  1982]  ar25.disasm
+│   │       ├── [May 31  1982]  ar26.sort
+│   │       ├── [Jun 27  1982]  ar27.list
+│   │       ├── [Jul 28  1982]  ar28.cpmarc
+│   │       ├── [Nov 21  1981]  ar30.basic
+│   │       ├── [Apr 28  1982]  ar31.pascal
+│   │       ├── [Dec 20  1981]  ar32.forth
+│   │       ├── [Nov  9  1981]  ar33.ratfor
+│   │       ├── [Jul 19  1982]  ar34.bdsc-1
+│   │       ├── [Jul 14  1982]  ar35.bdsc-2
+│   │       ├── [Jul 14  1982]  ar36.bdsc-3
+│   │       ├── [May 20  1982]  ar40.apple
+│   │       ├── [Jun 30  1982]  ar41.osborn
+│   │       ├── [Mar 29  1982]  ar42.trs-80
+│   │       ├── [Jul 11  1982]  ar43.unix
+│   │       ├── [Jun  8  1982]  ar44.heath
+│   │       ├── [Aug  9  1982]  ar44.heath_0
+│   │       ├── [Aug  1  1982]  ar45.atari
+│   │       ├── [Mar  1  1982]  ar50.help
+│   │       ├── [Apr  2  1982]  ar51.sq{usq
+│   │       ├── [Feb  6  1982]  ar52.voice
+│   │       ├── [Jan 31  1982]  ar53.catlog
+│   │       ├── [Oct 10  1981]  ar54.fast2
+│   │       ├── [May 29  1982]  ar55.ccp
+│   │       ├── [Aug  1  1982]  ar56.zcpr
+│   │       ├── [Apr  2  1982]  ar58.maclib
+│   │       ├── [May 15  1982]  ar60.modem2
+│   │       ├── [May 29  1982]  ar61.modem7
+│   │       ├── [Feb 23  1982]  ar62.yam
+│   │       ├── [Jun 25  1982]  ar63.rcpm
+│   │       ├── [Apr 24  1982]  ar64.term
+│   │       ├── [Apr  8  1982]  ar65.smodem
+│   │       ├── [Jul  6  1982]  ar66.micnet
+│   │       ├── [May  1  1982]  bbsnos.byarea
+│   │       ├── [Apr 30  1982]  bbsnos.byname
+│   │       ├── [Aug  9  1982]  cpm.archiv
+│   │       ├── [Jun  8  1982]  cpm.dirlst
+│   │       ├── [Jul 21  1982]  forth.archiv
+│   │       ├── [Aug  9  1982]  micro.archiv
+│   │       ├── [Aug  9  1982]  micro.archiv_0
+│   │       ├── [Jun 20  1982]  mince.list
+│   │       ├── [Feb 11  1982]  mtn.info
+│   │       ├── [Jul  6  1982]  rcp-m.nos
+│   │       ├── [May 25  1982]  ts.lmodem
+│   │       └── [Feb 10  1982]  wewcpm.index
+│   ├── [Sep  4 17:03]  7005176
+│   │   ├── [Sep  5 16:37]  ar16.msoft
+│   │   │   ├── [Sep 12  1981]  bascom.53doc
+│   │   │   ├── [Feb 21  1982]  mbasic.fre
+│   │   │   ├── [Apr 29  1982]  msftnw.apr82
+│   │   │   ├── [Apr 29  1982]  msftnw.mar82
+│   │   │   └── [Feb 21  1982]  msoft.call
+│   │   ├── [Sep  5 16:37]  ar25.disasm
+│   │   │   ├── [Apr 17  1982]  resorc.com
+│   │   │   ├── [Apr 18  1982]  resorc.hex
+│   │   │   ├── [Aug 17  1982]  zdasm.15com
+│   │   │   ├── [Aug 22  1982]  zdasm.15hex
+│   │   │   ├── [Aug 17  1982]  zdasm.15mac
+│   │   │   ├── [Jun 13  1982]  zdasmt.mac
+│   │   │   └── [May 16  1982]  zdasmz.mac
+│   │   ├── [Sep  5 16:37]  ar26.sort
+│   │   │   ├── [Apr  7  1983]  b-sort.c
+│   │   │   ├── [Apr  7  1983]  b-sort.com
+│   │   │   ├── [Apr  7  1983]  bsort.asm
+│   │   │   ├── [Apr  7  1983]  bsort.com
+│   │   │   ├── [Apr  7  1983]  bsort.doc
+│   │   │   ├── [Apr 29  1982]  sortv.14asm
+│   │   │   └── [Apr 29  1982]  sortv.doc
+│   │   ├── [Sep  5 16:37]  ar27.list
+│   │   │   ├── [Mar  3  1982]  list.asm
+│   │   │   ├── [Mar  3  1982]  list.com
+│   │   │   ├── [Jul  8  1981]  mlist.50asm
+│   │   │   ├── [Nov 24  1981]  mlist.50com
+│   │   │   ├── [Jun 27  1982]  print2.35asm
+│   │   │   ├── [Jun 27  1982]  print2.35com
+│   │   │   └── [Jun 27  1982]  print2.35hex
+│   │   ├── [Sep  5 16:37]  ar28.editor
+│   │   │   ├── [Sep 29  1982]  ed.h
+│   │   │   ├── [Sep 29  1982]  ed1.ccc
+│   │   │   ├── [Sep 29  1982]  ed10.c
+│   │   │   ├── [Sep 29  1982]  ed2.c
+│   │   │   ├── [Sep 29  1982]  ed3.c
+│   │   │   ├── [Sep 29  1982]  ed4.c
+│   │   │   ├── [Sep 29  1982]  ed5.c
+│   │   │   ├── [Sep 29  1982]  ed6.c
+│   │   │   ├── [Sep 29  1982]  ed7.c
+│   │   │   ├── [Sep 29  1982]  ed8.c
+│   │   │   ├── [Sep 29  1982]  ed9.c
+│   │   │   ├── [Sep 29  1982]  edext.cc
+│   │   │   ├── [Sep 29  1982]  editor.txt
+│   │   │   └── [Sep 29  1982]  edsum.doc
+│   │   ├── [Sep  5 16:37]  ar30.basic
+│   │   │   ├── [Sep  9  1982]  basice.com
+│   │   │   ├── [Sep  9  1982]  ebasic.hlp
+│   │   │   ├── [Sep  9  1982]  el-e.bas
+│   │   │   ├── [Sep  9  1982]  el-e.int
+│   │   │   ├── [Sep  9  1982]  erun.com
+│   │   │   └── [Oct 30  1981]  xref.bas
+│   │   ├── [Sep  5 16:37]  ar31.pascal
+│   │   │   ├── [Feb  4  1982]  cal.com
+│   │   │   ├── [Feb  4  1982]  cal.pas
+│   │   │   ├── [Apr 27  1982]  cpmcop.pas
+│   │   │   ├── [Mar 11  1982]  modem3.8080io
+│   │   │   ├── [Mar 11  1982]  modem3.pas
+│   │   │   ├── [Mar 11  1982]  modem3.z80-io
+│   │   │   ├── [Nov 12  1982]  pset.src
+│   │   │   ├── [Apr  6  1982]  xydemo.pas
+│   │   │   └── [Apr  6  1982]  xyplot.pas
+│   │   ├── [Sep  5 16:37]  ar32.forth
+│   │   │   ├── [Nov  6  1981]  forth.asm
+│   │   │   ├── [Sep 14  1982]  forth.pdp11
+│   │   │   ├── [Nov  7  1981]  forth.z80com
+│   │   │   ├── [Nov  7  1981]  forth.z80mac
+│   │   │   └── [Dec 20  1981]  nit4th.asm
+│   │   ├── [Sep  5 16:37]  ar33.ratfor
+│   │   │   ├── [Nov  9  1981]  asmdef.rat
+│   │   │   ├── [Nov  9  1981]  consts.rat
+│   │   │   ├── [Nov  9  1981]  f77.doc
+│   │   │   ├── [Nov  9  1981]  f77def.rat
+│   │   │   ├── [Nov  9  1981]  f77lib.for
+│   │   │   ├── [Nov  9  1981]  index.z80
+│   │   │   ├── [Nov  9  1981]  indext.for
+│   │   │   ├── [Nov  9  1981]  ioer.z80
+│   │   │   ├── [Nov  9  1981]  lcat.doc
+│   │   │   ├── [Nov  9  1981]  lcat.rat
+│   │   │   ├── [Nov  9  1981]  ratcmn.rat
+│   │   │   ├── [Nov  9  1981]  ratfor.doc
+│   │   │   ├── [Nov  9  1981]  ratfor.for
+│   │   │   ├── [Nov  9  1981]  ratfor.rat
+│   │   │   └── [Nov  9  1981]  trnslt.z80
+│   │   ├── [Sep  5 16:37]  ar34.bdsc-1
+│   │   │   ├── [Mar 15  1982]  bds.46lib
+│   │   │   ├── [Oct 21  1982]  bdscio.50h
+│   │   │   ├── [Jan 30  1982]  bdscio.h
+│   │   │   ├── [Jan 30  1982]  c.ccc
+│   │   │   ├── [Mar  3  1982]  casm.c
+│   │   │   ├── [Mar  3  1982]  casm.doc
+│   │   │   ├── [Mar  3  1982]  casm.sub
+│   │   │   ├── [Jan 30  1982]  ccc.asm
+│   │   │   ├── [Jan 30  1982]  deff.crl
+│   │   │   ├── [Mar 14  1982]  deff2.crl
+│   │   │   ├── [Mar 23  1982]  deff2.csm
+│   │   │   ├── [Mar 23  1982]  deff2a.csm
+│   │   │   ├── [Feb  1  1982]  dio.c
+│   │   │   ├── [Jan 30  1982]  dio.h
+│   │   │   ├── [Jan 30  1982]  float.c
+│   │   │   ├── [Jan 30  1982]  float.doc
+│   │   │   ├── [Jan 30  1982]  fltsum.c
+│   │   │   ├── [May  9  1983]  fp.csm
+│   │   │   ├── [Oct 21  1982]  hware.50h
+│   │   │   ├── [Mar 18  1982]  noboot.c
+│   │   │   ├── [Nov 16  1982]  noclr.c
+│   │   │   ├── [Jan 30  1982]  sieve.c
+│   │   │   ├── [Jan 30  1982]  stdlb1.c
+│   │   │   ├── [Jan 30  1982]  stdlb2.c
+│   │   │   ├── [Mar 25  1983]  wildex.16c
+│   │   │   └── [Mar 22  1982]  wildex.c
+│   │   ├── [Sep  5 16:37]  ar35.bdsc-2
+│   │   │   ├── [Jan 29  1982]  chario.c
+│   │   │   ├── [Jul 11  1982]  crypt.c
+│   │   │   ├── [Jul 11  1982]  crypt.com
+│   │   │   ├── [Jan 29  1982]  l2.c
+│   │   │   ├── [Jan 28  1982]  l2.doc
+│   │   │   ├── [Mar 23  1982]  l2link.fix
+│   │   │   ├── [Jan 31  1982]  load.c
+│   │   │   ├── [Jan 30  1982]  lpr.c
+│   │   │   ├── [Jan 27  1982]  lprint.c
+│   │   │   ├── [Jan 31  1982]  makovl.c
+│   │   │   ├── [Mar 22  1982]  nl2.c
+│   │   │   ├── [Oct 12  1982]  ph.c
+│   │   │   ├── [Mar 22  1982]  portio.c
+│   │   │   ├── [Mar 24  1982]  portio.h
+│   │   │   ├── [Jan 29  1982]  scott.c
+│   │   │   ├── [Oct 23  1982]  teled.12c
+│   │   │   ├── [Mar 20  1982]  teled.doc
+│   │   │   ├── [Jun 24  1982]  uniq.c
+│   │   │   ├── [Jan 31  1982]  untip.c
+│   │   │   ├── [Jan 30  1982]  wavy.c
+│   │   │   └── [Feb  6  1982]  xc.c
+│   │   ├── [Sep  5 16:37]  ar36.bdsc-3
+│   │   │   ├── [Mar 18  1982]  alph.c
+│   │   │   ├── [Sep  6  1982]  append.1c
+│   │   │   ├── [Mar 18  1982]  cat.c
+│   │   │   ├── [Jul  6  1982]  cdir.c
+│   │   │   ├── [Mar 11  1982]  cio.c
+│   │   │   ├── [Mar 19  1982]  cp.c
+│   │   │   ├── [Mar 18  1982]  echo.c
+│   │   │   ├── [Sep  2  1982]  fp.c
+│   │   │   ├── [Apr 26  1982]  fs.c
+│   │   │   ├── [May 30  1982]  lcheck.c
+│   │   │   ├── [Sep 14  1982]  long.1c
+│   │   │   ├── [Oct  4  1982]  long.1crl
+│   │   │   ├── [Sep 14  1982]  long.1csm
+│   │   │   ├── [Sep 14  1982]  long.1doc
+│   │   │   ├── [Sep  2  1982]  pat.c
+│   │   │   ├── [Sep  2  1982]  pat.h
+│   │   │   ├── [Feb 24  1982]  qsort.tip
+│   │   │   ├── [Mar 24  1982]  rm.c
+│   │   │   ├── [Mar 18  1982]  rmf.c
+│   │   │   ├── [Mar 25  1982]  rmx.c
+│   │   │   ├── [Feb 28  1982]  sample.csm
+│   │   │   ├── [Mar 18  1982]  sd.c
+│   │   │   ├── [Sep 22  1982]  sort.3c
+│   │   │   ├── [Mar  8  1982]  stdlib.doc
+│   │   │   ├── [Mar 18  1982]  stripc.c
+│   │   │   ├── [Mar 18  1982]  symp.c
+│   │   │   ├── [Jan 27  1982]  usrcod.c
+│   │   │   ├── [Jan 30  1982]  v143.doc
+│   │   │   ├── [Jan 30  1982]  v144.doc
+│   │   │   ├── [Jan 29  1982]  v145.doc
+│   │   │   ├── [Mar  8  1982]  v146.doc
+│   │   │   ├── [Sep 28  1982]  v150.2doc
+│   │   │   └── [Mar 17  1982]  wc.c
+│   │   ├── [Sep  5 16:37]  ar37.bdsc-4
+│   │   │   ├── [May  1  1983]  append.c
+│   │   │   ├── [Aug 27  1982]  chdir.10c
+│   │   │   ├── [Sep  6  1982]  chdir.10hlp
+│   │   │   ├── [Oct  6  1982]  config.12c
+│   │   │   ├── [Oct  7  1982]  config.12com
+│   │   │   ├── [Aug 27  1982]  device.c
+│   │   │   ├── [May  1  1983]  di.c
+│   │   │   ├── [May  1  1983]  tail.c
+│   │   │   └── [May 31  1982]  tinit.c
+│   │   ├── [Sep  5 16:37]  ar40.apple
+│   │   │   ├── [Oct 31  1981]  apbdsc.patchs
+│   │   │   ├── [Jun  5  1981]  apboot.mac
+│   │   │   ├── [Apr 27  1982]  apbye.69asm
+│   │   │   ├── [Jun  5  1981]  aphigh.memasm
+│   │   │   ├── [Mar 10  1981]  apmbot.asm
+│   │   │   ├── [Jun  5  1981]  apmodm.21asm
+│   │   │   ├── [Apr 27  1982]  apmodm.2asm
+│   │   │   ├── [Jun  5  1981]  apmodm.doc
+│   │   │   ├── [Mar 31  1982]  apple.cpmfix
+│   │   │   ├── [Apr 26  1982]  apunsp.msg
+│   │   │   ├── [Sep 27  1981]  apxmdm.41asm
+│   │   │   ├── [Apr  1  1982]  cpmxfr.com
+│   │   │   ├── [Apr  1  1982]  cpmxfr.doc
+│   │   │   ├── [Apr  1  1982]  cpmxfr.hex
+│   │   │   ├── [Mar 15  1983]  lisa.01doc
+│   │   │   └── [Aug 27  1982]  lksmth.doc
+│   │   ├── [Sep  5 16:37]  ar41.osborn
+│   │   │   ├── [Apr 26  1982]  bdscio.h-osb
+│   │   │   ├── [Apr 27  1982]  mdio.c-osb
+│   │   │   ├── [May 30  1982]  modem7.osbcom
+│   │   │   ├── [Jan  9  1982]  modema.osborn
+│   │   │   ├── [Jan  9  1982]  modemc.osborn
+│   │   │   ├── [May 31  1982]  omodem.216hex
+│   │   │   ├── [May 28  1982]  osbtrx.10doc
+│   │   │   ├── [Oct 14  1982]  oterm.401doc
+│   │   │   ├── [Mar 27  1983]  oterm.404msg
+│   │   │   ├── [Apr  5  1983]  oterm.405com
+│   │   │   ├── [Mar 27  1983]  oterm.405sub
+│   │   │   ├── [Oct 16  1982]  otset.4com
+│   │   │   ├── [Oct 16  1982]  otset.4doc
+│   │   │   ├── [Jan  6  1982]  plink.osborn
+│   │   │   └── [Apr 26  1982]  rain.c
+│   │   ├── [Sep  5 16:37]  ar42.trs-80
+│   │   │   ├── [Nov 21  1982]  trs-ii.cpm
+│   │   │   ├── [Feb  6  1982]  trs-ii.modem
+│   │   │   └── [Nov  8  1981]  trsurt.asm
+│   │   ├── [Sep  5 16:37]  ar43.unix
+│   │   │   ├── [Dec  9  1982]  cpmutl.7c
+│   │   │   ├── [Dec 12  1982]  cpmutl.7cmsg
+│   │   │   ├── [Apr 23  1983]  tmodem.c
+│   │   │   ├── [Apr 17  1982]  umodem.c
+│   │   │   ├── [Apr 17  1982]  umodem.his
+│   │   │   ├── [Feb  9  1983]  xsq.107c
+│   │   │   ├── [Feb  9  1983]  xtype.107c
+│   │   │   └── [Feb  9  1983]  xusq.107c
+│   │   ├── [Sep  5 16:37]  ar44.heath
+│   │   │   ├── [Sep  5  1982]  consol.h
+│   │   │   ├── [Mar 29  1982]  h19h89.convrt
+│   │   │   ├── [Apr  2  1983]  h19sup.rom
+│   │   │   ├── [Jul 13  1982]  h8.upgrad
+│   │   │   ├── [Oct  9  1982]  h89.moddoc
+│   │   │   ├── [Jul 30  1982]  h89cpu.list
+│   │   │   ├── [Apr  2  1983]  heath.h29doc
+│   │   │   ├── [Sep  5  1982]  szofrm.c
+│   │   │   ├── [Jun  8  1982]  teledt.abs
+│   │   │   ├── [Sep  5  1982]  teledt.c
+│   │   │   ├── [Sep  5  1982]  teledt.doc
+│   │   │   ├── [Oct 12  1982]  z19cn.moddoc
+│   │   │   ├── [May 31  1982]  zb4mhz.asm
+│   │   │   └── [May 31  1982]  zb4mhz.doc
+│   │   ├── [Sep  5 16:37]  ar45.atari
+│   │   │   ├── [Apr 12  1983]  amodem.42bas
+│   │   │   ├── [Mar 13  1983]  amodem.42doc
+│   │   │   └── [Aug  1  1982]  aut850.bas
+│   │   ├── [Sep  5 16:37]  ar46.ibm-pc
+│   │   │   ├── [May 22  1983]  heath.a86
+│   │   │   ├── [May 22  1983]  ibmftp.bas
+│   │   │   ├── [May 22  1983]  ibmftp.feturs
+│   │   │   └── [May 22  1983]  ibmftp.help
+│   │   ├── [Sep  5 16:37]  ar47.nstar
+│   │   │   ├── [Nov 20  1982]  ar47.read
+│   │   │   ├── [Nov  4  1982]  format.doc
+│   │   │   ├── [Dec 20  1982]  hd18.dos
+│   │   │   ├── [Dec 20  1982]  htrans.ient
+│   │   │   ├── [Oct  5  1981]  lbgen.asm
+│   │   │   ├── [Jan 15  1982]  lbusr.ccp
+│   │   │   ├── [Dec 15  1981]  lbusr.doc
+│   │   │   ├── [Feb 20  1983]  newcpy.16com
+│   │   │   ├── [Dec  2  1982]  newfmt.14com
+│   │   │   ├── [Dec  3  1982]  newfrm.14asm
+│   │   │   ├── [Dec 18  1982]  ns2cpm.com
+│   │   │   ├── [Dec 18  1982]  ns2cpm.doc
+│   │   │   ├── [Sep  6  1982]  nsbas.59asm
+│   │   │   ├── [Sep  6  1982]  nsbas.59doc
+│   │   │   ├── [Nov  3  1982]  nsgen.com
+│   │   │   ├── [Jan 14  1983]  nsusr.48ccp
+│   │   │   ├── [Nov  3  1982]  nsusr.doc
+│   │   │   ├── [Oct 10  1981]  nsusr5.zasm
+│   │   │   └── [Nov 23  1981]  ramtes.com
+│   │   ├── [Sep  5 16:37]  ar52.voice
+│   │   │   ├── [Nov 19  1981]  speech.bas
+│   │   │   ├── [Oct 26  1981]  talk@.lib
+│   │   │   ├── [Oct 26  1981]  vmac.asm
+│   │   │   ├── [Oct 26  1981]  voic@.crc
+│   │   │   ├── [Oct 22  1981]  voic@.doc
+│   │   │   ├── [Oct 26  1981]  voic@.equlib
+│   │   │   ├── [Oct 26  1981]  voic@.lib
+│   │   │   ├── [Dec  1  1981]  voice.c
+│   │   │   ├── [Dec  1  1981]  voice.c-doc
+│   │   │   ├── [Oct 26  1981]  vrmac.asm
+│   │   │   └── [Feb  6  1982]  yesmst.voc
+│   │   ├── [Sep  5 16:37]  ar53.catlog
+│   │   │   ├── [Mar 28  1983]  cat.2asm
+│   │   │   ├── [Mar 28  1983]  cat.2com
+│   │   │   ├── [Nov 14  1981]  catlog.doc
+│   │   │   ├── [Nov 14  1981]  crsref.asm
+│   │   │   ├── [Nov 14  1981]  fmap.asm
+│   │   │   ├── [Aug 22  1981]  fmap.com
+│   │   │   ├── [Mar 22  1983]  ncat.32doc
+│   │   │   ├── [Mar 22  1983]  ncat.32set
+│   │   │   ├── [Mar 22  1983]  ncat.33aasm
+│   │   │   ├── [Mar 22  1983]  ncat.33acom
+│   │   │   ├── [Mar 22  1983]  ncat.33ahex
+│   │   │   ├── [Mar 22  1983]  xcat.37asm
+│   │   │   ├── [Mar 22  1983]  xcat.37com
+│   │   │   └── [Mar 22  1983]  xcat.37hex
+│   │   ├── [Sep  5 16:37]  ar54.fast2
+│   │   │   ├── [Oct 10  1981]  discus.patasm
+│   │   │   ├── [Oct 10  1981]  dms.patasm
+│   │   │   ├── [Oct 10  1981]  fast.manual
+│   │   │   ├── [Oct 10  1981]  fast2.asm
+│   │   │   ├── [Oct 10  1981]  fast2.com
+│   │   │   ├── [Oct 10  1981]  fast2.comdoc
+│   │   │   ├── [Oct 10  1981]  instal.doc
+│   │   │   ├── [Oct 10  1981]  microp.patasm
+│   │   │   ├── [Oct 10  1981]  pakup2.asm
+│   │   │   ├── [Oct 10  1981]  rel.asm
+│   │   │   ├── [Oct 10  1981]  rel.utl
+│   │   │   ├── [Oct 10  1981]  relcpm.doc
+│   │   │   ├── [Oct 10  1981]  relcpm.sub
+│   │   │   ├── [Oct 10  1981]  reled.sub
+│   │   │   ├── [Oct 10  1981]  relhdr.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.com
+│   │   │   ├── [Oct 10  1981]  skew2.patasm
+│   │   │   ├── [Oct 10  1981]  skew3.patasm
+│   │   │   └── [Oct 10  1981]  utl.lib
+│   │   ├── [Sep  5 16:37]  ar55.ccp
+│   │   │   ├── [Sep 10  1981]  22pub.asm
+│   │   │   ├── [Sep  8  1981]  autox.asm
+│   │   │   ├── [Mar 14  1981]  ccppat.asm
+│   │   │   ├── [Mar 16  1981]  dvrpat.asm
+│   │   │   ├── [Apr  2  1982]  fifos.mac
+│   │   │   ├── [Dec 15  1981]  xtcpm.15asm
+│   │   │   ├── [Dec 15  1981]  xtcpm.15doc
+│   │   │   └── [Mar 28  1982]  xtcpm.msg
+│   │   ├── [Sep  5 16:37]  ar56.zcpr
+│   │   │   ├── [Jul  3  1981]  bdloc.asm
+│   │   │   ├── [Jun 24  1982]  nzcpr.14bdif
+│   │   │   ├── [Mar 18  1982]  pass.asm
+│   │   │   ├── [Dec 11  1981]  zcpr.asm
+│   │   │   ├── [Dec 13  1981]  zcpr.doc
+│   │   │   ├── [Aug  1  1982]  zcpr.eramod
+│   │   │   ├── [Dec 13  1981]  zcpr.hlp
+│   │   │   ├── [Dec 13  1981]  zcpr.msg
+│   │   │   └── [Mar 15  1982]  zcprbf.asm
+│   │   ├── [Sep  5 16:37]  ar57.submit
+│   │   │   ├── [Jun 23  1981]  batch.com
+│   │   │   ├── [Jun 23  1981]  batch.doc
+│   │   │   ├── [Mar 19  1983]  ex.14asm
+│   │   │   ├── [Mar 19  1983]  ex.14com
+│   │   │   ├── [Mar 19  1983]  ex.14doc
+│   │   │   ├── [Mar 19  1983]  ex.14hex
+│   │   │   ├── [Mar 19  1983]  ex.14sub
+│   │   │   ├── [Mar 19  1983]  ex.14tst
+│   │   │   ├── [Jun 23  1981]  exampl.bat
+│   │   │   ├── [Sep 12  1982]  if.asm
+│   │   │   ├── [Sep 12  1982]  if.com
+│   │   │   ├── [Sep 13  1982]  if.hex
+│   │   │   ├── [Sep 12  1982]  ifskip.doc
+│   │   │   ├── [Nov 10  1980]  maksub.asm
+│   │   │   ├── [Aug 23  1982]  rels.hex
+│   │   │   ├── [Aug 23  1982]  rels.utl
+│   │   │   ├── [Sep 12  1982]  skip.asm
+│   │   │   ├── [Sep 12  1982]  skip.com
+│   │   │   ├── [Sep 13  1982]  skip.hex
+│   │   │   ├── [Mar  3  1982]  sub.asm
+│   │   │   ├── [Mar  3  1982]  sub.com
+│   │   │   ├── [Mar 19  1983]  subgen.10doc
+│   │   │   ├── [Mar 19  1983]  subgen.12asm
+│   │   │   ├── [Sep 19  1981]  supsub.11asm
+│   │   │   ├── [Sep 19  1981]  supsub.11doc
+│   │   │   └── [Jun 23  1981]  varbat.com
+│   │   ├── [Sep  5 16:37]  ar58.maclib
+│   │   │   ├── [Oct 24  1981]  macro.lib
+│   │   │   ├── [Apr  2  1982]  macros.tip
+│   │   │   ├── [Feb 19  1982]  macroz.mac
+│   │   │   ├── [Mar 15  1983]  seqio.22lib
+│   │   │   ├── [Jul  8  1981]  seqio.lib
+│   │   │   ├── [Mar  7  1982]  xmac.asm
+│   │   │   ├── [Oct 10  1981]  z80-v3.lib
+│   │   │   └── [Oct 10  1981]  z80ext.lib
+│   │   ├── [Sep  5 16:37]  ar59.spell
+│   │   │   ├── [Mar 30  1983]  diccre.20com
+│   │   │   ├── [Mar 30  1983]  diccre.20hex
+│   │   │   ├── [Mar 30  1983]  diccre.20mac
+│   │   │   ├── [Aug 19  1982]  dict.dic
+│   │   │   ├── [Dec 28  1982]  dict.letter
+│   │   │   ├── [Dec 23  1982]  spell.20com
+│   │   │   ├── [Dec 23  1982]  spell.20doc
+│   │   │   ├── [Dec 23  1982]  spell.20hex
+│   │   │   ├── [Dec 23  1982]  spell.20mac
+│   │   │   └── [Aug 19  1982]  spell0.10mac
+│   │   ├── [Sep  5 16:37]  ar62.yam
+│   │   │   ├── [Feb 23  1982]  yam.h
+│   │   │   ├── [Feb 23  1982]  yam.sub
+│   │   │   ├── [Feb 23  1982]  yam1.c
+│   │   │   ├── [Dec  8  1981]  yam8.asm
+│   │   │   ├── [Dec  8  1981]  yam9.asm
+│   │   │   └── [Feb 23  1982]  yamapl.h
+│   │   ├── [Sep  5 16:37]  ar64.term
+│   │   │   ├── [Aug 11  1981]  dial.3asm
+│   │   │   ├── [Sep 27  1982]  h19vax.escape
+│   │   │   ├── [Jan  8  1982]  mtn.22bcom
+│   │   │   ├── [Feb  1  1982]  mtn.22bdoc
+│   │   │   ├── [May 23  1981]  mtn.info
+│   │   │   ├── [Nov  4  1981]  mtn21.offcom
+│   │   │   ├── [Nov  9  1981]  mtn21.offdoc
+│   │   │   ├── [Aug  9  1981]  mtn21.offhex
+│   │   │   ├── [May 20  1981]  mtnmsg.ovr
+│   │   │   ├── [Oct 29  1982]  pipmod.asm
+│   │   │   ├── [Oct 29  1982]  pipmod.doc
+│   │   │   ├── [Jul  4  1981]  plink.65doc
+│   │   │   ├── [Apr  4  1983]  plink.67aasm
+│   │   │   ├── [Apr  2  1982]  ubpmmi.asm
+│   │   │   └── [Apr 21  1982]  z19.asm
+│   │   ├── [Sep  5 16:37]  ar65.smodem
+│   │   │   ├── [Apr  8  1982]  smodem.38doc
+│   │   │   ├── [Dec  7  1982]  smodem.39mac
+│   │   │   └── [Sep 10  1981]  smodem.doc
+│   │   ├── [Sep  5 16:37]  ar66.micnet
+│   │   │   ├── [Jun 13  1982]  bufexc.asm
+│   │   │   ├── [Sep 23  1982]  cis.qdoc
+│   │   │   ├── [Mar 20  1982]  cis.sysdoc
+│   │   │   ├── [Apr  2  1982]  dow.12com
+│   │   │   ├── [Apr  2  1982]  dow.12hex
+│   │   │   ├── [Apr  2  1982]  dow.12mac
+│   │   │   ├── [Apr 23  1982]  dowpmm.dif
+│   │   │   ├── [Mar 22  1982]  mnet.proto
+│   │   │   ├── [Jul  6  1982]  mnet.signup
+│   │   │   ├── [Mar 15  1982]  mnexec.doc
+│   │   │   ├── [Apr 21  1983]  protoc.cis
+│   │   │   ├── [Apr  2  1982]  upload.12com
+│   │   │   ├── [Apr  2  1982]  upload.12hex
+│   │   │   ├── [Apr  2  1982]  upload.12mac
+│   │   │   └── [Apr 23  1982]  uppmmi.dif
+│   │   └── [Aug 11 10:40]  cpm
+│   │       ├── [Mar 15  1983]  ar16.msoft
+│   │       ├── [Aug 22  1982]  ar25.disasm
+│   │       ├── [Apr  7  1983]  ar26.sort
+│   │       ├── [Jun 27  1982]  ar27.list
+│   │       ├── [Sep 30  1982]  ar28.editor
+│   │       ├── [Sep  9  1982]  ar30.basic
+│   │       ├── [Nov 16  1982]  ar31.pascal
+│   │       ├── [Sep 14  1982]  ar32.forth
+│   │       ├── [Feb 22  1983]  ar33.ratfor
+│   │       ├── [May  9  1983]  ar34.bdsc-1
+│   │       ├── [Oct 23  1982]  ar35.bdsc-2
+│   │       ├── [Oct  8  1982]  ar36.bdsc-3
+│   │       ├── [May  1  1983]  ar37.bdsc-4
+│   │       ├── [Mar 30  1983]  ar40.apple
+│   │       ├── [Apr  5  1983]  ar41.osborn
+│   │       ├── [Mar 17  1983]  ar42.trs-80
+│   │       ├── [Apr 23  1983]  ar43.unix
+│   │       ├── [Apr  2  1983]  ar44.heath
+│   │       ├── [Apr 12  1983]  ar45.atari
+│   │       ├── [May 22  1983]  ar46.ibm-pc
+│   │       ├── [Feb 20  1983]  ar47.nstar
+│   │       ├── [Feb  6  1982]  ar52.voice
+│   │       ├── [Mar 28  1983]  ar53.catlog
+│   │       ├── [Oct 10  1981]  ar54.fast2
+│   │       ├── [Nov  3  1982]  ar55.ccp
+│   │       ├── [Aug  1  1982]  ar56.zcpr
+│   │       ├── [Mar 19  1983]  ar57.submit
+│   │       ├── [Mar 15  1983]  ar58.maclib
+│   │       ├── [Mar 30  1983]  ar59.spell
+│   │       ├── [Dec 13  1982]  ar62.yam
+│   │       ├── [Apr  4  1983]  ar64.term
+│   │       ├── [Dec  7  1982]  ar65.smodem
+│   │       └── [May 28 14:09]  ar66.micnet
+│   ├── [Aug 11 10:40]  7005394
+│   │   └── [Aug 11 10:40]  cpm
+│   │       └── [Aug 30  1981]  cpm.archiv
+│   ├── [Sep  4 17:03]  7005400
+│   │   ├── [Sep  5 16:37]  ar0.docfil
+│   │   │   ├── [Apr  8  1981]  22cpm.doc
+│   │   │   ├── [Feb  6  1981]  22cp{m.crclst
+│   │   │   ├── [Jun 23  1981]  batch.doc
+│   │   │   ├── [Jun 20  1981]  clenup.doc
+│   │   │   ├── [Sep 14  1980]  cpm.doc
+│   │   │   ├── [Jun 27  1981]  crcart.doc
+│   │   │   ├── [Jul 23  1981]  du-v75.doc
+│   │   │   ├── [Aug 25  1981]  heath.option
+│   │   │   ├── [May 29  1981]  h{z89.mods
+│   │   │   ├── [Aug 30  1981]  libray.contrl
+│   │   │   ├── [Jun 21  1981]  marc.doc
+│   │   │   ├── [Jun 22  1981]  maron.patch
+│   │   │   ├── [May  1  1981]  money.talks
+│   │   │   ├── [May 23  1981]  mtn.info
+│   │   │   ├── [May 31  1981]  mtn22a.doc
+│   │   │   ├── [Jul  4  1981]  plink.65doc
+│   │   │   ├── [May 30  1981]  scrmbl.doc
+│   │   │   ├── [Jun 15  1981]  trsmdm.equs
+│   │   │   ├── [May 30  1981]  umpire.doc
+│   │   │   └── [Jul  3  1981]  zsid.patch
+│   │   ├── [Sep  5 16:37]  ar1.comfil
+│   │   │   ├── [Jun 23  1981]  batch.com
+│   │   │   ├── [Jun 20  1981]  clenup.com
+│   │   │   ├── [May 30  1981]  compar.com
+│   │   │   ├── [May  5  1981]  cpyfil.com
+│   │   │   ├── [May  5  1981]  crck.com
+│   │   │   ├── [Jun 13  1981]  d-27.com
+│   │   │   ├── [Aug  8  1981]  df.com
+│   │   │   ├── [Jul 23  1981]  du-v77.com
+│   │   │   ├── [Jun 23  1981]  exampl.bat
+│   │   │   ├── [May 21  1981]  fbad54.com
+│   │   │   ├── [May  5  1981]  filter.com
+│   │   │   ├── [May  5  1981]  filtex.com
+│   │   │   ├── [Aug 22  1981]  fmap.com
+│   │   │   ├── [Aug  8  1981]  hexdif.com
+│   │   │   ├── [Jul  8  1981]  mlist.com
+│   │   │   ├── [May 24  1981]  mtn22a.com
+│   │   │   ├── [May 20  1981]  mtnmsg.ovr
+│   │   │   ├── [Jun  5  1981]  sd-22.com
+│   │   │   ├── [Jul 23  1981]  tabify.com
+│   │   │   ├── [May 30  1981]  umpire.com
+│   │   │   ├── [May  5  1981]  unload.com
+│   │   │   ├── [Jun 23  1981]  varbat.com
+│   │   │   └── [May  5  1981]  xd.com
+│   │   ├── [Sep  5 16:37]  ar2.hlpfil
+│   │   │   ├── [Jun 26  1981]  algolm.hlp
+│   │   │   ├── [Jun 26  1981]  asm2.hlp
+│   │   │   ├── [Jun 26  1981]  c.hlp
+│   │   │   ├── [Jul 24  1981]  catlog.hlp
+│   │   │   ├── [Jun 26  1981]  cbas.hlp
+│   │   │   ├── [Jun 26  1981]  cbas2.hlp
+│   │   │   ├── [Jul 24  1981]  cpm2.hlp
+│   │   │   ├── [May 27  1981]  du-v75.hlp
+│   │   │   ├── [Jun 26  1981]  fortra.hlp
+│   │   │   ├── [Jun  3  1981]  help.com
+│   │   │   ├── [Jun  3  1981]  help.hlp
+│   │   │   ├── [Jun 23  1981]  help12.asm
+│   │   │   ├── [Jul 24  1981]  link.hlp
+│   │   │   ├── [Jun  3  1981]  mac.hlp
+│   │   │   ├── [Jun  3  1981]  masm.hlp
+│   │   │   ├── [Jul 24  1981]  mbasic.hlp
+│   │   │   ├── [Jul 25  1981]  phelp.com
+│   │   │   └── [May 27  1981]  resour.hlp
+│   │   ├── [Sep  5 16:37]  ar3.sq{usq
+│   │   │   ├── [Jun 28  1981]  bdscio.h
+│   │   │   ├── [Jul 23  1981]  chnges.doc
+│   │   │   ├── [Jun 28  1981]  dio.h
+│   │   │   ├── [Jun 28  1981]  dio2.c
+│   │   │   ├── [Jun 28  1981]  fls.c
+│   │   │   ├── [Jun 28  1981]  fls.com
+│   │   │   ├── [Jun 28  1981]  histry.doc
+│   │   │   ├── [Jun 28  1981]  io.c
+│   │   │   ├── [Jul 23  1981]  readme.doc
+│   │   │   ├── [Aug 24  1981]  spcdio.c
+│   │   │   ├── [Jun 28  1981]  sq.c
+│   │   │   ├── [Jun 28  1981]  sq.com
+│   │   │   ├── [Jun 28  1981]  sq.h
+│   │   │   ├── [Jun 28  1981]  sqcom.h
+│   │   │   ├── [Jul 23  1981]  sqezer.doc
+│   │   │   ├── [Jun 28  1981]  tr1.c
+│   │   │   ├── [Jun 28  1981]  tr2.c
+│   │   │   ├── [Aug 24  1981]  typesq.13c
+│   │   │   ├── [Aug 24  1981]  typesq.13com
+│   │   │   ├── [Aug 24  1981]  typesq.13doc
+│   │   │   ├── [Aug 24  1981]  typesq.40acom
+│   │   │   ├── [Aug 24  1981]  typesq.80acom
+│   │   │   ├── [Jul 23  1981]  update.doc
+│   │   │   ├── [Jul 23  1981]  usq-14.c
+│   │   │   ├── [Jul 23  1981]  usq-14.com
+│   │   │   ├── [Jun 28  1981]  usq.h
+│   │   │   └── [Jun 28  1981]  utr.c
+│   │   ├── [Sep  5 16:37]  ar4.apple
+│   │   │   ├── [Jun  5  1981]  apboot.mac
+│   │   │   ├── [Jun  5  1981]  apbye.asm
+│   │   │   ├── [Jun  5  1981]  aphigh.memasm
+│   │   │   ├── [Mar 10  1981]  apmbot.asm
+│   │   │   ├── [Jun  5  1981]  apmodm.21asm
+│   │   │   ├── [Jun  5  1981]  apmodm.2asm
+│   │   │   ├── [Jun  5  1981]  apmodm.doc
+│   │   │   └── [Jun  5  1981]  apxmod.asm
+│   │   ├── [Sep  5 16:37]  ar5.modem
+│   │   │   ├── [Jun 24  1981]  cmodem.13c
+│   │   │   ├── [Jun 30  1981]  cmodem.c
+│   │   │   ├── [Aug 22  1981]  commo1.bas
+│   │   │   ├── [Aug 22  1981]  commo2.asm
+│   │   │   ├── [Jun 26  1981]  dch.h
+│   │   │   ├── [Aug 11  1981]  dial3.asm
+│   │   │   ├── [Nov 24  1980]  mboot.asm
+│   │   │   ├── [May  8  1981]  modem.206asm
+│   │   │   ├── [May  8  1981]  modem.206doc
+│   │   │   ├── [Mar  8  1981]  modem.doc
+│   │   │   ├── [Apr 29  1981]  modem2.proto
+│   │   │   ├── [Jul  7  1981]  plink.65asm
+│   │   │   ├── [Jun 24  1981]  pmmi.h
+│   │   │   ├── [Jul 22  1981]  trs-ii.modem
+│   │   │   ├── [May  8  1981]  xmodem.42doc
+│   │   │   └── [Jun  2  1981]  xmodem.43asm
+│   │   ├── [Sep  5 16:37]  ar6.asmfil
+│   │   │   ├── [Jun 20  1981]  bitmap.asm
+│   │   │   ├── [Jun 24  1981]  carry.12asm
+│   │   │   ├── [Mar 14  1981]  ccppat.asm
+│   │   │   ├── [May 30  1981]  compar.asm
+│   │   │   ├── [Nov 29  1980]  cpyfil.asm
+│   │   │   ├── [Dec  5  1980]  crck.asm
+│   │   │   ├── [Jun 23  1981]  d-27a.asm
+│   │   │   ├── [Dec 19  1980]  dirf.asm
+│   │   │   ├── [Dec 19  1980]  dirf.mac
+│   │   │   ├── [Jul 23  1981]  du-v77.asm
+│   │   │   ├── [Mar 16  1981]  dvrpat.asm
+│   │   │   ├── [May 26  1981]  fbad54.asm
+│   │   │   ├── [Aug  3  1981]  filfnd.11asm
+│   │   │   ├── [May 30  1981]  filprt.asm
+│   │   │   ├── [Jan 28  1981]  filter.asm
+│   │   │   ├── [Mar 25  1981]  filtex.asm
+│   │   │   ├── [Nov 10  1980]  maksub.asm
+│   │   │   ├── [Sep  2  1980]  menu.mac
+│   │   │   ├── [Jul 30  1981]  mft46a.asm
+│   │   │   ├── [Jul  8  1981]  mlist.asm
+│   │   │   ├── [Nov 28  1980]  move.asm
+│   │   │   ├── [Jul 14  1981]  scrmbl.2asm
+│   │   │   ├── [Jun  5  1981]  sd-22.asm
+│   │   │   ├── [Jun 24  1981]  sndout.3asm
+│   │   │   ├── [Nov 10  1980]  unload.asm
+│   │   │   ├── [Aug 15  1981]  worm.asm
+│   │   │   └── [Jun 25  1981]  xmac.asm
+│   │   ├── [Sep  5 16:37]  ar7.rcpm
+│   │   │   ├── [Mar 25  1981]  bye.asm
+│   │   │   ├── [Jul 27  1981]  byelow.mod
+│   │   │   ├── [Mar 24  1981]  rbbs.usedoc
+│   │   │   ├── [Jul 14  1981]  rbbs25.asc
+│   │   │   ├── [Jul 14  1981]  secure.sysdoc
+│   │   │   ├── [Mar 14  1981]  user88.asm
+│   │   │   ├── [Jul 14  1981]  userpw.21asm
+│   │   │   └── [Jul 15  1981]  xmodem.c
+│   │   ├── [Sep  5 16:37]  ar8.uglibs
+│   │   │   ├── [Jul 18  1981]  absrct.cpm048
+│   │   │   ├── [Jul 18  1981]  absrct.cpm050
+│   │   │   ├── [Jul 18  1981]  absrct.cpm051
+│   │   │   ├── [Jul 18  1981]  absrct.sgm011
+│   │   │   ├── [Jul 18  1981]  absrct.sgm019
+│   │   │   ├── [Jul 18  1981]  absrct.sgm020
+│   │   │   ├── [Jul 18  1981]  absrct.sgm021
+│   │   │   ├── [Jul 18  1981]  absrct.sgm022
+│   │   │   ├── [Jul 18  1981]  absrct.sgm023
+│   │   │   ├── [Jul 18  1981]  absrct.sgm024
+│   │   │   ├── [Jul 18  1981]  absrct.sgm025
+│   │   │   ├── [Jul 18  1981]  catlog.cpm046
+│   │   │   ├── [Jul 18  1981]  catlog.cpm048
+│   │   │   ├── [Jul 18  1981]  catlog.cpm050
+│   │   │   ├── [Jul 18  1981]  catlog.cpm051
+│   │   │   ├── [Jul 19  1981]  catlog.cpm052
+│   │   │   ├── [Jul 18  1981]  catlog.sgm011
+│   │   │   ├── [Jul 18  1981]  catlog.sgm012
+│   │   │   ├── [Jul 18  1981]  catlog.sgm013
+│   │   │   ├── [Jul 18  1981]  catlog.sgm014
+│   │   │   ├── [Jul 18  1981]  catlog.sgm015
+│   │   │   ├── [Jul 18  1981]  catlog.sgm016
+│   │   │   ├── [Jul 18  1981]  catlog.sgm017
+│   │   │   ├── [Jul 18  1981]  catlog.sgm018
+│   │   │   ├── [Jul 18  1981]  catlog.sgm019
+│   │   │   ├── [Jul 18  1981]  catlog.sgm020
+│   │   │   ├── [Jul 18  1981]  catlog.sgm021
+│   │   │   ├── [Jul 18  1981]  catlog.sgm022
+│   │   │   ├── [Jul 18  1981]  catlog.sgm023
+│   │   │   ├── [Jul 18  1981]  catlog.sgm024
+│   │   │   └── [Jul 18  1981]  catlog.sgm025
+│   │   └── [Aug 11 10:40]  cpm
+│   │       ├── [Aug 30  1981]  ar0.docfil
+│   │       ├── [Aug 22  1981]  ar1.comfil
+│   │       ├── [Jul 24  1981]  ar2.hlpfil
+│   │       ├── [Aug 24  1981]  ar3.sq{usq
+│   │       ├── [Jun 26  1981]  ar4.apple
+│   │       ├── [Aug 22  1981]  ar5.modem
+│   │       ├── [Aug 15  1981]  ar6.asmfil
+│   │       ├── [Jul 27  1981]  ar7.rcpm
+│   │       ├── [Jul 19  1981]  ar8.uglibs
+│   │       ├── [Aug  2  1981]  bbsnos.byarea
+│   │       ├── [Aug 15  1981]  bbsnos.byname
+│   │       ├── [Aug 30  1981]  cpm.archiv
+│   │       ├── [Aug 30  1981]  cpm.list
+│   │       ├── [Jul 15  1981]  cpmnet.jul81
+│   │       ├── [Jun 16  1981]  cpmnet.jun81
+│   │       ├── [Aug 22  1981]  fixccc.asm
+│   │       ├── [Aug 30  1981]  mince.list
+│   │       ├── [Aug 16  1981]  qqsort.com
+│   │       ├── [Aug 16  1981]  qqsort.lib
+│   │       ├── [Aug 16  1981]  qqsort.pas
+│   │       ├── [Aug 16  1981]  qsort.com
+│   │       ├── [Aug 16  1981]  qsort.lib
+│   │       ├── [Aug 16  1981]  qsort.pas
+│   │       ├── [Aug 16  1981]  rcpdat.mst
+│   │       ├── [Aug 16  1981]  rcpdat.xxx
+│   │       ├── [Aug 16  1981]  rcpdat.yyy
+│   │       ├── [Aug 21  1981]  rcp{m.nos
+│   │       ├── [Aug 16  1981]  recipe.com
+│   │       ├── [Aug 16  1981]  recipe.pas
+│   │       ├── [Jul  8  1981]  seqio.lib
+│   │       ├── [Aug 16  1981]  shell.com
+│   │       ├── [Aug 16  1981]  shell.lib
+│   │       ├── [Aug 16  1981]  shell.pas
+│   │       ├── [Aug 22  1981]  tabify.2-c
+│   │       ├── [Jul 23  1981]  tabify.c
+│   │       ├── [Aug 28  1981]  umodem.c
+│   │       ├── [Jul 22  1981]  xmodem.sai
+│   │       └── [Aug 21  1981]  }lmod}.output
+│   ├── [Sep  4 17:03]  7005637
+│   │   ├── [Sep  5 16:37]  ar70.epson
+│   │   │   ├── [Jul 19  1982]  epson.specs
+│   │   │   ├── [Sep 28  1982]  fncfnt.com
+│   │   │   ├── [Sep 28  1982]  fncfnt.dm1
+│   │   │   ├── [Oct  1  1982]  fncfnt.dm1hex
+│   │   │   ├── [Sep 28  1982]  fncfnt.doc
+│   │   │   ├── [Oct  1  1982]  fncfnt.hex
+│   │   │   ├── [Nov  5  1982]  printr.c
+│   │   │   └── [Nov 11  1982]  printr.com
+│   │   └── [Aug 11 10:40]  cpm
+│   │       └── [Jan 13  1983]  ar70.epson
+│   ├── [Sep  4 17:03]  7005640
+│   │   ├── [Sep  5 16:37]  ar16.msoft
+│   │   │   ├── [Sep 12  1981]  bascom.53doc
+│   │   │   ├── [Feb 21  1982]  mbasic.fre
+│   │   │   ├── [Apr 29  1982]  msftnw.apr82
+│   │   │   ├── [Apr 29  1982]  msftnw.mar82
+│   │   │   └── [Feb 21  1982]  msoft.call
+│   │   ├── [Sep  5 16:37]  ar25.disasm
+│   │   │   ├── [Apr 17  1982]  resorc.com
+│   │   │   ├── [Apr 18  1982]  resorc.hex
+│   │   │   ├── [Aug 17  1982]  zdasm.15com
+│   │   │   ├── [Aug 22  1982]  zdasm.15hex
+│   │   │   ├── [Aug 17  1982]  zdasm.15mac
+│   │   │   ├── [Jun 13  1982]  zdasmt.mac
+│   │   │   └── [May 16  1982]  zdasmz.mac
+│   │   ├── [Sep  5 16:37]  ar26.sort
+│   │   │   ├── [Apr  7  1983]  b-sort.c
+│   │   │   ├── [Apr  7  1983]  b-sort.com
+│   │   │   ├── [Apr  7  1983]  bsort.asm
+│   │   │   ├── [Apr  7  1983]  bsort.com
+│   │   │   ├── [Apr  7  1983]  bsort.doc
+│   │   │   ├── [Apr 29  1982]  sortv.14asm
+│   │   │   └── [Apr 29  1982]  sortv.doc
+│   │   ├── [Sep  5 16:37]  ar27.list
+│   │   │   ├── [Mar  3  1982]  list.asm
+│   │   │   ├── [Mar  3  1982]  list.com
+│   │   │   ├── [Jul  8  1981]  mlist.50asm
+│   │   │   ├── [Nov 24  1981]  mlist.50com
+│   │   │   ├── [Jun 27  1982]  print2.35asm
+│   │   │   ├── [Jun 27  1982]  print2.35com
+│   │   │   └── [Jun 27  1982]  print2.35hex
+│   │   ├── [Sep  5 16:37]  ar28.editor
+│   │   │   ├── [Sep 29  1982]  ed.h
+│   │   │   ├── [Sep 29  1982]  ed1.ccc
+│   │   │   ├── [Sep 29  1982]  ed10.c
+│   │   │   ├── [Sep 29  1982]  ed2.c
+│   │   │   ├── [Sep 29  1982]  ed3.c
+│   │   │   ├── [Sep 29  1982]  ed4.c
+│   │   │   ├── [Sep 29  1982]  ed5.c
+│   │   │   ├── [Sep 29  1982]  ed6.c
+│   │   │   ├── [Sep 29  1982]  ed7.c
+│   │   │   ├── [Sep 29  1982]  ed8.c
+│   │   │   ├── [Sep 29  1982]  ed9.c
+│   │   │   ├── [Sep 29  1982]  edext.cc
+│   │   │   ├── [Sep 29  1982]  editor.txt
+│   │   │   └── [Sep 29  1982]  edsum.doc
+│   │   ├── [Sep  5 16:37]  ar40.apple
+│   │   │   ├── [Oct 31  1981]  apbdsc.patchs
+│   │   │   ├── [Jun  5  1981]  apboot.mac
+│   │   │   ├── [Apr 27  1982]  apbye.69asm
+│   │   │   ├── [Jun  5  1981]  aphigh.memasm
+│   │   │   ├── [Mar 10  1981]  apmbot.asm
+│   │   │   ├── [Jun  5  1981]  apmodm.21asm
+│   │   │   ├── [Apr 27  1982]  apmodm.2asm
+│   │   │   ├── [Jun  5  1981]  apmodm.doc
+│   │   │   ├── [Mar 31  1982]  apple.cpmfix
+│   │   │   ├── [Apr 26  1982]  apunsp.msg
+│   │   │   ├── [Sep 27  1981]  apxmdm.41asm
+│   │   │   ├── [Apr  1  1982]  cpmxfr.com
+│   │   │   ├── [Apr  1  1982]  cpmxfr.doc
+│   │   │   ├── [Apr  1  1982]  cpmxfr.hex
+│   │   │   ├── [Mar 15  1983]  lisa.01doc
+│   │   │   └── [Aug 27  1982]  lksmth.doc
+│   │   ├── [Sep  5 16:37]  ar41.osborn
+│   │   │   ├── [Apr 26  1982]  bdscio.h-osb
+│   │   │   ├── [Apr 27  1982]  mdio.c-osb
+│   │   │   ├── [May 30  1982]  modem7.osbcom
+│   │   │   ├── [Jan  9  1982]  modema.osborn
+│   │   │   ├── [Jan  9  1982]  modemc.osborn
+│   │   │   ├── [May 31  1982]  omodem.216hex
+│   │   │   ├── [May 28  1982]  osbtrx.10doc
+│   │   │   ├── [Oct 14  1982]  oterm.401doc
+│   │   │   ├── [Mar 27  1983]  oterm.404msg
+│   │   │   ├── [Apr  5  1983]  oterm.405com
+│   │   │   ├── [Mar 27  1983]  oterm.405sub
+│   │   │   ├── [Oct 16  1982]  otset.4com
+│   │   │   ├── [Oct 16  1982]  otset.4doc
+│   │   │   ├── [Jan  6  1982]  plink.osborn
+│   │   │   └── [Apr 26  1982]  rain.c
+│   │   ├── [Sep  5 16:37]  ar42.trs-80
+│   │   │   ├── [Nov 21  1982]  trs-ii.cpm
+│   │   │   ├── [Feb  6  1982]  trs-ii.modem
+│   │   │   └── [Nov  8  1981]  trsurt.asm
+│   │   ├── [Sep  5 16:37]  ar43.unix
+│   │   │   ├── [Dec  9  1982]  cpmutl.7c
+│   │   │   ├── [Dec 12  1982]  cpmutl.7cmsg
+│   │   │   ├── [Jul  3  1983]  crck.sh
+│   │   │   ├── [Aug  1  1983]  lar.c
+│   │   │   ├── [May 31  1983]  tmodem.c
+│   │   │   ├── [Jun  5  1983]  tmodem.man
+│   │   │   ├── [Jun  2  1983]  umodem.32his
+│   │   │   ├── [Jul 16  1983]  umodem.33c
+│   │   │   ├── [Feb  9  1983]  xsq.107c
+│   │   │   ├── [Feb  9  1983]  xtype.107c
+│   │   │   └── [Feb  9  1983]  xusq.107c
+│   │   ├── [Sep  5 16:37]  ar44.heath
+│   │   │   ├── [Sep  5  1982]  consol.h
+│   │   │   ├── [Mar 29  1982]  h19h89.convrt
+│   │   │   ├── [Apr  2  1983]  h19sup.rom
+│   │   │   ├── [Jul 13  1982]  h8.upgrad
+│   │   │   ├── [Oct  9  1982]  h89.moddoc
+│   │   │   ├── [Jul 30  1982]  h89cpu.list
+│   │   │   ├── [Apr  2  1983]  heath.h29doc
+│   │   │   ├── [Sep  5  1982]  szofrm.c
+│   │   │   ├── [Jun  8  1982]  teledt.abs
+│   │   │   ├── [Sep  5  1982]  teledt.c
+│   │   │   ├── [Sep  5  1982]  teledt.doc
+│   │   │   ├── [Oct 12  1982]  z19cn.moddoc
+│   │   │   ├── [May 31  1982]  zb4mhz.asm
+│   │   │   └── [May 31  1982]  zb4mhz.doc
+│   │   ├── [Sep  5 16:37]  ar45.atari
+│   │   │   ├── [Apr 12  1983]  amodem.42bas
+│   │   │   ├── [Mar 13  1983]  amodem.42doc
+│   │   │   └── [Aug  1  1982]  aut850.bas
+│   │   ├── [Sep  5 16:37]  ar46.ibm-pc
+│   │   │   ├── [May 22  1983]  heath.a86
+│   │   │   ├── [May 22  1983]  ibmftp.bas
+│   │   │   ├── [May 22  1983]  ibmftp.feturs
+│   │   │   └── [May 22  1983]  ibmftp.help
+│   │   ├── [Sep  5 16:37]  ar52.voice
+│   │   │   ├── [Nov 19  1981]  speech.bas
+│   │   │   ├── [Oct 26  1981]  talk@.lib
+│   │   │   ├── [Oct 26  1981]  vmac.asm
+│   │   │   ├── [Oct 26  1981]  voic@.crc
+│   │   │   ├── [Oct 22  1981]  voic@.doc
+│   │   │   ├── [Oct 26  1981]  voic@.equlib
+│   │   │   ├── [Oct 26  1981]  voic@.lib
+│   │   │   ├── [Dec  1  1981]  voice.c
+│   │   │   ├── [Dec  1  1981]  voice.c-doc
+│   │   │   ├── [Oct 26  1981]  vrmac.asm
+│   │   │   └── [Feb  6  1982]  yesmst.voc
+│   │   ├── [Sep  5 16:37]  ar53.catlog
+│   │   │   ├── [Mar 28  1983]  cat.2asm
+│   │   │   ├── [Mar 28  1983]  cat.2com
+│   │   │   ├── [Nov 14  1981]  catlog.doc
+│   │   │   ├── [Nov 14  1981]  crsref.asm
+│   │   │   ├── [Nov 14  1981]  fmap.asm
+│   │   │   ├── [Aug 22  1981]  fmap.com
+│   │   │   ├── [Mar 22  1983]  ncat.32doc
+│   │   │   ├── [Mar 22  1983]  ncat.32set
+│   │   │   ├── [Mar 22  1983]  ncat.33aasm
+│   │   │   ├── [Mar 22  1983]  ncat.33acom
+│   │   │   ├── [Mar 22  1983]  ncat.33ahex
+│   │   │   ├── [Mar 22  1983]  xcat.37asm
+│   │   │   ├── [Mar 22  1983]  xcat.37com
+│   │   │   └── [Mar 22  1983]  xcat.37hex
+│   │   ├── [Sep  5 16:37]  ar54.fast2
+│   │   │   ├── [Oct 10  1981]  discus.patasm
+│   │   │   ├── [Oct 10  1981]  dms.patasm
+│   │   │   ├── [Oct 10  1981]  fast.manual
+│   │   │   ├── [Oct 10  1981]  fast2.asm
+│   │   │   ├── [Oct 10  1981]  fast2.com
+│   │   │   ├── [Oct 10  1981]  fast2.comdoc
+│   │   │   ├── [Oct 10  1981]  instal.doc
+│   │   │   ├── [Oct 10  1981]  microp.patasm
+│   │   │   ├── [Oct 10  1981]  pakup2.asm
+│   │   │   ├── [Oct 10  1981]  rel.asm
+│   │   │   ├── [Oct 10  1981]  rel.utl
+│   │   │   ├── [Oct 10  1981]  relcpm.doc
+│   │   │   ├── [Oct 10  1981]  relcpm.sub
+│   │   │   ├── [Oct 10  1981]  reled.sub
+│   │   │   ├── [Oct 10  1981]  relhdr.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.com
+│   │   │   ├── [Oct 10  1981]  skew2.patasm
+│   │   │   ├── [Oct 10  1981]  skew3.patasm
+│   │   │   └── [Oct 10  1981]  utl.lib
+│   │   ├── [Sep  5 16:37]  ar55.ccp
+│   │   │   ├── [Sep 10  1981]  22pub.asm
+│   │   │   ├── [Sep  8  1981]  autox.asm
+│   │   │   ├── [Mar 14  1981]  ccppat.asm
+│   │   │   ├── [Mar 16  1981]  dvrpat.asm
+│   │   │   ├── [Apr  2  1982]  fifos.mac
+│   │   │   ├── [Dec 15  1981]  xtcpm.15asm
+│   │   │   └── [Dec 15  1981]  xtcpm.15doc
+│   │   ├── [Sep  5 16:37]  ar56.zcpr
+│   │   │   ├── [Jul  3  1981]  bdloc.asm
+│   │   │   ├── [Jun 24  1982]  nzcpr.14bdif
+│   │   │   ├── [Mar 18  1982]  pass.asm
+│   │   │   ├── [Dec 11  1981]  zcpr.asm
+│   │   │   ├── [Dec 13  1981]  zcpr.doc
+│   │   │   ├── [Aug  1  1982]  zcpr.eramod
+│   │   │   ├── [Dec 13  1981]  zcpr.hlp
+│   │   │   ├── [Dec 13  1981]  zcpr.msg
+│   │   │   └── [Mar 15  1982]  zcprbf.asm
+│   │   ├── [Sep  5 16:37]  ar57.submit
+│   │   │   ├── [Jun 23  1981]  batch.com
+│   │   │   ├── [Jun 23  1981]  batch.doc
+│   │   │   ├── [Mar 19  1983]  ex.14asm
+│   │   │   ├── [Mar 19  1983]  ex.14com
+│   │   │   ├── [Mar 19  1983]  ex.14doc
+│   │   │   ├── [Mar 19  1983]  ex.14hex
+│   │   │   ├── [Mar 19  1983]  ex.14sub
+│   │   │   ├── [Mar 19  1983]  ex.14tst
+│   │   │   ├── [Jun 23  1981]  exampl.bat
+│   │   │   ├── [Sep 12  1982]  if.asm
+│   │   │   ├── [Sep 12  1982]  if.com
+│   │   │   ├── [Sep 13  1982]  if.hex
+│   │   │   ├── [Sep 12  1982]  ifskip.doc
+│   │   │   ├── [Nov 10  1980]  maksub.asm
+│   │   │   ├── [Aug 23  1982]  rels.hex
+│   │   │   ├── [Aug 23  1982]  rels.utl
+│   │   │   ├── [Sep 12  1982]  skip.asm
+│   │   │   ├── [Sep 12  1982]  skip.com
+│   │   │   ├── [Sep 13  1982]  skip.hex
+│   │   │   ├── [Mar  3  1982]  sub.asm
+│   │   │   ├── [Mar  3  1982]  sub.com
+│   │   │   ├── [Mar 19  1983]  subgen.10doc
+│   │   │   ├── [Mar 19  1983]  subgen.12asm
+│   │   │   ├── [Sep 19  1981]  supsub.11asm
+│   │   │   ├── [Sep 19  1981]  supsub.11doc
+│   │   │   └── [Jun 23  1981]  varbat.com
+│   │   ├── [Sep  5 16:37]  ar58.maclib
+│   │   │   ├── [Oct 24  1981]  macro.lib
+│   │   │   ├── [Apr  2  1982]  macros.tip
+│   │   │   ├── [Feb 19  1982]  macroz.mac
+│   │   │   ├── [Mar 15  1983]  seqio.22lib
+│   │   │   ├── [Jul  8  1981]  seqio.lib
+│   │   │   ├── [Mar  7  1982]  xmac.asm
+│   │   │   ├── [Oct 10  1981]  z80-v3.lib
+│   │   │   └── [Oct 10  1981]  z80ext.lib
+│   │   ├── [Sep  5 16:37]  ar59.spell
+│   │   │   ├── [Mar 30  1983]  diccre.20com
+│   │   │   ├── [Mar 30  1983]  diccre.20hex
+│   │   │   ├── [Mar 30  1983]  diccre.20mac
+│   │   │   ├── [Aug 19  1982]  dict.dic
+│   │   │   ├── [Dec 28  1982]  dict.letter
+│   │   │   ├── [Dec 23  1982]  spell.20com
+│   │   │   ├── [Dec 23  1982]  spell.20doc
+│   │   │   ├── [Dec 23  1982]  spell.20hex
+│   │   │   ├── [Dec 23  1982]  spell.20mac
+│   │   │   └── [Aug 19  1982]  spell0.10mac
+│   │   ├── [Sep  5 16:37]  ar62.yam
+│   │   │   ├── [Feb 23  1982]  yam.h
+│   │   │   ├── [Feb 23  1982]  yam.sub
+│   │   │   ├── [Feb 23  1982]  yam1.c
+│   │   │   ├── [Dec  8  1981]  yam8.asm
+│   │   │   ├── [Dec  8  1981]  yam9.asm
+│   │   │   └── [Feb 23  1982]  yamapl.h
+│   │   ├── [Sep  5 16:37]  ar64.term
+│   │   │   ├── [Aug 11  1981]  dial.3asm
+│   │   │   ├── [Sep 27  1982]  h19vax.escape
+│   │   │   ├── [Jan  8  1982]  mtn.22bcom
+│   │   │   ├── [Feb  1  1982]  mtn.22bdoc
+│   │   │   ├── [May 23  1981]  mtn.info
+│   │   │   ├── [Nov  4  1981]  mtn21.offcom
+│   │   │   ├── [Nov  9  1981]  mtn21.offdoc
+│   │   │   ├── [Aug  9  1981]  mtn21.offhex
+│   │   │   ├── [May 20  1981]  mtnmsg.ovr
+│   │   │   ├── [Oct 29  1982]  pipmod.asm
+│   │   │   ├── [Oct 29  1982]  pipmod.doc
+│   │   │   ├── [Jul  4  1981]  plink.65doc
+│   │   │   ├── [Apr  4  1983]  plink.67aasm
+│   │   │   ├── [Apr  2  1982]  ubpmmi.asm
+│   │   │   └── [Apr 21  1982]  z19.asm
+│   │   ├── [Sep  5 16:37]  ar65.smodem
+│   │   │   ├── [Apr  8  1982]  smodem.38doc
+│   │   │   ├── [Dec  7  1982]  smodem.39mac
+│   │   │   └── [Sep 10  1981]  smodem.doc
+│   │   ├── [Sep  5 16:37]  ar66.micnet
+│   │   │   ├── [Jun 13  1982]  bufexc.asm
+│   │   │   ├── [Sep 23  1982]  cis.qdoc
+│   │   │   ├── [Mar 20  1982]  cis.sysdoc
+│   │   │   ├── [Apr  2  1982]  dow.12com
+│   │   │   ├── [Apr  2  1982]  dow.12hex
+│   │   │   ├── [Apr  2  1982]  dow.12mac
+│   │   │   ├── [Apr 23  1982]  dowpmm.dif
+│   │   │   ├── [Mar 22  1982]  mnet.proto
+│   │   │   ├── [Jul  6  1982]  mnet.signup
+│   │   │   ├── [Mar 15  1982]  mnexec.doc
+│   │   │   ├── [Apr 21  1983]  protoc.cis
+│   │   │   ├── [Apr  2  1982]  upload.12com
+│   │   │   ├── [Apr  2  1982]  upload.12hex
+│   │   │   ├── [Apr  2  1982]  upload.12mac
+│   │   │   └── [Apr 23  1982]  uppmmi.dif
+│   │   ├── [Sep  5 16:37]  ar69.rbbs
+│   │   │   ├── [Sep  7  1982]  menu.rbbs
+│   │   │   ├── [Sep  7  1982]  newcom.1
+│   │   │   ├── [Jul 14  1981]  rbbs.25asc
+│   │   │   ├── [Sep 18  1982]  rbbs.31asc
+│   │   │   ├── [Sep 18  1982]  rbbs.31doc
+│   │   │   ├── [Dec 12  1982]  rbbs.rtn001
+│   │   │   ├── [Mar 24  1981]  rbbs.usedoc
+│   │   │   └── [Dec  5  1981]  rbsutl.22asc
+│   │   ├── [Sep  5 16:37]  ar70.epson
+│   │   │   ├── [Jul 19  1982]  epson.specs
+│   │   │   ├── [Sep 28  1982]  fncfnt.com
+│   │   │   ├── [Sep 28  1982]  fncfnt.dm1
+│   │   │   ├── [Oct  1  1982]  fncfnt.dm1hex
+│   │   │   ├── [Sep 28  1982]  fncfnt.doc
+│   │   │   ├── [Oct  1  1982]  fncfnt.hex
+│   │   │   ├── [Nov  5  1982]  printr.c
+│   │   │   └── [Nov 11  1982]  printr.com
+│   │   └── [Aug 11 10:40]  cpm
+│   │       ├── [Mar 15  1983]  ar16.msoft
+│   │       ├── [Aug 22  1982]  ar25.disasm
+│   │       ├── [Apr  7  1983]  ar26.sort
+│   │       ├── [Jun 27  1982]  ar27.list
+│   │       ├── [Sep 30  1982]  ar28.editor
+│   │       ├── [Mar 30  1983]  ar40.apple
+│   │       ├── [Apr  5  1983]  ar41.osborn
+│   │       ├── [Mar 17  1983]  ar42.trs-80
+│   │       ├── [Aug  1  1983]  ar43.unix
+│   │       ├── [Apr  2  1983]  ar44.heath
+│   │       ├── [Apr 12  1983]  ar45.atari
+│   │       ├── [May 22  1983]  ar46.ibm-pc
+│   │       ├── [Feb  6  1982]  ar52.voice
+│   │       ├── [Mar 28  1983]  ar53.catlog
+│   │       ├── [Oct 10  1981]  ar54.fast2
+│   │       ├── [Aug  3  1983]  ar55.ccp
+│   │       ├── [Jun 20  1983]  ar56.zcpr
+│   │       ├── [Mar 19  1983]  ar57.submit
+│   │       ├── [Mar 15  1983]  ar58.maclib
+│   │       ├── [Mar 30  1983]  ar59.spell
+│   │       ├── [Dec 13  1982]  ar62.yam
+│   │       ├── [Apr  4  1983]  ar64.term
+│   │       ├── [Dec  7  1982]  ar65.smodem
+│   │       ├── [Apr 21  1983]  ar66.micnet
+│   │       ├── [Dec 12  1982]  ar69.rbbs
+│   │       ├── [Jan 13  1983]  ar70.epson
+│   │       ├── [Jun  8  1983]  mince.list
+│   │       ├── [Jun 22  1983]  mitifm.rcpts
+│   │       └── [Mar 27  1983]  ts.crc
+│   ├── [Aug 11 10:40]  7005768
+│   │   └── [Aug 11 10:40]  cpm
+│   │       ├── [Apr  8  1981]  22cpm.doc
+│   │       ├── [Feb  6  1981]  22cp{m.crclst
+│   │       ├── [Mar 10  1981]  apmbot.asm
+│   │       ├── [Nov 10  1980]  asmpat.asm
+│   │       ├── [Feb 18  1981]  autox.asm
+│   │       ├── [May 25  1981]  bbsnos.byarea
+│   │       ├── [Nov  9  1980]  bdos22.patch
+│   │       ├── [Mar 25  1981]  bye.asm
+│   │       ├── [Mar 14  1981]  ccppat.asm
+│   │       ├── [Mar 24  1981]  cmodem.c
+│   │       ├── [May 30  1981]  compar.asm
+│   │       ├── [May 30  1981]  compar.com
+│   │       ├── [May 31  1981]  cpm.archiv
+│   │       ├── [Sep 14  1980]  cpm.doc
+│   │       ├── [Jun  1  1981]  cpm.list
+│   │       ├── [Apr 28  1981]  cpmnet.apr81
+│   │       ├── [Feb  2  1981]  cpmnet.feb81
+│   │       ├── [Jan 24  1981]  cpmnet.jan81
+│   │       ├── [Apr 28  1981]  cpmnet.mar81
+│   │       ├── [Apr 28  1981]  cpmnet.may81
+│   │       ├── [Nov 29  1980]  cpyfil.asm
+│   │       ├── [May  5  1981]  cpyfil.com
+│   │       ├── [May 31  1981]  cp{m.list
+│   │       ├── [Dec  5  1980]  crck.asm
+│   │       ├── [May  5  1981]  crck.com
+│   │       ├── [Mar  8  1981]  d.asm
+│   │       ├── [Mar  8  1981]  d.hex
+│   │       ├── [Mar  9  1981]  dbase2.review
+│   │       ├── [Mar 24  1981]  dch.h
+│   │       ├── [Dec 19  1980]  dirf.mac
+│   │       ├── [Nov 29  1980]  dskcmp.doc
+│   │       ├── [May  4  1981]  du-v75.asm
+│   │       ├── [May  5  1981]  du-v75.com
+│   │       ├── [May  4  1981]  du-v75.doc
+│   │       ├── [May 27  1981]  du-v75.hlp
+│   │       ├── [Mar 16  1981]  dvrpat.asm
+│   │       ├── [Nov 10  1980]  fast.doc
+│   │       ├── [May 26  1981]  fbad54.asm
+│   │       ├── [May 21  1981]  fbad54.com
+│   │       ├── [May 30  1981]  filprt.asm
+│   │       ├── [Jan 28  1981]  filter.asm
+│   │       ├── [May  5  1981]  filter.com
+│   │       ├── [May 27  1981]  filter.z80
+│   │       ├── [Mar 25  1981]  filtex.asm
+│   │       ├── [May  5  1981]  filtex.com
+│   │       ├── [May  5  1981]  fmap.com
+│   │       ├── [May 31  1981]  help.lmodem
+│   │       ├── [May 29  1981]  h{z89.mods
+│   │       ├── [Nov 10  1980]  maksub.asm
+│   │       ├── [Sep  2  1980]  menu.mac
+│   │       ├── [Jun  1  1981]  mince.list
+│   │       ├── [Jan 24  1981]  mlist.asm
+│   │       ├── [May  5  1981]  mlist.com
+│   │       ├── [May  8  1981]  modem.206asm
+│   │       ├── [May  8  1981]  modem.206doc
+│   │       ├── [Mar 14  1981]  modem.926
+│   │       ├── [Mar  8  1981]  modem.doc
+│   │       ├── [Apr 29  1981]  modem2.proto
+│   │       ├── [May  1  1981]  money.talks
+│   │       ├── [Nov 28  1980]  move.asm
+│   │       ├── [May 30  1981]  mtn.bugs
+│   │       ├── [May 23  1981]  mtn.info
+│   │       ├── [Mar  4  1981]  mtn21.doc
+│   │       ├── [Mar  4  1981]  mtn21.hex
+│   │       ├── [Mar  4  1981]  mtn21.hex1
+│   │       ├── [Mar  4  1981]  mtn21.hex2
+│   │       ├── [Mar  4  1981]  mtn21.hex3
+│   │       ├── [Mar  6  1981]  mtn21.hex43
+│   │       ├── [Mar  3  1981]  mtnmsg.hex
+│   │       ├── [Mar  4  1981]  mtnmsg.hex1
+│   │       ├── [Mar  4  1981]  mtnmsg.hex2
+│   │       ├── [Mar  4  1981]  mtnmsg.hex3
+│   │       ├── [Nov 30  1980]  nsskew.asm
+│   │       ├── [Mar 24  1981]  rbbs.usedoc
+│   │       ├── [Apr  1  1981]  rcp{m.info
+│   │       ├── [May 26  1981]  rcp{m.nos
+│   │       ├── [Nov 10  1980]  rspeed.asm
+│   │       ├── [Nov 10  1980]  rspeed.hex
+│   │       ├── [May 30  1981]  scrmbl.asm
+│   │       ├── [May 30  1981]  scrmbl.doc
+│   │       ├── [Dec 16  1980]  sd.asm
+│   │       ├── [May  5  1981]  sd.com
+│   │       ├── [Apr 20  1981]  sig{m.apr81
+│   │       ├── [Dec 19  1980]  sig{m.dec80
+│   │       ├── [May 27  1981]  sig{m.jun81
+│   │       ├── [Dec 21  1980]  sig{m.nov80
+│   │       ├── [Nov 10  1980]  skew2.asmpat
+│   │       ├── [Nov 10  1980]  skew3.asmpat
+│   │       ├── [Nov 26  1980]  speed.doc
+│   │       ├── [Jan 27  1981]  telnet.c
+│   │       ├── [May 30  1981]  ts.lmodem
+│   │       ├── [May 25  1981]  ts.olmode
+│   │       ├── [May 30  1981]  umpire.com
+│   │       ├── [May 30  1981]  umpire.doc
+│   │       ├── [May  5  1981]  unload.com
+│   │       ├── [Dec 19  1980]  up.load
+│   │       ├── [Jan  7  1981]  updown.doc
+│   │       ├── [May 29  1981]  usrdft.ccp
+│   │       ├── [May  5  1981]  xd.com
+│   │       ├── [May  8  1981]  xmodem.42asm
+│   │       └── [May  8  1981]  xmodem.42doc
+│   ├── [Sep  4 17:03]  7005815
+│   │   ├── [Sep  5 16:37]  ar10.gendoc
+│   │   │   ├── [Apr  8  1981]  22cpm.doc
+│   │   │   ├── [Jan 30  1982]  22cp{m.crclst
+│   │   │   ├── [Apr 28  1982]  22dblk.doc
+│   │   │   ├── [Apr 29  1982]  22dblk.morrow
+│   │   │   ├── [Jul  8  1982]  atsign.doc
+│   │   │   ├── [Feb  7  1982]  auto.start
+│   │   │   ├── [Apr 16  1982]  bakspc.patch
+│   │   │   ├── [Oct  7  1982]  brnwsh.msg
+│   │   │   ├── [May 15  1982]  cache.disks
+│   │   │   ├── [Nov 21  1982]  cacheq.bug
+│   │   │   ├── [Nov 21  1981]  ccsbio.fix
+│   │   │   ├── [Apr 15  1982]  chain.doc
+│   │   │   ├── [Sep 14  1980]  cpm.doc
+│   │   │   ├── [Nov 11  1981]  cpyrit.doc
+│   │   │   ├── [Aug 22  1982]  cpyrit.txt
+│   │   │   ├── [Jun 27  1981]  crcart.doc
+│   │   │   ├── [Jun 22  1982]  eac.doc
+│   │   │   ├── [Jun 10  1982]  easy.writer
+│   │   │   ├── [Aug 28  1982]  godbot.z80doc
+│   │   │   ├── [Apr 29  1982]  h19cod.doc
+│   │   │   ├── [Oct 20  1981]  hammin.doc
+│   │   │   ├── [Aug 25  1981]  heath.option
+│   │   │   ├── [Apr  1  1982]  hedcln.doc
+│   │   │   ├── [Nov 21  1981]  howto.hack
+│   │   │   ├── [Nov 10  1982]  index.syslib
+│   │   │   ├── [Aug 30  1981]  libray.contrl
+│   │   │   ├── [Jun 21  1981]  marc.doc
+│   │   │   ├── [Jun 22  1981]  maron.patch
+│   │   │   ├── [May 13  1982]  micro.shell
+│   │   │   ├── [Sep 10  1981]  modems.doc
+│   │   │   ├── [Nov 11  1981]  quikie.hints3
+│   │   │   ├── [Sep  4  1982]  s100dc.survey
+│   │   │   ├── [Feb 11  1983]  safram.doc
+│   │   │   ├── [May 30  1981]  umpire.doc
+│   │   │   ├── [Apr  2  1982]  xsub.pat
+│   │   │   └── [Jul  3  1981]  zsid.patch
+│   │   ├── [Sep  5 16:37]  ar11.genasm
+│   │   │   ├── [Feb 23  1982]  banner.asm
+│   │   │   ├── [Oct  3  1982]  brnwsh.asm
+│   │   │   ├── [Jun 24  1981]  carry.12asm
+│   │   │   ├── [Sep 11  1981]  debug.mac
+│   │   │   ├── [Oct 20  1981]  decxha.asm
+│   │   │   ├── [Mar 29  1982]  formha.1asm
+│   │   │   ├── [Mar  6  1982]  inuse.11asm
+│   │   │   ├── [May 29  1982]  jnztes.asm
+│   │   │   ├── [Sep 12  1981]  makfcb.asm
+│   │   │   ├── [Apr 27  1982]  mdmpat.asm
+│   │   │   ├── [Feb 11  1983]  safram.asm
+│   │   │   ├── [Feb 11  1983]  safram.ht2
+│   │   │   ├── [May  2  1982]  spttim.10asm
+│   │   │   ├── [Oct  3  1982]  swap.asm
+│   │   │   ├── [Dec 23  1982]  tell.asm
+│   │   │   ├── [Mar  6  1982]  time.11mac
+│   │   │   ├── [Dec  4  1981]  u.asm
+│   │   │   ├── [Sep 19  1982]  ukaypr.asm
+│   │   │   ├── [Apr  2  1982]  whoder.1asm
+│   │   │   └── [Oct 21  1981]  worm.21asm
+│   │   ├── [Sep  5 16:37]  ar12.gencom
+│   │   │   ├── [Jul  8  1982]  atsign.com
+│   │   │   ├── [Aug 23  1982]  device.com
+│   │   │   ├── [Jun 22  1982]  eac.com
+│   │   │   ├── [Mar  6  1982]  inuse.11com
+│   │   │   ├── [Mar  7  1982]  time.11com
+│   │   │   └── [May 30  1981]  umpire.com
+│   │   ├── [Sep  5 16:37]  ar16.msoft
+│   │   │   ├── [Sep 12  1981]  bascom.53doc
+│   │   │   ├── [Feb 21  1982]  mbasic.fre
+│   │   │   ├── [Apr 29  1982]  msftnw.apr82
+│   │   │   ├── [Apr 29  1982]  msftnw.mar82
+│   │   │   └── [Feb 21  1982]  msoft.call
+│   │   ├── [Sep  5 16:37]  ar25.disasm
+│   │   │   ├── [Apr 17  1982]  resorc.com
+│   │   │   ├── [Apr 18  1982]  resorc.hex
+│   │   │   ├── [Aug 17  1982]  zdasm.15com
+│   │   │   ├── [Aug 22  1982]  zdasm.15hex
+│   │   │   ├── [Aug 17  1982]  zdasm.15mac
+│   │   │   ├── [Jun 13  1982]  zdasmt.mac
+│   │   │   └── [May 16  1982]  zdasmz.mac
+│   │   ├── [Sep  5 16:37]  ar26.sort
+│   │   │   ├── [Apr 29  1982]  sortv.14asm
+│   │   │   └── [Apr 29  1982]  sortv.doc
+│   │   ├── [Sep  5 16:37]  ar27.list
+│   │   │   ├── [Mar  3  1982]  list.asm
+│   │   │   ├── [Mar  3  1982]  list.com
+│   │   │   ├── [Jul  8  1981]  mlist.50asm
+│   │   │   ├── [Nov 24  1981]  mlist.50com
+│   │   │   ├── [Jun 27  1982]  print2.35asm
+│   │   │   ├── [Jun 27  1982]  print2.35com
+│   │   │   └── [Jun 27  1982]  print2.35hex
+│   │   ├── [Sep  5 16:37]  ar28.editor
+│   │   │   ├── [Sep 29  1982]  ed.h
+│   │   │   ├── [Sep 29  1982]  ed1.ccc
+│   │   │   ├── [Sep 29  1982]  ed10.c
+│   │   │   ├── [Sep 29  1982]  ed2.c
+│   │   │   ├── [Sep 29  1982]  ed3.c
+│   │   │   ├── [Sep 29  1982]  ed4.c
+│   │   │   ├── [Sep 29  1982]  ed5.c
+│   │   │   ├── [Sep 29  1982]  ed6.c
+│   │   │   ├── [Sep 29  1982]  ed7.c
+│   │   │   ├── [Sep 29  1982]  ed8.c
+│   │   │   ├── [Sep 29  1982]  ed9.c
+│   │   │   ├── [Sep 29  1982]  edext.cc
+│   │   │   ├── [Sep 29  1982]  editor.txt
+│   │   │   └── [Sep 29  1982]  edsum.doc
+│   │   ├── [Sep  5 16:37]  ar30.basic
+│   │   │   ├── [Sep  9  1982]  basice.com
+│   │   │   ├── [Sep  9  1982]  ebasic.hlp
+│   │   │   ├── [Sep  9  1982]  el-e.bas
+│   │   │   ├── [Sep  9  1982]  el-e.int
+│   │   │   ├── [Sep  9  1982]  erun.com
+│   │   │   └── [Oct 30  1981]  xref.bas
+│   │   ├── [Sep  5 16:37]  ar31.pascal
+│   │   │   ├── [Feb  4  1982]  cal.com
+│   │   │   ├── [Feb  4  1982]  cal.pas
+│   │   │   ├── [Apr 27  1982]  cpmcop.pas
+│   │   │   ├── [Mar 11  1982]  modem3.8080io
+│   │   │   ├── [Mar 11  1982]  modem3.pas
+│   │   │   ├── [Mar 11  1982]  modem3.z80-io
+│   │   │   ├── [Nov 12  1982]  pset.src
+│   │   │   ├── [Apr  6  1982]  xydemo.pas
+│   │   │   └── [Apr  6  1982]  xyplot.pas
+│   │   ├── [Sep  5 16:37]  ar32.forth
+│   │   │   ├── [Nov  6  1981]  forth.asm
+│   │   │   ├── [Sep 14  1982]  forth.pdp11
+│   │   │   ├── [Nov  7  1981]  forth.z80com
+│   │   │   ├── [Nov  7  1981]  forth.z80mac
+│   │   │   └── [Dec 20  1981]  nit4th.asm
+│   │   ├── [Sep  5 16:37]  ar33.ratfor
+│   │   │   ├── [Nov  9  1981]  asmdef.rat
+│   │   │   ├── [Nov  9  1981]  consts.rat
+│   │   │   ├── [Nov  9  1981]  f77.doc
+│   │   │   ├── [Nov  9  1981]  f77def.rat
+│   │   │   ├── [Nov  9  1981]  f77lib.for
+│   │   │   ├── [Nov  9  1981]  index.z80
+│   │   │   ├── [Nov  9  1981]  indext.for
+│   │   │   ├── [Nov  9  1981]  ioer.z80
+│   │   │   ├── [Nov  9  1981]  lcat.doc
+│   │   │   ├── [Nov  9  1981]  lcat.rat
+│   │   │   ├── [Nov  9  1981]  ratcmn.rat
+│   │   │   ├── [Nov  9  1981]  ratfor.doc
+│   │   │   ├── [Nov  9  1981]  ratfor.for
+│   │   │   ├── [Nov  9  1981]  ratfor.rat
+│   │   │   └── [Nov  9  1981]  trnslt.z80
+│   │   ├── [Sep  5 16:37]  ar34.bdsc-1
+│   │   │   ├── [Mar 15  1982]  bds.46lib
+│   │   │   ├── [Oct 21  1982]  bdscio.50h
+│   │   │   ├── [Jan 30  1982]  bdscio.h
+│   │   │   ├── [Jan 30  1982]  c.ccc
+│   │   │   ├── [Mar  3  1982]  casm.c
+│   │   │   ├── [Mar  3  1982]  casm.doc
+│   │   │   ├── [Mar  3  1982]  casm.sub
+│   │   │   ├── [Jan 30  1982]  ccc.asm
+│   │   │   ├── [Jan 30  1982]  deff.crl
+│   │   │   ├── [Mar 14  1982]  deff2.crl
+│   │   │   ├── [Mar 23  1982]  deff2.csm
+│   │   │   ├── [Mar 23  1982]  deff2a.csm
+│   │   │   ├── [Feb  1  1982]  dio.c
+│   │   │   ├── [Jan 30  1982]  dio.h
+│   │   │   ├── [Jan 30  1982]  float.c
+│   │   │   ├── [Jan 30  1982]  float.doc
+│   │   │   ├── [Jan 30  1982]  fltsum.c
+│   │   │   ├── [Oct 21  1982]  hware.50h
+│   │   │   ├── [Mar 18  1982]  noboot.c
+│   │   │   ├── [Nov 16  1982]  noclr.c
+│   │   │   ├── [Jan 30  1982]  sieve.c
+│   │   │   ├── [Jan 30  1982]  stdlb1.c
+│   │   │   ├── [Jan 30  1982]  stdlb2.c
+│   │   │   ├── [Aug 29  1982]  wildex.15c
+│   │   │   └── [Mar 22  1982]  wildex.c
+│   │   ├── [Sep  5 16:37]  ar35.bdsc-2
+│   │   │   ├── [Jan 29  1982]  chario.c
+│   │   │   ├── [Jul 11  1982]  crypt.c
+│   │   │   ├── [Jul 11  1982]  crypt.com
+│   │   │   ├── [Jan 29  1982]  l2.c
+│   │   │   ├── [Jan 28  1982]  l2.doc
+│   │   │   ├── [Mar 23  1982]  l2link.fix
+│   │   │   ├── [Jan 31  1982]  load.c
+│   │   │   ├── [Jan 30  1982]  lpr.c
+│   │   │   ├── [Jan 27  1982]  lprint.c
+│   │   │   ├── [Jan 31  1982]  makovl.c
+│   │   │   ├── [Mar 22  1982]  nl2.c
+│   │   │   ├── [Oct 12  1982]  ph.c
+│   │   │   ├── [Mar 22  1982]  portio.c
+│   │   │   ├── [Mar 24  1982]  portio.h
+│   │   │   ├── [Jan 29  1982]  scott.c
+│   │   │   ├── [Oct 23  1982]  teled.12c
+│   │   │   ├── [Mar 20  1982]  teled.doc
+│   │   │   ├── [Jun 24  1982]  uniq.c
+│   │   │   ├── [Jan 31  1982]  untip.c
+│   │   │   ├── [Jan 30  1982]  wavy.c
+│   │   │   └── [Feb  6  1982]  xc.c
+│   │   ├── [Sep  5 16:37]  ar36.bdsc-3
+│   │   │   ├── [Mar 18  1982]  alph.c
+│   │   │   ├── [Sep  6  1982]  append.1c
+│   │   │   ├── [Mar 18  1982]  cat.c
+│   │   │   ├── [Jul  6  1982]  cdir.c
+│   │   │   ├── [Mar 11  1982]  cio.c
+│   │   │   ├── [Mar 19  1982]  cp.c
+│   │   │   ├── [Mar 18  1982]  echo.c
+│   │   │   ├── [Sep  2  1982]  fp.c
+│   │   │   ├── [Apr 26  1982]  fs.c
+│   │   │   ├── [May 30  1982]  lcheck.c
+│   │   │   ├── [Sep 14  1982]  long.1c
+│   │   │   ├── [Oct  4  1982]  long.1crl
+│   │   │   ├── [Sep 14  1982]  long.1csm
+│   │   │   ├── [Sep 14  1982]  long.1doc
+│   │   │   ├── [Sep  2  1982]  pat.c
+│   │   │   ├── [Sep  2  1982]  pat.h
+│   │   │   ├── [Feb 24  1982]  qsort.tip
+│   │   │   ├── [Mar 24  1982]  rm.c
+│   │   │   ├── [Mar 18  1982]  rmf.c
+│   │   │   ├── [Mar 25  1982]  rmx.c
+│   │   │   ├── [Feb 28  1982]  sample.csm
+│   │   │   ├── [Mar 18  1982]  sd.c
+│   │   │   ├── [Sep 22  1982]  sort.3c
+│   │   │   ├── [Mar  8  1982]  stdlib.doc
+│   │   │   ├── [Mar 18  1982]  stripc.c
+│   │   │   ├── [Mar 18  1982]  symp.c
+│   │   │   ├── [Jan 27  1982]  usrcod.c
+│   │   │   ├── [Jan 30  1982]  v143.doc
+│   │   │   ├── [Jan 30  1982]  v144.doc
+│   │   │   ├── [Jan 29  1982]  v145.doc
+│   │   │   ├── [Mar  8  1982]  v146.doc
+│   │   │   ├── [Sep 28  1982]  v150.2doc
+│   │   │   └── [Mar 17  1982]  wc.c
+│   │   ├── [Sep  5 16:37]  ar37.bdsc-4
+│   │   │   ├── [Aug 27  1982]  chdir.10c
+│   │   │   ├── [Sep  6  1982]  chdir.10hlp
+│   │   │   ├── [Oct  6  1982]  config.12c
+│   │   │   ├── [Oct  7  1982]  config.12com
+│   │   │   ├── [Aug 27  1982]  device.c
+│   │   │   └── [May 31  1982]  tinit.c
+│   │   ├── [Sep  5 16:37]  ar40.apple
+│   │   │   ├── [Oct 31  1981]  apbdsc.patchs
+│   │   │   ├── [Jun  5  1981]  apboot.mac
+│   │   │   ├── [Apr 27  1982]  apbye.69asm
+│   │   │   ├── [Jun  5  1981]  aphigh.memasm
+│   │   │   ├── [Mar 10  1981]  apmbot.asm
+│   │   │   ├── [Jun  5  1981]  apmodm.21asm
+│   │   │   ├── [Apr 27  1982]  apmodm.2asm
+│   │   │   ├── [Jun  5  1981]  apmodm.doc
+│   │   │   ├── [Mar 31  1982]  apple.cpmfix
+│   │   │   ├── [Apr 26  1982]  apunsp.msg
+│   │   │   ├── [Sep 27  1981]  apxmdm.41asm
+│   │   │   ├── [Apr  1  1982]  cpmxfr.com
+│   │   │   ├── [Apr  1  1982]  cpmxfr.doc
+│   │   │   ├── [Apr  1  1982]  cpmxfr.hex
+│   │   │   └── [Aug 27  1982]  lksmth.doc
+│   │   ├── [Sep  5 16:37]  ar41.osborn
+│   │   │   ├── [Apr 26  1982]  bdscio.h-osb
+│   │   │   ├── [Apr 27  1982]  mdio.c-osb
+│   │   │   ├── [May 30  1982]  modem7.osbcom
+│   │   │   ├── [Jan  9  1982]  modema.osborn
+│   │   │   ├── [Jan  9  1982]  modemc.osborn
+│   │   │   ├── [May 31  1982]  omodem.216hex
+│   │   │   ├── [May 28  1982]  osbtrx.10doc
+│   │   │   ├── [Oct 14  1982]  oterm.401com
+│   │   │   ├── [Oct 14  1982]  oterm.401doc
+│   │   │   ├── [Oct 16  1982]  otset.4com
+│   │   │   ├── [Oct 16  1982]  otset.4doc
+│   │   │   ├── [Jan  6  1982]  plink.osborn
+│   │   │   └── [Apr 26  1982]  rain.c
+│   │   ├── [Sep  5 16:37]  ar42.trs-80
+│   │   │   ├── [Nov 21  1982]  trs-ii.cpm
+│   │   │   ├── [Feb  6  1982]  trs-ii.modem
+│   │   │   └── [Nov  8  1981]  trsurt.asm
+│   │   ├── [Sep  5 16:37]  ar43.unix
+│   │   │   ├── [Dec  9  1982]  cpmutl.7c
+│   │   │   ├── [Dec 12  1982]  cpmutl.7cmsg
+│   │   │   ├── [Jun  9  1982]  tmodem.c
+│   │   │   ├── [Apr 17  1982]  umodem.c
+│   │   │   ├── [Apr 17  1982]  umodem.his
+│   │   │   ├── [Feb  9  1983]  xsq.107c
+│   │   │   ├── [Feb  9  1983]  xtype.107c
+│   │   │   └── [Feb  9  1983]  xusq.107c
+│   │   ├── [Sep  5 16:37]  ar44.heath
+│   │   │   ├── [Sep  5  1982]  consol.h
+│   │   │   ├── [Mar 29  1982]  h19h89.convrt
+│   │   │   ├── [Jul 13  1982]  h8.upgrad
+│   │   │   ├── [Oct  9  1982]  h89.moddoc
+│   │   │   ├── [Jul 30  1982]  h89cpu.list
+│   │   │   ├── [Sep  5  1982]  szofrm.c
+│   │   │   ├── [Jun  8  1982]  teledt.abs
+│   │   │   ├── [Sep  5  1982]  teledt.c
+│   │   │   ├── [Sep  5  1982]  teledt.doc
+│   │   │   ├── [Oct 12  1982]  z19cn.moddoc
+│   │   │   ├── [May 31  1982]  zb4mhz.asm
+│   │   │   └── [May 31  1982]  zb4mhz.doc
+│   │   ├── [Sep  5 16:37]  ar45.atari
+│   │   │   ├── [Mar 13  1983]  amodem.42bas
+│   │   │   ├── [Mar 13  1983]  amodem.42doc
+│   │   │   └── [Aug  1  1982]  aut850.bas
+│   │   ├── [Sep  5 16:37]  ar46.ibm-pc
+│   │   │   └── [Aug 24  1982]  ibmmdm.bas
+│   │   ├── [Sep  5 16:37]  ar47.nstar
+│   │   │   ├── [Nov 20  1982]  ar47.read
+│   │   │   ├── [Nov  4  1982]  format.doc
+│   │   │   ├── [Dec 20  1982]  hd18.dos
+│   │   │   ├── [Dec 20  1982]  htrans.ient
+│   │   │   ├── [Oct  5  1981]  lbgen.asm
+│   │   │   ├── [Jan 15  1982]  lbusr.ccp
+│   │   │   ├── [Dec 15  1981]  lbusr.doc
+│   │   │   ├── [Feb 20  1983]  newcpy.16com
+│   │   │   ├── [Dec  2  1982]  newfmt.14com
+│   │   │   ├── [Dec  3  1982]  newfrm.14asm
+│   │   │   ├── [Dec 18  1982]  ns2cpm.com
+│   │   │   ├── [Dec 18  1982]  ns2cpm.doc
+│   │   │   ├── [Sep  6  1982]  nsbas.59asm
+│   │   │   ├── [Sep  6  1982]  nsbas.59doc
+│   │   │   ├── [Nov  3  1982]  nsgen.com
+│   │   │   ├── [Jan 14  1983]  nsusr.48ccp
+│   │   │   ├── [Nov  3  1982]  nsusr.doc
+│   │   │   ├── [Oct 10  1981]  nsusr5.zasm
+│   │   │   └── [Nov 23  1981]  ramtes.com
+│   │   ├── [Sep  5 16:37]  ar51.sq{usq
+│   │   │   ├── [Jun 28  1981]  bdscio.h
+│   │   │   ├── [Nov 19  1981]  chnges.doc
+│   │   │   ├── [Jan 12  1982]  dio.h
+│   │   │   ├── [Jan 12  1982]  dio2.c
+│   │   │   ├── [Sep 11  1981]  fls-11.com
+│   │   │   ├── [Jan 12  1982]  fls.c
+│   │   │   ├── [Nov 19  1981]  histry.doc
+│   │   │   ├── [Jan 12  1982]  io.c
+│   │   │   ├── [Sep 11  1982]  prntsq.com
+│   │   │   ├── [Sep 11  1982]  prntsq.comdoc
+│   │   │   ├── [Nov 19  1981]  readme.doc
+│   │   │   ├── [Mar 15  1983]  rstrct.c
+│   │   │   ├── [Nov 29  1982]  sq-16.com
+│   │   │   ├── [Aug 26  1982]  sq.16c
+│   │   │   ├── [Apr  2  1982]  sq.c
+│   │   │   ├── [Nov 19  1981]  sq.h
+│   │   │   ├── [Jun 28  1981]  sqcom.h
+│   │   │   ├── [Nov 19  1981]  sqdbug.c
+│   │   │   ├── [Nov 19  1981]  sqezer.doc
+│   │   │   ├── [Nov 19  1981]  sq{usq.15doc
+│   │   │   ├── [Jun 28  1981]  tr1.c
+│   │   │   ├── [Nov 19  1981]  tr2.c
+│   │   │   ├── [Aug 31  1982]  type.15c
+│   │   │   ├── [Sep  1  1982]  type.15com
+│   │   │   ├── [Sep  1  1982]  type.15doc
+│   │   │   ├── [Mar 15  1983]  type.19c
+│   │   │   ├── [Aug 31  1982]  type40.15com
+│   │   │   ├── [Aug 31  1982]  type80.15com
+│   │   │   ├── [Nov 29  1982]  usq-19.com
+│   │   │   ├── [Aug 26  1982]  usq.19c
+│   │   │   ├── [Nov 19  1981]  usq.c
+│   │   │   ├── [Jun 28  1981]  usq.h
+│   │   │   ├── [Jun 28  1981]  utr.c
+│   │   │   └── [Aug 31  1982]  xtype.15com
+│   │   ├── [Sep  5 16:37]  ar52.voice
+│   │   │   ├── [Nov 19  1981]  speech.bas
+│   │   │   ├── [Oct 26  1981]  talk@.lib
+│   │   │   ├── [Oct 26  1981]  vmac.asm
+│   │   │   ├── [Oct 26  1981]  voic@.crc
+│   │   │   ├── [Oct 22  1981]  voic@.doc
+│   │   │   ├── [Oct 26  1981]  voic@.equlib
+│   │   │   ├── [Oct 26  1981]  voic@.lib
+│   │   │   ├── [Dec  1  1981]  voice.c
+│   │   │   ├── [Dec  1  1981]  voice.c-doc
+│   │   │   ├── [Oct 26  1981]  vrmac.asm
+│   │   │   └── [Feb  6  1982]  yesmst.voc
+│   │   ├── [Sep  5 16:37]  ar53.catlog
+│   │   │   ├── [Sep  8  1982]  cat.21asm
+│   │   │   ├── [Nov 14  1981]  catlog.doc
+│   │   │   ├── [Nov 14  1981]  crsref.asm
+│   │   │   ├── [Nov 14  1981]  fmap.asm
+│   │   │   ├── [Aug 22  1981]  fmap.com
+│   │   │   ├── [Mar 22  1983]  ncat.32doc
+│   │   │   ├── [Mar 22  1983]  ncat.32set
+│   │   │   ├── [Mar 22  1983]  ncat.33aasm
+│   │   │   ├── [Mar 22  1983]  ncat.33acom
+│   │   │   ├── [Mar 22  1983]  ncat.33ahex
+│   │   │   ├── [Mar 22  1983]  xcat.37asm
+│   │   │   ├── [Mar 22  1983]  xcat.37com
+│   │   │   └── [Mar 22  1983]  xcat.37hex
+│   │   ├── [Sep  5 16:37]  ar54.fast2
+│   │   │   ├── [Oct 10  1981]  discus.patasm
+│   │   │   ├── [Oct 10  1981]  dms.patasm
+│   │   │   ├── [Oct 10  1981]  fast.manual
+│   │   │   ├── [Oct 10  1981]  fast2.asm
+│   │   │   ├── [Oct 10  1981]  fast2.com
+│   │   │   ├── [Oct 10  1981]  fast2.comdoc
+│   │   │   ├── [Oct 10  1981]  instal.doc
+│   │   │   ├── [Oct 10  1981]  microp.patasm
+│   │   │   ├── [Oct 10  1981]  pakup2.asm
+│   │   │   ├── [Oct 10  1981]  rel.asm
+│   │   │   ├── [Oct 10  1981]  rel.utl
+│   │   │   ├── [Oct 10  1981]  relcpm.doc
+│   │   │   ├── [Oct 10  1981]  relcpm.sub
+│   │   │   ├── [Oct 10  1981]  reled.sub
+│   │   │   ├── [Oct 10  1981]  relhdr.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.com
+│   │   │   ├── [Oct 10  1981]  skew2.patasm
+│   │   │   ├── [Oct 10  1981]  skew3.patasm
+│   │   │   └── [Oct 10  1981]  utl.lib
+│   │   ├── [Sep  5 16:37]  ar55.ccp
+│   │   │   ├── [Sep 10  1981]  22pub.asm
+│   │   │   ├── [Sep  8  1981]  autox.asm
+│   │   │   ├── [Mar 14  1981]  ccppat.asm
+│   │   │   ├── [Mar 16  1981]  dvrpat.asm
+│   │   │   ├── [Apr  2  1982]  fifos.mac
+│   │   │   ├── [Dec 15  1981]  xtcpm.15asm
+│   │   │   ├── [Dec 15  1981]  xtcpm.15doc
+│   │   │   └── [Mar 28  1982]  xtcpm.msg
+│   │   ├── [Sep  5 16:37]  ar56.zcpr
+│   │   │   ├── [Jul  3  1981]  bdloc.asm
+│   │   │   ├── [Jun 24  1982]  nzcpr.14bdif
+│   │   │   ├── [Mar 18  1982]  pass.asm
+│   │   │   ├── [Dec 11  1981]  zcpr.asm
+│   │   │   ├── [Dec 13  1981]  zcpr.doc
+│   │   │   ├── [Aug  1  1982]  zcpr.eramod
+│   │   │   ├── [Dec 13  1981]  zcpr.hlp
+│   │   │   ├── [Dec 13  1981]  zcpr.msg
+│   │   │   └── [Mar 15  1982]  zcprbf.asm
+│   │   ├── [Sep  5 16:37]  ar57.submit
+│   │   │   ├── [Jun 23  1981]  batch.com
+│   │   │   ├── [Jun 23  1981]  batch.doc
+│   │   │   ├── [Mar 19  1983]  ex.14asm
+│   │   │   ├── [Mar 19  1983]  ex.14com
+│   │   │   ├── [Mar 19  1983]  ex.14doc
+│   │   │   ├── [Mar 19  1983]  ex.14hex
+│   │   │   ├── [Mar 19  1983]  ex.14sub
+│   │   │   ├── [Mar 19  1983]  ex.14tst
+│   │   │   ├── [Jun 23  1981]  exampl.bat
+│   │   │   ├── [Sep 12  1982]  if.asm
+│   │   │   ├── [Sep 12  1982]  if.com
+│   │   │   ├── [Sep 13  1982]  if.hex
+│   │   │   ├── [Sep 12  1982]  ifskip.doc
+│   │   │   ├── [Nov 10  1980]  maksub.asm
+│   │   │   ├── [Aug 23  1982]  rels.hex
+│   │   │   ├── [Aug 23  1982]  rels.utl
+│   │   │   ├── [Sep 12  1982]  skip.asm
+│   │   │   ├── [Sep 12  1982]  skip.com
+│   │   │   ├── [Sep 13  1982]  skip.hex
+│   │   │   ├── [Mar  3  1982]  sub.asm
+│   │   │   ├── [Mar  3  1982]  sub.com
+│   │   │   ├── [Mar 19  1983]  subgen.10doc
+│   │   │   ├── [Mar 19  1983]  subgen.12asm
+│   │   │   ├── [Sep 19  1981]  supsub.11asm
+│   │   │   ├── [Sep 19  1981]  supsub.11doc
+│   │   │   └── [Jun 23  1981]  varbat.com
+│   │   ├── [Sep  5 16:37]  ar58.maclib
+│   │   │   ├── [Oct 24  1981]  macro.lib
+│   │   │   ├── [Apr  2  1982]  macros.tip
+│   │   │   ├── [Feb 19  1982]  macroz.mac
+│   │   │   ├── [Mar 15  1983]  seqio.22lib
+│   │   │   ├── [Jul  8  1981]  seqio.lib
+│   │   │   ├── [Mar  7  1982]  xmac.asm
+│   │   │   ├── [Oct 10  1981]  z80-v3.lib
+│   │   │   └── [Oct 10  1981]  z80ext.lib
+│   │   ├── [Sep  5 16:37]  ar59.spell
+│   │   │   ├── [Aug 18  1982]  diccre.10com
+│   │   │   ├── [Aug 20  1982]  diccre.10hex
+│   │   │   ├── [Aug 19  1982]  diccre.10mac
+│   │   │   ├── [Aug 19  1982]  dict.dic
+│   │   │   ├── [Dec 28  1982]  dict.letter
+│   │   │   ├── [Dec 23  1982]  spell.20com
+│   │   │   ├── [Dec 23  1982]  spell.20doc
+│   │   │   ├── [Dec 23  1982]  spell.20hex
+│   │   │   ├── [Dec 23  1982]  spell.20mac
+│   │   │   └── [Aug 19  1982]  spell0.10mac
+│   │   ├── [Sep  5 16:37]  ar62.yam
+│   │   │   ├── [Feb 23  1982]  yam.h
+│   │   │   ├── [Feb 23  1982]  yam.sub
+│   │   │   ├── [Feb 23  1982]  yam1.c
+│   │   │   ├── [Dec  8  1981]  yam8.asm
+│   │   │   ├── [Dec  8  1981]  yam9.asm
+│   │   │   └── [Feb 23  1982]  yamapl.h
+│   │   ├── [Sep  5 16:37]  ar63.rcpm
+│   │   │   ├── [Apr 14  1982]  bye.79asm
+│   │   │   ├── [Jun  3  1982]  bye.79fix
+│   │   │   ├── [Sep  8  1982]  chat.19asm
+│   │   │   ├── [Jun 24  1982]  paswrd.fun
+│   │   │   ├── [Nov 24  1981]  scurty.2asm
+│   │   │   ├── [Jul 14  1981]  secure.sysdoc
+│   │   │   ├── [Nov 24  1981]  tag.2asm
+│   │   │   ├── [Mar 14  1981]  user.88asm
+│   │   │   ├── [Sep  8  1982]  userpw.36asm
+│   │   │   ├── [Dec  7  1982]  xmodem.17c
+│   │   │   ├── [Dec  6  1982]  xmodem.60asm
+│   │   │   └── [Dec  7  1982]  xmodem.60his
+│   │   ├── [Sep  5 16:37]  ar64.term
+│   │   │   ├── [Aug 11  1981]  dial.3asm
+│   │   │   ├── [Sep 27  1982]  h19vax.escape
+│   │   │   ├── [Jan  8  1982]  mtn.22bcom
+│   │   │   ├── [Feb  1  1982]  mtn.22bdoc
+│   │   │   ├── [May 23  1981]  mtn.info
+│   │   │   ├── [Nov  4  1981]  mtn21.offcom
+│   │   │   ├── [Nov  9  1981]  mtn21.offdoc
+│   │   │   ├── [Aug  9  1981]  mtn21.offhex
+│   │   │   ├── [May 20  1981]  mtnmsg.ovr
+│   │   │   ├── [Oct 29  1982]  pipmod.asm
+│   │   │   ├── [Oct 29  1982]  pipmod.doc
+│   │   │   ├── [Jul  4  1981]  plink.65doc
+│   │   │   ├── [Aug 22  1982]  plink.66aasm
+│   │   │   ├── [Apr  2  1982]  ubpmmi.asm
+│   │   │   └── [Apr 21  1982]  z19.asm
+│   │   ├── [Sep  5 16:37]  ar65.smodem
+│   │   │   ├── [Apr  8  1982]  smodem.38doc
+│   │   │   ├── [Dec  7  1982]  smodem.39mac
+│   │   │   └── [Sep 10  1981]  smodem.doc
+│   │   ├── [Sep  5 16:37]  ar66.micnet
+│   │   │   ├── [Jun 13  1982]  bufexc.asm
+│   │   │   ├── [Apr 21  1982]  cis.proto
+│   │   │   ├── [Sep 23  1982]  cis.qdoc
+│   │   │   ├── [Mar 20  1982]  cis.sysdoc
+│   │   │   ├── [Apr  2  1982]  dow.12com
+│   │   │   ├── [Apr  2  1982]  dow.12hex
+│   │   │   ├── [Apr  2  1982]  dow.12mac
+│   │   │   ├── [Apr 23  1982]  dowpmm.dif
+│   │   │   ├── [Mar 22  1982]  mnet.proto
+│   │   │   ├── [Jul  6  1982]  mnet.signup
+│   │   │   ├── [Mar 15  1982]  mnexec.doc
+│   │   │   ├── [Apr  2  1982]  upload.12com
+│   │   │   ├── [Apr  2  1982]  upload.12hex
+│   │   │   ├── [Apr  2  1982]  upload.12mac
+│   │   │   └── [Apr 23  1982]  uppmmi.dif
+│   │   ├── [Sep  5 16:37]  ar69.rbbs
+│   │   │   ├── [Sep  7  1982]  menu.rbbs
+│   │   │   ├── [Sep  7  1982]  newcom.1
+│   │   │   ├── [Jul 14  1981]  rbbs.25asc
+│   │   │   ├── [Sep 18  1982]  rbbs.31asc
+│   │   │   ├── [Sep 18  1982]  rbbs.31doc
+│   │   │   ├── [Dec 12  1982]  rbbs.rtn001
+│   │   │   ├── [Mar 24  1981]  rbbs.usedoc
+│   │   │   └── [Dec  5  1981]  rbsutl.22asc
+│   │   ├── [Sep  5 16:37]  ar70.epson
+│   │   │   ├── [Jul 19  1982]  epson.specs
+│   │   │   ├── [Sep 28  1982]  fncfnt.com
+│   │   │   ├── [Sep 28  1982]  fncfnt.dm1
+│   │   │   ├── [Oct  1  1982]  fncfnt.dm1hex
+│   │   │   ├── [Sep 28  1982]  fncfnt.doc
+│   │   │   ├── [Oct  1  1982]  fncfnt.hex
+│   │   │   ├── [Nov  5  1982]  printr.c
+│   │   │   └── [Nov 11  1982]  printr.com
+│   │   └── [Aug 11 10:40]  cpm
+│   │       ├── [Feb  6  1982]  -cpm-.format
+│   │       ├── [Mar 17  1983]  ar10.gendoc
+│   │       ├── [Feb 18  1983]  ar11.genasm
+│   │       ├── [Mar 15  1983]  ar12.gencom
+│   │       ├── [Mar 15  1983]  ar16.msoft
+│   │       ├── [Aug 22  1982]  ar25.disasm
+│   │       ├── [May 31  1982]  ar26.sort
+│   │       ├── [Jun 27  1982]  ar27.list
+│   │       ├── [Sep 30  1982]  ar28.editor
+│   │       ├── [Sep  9  1982]  ar30.basic
+│   │       ├── [Nov 16  1982]  ar31.pascal
+│   │       ├── [Sep 14  1982]  ar32.forth
+│   │       ├── [Feb 22  1983]  ar33.ratfor
+│   │       ├── [Nov 19  1982]  ar34.bdsc-1
+│   │       ├── [Oct 23  1982]  ar35.bdsc-2
+│   │       ├── [Oct  8  1982]  ar36.bdsc-3
+│   │       ├── [Oct  7  1982]  ar37.bdsc-4
+│   │       ├── [Mar  3  1983]  ar40.apple
+│   │       ├── [Mar 10  1983]  ar41.osborn
+│   │       ├── [Mar 17  1983]  ar42.trs-80
+│   │       ├── [Feb  9  1983]  ar43.unix
+│   │       ├── [Oct 13  1982]  ar44.heath
+│   │       ├── [Mar 13  1983]  ar45.atari
+│   │       ├── [Aug 24  1982]  ar46.ibm-pc
+│   │       ├── [Feb 20  1983]  ar47.nstar
+│   │       ├── [Mar 15  1983]  ar51.sq{usq
+│   │       ├── [Feb  6  1982]  ar52.voice
+│   │       ├── [Mar 22  1983]  ar53.catlog
+│   │       ├── [Oct 10  1981]  ar54.fast2
+│   │       ├── [Nov  3  1982]  ar55.ccp
+│   │       ├── [Aug  1  1982]  ar56.zcpr
+│   │       ├── [Mar 19  1983]  ar57.submit
+│   │       ├── [Mar 15  1983]  ar58.maclib
+│   │       ├── [Dec 28  1982]  ar59.spell
+│   │       ├── [Dec 13  1982]  ar62.yam
+│   │       ├── [Dec  7  1982]  ar63.rcpm
+│   │       ├── [Oct 29  1982]  ar64.term
+│   │       ├── [Dec  7  1982]  ar65.smodem
+│   │       ├── [Mar 14  1983]  ar66.micnet
+│   │       ├── [Dec 12  1982]  ar69.rbbs
+│   │       ├── [Jan 13  1983]  ar70.epson
+│   │       ├── [Dec 31  1982]  lmohak.lisp
+│   │       ├── [Mar 13  1983]  mince.list
+│   │       ├── [Sep 22  1982]  mtn.info
+│   │       ├── [Mar 22  1983]  ts.crc
+│   │       ├── [Mar 28  1982]  ts.downl
+│   │       ├── [Apr 17  1982]  ts.xfdir
+│   │       └── [Feb  8  1982]  updown.doc
+│   ├── [Sep  4 17:03]  7005964
+│   │   ├── [Sep  5 16:37]  ar0.docfil
+│   │   │   ├── [Apr  8  1981]  22cpm.doc
+│   │   │   ├── [Feb  6  1981]  22cp{m.crclst
+│   │   │   ├── [Sep 12  1981]  bascom.53doc
+│   │   │   ├── [Jun 23  1981]  batch.doc
+│   │   │   ├── [Nov 21  1981]  ccsbio.fix
+│   │   │   ├── [Jun 20  1981]  clenup.doc
+│   │   │   ├── [Sep 14  1980]  cpm.doc
+│   │   │   ├── [Nov 11  1981]  cpyrit.doc
+│   │   │   ├── [Jun 27  1981]  crcart.doc
+│   │   │   ├── [Jul 23  1981]  du-v75.doc
+│   │   │   ├── [May 29  1981]  h-z89.mods
+│   │   │   ├── [Oct 20  1981]  hammin.doc
+│   │   │   ├── [Aug 25  1981]  heath.option
+│   │   │   ├── [Nov 21  1981]  howto.hack
+│   │   │   ├── [Oct  6  1981]  lasm.doc
+│   │   │   ├── [Aug 30  1981]  libray.contrl
+│   │   │   ├── [Jun 21  1981]  marc.doc
+│   │   │   ├── [Jun 22  1981]  maron.patch
+│   │   │   ├── [Sep 10  1981]  modems.doc
+│   │   │   ├── [May  1  1981]  money.talks
+│   │   │   ├── [May 23  1981]  mtn.info
+│   │   │   ├── [May 31  1981]  mtn22a.doc
+│   │   │   ├── [Jul  4  1981]  plink.65doc
+│   │   │   ├── [Nov 11  1981]  quikie.hints3
+│   │   │   ├── [May 30  1981]  scrmbl.doc
+│   │   │   ├── [Sep 10  1981]  smart.mdmdoc
+│   │   │   ├── [Sep 19  1981]  supsub.11doc
+│   │   │   ├── [Jun 15  1981]  trsmdm.equs
+│   │   │   ├── [May 30  1981]  umpire.doc
+│   │   │   └── [Jul  3  1981]  zsid.patch
+│   │   ├── [Sep  5 16:37]  ar1.comfil
+│   │   │   ├── [Jun 23  1981]  batch.com
+│   │   │   ├── [Oct 22  1981]  batcom.com
+│   │   │   ├── [Jun 20  1981]  clenup.com
+│   │   │   ├── [May 30  1981]  compar.com
+│   │   │   ├── [May  5  1981]  cpyfil.15com
+│   │   │   ├── [May  5  1981]  crck.com
+│   │   │   ├── [Jun 13  1981]  d.27acom
+│   │   │   ├── [Aug  8  1981]  df.com
+│   │   │   ├── [Jul 23  1981]  du.v77com
+│   │   │   ├── [Jun 23  1981]  exampl.bat
+│   │   │   ├── [May  5  1981]  filter.com
+│   │   │   ├── [May  5  1981]  filtex.com
+│   │   │   ├── [Aug 22  1981]  fmap.com
+│   │   │   ├── [May 21  1981]  fndbad.54com
+│   │   │   ├── [Aug  8  1981]  hexdif.com
+│   │   │   ├── [Oct  6  1981]  lasm.com
+│   │   │   ├── [Jan  8  1982]  mtn.22bcom
+│   │   │   ├── [May 20  1981]  mtnmsg.ovr
+│   │   │   ├── [Nov 23  1981]  ramtes.com
+│   │   │   ├── [Jun  5  1981]  sd.22com
+│   │   │   ├── [Nov 28  1981]  sd.42com
+│   │   │   ├── [Oct 23  1981]  tabify.4com
+│   │   │   ├── [May 30  1981]  umpire.com
+│   │   │   ├── [May  5  1981]  unload.com
+│   │   │   ├── [Nov 22  1981]  unspol.30com
+│   │   │   ├── [Jun 23  1981]  varbat.com
+│   │   │   └── [May  5  1981]  xd.com
+│   │   ├── [Sep  5 16:37]  ar10.voice
+│   │   │   ├── [Nov 19  1981]  speech.bas
+│   │   │   ├── [Oct 26  1981]  talk@.lib
+│   │   │   ├── [Oct 26  1981]  vmac.asm
+│   │   │   ├── [Oct 26  1981]  voic@.crc
+│   │   │   ├── [Oct 22  1981]  voic@.doc
+│   │   │   ├── [Oct 26  1981]  voic@.equlib
+│   │   │   ├── [Oct 26  1981]  voic@.lib
+│   │   │   ├── [Dec  1  1981]  voice.c
+│   │   │   ├── [Dec  1  1981]  voice.c-doc
+│   │   │   └── [Oct 26  1981]  vrmac.asm
+│   │   ├── [Sep  5 16:37]  ar11.dskutl
+│   │   │   ├── [Sep 10  1981]  22pub.asm
+│   │   │   ├── [Mar 14  1981]  ccppat.asm
+│   │   │   ├── [Jan  4  1982]  disk.bugcom
+│   │   │   ├── [Jan  4  1982]  disk.bugdoc
+│   │   │   ├── [Jul 23  1981]  du.v77asm
+│   │   │   ├── [Mar 16  1981]  dvrpat.asm
+│   │   │   ├── [Oct 22  1981]  fmhard.asm
+│   │   │   ├── [May 26  1981]  fndbad.54asm
+│   │   │   ├── [Dec 15  1981]  gendoc.30doc
+│   │   │   ├── [Oct  5  1981]  gensys.32asm
+│   │   │   ├── [Jan 15  1982]  genusr.37asm
+│   │   │   ├── [Oct 10  1981]  nsusr5.zasm
+│   │   │   ├── [Dec 20  1981]  sweep.26com
+│   │   │   ├── [Dec 20  1981]  sweep.26doc
+│   │   │   ├── [Oct 22  1981]  tohard.asm
+│   │   │   └── [Oct 31  1981]  usrdft.2ccp
+│   │   ├── [Sep  5 16:37]  ar12.maclib
+│   │   │   ├── [Oct 24  1981]  macro.lib
+│   │   │   ├── [Jul  8  1981]  seqio.lib
+│   │   │   ├── [Oct 10  1981]  z80-v3.lib
+│   │   │   └── [Oct 10  1981]  z80ext.lib
+│   │   ├── [Sep  5 16:37]  ar13.news
+│   │   │   ├── [Sep 16  1981]  cpmnet.aug81
+│   │   │   ├── [Jul 15  1981]  cpmnet.jul81
+│   │   │   ├── [Jun 16  1981]  cpmnet.jun81
+│   │   │   ├── [Apr 28  1981]  cpmnet.may81
+│   │   │   ├── [Sep 27  1981]  cpmnet.sep81
+│   │   │   └── [Sep  5 16:37]  sig{m.jun81
+│   │   ├── [Sep  5 16:37]  ar14.txtutl
+│   │   │   ├── [Nov 20  1981]  dif.2c
+│   │   │   ├── [Nov 20  1981]  dif.2com
+│   │   │   ├── [Nov 20  1981]  dif.2doc
+│   │   │   ├── [May 30  1981]  filprt.asm
+│   │   │   ├── [Jan 28  1981]  filter.11asm
+│   │   │   ├── [Mar 25  1981]  filtex.11asm
+│   │   │   ├── [Jan 15  1982]  index.c
+│   │   │   ├── [Jan  4  1982]  index.com
+│   │   │   ├── [Jan 15  1982]  index.doc
+│   │   │   ├── [Jul  8  1981]  mlist.50asm
+│   │   │   ├── [Nov 24  1981]  mlist.50com
+│   │   │   ├── [Nov 20  1981]  ssed.2c
+│   │   │   ├── [Nov 20  1981]  ssed.2com
+│   │   │   ├── [Oct 18  1981]  tabify.4c
+│   │   │   ├── [Nov 22  1981]  unspol.30asm
+│   │   │   ├── [Nov 22  1981]  unspol.30doc
+│   │   │   └── [Jan 16  1982]  xc.c
+│   │   ├── [Sep  5 16:37]  ar15.basic
+│   │   │   └── [Oct 30  1981]  xref.bas
+│   │   ├── [Sep  5 16:37]  ar16.dirutl
+│   │   │   ├── [Jun 23  1981]  d-27a.asm
+│   │   │   ├── [Dec 19  1980]  dirf.asm
+│   │   │   ├── [Dec 19  1980]  dirf.mac
+│   │   │   ├── [Aug  3  1981]  filfnd.11asm
+│   │   │   ├── [Nov  3  1981]  mdir.asm
+│   │   │   ├── [Sep  2  1980]  menu.mac
+│   │   │   ├── [Jun  5  1981]  sd-22.asm
+│   │   │   ├── [Nov  3  1981]  sd-41.doc
+│   │   │   └── [Nov  7  1981]  sd-42.asm
+│   │   ├── [Sep  5 16:37]  ar17.forth
+│   │   │   ├── [Nov  6  1981]  forth.asm
+│   │   │   ├── [Nov  7  1981]  forth.z80com
+│   │   │   ├── [Nov  7  1981]  forth.z80mac
+│   │   │   └── [Dec 20  1981]  nit4th.asm
+│   │   ├── [Sep  5 16:37]  ar18.ratfor
+│   │   │   ├── [Nov  9  1981]  asmdef.rat
+│   │   │   ├── [Nov  9  1981]  consts.rat
+│   │   │   ├── [Nov  9  1981]  f77.doc
+│   │   │   ├── [Nov  9  1981]  f77def.rat
+│   │   │   ├── [Nov  9  1981]  f77lib.for
+│   │   │   ├── [Nov  9  1981]  index.z80
+│   │   │   ├── [Nov  9  1981]  indext.for
+│   │   │   ├── [Nov  9  1981]  ioer.z80
+│   │   │   ├── [Nov  9  1981]  lcat.doc
+│   │   │   ├── [Nov  9  1981]  lcat.rat
+│   │   │   ├── [Nov  9  1981]  ratcmn.rat
+│   │   │   ├── [Nov  9  1981]  ratfor.doc
+│   │   │   ├── [Nov  9  1981]  ratfor.for
+│   │   │   ├── [Nov  9  1981]  ratfor.rat
+│   │   │   └── [Nov  9  1981]  trnslt.z80
+│   │   ├── [Sep  5 16:37]  ar19.catlog
+│   │   │   ├── [Nov 14  1981]  cat.asm
+│   │   │   ├── [Nov 14  1981]  catlog.doc
+│   │   │   ├── [Nov 14  1981]  crsref.asm
+│   │   │   ├── [Nov 14  1981]  fmap.asm
+│   │   │   ├── [Nov 14  1981]  qcat.asm
+│   │   │   ├── [Nov 14  1981]  ucat.asm
+│   │   │   └── [Nov 20  1981]  ucat2.asm
+│   │   ├── [Sep  5 16:37]  ar2.hlpfil
+│   │   │   ├── [Mar 31  2032]  <urhlp.~~~~~7
+│   │   │   ├── [Jun 26  1981]  algolm.hlp
+│   │   │   ├── [Jun 26  1981]  asm2.hlp
+│   │   │   ├── [Jun 26  1981]  c.hlp
+│   │   │   ├── [Jul 24  1981]  catlog.hlp
+│   │   │   ├── [Jun 26  1981]  cbas.hlp
+│   │   │   ├── [Jun 26  1981]  cbas2.hlp
+│   │   │   ├── [Jul 24  1981]  cpm2.hlp
+│   │   │   ├── [May 27  1981]  du-v75.hlp
+│   │   │   ├── [Jun 26  1981]  fortra.hlp
+│   │   │   ├── [Nov  2  1981]  help.20asm
+│   │   │   ├── [Nov  2  1981]  help.20com
+│   │   │   ├── [Nov  5  1981]  help.20hlp
+│   │   │   ├── [Jul 24  1981]  link.hlp
+│   │   │   ├── [Jun  3  1981]  mac.hlp
+│   │   │   ├── [Jun  3  1981]  masm.hlp
+│   │   │   ├── [Jul 24  1981]  mbasic.hlp
+│   │   │   ├── [Nov 20  1981]  pascal.hlp
+│   │   │   ├── [Jul 25  1981]  phelp.com
+│   │   │   └── [Nov 20  1981]  phelp.mac
+│   │   ├── [Sep  5 16:37]  ar20.modem7
+│   │   │   ├── [Dec 23  1981]  modem.731asm
+│   │   │   ├── [Nov 22  1981]  modem.731com
+│   │   │   ├── [Dec 23  1981]  modem.731set
+│   │   │   ├── [Dec 16  1981]  modem.7xbug
+│   │   │   ├── [Nov 22  1981]  modem7.doc
+│   │   │   ├── [Nov 22  1981]  modem7.lib
+│   │   │   └── [Nov 28  1981]  modem7.tip
+│   │   ├── [Sep  5 16:37]  ar22.yamfil
+│   │   │   ├── [Dec  8  1981]  yam8.asm
+│   │   │   └── [Dec  8  1981]  yam9.asm
+│   │   ├── [Sep  5 16:37]  ar23.zcpr
+│   │   │   ├── [Jul  3  1981]  bdloc.asm
+│   │   │   ├── [Dec 11  1981]  zcpr.asm
+│   │   │   ├── [Dec 13  1981]  zcpr.doc
+│   │   │   ├── [Dec 13  1981]  zcpr.hlp
+│   │   │   └── [Dec 13  1981]  zcpr.msg
+│   │   ├── [Sep  5 16:37]  ar24.unix
+│   │   │   ├── [Dec 28  1981]  cpmutl.c
+│   │   │   ├── [Sep 26  1981]  umodem.c
+│   │   │   └── [Sep 15  1981]  umodem.hst
+│   │   ├── [Sep  5 16:37]  ar3.sq{usq
+│   │   │   ├── [Jun 28  1981]  bdscio.h
+│   │   │   ├── [Nov 19  1981]  chnges.doc
+│   │   │   ├── [Jan 12  1982]  dio.h
+│   │   │   ├── [Jan 12  1982]  dio2.c
+│   │   │   ├── [Sep 11  1981]  fls-11.com
+│   │   │   ├── [Jan 12  1982]  fls.c
+│   │   │   ├── [Nov 19  1981]  histry.doc
+│   │   │   ├── [Jan 12  1982]  io.c
+│   │   │   ├── [Nov 19  1981]  readme.doc
+│   │   │   ├── [Sep 11  1981]  sq-15.com
+│   │   │   ├── [Nov 19  1981]  sq.c
+│   │   │   ├── [Nov 19  1981]  sq.h
+│   │   │   ├── [Jun 28  1981]  sqcom.h
+│   │   │   ├── [Nov 19  1981]  sqdbug.c
+│   │   │   ├── [Nov 19  1981]  sqezer.doc
+│   │   │   ├── [Nov 19  1981]  sq{usq.15doc
+│   │   │   ├── [Jun 28  1981]  tr1.c
+│   │   │   ├── [Nov 19  1981]  tr2.c
+│   │   │   ├── [Aug 26  1981]  typesq.14c
+│   │   │   ├── [Aug 26  1981]  typesq.14com
+│   │   │   ├── [Aug 26  1981]  typesq.14crc
+│   │   │   ├── [Nov 19  1981]  typesq.14doc
+│   │   │   ├── [Aug 26  1981]  typesq.40bcom
+│   │   │   ├── [Aug 27  1981]  typesq.80bcom
+│   │   │   ├── [Aug 26  1981]  typesq.ntcom
+│   │   │   ├── [Sep 11  1981]  usq-15.com
+│   │   │   ├── [Nov 19  1981]  usq.c
+│   │   │   ├── [Jun 28  1981]  usq.h
+│   │   │   └── [Jun 28  1981]  utr.c
+│   │   ├── [Sep  5 16:37]  ar4.apple
+│   │   │   ├── [Oct 31  1981]  apbdsc.patchs
+│   │   │   ├── [Jun  5  1981]  apboot.mac
+│   │   │   ├── [Sep 27  1981]  apbye.69asm
+│   │   │   ├── [Jun  5  1981]  aphigh.memasm
+│   │   │   ├── [Mar 10  1981]  apmbot.asm
+│   │   │   ├── [Jun  5  1981]  apmodm.21asm
+│   │   │   ├── [Jun  5  1981]  apmodm.2asm
+│   │   │   ├── [Jun  5  1981]  apmodm.doc
+│   │   │   └── [Sep 27  1981]  apxmdm.41asm
+│   │   ├── [Sep  5 16:37]  ar5.modem
+│   │   │   ├── [Jun 24  1981]  cmodem.13c
+│   │   │   ├── [Jun 30  1981]  cmodem.c
+│   │   │   ├── [Jun 26  1981]  dch.h
+│   │   │   ├── [Aug 11  1981]  dial.3asm
+│   │   │   ├── [Nov 24  1980]  mboot.3asm
+│   │   │   ├── [Nov 11  1981]  modem.216asm
+│   │   │   ├── [Mar  8  1981]  modem.doc
+│   │   │   ├── [Apr 29  1981]  modem2.proto
+│   │   │   ├── [Nov  4  1981]  mtn21.offcom
+│   │   │   ├── [Nov  9  1981]  mtn21.offdoc
+│   │   │   ├── [Aug  9  1981]  mtn21.offhex
+│   │   │   ├── [Jul  7  1981]  plink.65asm
+│   │   │   ├── [Jun 24  1981]  pmmi.h
+│   │   │   ├── [Oct 21  1981]  sndout.4asm
+│   │   │   ├── [Jul 22  1981]  trs-ii.modem
+│   │   │   ├── [Nov  8  1981]  trsurt.asm
+│   │   │   ├── [Nov 21  1981]  xfer.11bas
+│   │   │   ├── [Nov 21  1981]  xfer.11doc
+│   │   │   └── [Sep 15  1981]  xmodem.sai
+│   │   ├── [Sep  5 16:37]  ar6.asmfil
+│   │   │   ├── [Sep  8  1981]  autox.asm
+│   │   │   ├── [Jul  3  1981]  bdloc.asm
+│   │   │   ├── [Jun 20  1981]  bitmap.asm
+│   │   │   ├── [Jun 24  1981]  carry.12asm
+│   │   │   ├── [May 30  1981]  compar.asm
+│   │   │   ├── [Nov 29  1980]  cpyfil.15asm
+│   │   │   ├── [Oct 17  1981]  crc.120asm
+│   │   │   ├── [Dec  5  1980]  crck.42asm
+│   │   │   ├── [Sep 11  1981]  debug.mac
+│   │   │   ├── [Oct 20  1981]  decxha.asm
+│   │   │   ├── [Oct 31  1981]  dupusr.2asm
+│   │   │   ├── [Aug 22  1981]  fixccc.asm
+│   │   │   ├── [Oct 20  1981]  formha.asm
+│   │   │   ├── [Sep 12  1981]  makfcb.asm
+│   │   │   ├── [Nov 10  1980]  maksub.asm
+│   │   │   ├── [Jul 30  1981]  mft.46aasm
+│   │   │   ├── [Nov 28  1980]  move.asm
+│   │   │   ├── [Nov 11  1981]  paswrd.asm
+│   │   │   ├── [Jul 14  1981]  scrmbl.2asm
+│   │   │   ├── [Sep 19  1981]  supsub.11asm
+│   │   │   ├── [Nov 10  1980]  unload.asm
+│   │   │   ├── [Oct 21  1981]  worm.21asm
+│   │   │   └── [Jun 25  1981]  xmac.asm
+│   │   ├── [Sep  5 16:37]  ar7.rcpm
+│   │   │   ├── [Jan 22  1982]  bye.76basm
+│   │   │   ├── [Jul 27  1981]  byelow.mod
+│   │   │   ├── [Oct 30  1981]  byepat.lib
+│   │   │   ├── [Nov 23  1981]  chat.17asm
+│   │   │   ├── [Jul 14  1981]  rbbs.25asc
+│   │   │   ├── [Mar 24  1981]  rbbs.usedoc
+│   │   │   ├── [Dec  5  1981]  rbsutl.22asc
+│   │   │   ├── [Nov 24  1981]  scurty.2asm
+│   │   │   ├── [Jul 14  1981]  secure.sysdoc
+│   │   │   ├── [Nov 24  1981]  tag.2asm
+│   │   │   ├── [Dec  4  1981]  u.asm
+│   │   │   ├── [Mar 14  1981]  user.88asm
+│   │   │   ├── [Nov 11  1981]  userpw.34asm
+│   │   │   ├── [Nov 25  1981]  xmodem.47asm
+│   │   │   ├── [Jul 15  1981]  xmodem.c
+│   │   │   ├── [Dec 15  1981]  xtcpm.15asm
+│   │   │   └── [Dec 15  1981]  xtcpm.15doc
+│   │   ├── [Sep  5 16:37]  ar8.uglibs
+│   │   │   ├── [Jul 18  1981]  absrct.cpm048
+│   │   │   ├── [Jul 18  1981]  absrct.cpm050
+│   │   │   ├── [Jul 18  1981]  absrct.cpm051
+│   │   │   ├── [Jul 18  1981]  absrct.sgm011
+│   │   │   ├── [Jul 18  1981]  absrct.sgm019
+│   │   │   ├── [Jul 18  1981]  absrct.sgm020
+│   │   │   ├── [Jul 18  1981]  absrct.sgm021
+│   │   │   ├── [Jul 18  1981]  absrct.sgm022
+│   │   │   ├── [Jul 18  1981]  absrct.sgm023
+│   │   │   ├── [Jul 18  1981]  absrct.sgm024
+│   │   │   ├── [Jul 18  1981]  absrct.sgm025
+│   │   │   ├── [Jul 18  1981]  catlog.cpm046
+│   │   │   ├── [Jul 18  1981]  catlog.cpm048
+│   │   │   ├── [Jul 18  1981]  catlog.cpm050
+│   │   │   ├── [Jul 18  1981]  catlog.cpm051
+│   │   │   ├── [Jul 19  1981]  catlog.cpm052
+│   │   │   ├── [Jul 18  1981]  catlog.sgm011
+│   │   │   ├── [Jul 18  1981]  catlog.sgm012
+│   │   │   ├── [Jul 18  1981]  catlog.sgm013
+│   │   │   ├── [Jul 18  1981]  catlog.sgm014
+│   │   │   ├── [Jul 18  1981]  catlog.sgm015
+│   │   │   ├── [Jul 18  1981]  catlog.sgm016
+│   │   │   ├── [Jul 18  1981]  catlog.sgm017
+│   │   │   ├── [Jul 18  1981]  catlog.sgm018
+│   │   │   ├── [Jul 18  1981]  catlog.sgm019
+│   │   │   ├── [Jul 18  1981]  catlog.sgm020
+│   │   │   ├── [Jul 18  1981]  catlog.sgm021
+│   │   │   ├── [Jul 18  1981]  catlog.sgm022
+│   │   │   ├── [Jul 18  1981]  catlog.sgm023
+│   │   │   ├── [Jul 18  1981]  catlog.sgm024
+│   │   │   └── [Jul 18  1981]  catlog.sgm025
+│   │   ├── [Sep  5 16:37]  ar9.fast2
+│   │   │   ├── [Oct 10  1981]  discus.patasm
+│   │   │   ├── [Oct 10  1981]  dms.patasm
+│   │   │   ├── [Oct 10  1981]  fast.manual
+│   │   │   ├── [Oct 10  1981]  fast2.asm
+│   │   │   ├── [Oct 10  1981]  fast2.com
+│   │   │   ├── [Oct 10  1981]  fast2.comdoc
+│   │   │   ├── [Oct 10  1981]  instal.doc
+│   │   │   ├── [Oct 10  1981]  microp.patasm
+│   │   │   ├── [Oct 10  1981]  pakup2.asm
+│   │   │   ├── [Oct 10  1981]  rel.asm
+│   │   │   ├── [Oct 10  1981]  rel.utl
+│   │   │   ├── [Oct 10  1981]  relcpm.doc
+│   │   │   ├── [Oct 10  1981]  relcpm.sub
+│   │   │   ├── [Oct 10  1981]  reled.sub
+│   │   │   ├── [Oct 10  1981]  relhdr.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.com
+│   │   │   ├── [Oct 10  1981]  skew2.patasm
+│   │   │   ├── [Oct 10  1981]  skew3.patasm
+│   │   │   └── [Oct 10  1981]  utl.lib
+│   │   └── [Aug 11 10:40]  cpm
+│   │       ├── [Nov 21  1981]  ar0.docfil
+│   │       ├── [Jan  8  1982]  ar1.comfil
+│   │       ├── [Dec  1  1981]  ar10.voice
+│   │       ├── [Jan 15  1982]  ar11.dskutl
+│   │       ├── [Oct 24  1981]  ar12.maclib
+│   │       ├── [Oct 24  1981]  ar13.news
+│   │       ├── [Jan 16  1982]  ar14.txtutl
+│   │       ├── [Nov 21  1981]  ar15.basic
+│   │       ├── [Nov  7  1981]  ar16.dirutl
+│   │       ├── [Dec 20  1981]  ar17.forth
+│   │       ├── [Nov  9  1981]  ar18.ratfor
+│   │       ├── [Nov 20  1981]  ar19.catlog
+│   │       ├── [Jan 21  1982]  ar2.hlpfil
+│   │       ├── [Dec 23  1981]  ar20.modem7
+│   │       ├── [Dec  8  1981]  ar22.yamfil
+│   │       ├── [Jan 24  1982]  ar23.zcpr
+│   │       ├── [Dec 29  1981]  ar24.unix
+│   │       ├── [Jan 12  1982]  ar3.sq{usq
+│   │       ├── [Oct 31  1981]  ar4.apple
+│   │       ├── [Dec 29  1981]  ar5.modem
+│   │       ├── [Dec  5  1981]  ar6.asmfil
+│   │       ├── [Jan 24  1982]  ar7.rcpm
+│   │       ├── [Jul 19  1981]  ar8.uglibs
+│   │       ├── [Oct 10  1981]  ar9.fast2
+│   │       ├── [Nov 23  1981]  bbsnos.byarea
+│   │       ├── [Nov 23  1981]  bbsnos.byname
+│   │       ├── [Jan 24  1982]  cal.com
+│   │       ├── [Jan 24  1982]  cal.pas
+│   │       ├── [Jan 25  1982]  cpm.archiv
+│   │       ├── [Jan 23  1982]  cpm.list
+│   │       ├── [Nov  5  1981]  lmodem.fasl
+│   │       ├── [Jan 21  1982]  mince.list
+│   │       ├── [Jan  9  1982]  modema.osborn
+│   │       ├── [Jan  9  1982]  modemc.osborn
+│   │       ├── [Dec 26  1981]  mtn.bugs
+│   │       ├── [Jan  8  1982]  mtn.info
+│   │       ├── [Jan  6  1982]  plink.osborn
+│   │       ├── [Nov  5  1981]  ts.lmodem
+│   │       └── [Jan 24  1982]  }lmod}.output
+│   ├── [Sep  4 17:03]  7006672
+│   │   ├── [Sep  5 16:37]  ar0.docfil
+│   │   │   ├── [Apr  8  1981]  22cpm.doc
+│   │   │   ├── [Feb  6  1981]  22cp{m.crclst
+│   │   │   ├── [Sep 12  1981]  bascom.53doc
+│   │   │   ├── [Jun 23  1981]  batch.doc
+│   │   │   ├── [Jun 20  1981]  clenup.doc
+│   │   │   ├── [Sep 14  1980]  cpm.doc
+│   │   │   ├── [Jun 27  1981]  crcart.doc
+│   │   │   ├── [Jul 23  1981]  du-v75.doc
+│   │   │   ├── [May 29  1981]  h-z89.mods
+│   │   │   ├── [Oct 20  1981]  hammin.doc
+│   │   │   ├── [Aug 25  1981]  heath.option
+│   │   │   ├── [Oct  6  1981]  lasm.doc
+│   │   │   ├── [Aug 30  1981]  libray.contrl
+│   │   │   ├── [Jun 21  1981]  marc.doc
+│   │   │   ├── [Jun 22  1981]  maron.patch
+│   │   │   ├── [Sep 10  1981]  modems.doc
+│   │   │   ├── [May  1  1981]  money.talks
+│   │   │   ├── [May 23  1981]  mtn.info
+│   │   │   ├── [May 31  1981]  mtn22a.doc
+│   │   │   ├── [Jul  4  1981]  plink.65doc
+│   │   │   ├── [May 30  1981]  scrmbl.doc
+│   │   │   ├── [Sep 10  1981]  smart.mdmdoc
+│   │   │   ├── [Sep 19  1981]  supsub.11doc
+│   │   │   ├── [Jun 15  1981]  trsmdm.equs
+│   │   │   ├── [May 30  1981]  umpire.doc
+│   │   │   └── [Jul  3  1981]  zsid.patch
+│   │   ├── [Sep  5 16:37]  ar1.comfil
+│   │   │   ├── [Jun 23  1981]  batch.com
+│   │   │   ├── [Oct 22  1981]  batcom.com
+│   │   │   ├── [Jun 20  1981]  clenup.com
+│   │   │   ├── [May 30  1981]  compar.com
+│   │   │   ├── [May  5  1981]  cpyfil.com
+│   │   │   ├── [May  5  1981]  crck.com
+│   │   │   ├── [Jun 13  1981]  d-27.com
+│   │   │   ├── [Aug  8  1981]  df.com
+│   │   │   ├── [Jul 23  1981]  du-v77.com
+│   │   │   ├── [Jun 23  1981]  exampl.bat
+│   │   │   ├── [May 21  1981]  fbad54.com
+│   │   │   ├── [May  5  1981]  filter.com
+│   │   │   ├── [May  5  1981]  filtex.com
+│   │   │   ├── [Aug 22  1981]  fmap.com
+│   │   │   ├── [Aug  8  1981]  hexdif.com
+│   │   │   ├── [Oct  6  1981]  lasm.com
+│   │   │   ├── [Jul  8  1981]  mlist.com
+│   │   │   ├── [May 24  1981]  mtn22a.com
+│   │   │   ├── [May 20  1981]  mtnmsg.ovr
+│   │   │   ├── [Jun  5  1981]  sd-22.com
+│   │   │   ├── [Oct 23  1981]  tabify.4com
+│   │   │   ├── [May 30  1981]  umpire.com
+│   │   │   ├── [May  5  1981]  unload.com
+│   │   │   ├── [Jun 23  1981]  varbat.com
+│   │   │   └── [May  5  1981]  xd.com
+│   │   ├── [Sep  5 16:37]  ar10.voice
+│   │   │   ├── [Oct 26  1981]  talk@.lib
+│   │   │   ├── [Oct 26  1981]  vmac.asm
+│   │   │   ├── [Oct 26  1981]  voic@.crc
+│   │   │   ├── [Oct 22  1981]  voic@.doc
+│   │   │   ├── [Oct 26  1981]  voic@.equlib
+│   │   │   ├── [Oct 26  1981]  voic@.lib
+│   │   │   ├── [Oct 26  1981]  vrmac.asm
+│   │   │   └── [Oct 26  1981]  yesmst.voc
+│   │   ├── [Sep  5 16:37]  ar11.dskutl
+│   │   │   ├── [Sep 10  1981]  22pub.asm
+│   │   │   ├── [Mar 14  1981]  ccppat.asm
+│   │   │   ├── [Jul 23  1981]  du-v77.asm
+│   │   │   ├── [Mar 16  1981]  dvrpat.asm
+│   │   │   ├── [May 26  1981]  fbad54.asm
+│   │   │   ├── [Oct 22  1981]  fmhard.asm
+│   │   │   ├── [Oct 10  1981]  nsusr5.zasm
+│   │   │   └── [Oct 22  1981]  tohard.asm
+│   │   ├── [Sep  5 16:37]  ar12.maclib
+│   │   │   ├── [Oct 24  1981]  macro.lib
+│   │   │   ├── [Jul  8  1981]  seqio.lib
+│   │   │   ├── [Oct 10  1981]  z80-v3.lib
+│   │   │   └── [Oct 10  1981]  z80ext.lib
+│   │   ├── [Sep  5 16:37]  ar13.news
+│   │   │   ├── [Sep 16  1981]  cpmnet.aug81
+│   │   │   ├── [Jul 15  1981]  cpmnet.jul81
+│   │   │   ├── [Jun 16  1981]  cpmnet.jun81
+│   │   │   ├── [Apr 28  1981]  cpmnet.may81
+│   │   │   ├── [Sep 27  1981]  cpmnet.sep81
+│   │   │   └── [May 27  1981]  sig{m.jun81
+│   │   ├── [Sep  5 16:37]  ar14.txtutl
+│   │   │   ├── [May 30  1981]  filprt.asm
+│   │   │   ├── [Jan 28  1981]  filter.asm
+│   │   │   ├── [Mar 25  1981]  filtex.asm
+│   │   │   ├── [Jul  8  1981]  mlist.50asm
+│   │   │   └── [Oct 18  1981]  tabify.4c
+│   │   ├── [Sep  5 16:37]  ar2.hlpfil
+│   │   │   ├── [Jun 26  1981]  algolm.hlp
+│   │   │   ├── [Jun 26  1981]  asm2.hlp
+│   │   │   ├── [Jun 26  1981]  c.hlp
+│   │   │   ├── [Jul 24  1981]  catlog.hlp
+│   │   │   ├── [Jun 26  1981]  cbas.hlp
+│   │   │   ├── [Jun 26  1981]  cbas2.hlp
+│   │   │   ├── [Jul 24  1981]  cpm2.hlp
+│   │   │   ├── [May 27  1981]  du-v75.hlp
+│   │   │   ├── [Jun 26  1981]  fortra.hlp
+│   │   │   ├── [Oct 18  1981]  help18.asm
+│   │   │   ├── [Oct 18  1981]  help18.com
+│   │   │   ├── [Sep 10  1981]  help18.hlp
+│   │   │   ├── [Jul 24  1981]  link.hlp
+│   │   │   ├── [Jun  3  1981]  mac.hlp
+│   │   │   ├── [Jun  3  1981]  masm.hlp
+│   │   │   ├── [Jul 24  1981]  mbasic.hlp
+│   │   │   ├── [Jul 25  1981]  phelp.com
+│   │   │   └── [May 27  1981]  resour.hlp
+│   │   ├── [Sep  5 16:37]  ar3.sq{usq
+│   │   │   ├── [Jun 28  1981]  bdscio.h
+│   │   │   ├── [Jul 23  1981]  chnges.doc
+│   │   │   ├── [Jun 28  1981]  dio.h
+│   │   │   ├── [Jun 28  1981]  dio2.c
+│   │   │   ├── [Sep 11  1981]  fls-11.com
+│   │   │   ├── [Jun 28  1981]  fls.c
+│   │   │   ├── [Jun 28  1981]  histry.doc
+│   │   │   ├── [Jun 28  1981]  io.c
+│   │   │   ├── [Jul 23  1981]  readme.doc
+│   │   │   ├── [Sep 11  1981]  sq-15.com
+│   │   │   ├── [Jun 28  1981]  sq.h
+│   │   │   ├── [Jun 28  1981]  sqcom.h
+│   │   │   ├── [Jul 23  1981]  sqezer.doc
+│   │   │   ├── [Sep 11  1981]  sq{usq.15doc
+│   │   │   ├── [Jun 28  1981]  tr1.c
+│   │   │   ├── [Jun 28  1981]  tr2.c
+│   │   │   ├── [Aug 26  1981]  typesq.14c
+│   │   │   ├── [Aug 26  1981]  typesq.14com
+│   │   │   ├── [Aug 26  1981]  typesq.14crc
+│   │   │   ├── [Aug 26  1981]  typesq.40bcom
+│   │   │   ├── [Aug 27  1981]  typesq.80bcom
+│   │   │   ├── [Aug 26  1981]  typesq.ntcom
+│   │   │   ├── [Jul 23  1981]  update.doc
+│   │   │   ├── [Sep 11  1981]  usq-15.com
+│   │   │   ├── [Jun 28  1981]  usq.h
+│   │   │   └── [Jun 28  1981]  utr.c
+│   │   ├── [Sep  5 16:37]  ar4.apple
+│   │   │   ├── [Jun  5  1981]  apboot.mac
+│   │   │   ├── [Sep 27  1981]  apbye.69asm
+│   │   │   ├── [Jun  5  1981]  aphigh.memasm
+│   │   │   ├── [Mar 10  1981]  apmbot.asm
+│   │   │   ├── [Jun  5  1981]  apmodm.21asm
+│   │   │   ├── [Jun  5  1981]  apmodm.2asm
+│   │   │   ├── [Jun  5  1981]  apmodm.doc
+│   │   │   └── [Sep 27  1981]  apxmdm.41asm
+│   │   ├── [Sep  5 16:37]  ar5.modem
+│   │   │   ├── [Jun 24  1981]  cmodem.13c
+│   │   │   ├── [Jun 30  1981]  cmodem.c
+│   │   │   ├── [Aug 22  1981]  commo1.bas
+│   │   │   ├── [Aug 22  1981]  commo2.asm
+│   │   │   ├── [Jun 26  1981]  dch.h
+│   │   │   ├── [Aug 11  1981]  dial3.asm
+│   │   │   ├── [Nov 24  1980]  mboot.asm
+│   │   │   ├── [Sep 21  1981]  modem.206asm
+│   │   │   ├── [May  8  1981]  modem.206doc
+│   │   │   ├── [Mar  8  1981]  modem.doc
+│   │   │   ├── [Apr 29  1981]  modem2.proto
+│   │   │   ├── [Jul  7  1981]  plink.65asm
+│   │   │   ├── [Jun 24  1981]  pmmi.h
+│   │   │   ├── [Jul 22  1981]  trs-ii.modem
+│   │   │   ├── [Sep 26  1981]  umodem.c
+│   │   │   ├── [Sep 15  1981]  umodem.hst
+│   │   │   ├── [May  8  1981]  xmodem.42doc
+│   │   │   ├── [Jun  2  1981]  xmodem.43asm
+│   │   │   └── [Sep 15  1981]  xmodem.sai
+│   │   ├── [Sep  5 16:37]  ar6.asmfil
+│   │   │   ├── [Sep  8  1981]  autox.asm
+│   │   │   ├── [Jul  3  1981]  bdloc.asm
+│   │   │   ├── [Jun 20  1981]  bitmap.asm
+│   │   │   ├── [Jun 24  1981]  carry.12asm
+│   │   │   ├── [May 30  1981]  compar.asm
+│   │   │   ├── [Nov 29  1980]  cpyfil.asm
+│   │   │   ├── [Oct 17  1981]  crc120.asm
+│   │   │   ├── [Dec  5  1980]  crck.asm
+│   │   │   ├── [Jun 23  1981]  d-27a.asm
+│   │   │   ├── [Sep 11  1981]  debug.mac
+│   │   │   ├── [Oct 20  1981]  decxha.asm
+│   │   │   ├── [Dec 19  1980]  dirf.asm
+│   │   │   ├── [Dec 19  1980]  dirf.mac
+│   │   │   ├── [Aug  3  1981]  filfnd.11asm
+│   │   │   ├── [Aug 22  1981]  fixccc.asm
+│   │   │   ├── [Oct 20  1981]  formha.asm
+│   │   │   ├── [Sep 12  1981]  makfcb.asm
+│   │   │   ├── [Nov 10  1980]  maksub.asm
+│   │   │   ├── [Sep  2  1980]  menu.mac
+│   │   │   ├── [Jul 30  1981]  mft46a.asm
+│   │   │   ├── [Nov 28  1980]  move.asm
+│   │   │   ├── [Jul 14  1981]  scrmbl.2asm
+│   │   │   ├── [Jun  5  1981]  sd-22.asm
+│   │   │   ├── [Oct 21  1981]  sndout.4asm
+│   │   │   ├── [Sep 19  1981]  supsub.11asm
+│   │   │   ├── [Nov 10  1980]  unload.asm
+│   │   │   ├── [Oct 21  1981]  worm.21asm
+│   │   │   └── [Jun 25  1981]  xmac.asm
+│   │   ├── [Sep  5 16:37]  ar7.rcpm
+│   │   │   ├── [Oct 26  1981]  bye72.asm
+│   │   │   ├── [Jul 27  1981]  byelow.mod
+│   │   │   ├── [Oct 25  1981]  byepat.lib
+│   │   │   ├── [Mar 24  1981]  rbbs.usedoc
+│   │   │   ├── [Jul 14  1981]  rbbs25.asc
+│   │   │   ├── [Jul 14  1981]  secure.sysdoc
+│   │   │   ├── [Mar 14  1981]  user88.asm
+│   │   │   ├── [Sep  7  1981]  userpw.33asm
+│   │   │   └── [Jul 15  1981]  xmodem.c
+│   │   ├── [Sep  5 16:37]  ar8.uglibs
+│   │   │   ├── [Jul 18  1981]  absrct.cpm048
+│   │   │   ├── [Jul 18  1981]  absrct.cpm050
+│   │   │   ├── [Jul 18  1981]  absrct.cpm051
+│   │   │   ├── [Jul 18  1981]  absrct.sgm011
+│   │   │   ├── [Jul 18  1981]  absrct.sgm019
+│   │   │   ├── [Jul 18  1981]  absrct.sgm020
+│   │   │   ├── [Jul 18  1981]  absrct.sgm021
+│   │   │   ├── [Jul 18  1981]  absrct.sgm022
+│   │   │   ├── [Jul 18  1981]  absrct.sgm023
+│   │   │   ├── [Jul 18  1981]  absrct.sgm024
+│   │   │   ├── [Jul 18  1981]  absrct.sgm025
+│   │   │   ├── [Jul 18  1981]  catlog.cpm046
+│   │   │   ├── [Jul 18  1981]  catlog.cpm048
+│   │   │   ├── [Jul 18  1981]  catlog.cpm050
+│   │   │   ├── [Jul 18  1981]  catlog.cpm051
+│   │   │   ├── [Jul 19  1981]  catlog.cpm052
+│   │   │   ├── [Jul 18  1981]  catlog.sgm011
+│   │   │   ├── [Jul 18  1981]  catlog.sgm012
+│   │   │   ├── [Jul 18  1981]  catlog.sgm013
+│   │   │   ├── [Jul 18  1981]  catlog.sgm014
+│   │   │   ├── [Jul 18  1981]  catlog.sgm015
+│   │   │   ├── [Jul 18  1981]  catlog.sgm016
+│   │   │   ├── [Jul 18  1981]  catlog.sgm017
+│   │   │   ├── [Jul 18  1981]  catlog.sgm018
+│   │   │   ├── [Jul 18  1981]  catlog.sgm019
+│   │   │   ├── [Jul 18  1981]  catlog.sgm020
+│   │   │   ├── [Jul 18  1981]  catlog.sgm021
+│   │   │   ├── [Jul 18  1981]  catlog.sgm022
+│   │   │   ├── [Jul 18  1981]  catlog.sgm023
+│   │   │   ├── [Jul 18  1981]  catlog.sgm024
+│   │   │   └── [Jul 18  1981]  catlog.sgm025
+│   │   ├── [Sep  5 16:37]  ar9.fast2
+│   │   │   ├── [Oct 10  1981]  discus.patasm
+│   │   │   ├── [Oct 10  1981]  dms.patasm
+│   │   │   ├── [Oct 10  1981]  fast.manual
+│   │   │   ├── [Oct 10  1981]  fast2.asm
+│   │   │   ├── [Oct 10  1981]  fast2.com
+│   │   │   ├── [Oct 10  1981]  fast2.comdoc
+│   │   │   ├── [Oct 10  1981]  instal.doc
+│   │   │   ├── [Oct 10  1981]  microp.patasm
+│   │   │   ├── [Oct 10  1981]  pakup2.asm
+│   │   │   ├── [Oct 10  1981]  rel.asm
+│   │   │   ├── [Oct 10  1981]  rel.utl
+│   │   │   ├── [Oct 10  1981]  relcpm.doc
+│   │   │   ├── [Oct 10  1981]  relcpm.sub
+│   │   │   ├── [Oct 10  1981]  reled.sub
+│   │   │   ├── [Oct 10  1981]  relhdr.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.asm
+│   │   │   ├── [Oct 10  1981]  rspeed.com
+│   │   │   ├── [Oct 10  1981]  skew2.patasm
+│   │   │   ├── [Oct 10  1981]  skew3.patasm
+│   │   │   └── [Oct 10  1981]  utl.lib
+│   │   └── [Aug 11 10:40]  cpm
+│   │       ├── [Jul  3  1981]  -cpm-.index
+│   │       ├── [Oct 21  1981]  ar0.docfil
+│   │       ├── [Oct 24  1981]  ar1.comfil
+│   │       ├── [Oct 26  1981]  ar10.voice
+│   │       ├── [Oct 22  1981]  ar11.dskutl
+│   │       ├── [Oct 24  1981]  ar12.maclib
+│   │       ├── [Oct 24  1981]  ar13.news
+│   │       ├── [Oct 24  1981]  ar14.txtutl
+│   │       ├── [Oct 18  1981]  ar2.hlpfil
+│   │       ├── [Sep 11  1981]  ar3.sq{usq
+│   │       ├── [Sep 27  1981]  ar4.apple
+│   │       ├── [Oct 23  1981]  ar5.modem
+│   │       ├── [Oct 24  1981]  ar6.asmfil
+│   │       ├── [Oct 26  1981]  ar7.rcpm
+│   │       ├── [Jul 19  1981]  ar8.uglibs
+│   │       ├── [Oct 10  1981]  ar9.fast2
+│   │       ├── [Sep  5  1981]  bbsnos.byarea
+│   │       ├── [Oct 27  1981]  bbsnos.byname
+│   │       ├── [Oct 27  1981]  cpm.archiv
+│   │       ├── [Oct 27  1981]  cpm.list
+│   │       ├── [Sep 21  1980]  cp{m.auto
+│   │       ├── [Aug  4  1981]  down.load
+│   │       ├── [Sep  8  1981]  mac.dfiles
+│   │       ├── [Sep  8  1981]  mac.doc_a
+│   │       ├── [Sep  8  1981]  mac.mac_a
+│   │       ├── [Sep  8  1981]  mac.mactab
+│   │       ├── [Sep  8  1981]  mac.misc_a
+│   │       ├── [Sep 26  1981]  mince.list
+│   │       ├── [Jul 23  1981]  mtn.bugs
+│   │       ├── [Jun 12  1981]  ontape.list
+│   │       ├── [Aug 21  1981]  rcp-m.info
+│   │       ├── [Oct 17  1981]  rcp-m.nos
+│   │       ├── [Jul 20  1981]  ts.crc
+│   │       ├── [Jul 11  1981]  ts.downl
+│   │       ├── [Jul 30  1981]  ts.lmodem
+│   │       ├── [Jul 28  1981]  ts.olmode
+│   │       ├── [Jul 11  1981]  ts.upl
+│   │       ├── [Aug  4  1981]  up.load
+│   │       └── [Jul  2  1981]  updown.doc
+│   ├── [Aug 11 10:40]  7007267
+│   │   └── [Aug 11 10:40]  eb
+│   │       └── [Sep  5  1980]  errmac.fasl
+│   ├── [Aug 11 10:40]  7007317
+│   │   └── [Aug 11 10:40]  eb
+│   │       ├── [Jun 29  1980]  errmac.29
+│   │       └── [Jun 29  1980]  errmac.30
+│   ├── [Sep  4 17:03]  7007356
+│   │   ├── [Sep  5 16:37]  ar100.712lbr
+│   │   │   └── [Aug  7  1983]  mdm712.aqm
+│   │   ├── [Sep  5 16:37]  ar102.m7fixs
+│   │   │   └── [Sep  8  1983]  rugmdm.asm
+│   │   ├── [Sep  5 16:37]  ar13.hex
+│   │   │   ├── [Nov 27  1981]  cpyfil.hex
+│   │   │   ├── [May 10  1983]  crck.44hex
+│   │   │   ├── [Jan 17  1983]  filtex.11hex
+│   │   │   ├── [May 18  1983]  itscvt.hex
+│   │   │   ├── [Mar 29  1983]  lcrck.hex
+│   │   │   ├── [Mar 29  1983]  ldir.211hex
+│   │   │   ├── [Mar 22  1983]  lu.211hex
+│   │   │   ├── [Aug  5  1983]  mdm712.hex
+│   │   │   ├── [Aug 20  1983]  sq-17.hex
+│   │   │   ├── [Nov 26  1981]  umpire.hex
+│   │   │   ├── [Nov 27  1981]  unload.hex
+│   │   │   └── [Aug 20  1983]  usq-20.hex
+│   │   ├── [Sep  5 16:37]  ar14.news
+│   │   │   ├── [Mar 19  1982]  cpmnet.apr81
+│   │   │   ├── [Sep 16  1981]  cpmnet.aug81
+│   │   │   ├── [Mar 19  1982]  cpmnet.feb81
+│   │   │   ├── [Mar 19  1982]  cpmnet.jan81
+│   │   │   ├── [Jul 15  1981]  cpmnet.jul81
+│   │   │   ├── [Jun 16  1981]  cpmnet.jun81
+│   │   │   ├── [Mar 19  1982]  cpmnet.mar81
+│   │   │   ├── [Apr 28  1981]  cpmnet.may81
+│   │   │   ├── [Sep 27  1981]  cpmnet.sep81
+│   │   │   └── [May 27  1981]  sig{m.jun81
+│   │   ├── [Sep  5 16:37]  ar15.filcpy
+│   │   │   ├── [Nov 29  1980]  cpyfil.15asm
+│   │   │   ├── [Jul 25  1983]  disk.76adif
+│   │   │   ├── [Jul  9  1983]  disk.76casm
+│   │   │   ├── [Jul  9  1983]  disk.76ccom
+│   │   │   ├── [Jul  9  1983]  disk.76cdoc
+│   │   │   ├── [Aug 20  1983]  mft.48asm
+│   │   │   ├── [Aug 20  1983]  mft.48doc
+│   │   │   ├── [Nov 28  1980]  move.asm
+│   │   │   ├── [Oct 24  1982]  pippat.2asm
+│   │   │   ├── [Mar 21  1983]  sweep.38com
+│   │   │   ├── [Mar 21  1983]  sweep.38doc
+│   │   │   └── [Apr  4  1983]  wash.15asm
+│   │   ├── [Sep  5 16:37]  ar17.asmutl
+│   │   │   ├── [Oct  6  1981]  lasm.com
+│   │   │   ├── [Oct  6  1981]  lasm.doc
+│   │   │   ├── [Apr 13  1982]  lasm.hex
+│   │   │   ├── [May 29  1983]  mload.14asm
+│   │   │   ├── [May 29  1983]  mload.14com
+│   │   │   └── [May 29  1983]  mload.14hex
+│   │   ├── [Sep  5 16:37]  ar18.cpm3
+│   │   │   ├── [Mar 16  1983]  bios3.asm
+│   │   │   ├── [Aug  7  1983]  cpm3.bug
+│   │   │   ├── [Jul 19  1983]  rsxdmo.asm
+│   │   │   └── [Jul 19  1983]  rsxdmo.doc
+│   │   ├── [Sep  5 16:37]  ar19.syslib
+│   │   │   ├── [Nov 26  1982]  syslb.1np
+│   │   │   ├── [Nov 26  1982]  syslb.2np
+│   │   │   ├── [Nov 27  1982]  syslb.3np
+│   │   │   ├── [Nov  4  1982]  syslb1.hlp
+│   │   │   ├── [Nov  4  1982]  syslb2.hlp
+│   │   │   ├── [Nov  4  1982]  syslb3.hlp
+│   │   │   ├── [Nov  4  1982]  syslb4.hlp
+│   │   │   ├── [Nov  4  1982]  syslb5.hlp
+│   │   │   ├── [Nov  4  1982]  syslb6.hlp
+│   │   │   ├── [Nov  4  1982]  syslb7.hlp
+│   │   │   ├── [Nov 26  1982]  syslb8.hlp
+│   │   │   ├── [Nov 26  1982]  syslb9.hlp
+│   │   │   ├── [Nov  4  1982]  syslba.hlp
+│   │   │   ├── [Nov  4  1982]  syslbb.hlp
+│   │   │   ├── [Nov 26  1982]  syslbc.hlp
+│   │   │   ├── [Nov 26  1982]  syslib.21hdwq
+│   │   │   ├── [Nov  5  1982]  syslib.21swq
+│   │   │   ├── [Nov 26  1982]  syslib.21wq
+│   │   │   ├── [Jun 23  1983]  syslib.27hqp
+│   │   │   └── [Jun 22  1983]  syslib.27rel
+│   │   ├── [Sep  5 16:37]  ar20.dskutl
+│   │   │   ├── [Sep  2  1982]  archiv.asm
+│   │   │   ├── [Jun 20  1981]  bitmap.asm
+│   │   │   ├── [Oct 26  1982]  cpyfst.43asm
+│   │   │   ├── [Apr  4  1983]  cpyfst.43doc
+│   │   │   ├── [Jan  4  1982]  disk.bugcom
+│   │   │   ├── [Jan  4  1982]  disk.bugdoc
+│   │   │   ├── [Sep  5  1982]  djfmt.10com
+│   │   │   ├── [Sep  5  1982]  djfmt.10mac
+│   │   │   ├── [Sep  5  1982]  djsgen.13com
+│   │   │   ├── [Sep  5  1982]  djsgen.13mac
+│   │   │   ├── [Jul 23  1981]  du.v75doc
+│   │   │   ├── [Feb 10  1982]  du.v78asm
+│   │   │   ├── [Apr 21  1983]  du.v78com
+│   │   │   ├── [Apr 21  1983]  findbd.54bug
+│   │   │   ├── [May 26  1981]  fndbad.54asm
+│   │   │   ├── [May 21  1981]  fndbad.54com
+│   │   │   ├── [Apr 27  1982]  pas2cp.asm
+│   │   │   └── [Sep  3  1982]  syscop.c
+│   │   ├── [Sep  5 16:37]  ar21.txtutl
+│   │   │   ├── [Aug 17  1983]  bishow.17asm
+│   │   │   ├── [Aug  8  1981]  df.com
+│   │   │   ├── [Nov 20  1981]  dif.2c
+│   │   │   ├── [Nov 20  1981]  dif.2com
+│   │   │   ├── [Nov 20  1981]  dif.2doc
+│   │   │   ├── [May 16  1983]  displa.com
+│   │   │   ├── [May 30  1981]  filprt.asm
+│   │   │   ├── [Dec  5  1982]  filter.11asm
+│   │   │   ├── [May  5  1981]  filter.com
+│   │   │   ├── [Jan 17  1983]  filtex.11asm
+│   │   │   ├── [Jan 17  1983]  filtex.11com
+│   │   │   ├── [Jan 15  1983]  fixtex.11asm
+│   │   │   ├── [Mar  1  1982]  roff.com
+│   │   │   ├── [Feb  1  1982]  roff.doc
+│   │   │   ├── [Nov 20  1981]  ssed.2c
+│   │   │   ├── [Nov 20  1981]  ssed.2com
+│   │   │   ├── [Oct 18  1981]  tabify.4c
+│   │   │   ├── [Oct 23  1981]  tabify.4com
+│   │   │   ├── [Feb 15  1982]  unspol.32doc
+│   │   │   └── [Feb 15  1982]  unspol.33asm
+│   │   ├── [Sep  5 16:37]  ar22.dirutl
+│   │   │   ├── [Aug 23  1982]  chdir.com
+│   │   │   ├── [Jun 20  1981]  clenup.com
+│   │   │   ├── [Jun 23  1981]  d.27aasm
+│   │   │   ├── [Jun 13  1981]  d.27acom
+│   │   │   ├── [Dec 19  1980]  dirf.asm
+│   │   │   ├── [Dec 19  1980]  dirf.mac
+│   │   │   ├── [Oct 31  1981]  dupusr.2asm
+│   │   │   ├── [Aug  5  1982]  eraq.com
+│   │   │   ├── [Aug  5  1982]  eraq.mac
+│   │   │   ├── [Mar  3  1982]  erase.com
+│   │   │   ├── [Mar  3  1982]  erase.mac
+│   │   │   ├── [Jul 18  1983]  file.14asm
+│   │   │   ├── [Jul 18  1983]  file.14doc
+│   │   │   ├── [May  7  1983]  make.asm
+│   │   │   ├── [May  7  1983]  make.com
+│   │   │   ├── [Mar  1  1982]  mdir.21asm
+│   │   │   ├── [Sep  2  1980]  menu.mac
+│   │   │   ├── [Feb 27  1982]  nindex.com
+│   │   │   ├── [Feb 27  1982]  nindex.doc
+│   │   │   ├── [Mar  3  1982]  protec.asm
+│   │   │   ├── [Mar  3  1982]  protec.com
+│   │   │   ├── [Mar  3  1982]  rename.asm
+│   │   │   ├── [Mar  3  1982]  rename.com
+│   │   │   ├── [Nov  3  1981]  sd.41doc
+│   │   │   └── [Jul 18  1983]  sd.50asm
+│   │   ├── [Sep  5 16:37]  ar23.dirut2
+│   │   │   ├── [Dec  1  1982]  menu.com
+│   │   │   ├── [Dec  1  1982]  menu.doc
+│   │   │   ├── [Mar 27  1983]  unera.15doc
+│   │   │   ├── [Mar 27  1983]  unera.16asm
+│   │   │   ├── [Nov  4  1982]  xdir3.com
+│   │   │   ├── [Nov  4  1982]  xdir3.hlp
+│   │   │   ├── [Nov  4  1982]  xdir3.mac
+│   │   │   ├── [Nov 11  1982]  xdir3i.com
+│   │   │   └── [Nov 11  1982]  xdir3i.mac
+│   │   ├── [Sep  5 16:37]  ar24.filutl
+│   │   │   ├── [Apr 10  1983]  chek.15asm
+│   │   │   ├── [Apr 10  1983]  chek.15doc
+│   │   │   ├── [Apr 23  1983]  compar.asm
+│   │   │   ├── [Jun  6  1983]  crck.44asm
+│   │   │   ├── [Oct  9  1982]  find.2asm
+│   │   │   ├── [Aug 30  1982]  rt11.c
+│   │   │   ├── [Aug 31  1982]  rt11.com
+│   │   │   ├── [Aug 30  1982]  rt11.doc
+│   │   │   ├── [Aug 30  1982]  rt11.h
+│   │   │   ├── [Aug 30  1982]  rt11.msg
+│   │   │   ├── [Aug 30  1982]  rtfile.c
+│   │   │   ├── [Aug 30  1982]  rtmisc.c
+│   │   │   ├── [Jul 14  1981]  scrmbl.2asm
+│   │   │   ├── [May 30  1981]  scrmbl.doc
+│   │   │   └── [Nov 10  1980]  unload.20asm
+│   │   ├── [Sep  5 16:37]  ar29.cpmlib
+│   │   │   ├── [Jul 23  1982]  arcadd.10com
+│   │   │   ├── [Jul 23  1982]  arccpy.10com
+│   │   │   ├── [Jul 25  1982]  arcdir.10com
+│   │   │   ├── [Jul 23  1982]  arcget.11com
+│   │   │   ├── [Jul 23  1982]  archiv.hlp
+│   │   │   ├── [Jul 23  1982]  arctyp.10com
+│   │   │   ├── [Mar 29  1983]  lcrck.com
+│   │   │   ├── [Mar 29  1983]  ldir.211com
+│   │   │   ├── [Nov 16  1982]  ldir.msg
+│   │   │   ├── [Mar 22  1983]  ltype.com
+│   │   │   ├── [Mar 29  1983]  ltype.com80
+│   │   │   ├── [Aug 21  1983]  lu.300com
+│   │   │   ├── [Aug 21  1983]  lu.300doc
+│   │   │   └── [Aug 21  1983]  ludef.3doc
+│   │   ├── [Sep  5 16:37]  ar50.help
+│   │   │   ├── [Jun 26  1981]  algolm.hlp
+│   │   │   ├── [Jun 26  1981]  asm2.hlp
+│   │   │   ├── [Jun 26  1981]  c.hlp
+│   │   │   ├── [Jul 24  1981]  catlog.hlp
+│   │   │   ├── [Jun 26  1981]  cbas.hlp
+│   │   │   ├── [Jun 26  1981]  cbas2.hlp
+│   │   │   ├── [Jul 24  1981]  cpm2.hlp
+│   │   │   ├── [May 27  1981]  du-v75.hlp
+│   │   │   ├── [Jun 26  1981]  fortra.hlp
+│   │   │   ├── [Nov  2  1981]  help.20asm
+│   │   │   ├── [Nov  2  1981]  help.20com
+│   │   │   ├── [Nov  5  1981]  help.20hlp
+│   │   │   ├── [Jul 24  1981]  link.hlp
+│   │   │   ├── [Jun  3  1981]  mac.hlp
+│   │   │   ├── [Jun  3  1981]  masm.hlp
+│   │   │   ├── [Jul 24  1981]  mbasic.hlp
+│   │   │   ├── [Nov 20  1981]  pascal.hlp
+│   │   │   ├── [Jul 25  1981]  phelp.com
+│   │   │   ├── [Nov 20  1981]  phelp.mac
+│   │   │   └── [May 27  1981]  resour.hlp
+│   │   ├── [Sep  5 16:37]  ar51.sq{usq
+│   │   │   ├── [Jun 28  1981]  bdscio.h
+│   │   │   ├── [Nov 19  1981]  chnges.doc
+│   │   │   ├── [Jan 12  1982]  dio.h
+│   │   │   ├── [Jan 12  1982]  dio2.c
+│   │   │   ├── [Sep 11  1981]  fls-11.com
+│   │   │   ├── [Jan 12  1982]  fls.c
+│   │   │   ├── [Nov 19  1981]  histry.doc
+│   │   │   ├── [Jan 12  1982]  io.c
+│   │   │   ├── [Sep 11  1982]  prntsq.com
+│   │   │   ├── [Sep 11  1982]  prntsq.comdoc
+│   │   │   ├── [Nov 19  1981]  readme.doc
+│   │   │   ├── [Mar 15  1983]  rstrct.c
+│   │   │   ├── [Aug 17  1983]  sq-17.com
+│   │   │   ├── [Jul  1  1983]  sq-usq.bugmsg
+│   │   │   ├── [Aug 26  1982]  sq.16c
+│   │   │   ├── [Apr  2  1982]  sq.c
+│   │   │   ├── [Nov 19  1981]  sq.h
+│   │   │   ├── [Jun 28  1981]  sqcom.h
+│   │   │   ├── [Nov 19  1981]  sqdbug.c
+│   │   │   ├── [Nov 19  1981]  sqezer.doc
+│   │   │   ├── [Nov 19  1981]  sq{usq.15doc
+│   │   │   ├── [Jun 28  1981]  tr1.c
+│   │   │   ├── [Nov 19  1981]  tr2.c
+│   │   │   ├── [Aug 31  1982]  type.15c
+│   │   │   ├── [Sep  1  1982]  type.15com
+│   │   │   ├── [Sep  1  1982]  type.15doc
+│   │   │   ├── [Mar 15  1983]  type.19c
+│   │   │   ├── [Aug 31  1982]  type40.15com
+│   │   │   ├── [Aug 31  1982]  type80.15com
+│   │   │   ├── [Aug 17  1983]  usq-20.com
+│   │   │   ├── [Aug 26  1982]  usq.19c
+│   │   │   ├── [Nov 19  1981]  usq.c
+│   │   │   ├── [Jun 28  1981]  usq.h
+│   │   │   ├── [Jun 28  1981]  utr.c
+│   │   │   └── [Aug 31  1982]  xtype.15com
+│   │   ├── [Sep  5 16:37]  ar60.modem2
+│   │   │   ├── [Jun 24  1981]  cmodem.13c
+│   │   │   ├── [Jun 26  1981]  dch.h
+│   │   │   ├── [Aug 24  1982]  kaycom.config
+│   │   │   ├── [Nov 24  1980]  mboot.3asm
+│   │   │   ├── [Apr  4  1983]  mdmbra.asm
+│   │   │   ├── [Apr 27  1982]  modem.221asm
+│   │   │   ├── [Mar  8  1981]  modem.doc
+│   │   │   ├── [Apr 29  1981]  modem2.proto
+│   │   │   ├── [Sep  2  1983]  modem2.protoc
+│   │   │   ├── [Jun 24  1981]  pmmi.h
+│   │   │   ├── [Jan 23  1983]  sndout.8asm
+│   │   │   ├── [Oct 11  1982]  xmodem.exesav
+│   │   │   ├── [Oct  5  1982]  xmodem.sai
+│   │   │   └── [Apr  8  1982]  xmodem.saimsg
+│   │   ├── [Sep  5 16:37]  ar61.modem7
+│   │   │   ├── [Aug  5  1983]  m712ac.asm
+│   │   │   ├── [Aug  5  1983]  m712al.asm
+│   │   │   ├── [Aug  5  1983]  m712ap.asm
+│   │   │   ├── [Aug  5  1983]  m712dp.asm
+│   │   │   ├── [Aug  1  1983]  m712gp.asm
+│   │   │   ├── [Aug  5  1983]  m712h8.asm
+│   │   │   ├── [Aug  7  1983]  m712hp.asm
+│   │   │   ├── [Aug  5  1983]  m712hz.asm
+│   │   │   ├── [Aug  5  1983]  m712in.asm
+│   │   │   ├── [Aug  5  1983]  m712kp.asm
+│   │   │   ├── [Aug  5  1983]  m712md.asm
+│   │   │   ├── [Aug  5  1983]  m712mm.asm
+│   │   │   ├── [Aug  5  1983]  m712ne.asm
+│   │   │   ├── [Aug  5  1983]  m712nm.asm
+│   │   │   ├── [Aug  5  1983]  m712os.asm
+│   │   │   ├── [Sep  7  1983]  m712ot.asm
+│   │   │   ├── [Aug  5  1983]  m712ox.asm
+│   │   │   ├── [Aug  1  1983]  m712pm.asm
+│   │   │   ├── [Aug  5  1983]  m712tv.asm
+│   │   │   ├── [Aug 15  1983]  m712vt.asm
+│   │   │   ├── [Aug  5  1983]  m712xe.asm
+│   │   │   ├── [Aug  5  1983]  m712zb.asm
+│   │   │   ├── [Aug  1  1983]  mdm712.com
+│   │   │   ├── [Aug  1  1983]  mdm712.doc
+│   │   │   ├── [Aug  5  1983]  mdm712.inf
+│   │   │   ├── [Aug  1  1983]  mdm712.txt
+│   │   │   └── [Aug  1  1983]  mdm712.upd
+│   │   ├── [Sep  5 16:37]  ar63.rcpm
+│   │   │   ├── [Jun 12  1983]  chat.20asm
+│   │   │   ├── [Jun 24  1982]  paswrd.fun
+│   │   │   ├── [Nov 24  1981]  scurty.2asm
+│   │   │   ├── [Jul 14  1981]  secure.sysdoc
+│   │   │   ├── [Nov 24  1981]  tag.2asm
+│   │   │   ├── [Mar 14  1981]  user.88asm
+│   │   │   ├── [Mar 25  1983]  userpw.37asm
+│   │   │   ├── [May 18  1983]  xm74.lbrpat
+│   │   │   ├── [Apr 15  1983]  xmacat.74asm
+│   │   │   ├── [Apr 14  1983]  xmdch.74asm
+│   │   │   ├── [Apr 11  1983]  xmext.74asm
+│   │   │   ├── [Apr 15  1983]  xmext.74new
+│   │   │   ├── [Apr 11  1983]  xmhz89.74asm
+│   │   │   ├── [Apr 15  1983]  xmint3.74asm
+│   │   │   ├── [Apr 15  1983]  xmmmii.74asm
+│   │   │   ├── [Mar 25  1983]  xmodem.18c
+│   │   │   ├── [Apr  9  1983]  xmodem.74asm
+│   │   │   ├── [Apr 15  1983]  xmodem.74inf
+│   │   │   ├── [Apr  9  1983]  xmodem.74msg
+│   │   │   ├── [Apr 11  1983]  xmpmmi.74asm
+│   │   │   └── [Apr 11  1983]  xmsmdm.74asm
+│   │   ├── [Sep  5 16:37]  ar71.dskbuf
+│   │   │   ├── [Nov 13  1982]  prlmov.asm
+│   │   │   ├── [Mar  2  1983]  ramdrv.5mac
+│   │   │   ├── [Nov 13  1982]  ramdsk.asm
+│   │   │   └── [Nov 13  1982]  ramdsk.doc
+│   │   ├── [Sep  5 16:37]  ar72.ppspel
+│   │   │   ├── [Nov 19  1982]  speled.3com
+│   │   │   ├── [Nov 19  1982]  speled.doc
+│   │   │   ├── [Nov 19  1982]  spell.11asm
+│   │   │   ├── [Nov 19  1982]  spell.11com
+│   │   │   └── [Nov 19  1982]  spell.11doc
+│   │   ├── [Sep  5 16:37]  ar73.bye2
+│   │   │   ├── [Dec 24  1982]  by2.12asm
+│   │   │   ├── [Dec 24  1982]  by282.50asm
+│   │   │   ├── [Dec 24  1982]  by282.51asm
+│   │   │   ├── [Dec 24  1982]  by2ac.atasm
+│   │   │   ├── [Dec 24  1982]  by2d.chasm
+│   │   │   ├── [Dec 24  1982]  by2in.t3asm
+│   │   │   ├── [Dec 24  1982]  by2mm.iiasm
+│   │   │   └── [Dec 24  1982]  by2pm.miasm
+│   │   ├── [Sep  5 16:37]  ar74.6502
+│   │   │   ├── [Dec 17  1982]  6502.simlbr
+│   │   │   ├── [Feb 27  1983]  6dasm.mac
+│   │   │   └── [Feb 27  1983]  d6502.mac
+│   │   ├── [Sep  5 16:37]  ar75.wstar
+│   │   │   ├── [Jan 15  1982]  index.c
+│   │   │   ├── [Jan  4  1982]  index.com
+│   │   │   ├── [Jan 15  1982]  index.doc
+│   │   │   ├── [Dec  2  1982]  ws2rof.com
+│   │   │   ├── [Aug 22  1982]  ws30.doc
+│   │   │   ├── [May  7  1983]  ws30.patchs
+│   │   │   └── [Aug 22  1982]  wsmx80.pat
+│   │   ├── [Sep  5 16:37]  ar76.v2cmac
+│   │   │   ├── [Mar  6  1983]  cc1.mac
+│   │   │   ├── [Mar  6  1983]  cc2.mac
+│   │   │   └── [Mar  6  1983]  cc3.mac
+│   │   ├── [Sep  5 16:37]  ar77.v2cma2
+│   │   │   ├── [Mar 13  1983]  c.hex
+│   │   │   ├── [Mar  6  1983]  call.mac
+│   │   │   ├── [Mar 13  1983]  cc4.mac
+│   │   │   ├── [Mar  6  1983]  lib.c
+│   │   │   ├── [Mar 13  1983]  runtim.mac
+│   │   │   └── [Mar  6  1983]  stdio.h
+│   │   ├── [Sep  5 16:37]  ar85.zc8080
+│   │   │   ├── [May 19  1983]  du2-80.80com
+│   │   │   ├── [May 29  1983]  help80.80com
+│   │   │   ├── [May 19  1983]  lrun80.80com
+│   │   │   ├── [May 22  1983]  zcpr80.80aqm
+│   │   │   └── [May 18  1983]  zcpr80.80doc
+│   │   ├── [Sep  5 16:37]  ar90.vaxvms
+│   │   │   ├── [Jun 29  1983]  cpm.com
+│   │   │   ├── [Jun 29  1983]  fmxmod.for
+│   │   │   ├── [Jun 29  1983]  qio.dck
+│   │   │   ├── [Jun 29  1983]  toxmod.for
+│   │   │   ├── [Apr 21  1983]  xmodem.for
+│   │   │   ├── [Jun 29  1983]  xmodem.fordoc
+│   │   │   ├── [Jun 29  1983]  xmodem.hlp
+│   │   │   ├── [Jul 25  1983]  xmodem.lll
+│   │   │   └── [Jul  1  1983]  xmodem.lqr
+│   │   └── [Aug 11 10:40]  w8sdz
+│   │       ├── [Aug 15  1983]  ar100.712lbr
+│   │       ├── [Sep  8  1983]  ar102.m7fixs
+│   │       ├── [Aug 20  1983]  ar13.hex
+│   │       ├── [Mar 19  1982]  ar14.news
+│   │       ├── [Aug 20  1983]  ar15.filcpy
+│   │       ├── [May 29  1983]  ar17.asmutl
+│   │       ├── [Aug  7  1983]  ar18.cpm3
+│   │       ├── [Jun 27  1983]  ar19.syslib
+│   │       ├── [Apr 21  1983]  ar20.dskutl
+│   │       ├── [Sep  6  1983]  ar21.txtutl
+│   │       ├── [Jul 18  1983]  ar22.dirutl
+│   │       ├── [Mar 27  1983]  ar23.dirut2
+│   │       ├── [Jun  6  1983]  ar24.filutl
+│   │       ├── [Aug 21  1983]  ar29.cpmlib
+│   │       ├── [Mar  1  1982]  ar50.help
+│   │       ├── [Aug 17  1983]  ar51.sq{usq
+│   │       ├── [Sep  2  1983]  ar60.modem2
+│   │       ├── [Sep  7  1983]  ar61.modem7
+│   │       ├── [Aug 19  1983]  ar63.rcpm
+│   │       ├── [Mar  2  1983]  ar71.dskbuf
+│   │       ├── [Nov 20  1982]  ar72.ppspel
+│   │       ├── [Dec 26  1982]  ar73.bye2
+│   │       ├── [Feb 27  1983]  ar74.6502
+│   │       ├── [May 10  1983]  ar75.wstar
+│   │       ├── [Mar  6  1983]  ar76.v2cmac
+│   │       ├── [Mar 13  1983]  ar77.v2cma2
+│   │       ├── [May 29  1983]  ar85.zc8080
+│   │       ├── [Jul 25  1983]  ar90.vaxvms
+│   │       └── [May  2  1982]  rcp-m.info
+│   ├── [Aug 11 10:40]  7007993
+│   │   └── [Aug 11 10:40]  eb
+│   │       ├── [Feb  5  1981]  errmac.ofasl
+│   │       └── [Mar 18  1981]  signal.17
+│   ├── [Aug 11 10:40]  701499
+│   │   └── [Aug 11 10:40]  eb
+│   │       ├── [Aug 21  1980]  errmac.48
+│   │       ├── [Aug 22  1980]  errmac.49
+│   │       └── [Aug 22  1980]  errmac.fasl
+│   ├── [Aug 11 10:40]  701508
+│   │   └── [Aug 11 10:40]  eb
+│   │       └── [Mar  4  1981]  errmac.fasl
+│   ├── [Aug 11 10:40]  9005408
+│   │   └── [Aug 11 10:40]  _info_
+│   │       └── [Jun  5  1981]  lmodem.help
+│   ├── [Aug 11 10:40]  ai_ka_arch_3of9_2812_16_21_may_1981
+│   │   └── [Aug 11 10:40]  eb
+│   │       ├── [May 21  1981]  dsk8.32
+│   │       ├── [Mar 20  1981]  errmac.80
+│   │       ├── [Mar 20  1981]  errmac.81
+│   │       ├── [Mar 20  1981]  errmac.fasl
+│   │       ├── [May 25  1981]  lmodem.235
+│   │       ├── [May 30  1981]  lmodem.236
+│   │       ├── [May 30  1981]  lmodem.237
+│   │       ├── [May 30  1981]  lmodem.238
+│   │       └── [Mar 28  1981]  signal.30
+│   └── [Aug 11 10:40]  ai_ka_arch_3of9_3054_59_26_aug_1982
+│       └── [Aug 11 10:40]  eb
+│           ├── [May 21  1981]  dsk8.33
+│           ├── [May 21  1981]  dsk8.fasl
+│           ├── [Nov 11  1981]  errmac.84
+│           ├── [Nov 11  1981]  errmac.fasl
+│           ├── [May 25  1982]  lmodem.251
+│           ├── [May 25  1982]  lmodem.252
+│           ├── [May 21  1981]  signal.31
+│           └── [May 21  1981]  signal.fasl
+└── [Sep  5 16:42]  tree.txt
+
+270 directories, 3343 files

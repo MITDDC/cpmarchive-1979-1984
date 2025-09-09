@@ -1,0 +1,261 @@
+
+
+
+
+
+
+                   The SD Directory Program
+
+
+
+     This documentation file concerns SD-NEW.ASM and SD-NEW.OBJ,
+version 4.3 as of May 23, 1982.    Version 4.3 fixes bugs caused
+by the first use of the BDOS intercept at Version 4.1.   Version
+4.1 was a significant upgrade  of the standard "super-directory"
+program that most RCP/M systems  are  now  using  as their "DIR"
+executor.   That version had many  new features  over version 3.
+
+     The most significant  difference  between  version  4.X and
+version  3.X  concerns  the  ability  of SD to search a range of
+drives and/or user areas for a specified  file.  This capability
+is patterned after FILEFIND, but is significantly more useful in
+that  SD will report the sizes of files matched.    A  new  BDOS
+intercept  routine  has been added, which although more involved
+than  the FILEFIND method,  is  more  generally  applicable  and
+should  run "as-is" on most CP/M systems.  Thus, by using SD-4X,
+the use of a separate FILEFIND program should be unnecessary.  
+
+     The  basic operation of SD is as in previous releases.  You
+merely  type   "SD",   followed  by  an  optional  ambiguous  or
+unambiguous  filename (as  you  would  with  the  CCP  directory
+command).  Omitting  the  filename  (i.e.,  "SD  [CR]"), will be
+interpreted  as  "SD *.*".  Similarly, "SD A:" would  imply  "SD
+A:*.*" and "SD B:"  would  imply "SD B:*.*".  In addition to the
+filename option, up to 8 command  line options may be specified.
+If  options  are  to be specified, then  the  filename  must  be
+EXPLICITLY specified  by  at  least a drive code.  Option fields
+are  preceded  by a single dollar  sign  as  with  most  Digital
+Research programs  such as MAC, and may be essentially free-form
+in format.  Example:  SD  A:  $s  a  D  rn u0 fp.  Note that the
+reference  to the A drives in "A:" is mandatory.    Invoking  SD
+with a command  of the form "SD $s a D rn u0 fp" would result in
+SD thinking that  $S was the file to be searched for.  Note also
+that spaces and case  within  the option field are insignificant
+(i.e., "$ SADrNu0F p" is equivalent  to  "$  S A D R N U0 F P").
+The  only  exception concerns the "USER" option  which  will  be
+explained later.  Users should also be aware of two restrictions
+on the command  line  format.   SD scans the entire command line
+for a dollar sign preceded by at  least  1  blank to delimit the
+beginning  of  the option field.  For this reason,  invoking  SD
+with a command line  such as "SD $ $AR" is illegal since SD will
+consider the first dollar sign to be the option field delimiter.
+If you need to specify  a  a filename whose first character is a
+dollar sign, precede it with  a  drive  code as in "SD A:$ $AR".
+In  this  instance,  SD  will  consider  the first  dollar  sign
+insignificant as it is not preceded by a blank.  
+
+
+
+
+
+
+
+
+
+
+
+                                1
+SD-43 Documentation Notes
+
+
+
+     The second restriction is that command  line options may be
+specified once and only once per invocation.   That  is,  "SD A:
+$SDS"  would be illegal since the "S" option is specified twice.
+This shortcoming  is  due  to  the fact that options can be made
+into defaults at assembly time.  
+
+     The eight options recognized are:  
+
+  "S" - system option : system files will be included in
+        the output rather than being suppressed.  
+
+  "F"  -  file  option : the directory  output  will  be
+        echoed to  a  disk  file  named  "SD.DIR" on the
+        DEFAULT drive.  If SD.DIR already  exists,  then
+        the directory output will be APPENDED to the end
+        of  the file.  Otherwise, SD.DIR will be created
+        as a new file.  The append feature allows you to
+        build  up  one massive file on the default drive
+        containing the directories of all of your disks,
+        without  having   to  concantenate  a  swarm  of
+        individual directory  files.  If you plan to use
+        this feature often, it willbe simpler for you to
+        have a dedicated version  on  your  MASTCAT disk
+        with RESFLG set TRUE.  The advantage  of this is
+        that  you  can  work  through  a  pile  of disks
+        without  having  to  CTRL-C  or  specify the "R"
+        option everytime you SD a new disk.   Failing to
+        do  this  will  result in the allocation  vector
+        being invalid, and FREE size will be wrong.  
+
+  "U" - user option : allows  the  specification  of the
+        user  number for the directory of the form "Uxx"
+        where the  user  #  is  greater  than 0, but not
+        greater than a specified value not to exceed 15.
+        The user option specification will be illegal if
+        the user # is out of range, omitted,  or if U is
+        specified  on  a  pre-CP/M 2 system.  Note  that
+        since  the  user  option  requires  a  parameter
+        (i.e., the user number),  the  user  number must
+        immediately follow the "U" option on the command
+        field.    That is, "U1" is legal, but "U  1"  is
+        not.  In this respect, the U option differs from
+        the other options  in  that  embedded spaces ARE
+        significant.  
+
+  "A" - all users : causes SD to display  directories of
+        all  user  areas  starting  at  the  user   area
+        specified  in  the  U  option or, if U option is
+        omitted, the default user area and continuing up
+        to MAXUSR.  
+
+  "R" - reset option : allows for automatic resetting of
+        the disk prior to performing directory search so
+        that  the  allocation vector  will  be  updated.
+        Same as doing  a CTRL-C when changing disks, but
+        handy if you didn't  (such  as  when  running  a
+
+
+
+
+
+                                2
+SD-43 Documentation Notes
+
+
+
+        SUBMIT  file).  Note that the RESFLG equate will
+        force the  R option unconditionally each time SD
+        is run.  Useful  for SDing a stack of disks with
+        the "F" option, but  slows  down SD considerably
+        in normal use.  
+
+  "N"  - no page option : unconditionally  disables  the
+        page  pause  option.   Useful when running SD in
+        the "F" and/or "A" modes when you don't want the
+        page prompt slowing you  down.   Note that SD-43
+        will  not  put  the page-pause prompt  into  the
+        output file.  
+
+  "P" - printer option : forces all console output to be
+        echoed to the CP/M  list  device,  with the most
+        significant bit set to 0.  
+
+  "D" - all disk option : allows SD to search  all  disk
+        drives  on-line  starting  with  the  disk drive
+        specified  or  implied  with  the  command  line
+        filename.    For example, "SD B: $D" will result
+        in SD searching  all drives beginning with drive
+        B.  "SD *.* $D" will  result in SD searching all
+        drives beginning with the  drive  that is logged
+        in.  
+
+     If   an  unrecognized  option  (or  illegal   user   option
+specification) is detected, then the command line will be played
+back to the  console  up  to  the  point  where  the  error  was
+detected.    However,  if the REPERR option is disabled, then SD
+will keep its mouth shut  and  ignore  everything on the command
+line  past the illegal field.  In this situation,  an  illegally
+specified  user  number  would  default back to the current user
+number.  The option of DISABLING  error  reporting  was included
+primarily  for systems with hidden doors and secret passageways.
+Shooting off  rockets  and  clanging  bells  everytime a holswap
+starts  "experimenting" just calls attention to  the  fact  that
+there really  IS  something  behind  that  hollow- sounding wall
+after all (if you get my drift).  
+
+     As an added convenience, it is possible to "hard-wire" some
+or all of the command line options.  For example, if you want SD
+to ALWAYS perform a reset of the disk system  before putting its
+show  on the road, you can do just that.  For details,  see  the
+comments   preceding  the  option  field  lookup  table  in  the
+assembler source file.  
+
+     Finally,  if  the  all-disk  and/or  all-user  options  are
+enabled,   it  may  be  desirable  to  restrict  searches.    To
+facilitate this,  a  table is included in SD (beginning at label
+"LODRV" and continuing  through "HIDRV").  The table consists of
+a single byte for each drive  to  be  searched beginning with A.
+Each byte may be in the range of 0-15 mod  15  and  defines  the
+highest  user  number  that  SD  will search for that particular
+drive.  The highest drive number to  search  is  defined  by the
+length of the table.  If four DBs are present between LODRV  and
+
+
+
+
+
+                                3
+SD-43 Documentation Notes
+
+
+
+HIDRV,  then  drives  A-D  can  be  searched.    The source file
+includes the LODRV-HIDRV table in its maximum configuration  for
+16  drives.    However,  it  is  recommended that you delete DBs
+referencing  drives  that  aren't  available   on  your  system.
+Although  SD  will  intercept  attempts  to  search non-existant
+drives, there really isn't any point in allowing  SD  to  always
+search  drive  C  when  you  only  have  2  logical  drives; and
+depending  on  how  your  BIOS  is  constructed and how long  it
+monkeys around before advising the BDOS  of the select error, it
+could save some time.   As an additional feature at Version 4.3,
+you may set the most significant  bit  of  an entry  to skip any
+drive in the sequence.   This allows only physical drives  to be
+searched for those CP/M systems which implement logical disks.
+     
+              A THOUGHT FROM "THE GREAT REVISOR"
+
+     If you sit down and figure out the number  of  permutations
+of  options  and  equates  in the latest versions of SD,  you'll
+understand why there aren't  any warranties as to the absence of
+entomological cybernoids.  I leave  it  to the CP/M community to
+smoke  out  what bugs may pop-up when a certain  combination  of
+variables occurs.    If  you  find  any  bugs,  please  leave an
+advisory or a fix on either TCBBS or the Hyde Park RCP/M so that
+they can be exterminated.  
+
+     Finally, my latest revisions expanded the size of the  load
+module considerably, and it is now weighing in at just under  2K
+if all of the options are enabled.  A program of this type has a
+tendency  to be widely propogated throughout a disk library, and
+since 2K is  the  block  size  of  most  double and quad-density
+systems, I feel that it is important to try and keep SD under 2K
+if at all possible.  That's why some of my  code  may be cryptic
+in some places - I've sacrified clarity for code reductions.  If
+you  plan  to make public-domain enhancements to SD which  would
+push it over  the  2K mark, ask yourself whether its worth tying
+up an additional disk  block.    This  is also an invitation for
+someone less lazy than myself to further  optimize  the  code to
+reduce SD to as compact a package as possible (thus making  room
+for more enhancements).  For my part, I quit when I got it under
+2K.    It  works,  it  fits and I'm ready to move onto something
+else.  
+
+     
+                       I pass the torch.
+
+                          David Boruff
+                      Knoxville, Tennessee
+
+			Torch relayed to:
+
+			   Jim Jones
+		      Wellesley Hills, Mass.
+
+
+
+
+
+

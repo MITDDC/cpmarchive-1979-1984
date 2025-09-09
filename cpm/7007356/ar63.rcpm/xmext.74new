@@ -1,0 +1,276 @@
+;
+; XM74EXT.ASM - XMODEM74 PATCH FILE FOR EXTERNAL MODEMS
+;
+; (last modified: 04/10/83)
+;
+;
+; This file adapts XMODEM74 to an external modem, either an 8251 chip or
+; a 6850 (Motorola) chip.  To use, first edit any options desired into
+; XMODEM74.ASM, then assemble (can use ASM.COM) and load which supplies
+; XMODEM74.COM.  Then edit this file as needed (check the CONOUT routine
+; if you want to locally see file transfer time and the record count
+; while programs are being sent).  Then assemble (can use ASM.COM) and
+; merge via DDT or SID:
+;
+;	B>DDT XMODEM74.COM
+;	DDT VERS 2.2
+;	NEXT  PC
+;	1100 0100
+;	-IXM74EXT.HEX		(note the 'I' command)
+;	-R			('R' loads in the .HEX file)
+;	NEXT  PC
+;	1100 0100
+;	-G0			(return to CP/M)
+;	B>SAVE 16 XMODEM74.COM  (now have a modified .COM file)
+;
+; NOTE: Save 21 (rather than 16) if LOGCAL is TRUE and assembling with
+;	MAC.COM and SEQIO22.LIB.
+;
+;=======================================================================
+;
+; 04/06/83  Modified to also support Motorola 6850 serial acia. Updated
+;	    to XMODEM74.ASM. Tim Cannon.
+;
+; 03/27/83  Updated to XMODEM74		- Irv Hoff
+; 03/17/83  Updated to XMODEM72		- Irv Hoff
+; 03/15/83  Updated to XMODEM71		- Irv Hoff
+;
+; 03/07/83  Added instructions on how to adapt this file to XMODEM70.COM.
+;	    Standardized the format.  Added automatic MSPEED from "BYE"
+;	    program.  Added CONOUT information.  Adapted from XM70PMMI.
+;					- Irv Hoff
+;
+;=======================================================================
+;
+TRUE:	  EQU	0FFH
+FALSE:	  EQU	0
+;
+M8251	  equ	false		;only one of these equates
+M6850	  equ	true		;..can be set true.
+;
+;=======================================================================
+;
+	if	M8251		;8251 i/o chip
+;
+MODDATP:  EQU	28H		;DATA IN PORT
+MODDATO:  EQU	MODDATP		;DATA OUT PORT
+MODCTLP:  EQU	MODDATP+1	;CONTROL/STATUS PORT
+MODSNDB:  EQU	1		;BIT TO TEST FOR SEND
+MODSNDR:  EQU	1		;VALUE WHEN READY
+MODRCVB:  EQU	2		;BIT TO TEST FOR RECEIVE
+MODRCVR:  EQU	2		;VALUE WHEN READY
+MODDCDB:  EQU	4		;CARRIER DETECT BIT
+MODDCDA:  EQU	0		;VALUE WHEN ACTIVE
+MODPARE:  EQU	08H		;VALUE FOR PARITY ERROR
+MODOVRE:  EQU	10H		;VALUE FOR OVERRUN ERROR
+MODFRME:  EQU	20H		;VALUE FOR FRAMING ERROR
+;
+	endif	;M8251
+;
+;
+	if	M6850		;6850 i/o chip
+;
+MODDATP:  EQU	73H		;DATA IN PORT
+MODDATO:  EQU	MODDATP		;DATA OUT PORT
+MODCTLP:  EQU	72H		;CONTROL/STATUS PORT
+MODSNDB:  EQU	2		;BIT TO TEST FOR SEND
+MODSNDR:  EQU	2		;VALUE WHEN READY
+MODRCVB:  EQU	1		;BIT TO TEST FOR RECEIVE
+MODRCVR:  EQU	1		;VALUE WHEN READY
+MODDCDB:  EQU	8		;CARRIER DETECT BIT
+MODDCDA:  EQU	0		;VALUE WHEN ACTIVE
+MODCTL2:  EQU   7AH		;2ND. STATUS/CONTROL PORT		
+;
+	endif	;M6850
+;
+;=======================================================================
+;
+LSPEED:	  EQU	TRUE		;TRUE IF USING 'BYE' WITH SPEED SELECTION
+				;FALSE IF USING 'SPEED' MANUAL SELECTION
+MSPEED:	  EQU	3DH		;LOCATION OF BAUD RATE FACTOR (SET BY
+;				;'BYE')  SET LOCATION IN 'BYE' TO AGREE.
+;				;3DH AND 3EH OFTEN USED BY NEWER VER-
+;				;SIONS OF 'ZCPR'.
+XSPEED:	  EQU	1		;SPEED FOR FILE TIME TRANSFER WITHOUT
+;				;AUTO-SET.  USE ONE OF THE FOLLOWING:
+;				;0=110 1=300 2=450 3=600 4=710 5=1200
+BASE:	  EQU	100H		;START OF CP/M NORMAL PROGRAM AREA
+;
+;-------------------------------------------------------------------
+;
+; Jump table: The jump table must be in exactly the same sequence as the
+; one in XMODEM.  Note the ORG of 103H - This jump table has no jump to
+; 'BEGIN'.
+
+;
+	  ORG	BASE+3		;START AFTER 'JMP BEGIN'
+;
+CONOUT:   JMP	0B661H		;MUST BE 00000H IF NOT USED, SEE BELOW
+PMINIT:	  JMP	MINIT		;INITIALIZATION ROUTINE (IF NEEDED)
+PUNINIT:  JMP	UNINIT		;UNDO WHATEVER 'MINIT' DID (OR RETURN)
+PSENDR:	  JMP	SENDR		;SEND CHARACTER (VIA POP PSW)
+PCAROK:	  JMP	CAROK		;TEST FOR CARRIER
+PMDIN:	  JMP	MDIN		;RECEIVE DATA BYTE
+PGETCHR:  JMP	GETCHR		;GET CHARACTER FROM MODEM
+PRCVRDY:  JMP	RCVRDY		;CHECK RECEIVE READY
+PSNDRDY:  JMP	SNDRDY		;CHECK SEND READY
+PSPEED:	  JMP	SPEED		;GET SPEED VALUE FOR FILE TRANSFER TIME
+PEXTRA1:  JMP	EXTRA1		;EXTRA FOR CUSTOM ROUTINE
+PEXTRA2:  JMP	EXTRA2		;EXTRA FOR CUSTOM ROUTINE
+PEXTRA3:  JMP	EXTRA3		;EXTRA FOR CUSTOM ROUTINE
+;
+;=======================================================================
+;
+; -- To Display the Record Count on the CRT During Program Transfers --
+;	
+;	This one addition requires some work on the part of the user.
+; When "BYE" is added, CP/M is normally moved lower to accomodate the
+; new program above CP/M.  Whenever BYE is called to enable the RCPM
+; capability, it steals some of the addresses contained in the BIOS jump
+; vector table.  In order to display on the CRT during program transfers
+; you need to get into the BIOS console output routine directly, else
+; what is being displayed also tries to go out the modem.  This is a big
+; NO-NO at that time.  (This cannot be done automatically by XMODEM,
+; since BYE has already taken the address we need to find, by the time
+; XMODEM is automatically activated by the remote station.)
+;
+;	So with the disk containing BYE, but prior to activating BYE, do
+; this:
+;		1) Cold reboot to move CP/M (and BIOS) to the new area
+;		    needed when BYE is activated on the same disk.
+;		2) Use DDT and dump the area from 0000H to 0002H.  This
+;                   gives the warm reboot address in BIOS.
+;		3) Add 9 Bytes to that address to get your console out-
+;		     put jump vector.
+;		4) Pick off the address contained in the jump vector and
+;		     install that in "CONOUT", below.  Example of one
+;		     system in use:
+;
+;			FIRST, COLD REBOOT WITH DISK CONTAINING "BYE"
+;
+;	  0000  C3 03 E0    (location of warm reboot on disk with BYE
+;
+;			PRIOR TO ACTIVATING BYE BUT ON SAME DISK
+;
+;	  E003  C3 E9 E0    (BIOS warm reboot jump vector on this disk)
+;	  E006  C3 00 E9    (BIOS get console status routine)
+;	  E009  C3 B7 E1    (BIOS console input routine)
+;	  E00C  C3 D4 E1    (BIOS console output routine)
+;
+;		The address we need is thus E1D4.  Put that below, in
+;		our example it would be:    CONOUT   JMP   0E1D4H
+;
+;
+;	CONOUT:	  JMP	00000H	;If you wish to show the record count
+;				;during program transfer, fill in this
+;				;address at 'CONOUT' above.
+;
+;					- Irv Hoff
+;
+;=======================================================================
+;
+; ---> CAROK - check for presence of carrier.  RET with Z = carrier on
+;
+CAROK:
+	if	M8251
+	IN	MODCTLP		;GET STATUS
+	endif	;M8251
+;
+	if	M6850
+	IN	MODCTL2		;get status
+	endif	;M6850
+;
+	ANI	MODDCDB		;GET CARRIER DETECT BIT
+	CPI	MODDCDA		;TEST BIT
+	RET
+;
+;=======================================================================
+;
+EXTRA1:	RET			;FOR LATER USE
+EXTRA2:	RET			;FOR LATER USE
+EXTRA3:	RET			;FOR LATER USE
+;
+;=======================================================================
+;
+; ---> GETCHR - get a character, same as MDIN
+; ---> MDIN - - get a character, same as GETCHR
+;
+GETCHR:
+MDIN:
+	IN	MODDATP		;GET CHARACTER FROM DATA IN PORT
+	RET
+;
+;=======================================================================
+;
+MINIT:	RET			;NO INITIALIZATION REQUIRED
+;
+;=======================================================================
+;
+; ---> RCVRDY - check receive ready.  RET with Z = character available.
+;	        Return with error code in A-reg.
+;
+RCVRDY:
+	IN	MODCTLP		;GET MODEM STATUS
+;
+	if	M8251
+	PUSH	B		;SAVE SCRATCH REGISTER
+	PUSH	PSW		;CHECK ERROR STATUS
+	ANI	MODFRME+MODOVRE+MODPARE
+	MOV	B,A		;SAVE IT FOR A MOMENT
+	POP	PSW
+	ANI	MODRCVB		;ISOLATE READY BIT
+	CPI	MODRCVR		;TEST IT
+	MOV	A,B		;GET THE ERROR CODE CHAR. BACK
+	POP	B
+	endif	;M8251
+;
+	if	M6850
+	ANI	MODRCVB		;ISOLATE READY BIT
+	CPI	MODRCVR		;TEST IT
+	endif	;M6850
+;
+	RET
+;
+;=======================================================================
+;
+; ---> SENDR - send character
+;
+SENDR:
+	POP	PSW		;GET THE CHARACTER BACK
+	OUT	MODDATO		;SEND IT TO THE MODEM OUTPUT
+	RET
+;
+;=======================================================================
+;
+; ---> SNDRDY - check if ready to send.
+;
+SNDRDY:
+	IN	MODCTLP		;GET STATUS BYTE
+	ANI	MODSNDB		;ISOLATE READY BIT
+	CPI	MODSNDR		;READY TO SEND?
+	RET
+;
+;=======================================================================
+;
+; ---> SPEED - sets the time shown for program transfer.
+;
+SPEED:
+	 IF	LSPEED
+	LDA	MSPEED		;GET INDEX FOR BAUD RATE FROM 'BYE'
+	 ENDIF
+;
+	 IF 	NOT LSPEED
+	MVI	A,XSPEED	;GET INDEX FOR BAUD RATE FROM 'XSPEED'
+	 ENDIF
+;
+	RET
+;
+;=======================================================================
+;
+UNINIT:	RET			;NOT INITIALIZED, SO NO 'UN-INITIALIZE'
+;
+;=======================================================================
+;
+;
+	END
+   

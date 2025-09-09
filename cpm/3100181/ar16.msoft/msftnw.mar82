@@ -1,0 +1,38 @@
+
+                   --------------------------------
+                         MICROSOFT NEWSLETTER
+                           MARCH-APRIL 1982
+                   --------------------------------
+
+   How do Microsoft Products Interface with CP/M Disk Files?  We've 
+had a lot of requests for more information regarding the manner in 
+which Microsoft products function with CP/M when dealing with files.  
+In the next few months we'll attempt to explain in detail how we deal 
+with various types of files. First, a few ground rules: We're going to 
+discuss version 2.2 and later of CP/M.  Older versions (or the so 
+called "look-alikes", including MP/M,) may behave differently! We'll 
+begin with a review of CP/M's disk allocation schemes. While most of 
+the disk file access routines are up to the manufacturer of the 
+particular system you're using; there are some basic facts to keep in 
+mind.  The most important is that CP/M ALWAYS deals with files as 
+collections of 128 byte records.  CP/M ALLOCATES files in larger 
+blocks, which may range from 256 bytes to 16K bytes.  This "block" is 
+the smallest unit of disk space that CP/M will allocate for any file. 
+Finally, there is a unit of storage called an "extent", which is a 
+multiple of the minimum allocation.  For example, with a 1K 
+allocation, the extent size might be 16K. When you run the CP/M 
+program STAT (type STAT *.*), the program will tell you the size of 
+each of the files on your disk, in terms of the number of records, the 
+number of extents, and the size of the file in bytes (always a 
+multiple of the minimum allocation block). CP/M handles the "mapping" 
+of physical sectors to logical 128 byte records through a 
+"blocking/deblocking" algorithim, which can be treated as a "black 
+box" for all but the most esoteric applications. Finally, when we 
+start trying to compute how much space we have remaining on a given 
+disk; we're also limited by the number of "directory entries";  since 
+the CP/M system allocates a fixed space on the disk for the directory.  
+To obtain information about the physical characterisics of your 
+particular disk system you can use the STAT DSK:  command. I hope this 
+provides a good introduction to the CP/M file system.  Next month, 
+we'll discuss sequential files and how they are handled by MBASIC, 
+FORTRAN, and COBOL.  

@@ -1,0 +1,185 @@
+	TITLE	'CP/M MODEM PROGRAM Version 7.65'
+;
+;THE FOLLOWING IS AN EXTENSIVE REVISION OF THE CP/M MODEM PROGRAM
+;CREATED BY WARD CHRISTENSEN FOR THE CP/M USERS LIBRARY.
+;IT ALSO INCORPORATES ROUTINES FOUND IN THE POTOMAC MICRO-MAGIC MODEM
+;MANUAL WHICH MAY BE USED IF YOU HAVE A PMMI MODEM BOARD.
+
+;		******* N O T I C E *********
+;When using this modem program, you can avoid its shakey
+;features (which show up primarily in batch mode) by always
+;using the O or A option even if either modem is already in the
+;originate or answer mode;  and, by always declaring the speed
+;option such as .300, .600, etc.
+		*****************************
+
+;05/29/82  Moved fix log to history file.  MODEM7xx.HIS
+					           RLP
+
+;05/29/82  Fixed SAVCCP option when set to false.  RLP
+
+;05/21/82  Fixed minor bug at DISCON1 by changing JMP MENU1 to
+;JMP MENU so that recovery is correct from a control-X interrupt
+;AFTER auto dialling a number.			RLP
+
+;05/16/82  Added RCVFIL1 label so that switch between CRC mode
+;and CHECKSUM mode is done only on the first file transfer in
+;batch mode. Else the program hangs up on the second file transfer
+;if the sending end is not CRC capable.  Also added 'BYE' command
+;to MODEM command line which disconnects (hangs up) the modem line
+;and re-boots your computer.  (Good to arrange it to do a turnkey
+;start of 'BYE' so ready for next call). You must have the coldboot
+;prom address entered for your system at label CLDBOOT.
+;Changes marked ;@FIX7.61 or ;@7.63
+;					R. L. Plouffe        
+
+;04/29/82  Changes at TERM, START1 and OPTCK marked by ; @7.61
+;fix a bug that causes abort at the end of a file transfer if
+;the ogiginate 'O' or the answer 'A' character was not entered
+;after the 'T' term character when switching between term and
+;menu. Now the ogiginate or answer character has to only be 
+;entered once when comunications is first established. Also
+;changed the MACLIB mico to MODEM75. Added CR,LF to the NEWBAUD
+;message.
+;					R.L.Berg
+;
+;4/12/82  Merged in changes/enhancements from versions 7.32
+;and 7.4 and MODEM75.FIX.  This should hopefully give us one
+;"master" version again.  B. R. Ratoff
+;Summary:
+; @7.32 - Delay loop at DILAGN1 to allow "smart" terminals time
+;         to process bell character.
+;
+; @MODEM75.FIX - Maintain originate mode on RET command after
+;         transferring files (at TERM:).  Restore option tables correctly
+;         on control-D command (at DIR).  Issue "file open" message on
+;         receive (at RCVC3).
+; @7.41 - Make CRC/checksum switching on Receive automatic....
+;         assumes CRC and defaults to checksum on timeout.
+;
+;2/20/82  Changes at TERM and START1 marked by ; @7.5 fix a
+;long standing bug in MODEM7x that causes abort at the end of a
+;batch file transfer or an attempt to transfer a non-existent
+;file.  The call to NOPARIT in DONETCE caused a computer that was
+;in answer mode (but not explicitly by command option) to switch
+;to originate mode thus causing the two ends to no longer communicate
+;with each other.  Also added SAVCCP byte and code to prevent
+;overwriting of the CCP at the users option.       R. L. Plouffe 
+;
+;1/23/82  The following changes have been made in this version.
+;							RLP
+;Extensive cleanup of the file including colons after all labels
+;for easier search with screen editor for the purposes of debug.
+;Also set file capture mode so as not to overwite the CCP and
+;changed EXIT to return to the CCP instead of doing warm boot.
+;
+;TERML routine fix:
+;Added Rick Kawala's fix so that fewer framing errors will occur
+;with hosts that send out characters with high bit set.
+;
+;CAL command fix:
+;   All versions of MODEM7 including MODEM73 are supposed to be
+;able to accept "CAL n" (where n is either a library letter or
+;a phone-number string) as a valid form of the CAL command.  In
+;fact, however, the "n" will simply be ignored.  This is because
+;routine DIALPL checks for a command length >= 4 as a signal to
+;skip the library display, but the menu routine, after
+;recognizing CAL, sets the length to 1 so the L in CAL doesn't
+;look like an illegal secondary option.
+;   The following kludge repairs this defect.  In routine
+;DIALPL, two lines above label DIALPL0, change CMDBUF+5 to
+;CMDBUF+6.  Also, in routine GETCMD, three lines above label
+;NXTOPT2, change MVI A,1 to MVI A,20H and change the next line
+;from STA CMDBUF+1 to STA CMDBUF+4.  This makes the command
+;look to the option processor like "CA  n", and since A is a
+;legal secondary option (which in this case is never used) the
+;line passes muster.  If an actual telephone number is used,
+;you have to type an extra blank: CAL  000-0000, whereas
+;with library numbers one blank only must be typed: CAL A.
+
+;12/16/81 Removed stack imbalance bug at COLONB by adding
+;	  a JMP BRK1. Change is marked by ;@   R. L. Plouffe
+
+;11/21/81  Fixed code so byte received is on same line when
+;	   messages "XXH RCD, NOT SOH" or "XXH RCD, NOT ACK"
+;          are displayed. Also changed stack size to 50H.
+;	   (P.L.Kelley)
+
+;10/29/81 Changed receive sector routine so that on the first
+;time through when CRC is being used, it only waits 3 seconds
+;to receive the SOH after sending the initial 'C'.  If a
+;character is not received within 3 seconds, then a NAK is
+;sent and this program switches to CHECKSUM mode.  The sending
+;of the NAK causes XMODEM or MODEM to start sending the file
+;using checksum checking.  This allows the CRC MODEM7 program
+;to be used with versions of XMODEM, MODEM, and MODEM7 that
+;do not use CRC, even when MODEM7 has specified a CRC
+;transmission. (John Mahr)
+;
+;10/18/81 Added CRC option. This is another secondary option
+;that is specified by giving a 'C'.
+;	MODEM RC.600 fn.ft
+;	MODEM ROC.300 fn.ft etc.
+;	note: cannot have more than 6 secondary options.
+;When the file receive cmd. specifies CRC, the ltr. 'C' is
+;sent in place of the initial NAK. This signals the sender
+;(XMODEM54 or equiv.) that CRC is in effect. The sending 
+;program will repalce the checksum with the CRC 2 bytes.
+;CRC will give better than a 99.99% probability that there
+;are no data errors. Code copied from MODEM213, thanks to
+;John Mahr and Paul Hansknecht for the implementation. (WDE)
+
+;10/11/81 Add first NAK to RCVFIL to speed up start
+;Removed monitor scroll from good block messages
+;CTL-^ forces send of next char in T mode (for ctl-E,ctl-D) (WDE)
+
+;07/05/81 Added BRR ctrl char chgs, my number list (Bill Earnest)
+
+;06/05/81 Deleted some unneeded messages in the dial routines. (Bob Clyne)
+
+;05/31/81 Added detection of framing, overrun, and parity errors for
+;	  Receive file routine. (A modified version of the routines in
+;	  MODEM V2.06)
+
+;	  Added provisions to send and receive either even or odd parity
+;	  bit with PMMI modem in the 'S'end or 'R'eceive file modes - resets
+;	  to no parity in other modes. Use of the parity feature will slow
+;	  transfers slightly due to the extra (parity) bit being sent with
+;	  each character. Also this is the only program that I KNOW OF that
+;	  actually sends, or sets up the PMMI to receive, the parity bit.
+;	  Both ends must be set to the same parity for it to work. Parity
+;	  is invoked by adding a '0' (ASCII) for even parity or a '1' (ASCII)
+;	  for odd parity to the 'S'end or 'R'eceive command string eg. R0.600.
+
+;	  Changed timing for sending 'B'reak in the terminal mode.
+
+;	  Changed the code so that the 'M'enu command works from the keyboard
+;	  even when in XPR (expert) mode.
+
+;	  Added display of hex in addition to decimal numbers for file length
+;	  and sector numbers.
+
+;	  Removed provision for remote cancel of file transfers in the 'S'end
+;	  and 'R'eceive modes to prevent line noise from aborting a transfer.
+;	  (Bob Clyne)
+
+
+;02/15/81 Patched in the ringback routines from DIAL6/23. It doesn't
+;	  seem to be able to recognize when the other phone is ringing
+;	  though so it is a little shakey.
+
+;	  Put in routines to calculate file sizes and sector numbers in
+;	  decimal.
+
+;	  Put in code to transmit a "BREAK" with a PMMI for use with
+;	  computers which use BREAK instead of Control S to suspend
+;	  output. Control P is now the baudrate change request key
+;	  and Control @ is the BREAK key.. (Bob Clyne)
+
+
+;12/18/80 Changed disconnect timing.
+
+;10/26/80  Minor revision to allow 25-second 'wait' after PMMI
+;	   autodial -- longer time required for Chicago CBBS*.  Jim Mills.
+;	   * CBBS is a trademark of Ward Christensen and Randy Suess.
+

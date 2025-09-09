@@ -1,0 +1,2274 @@
+
+;		XMODEM.ASM V6.0, by Keith Petersen, W8SDZ
+;
+;		         (revised 12/02/82)
+;
+;		REMOTE CP/M - CP/M FILE TRANSFER PROGRAM
+;
+; Based on MODEM.ASM V2.0, by Ward Christensen.  This program is in-
+; tended for use on remote CP/M systems where it is important that the
+; initialization of the modem not be changed, such as when using the
+; PMMIBYE program.  The baud rate and number of bits remains the same as
+; whatever was set previously.  There is no disconnect, terminal or echo
+; option.
+;
+;       NOTE:  REQUIRES SEQIO22.LIB if "LOGCAL" is set TRUE
+;
+;	SUGGESTION:  Consider making a 2nd file called XMODSPCL.COM
+;		     where you use some area like B15: for uploading.
+;		     This allows anybody to put files in a non-public
+;		     area.  This is especially beneficial in the case
+;		     of proprietary programs or experimental types for
+;		     the exclusive use of the SYSOP only.  No one else
+;		     will be aware they even exist.
+;						- Irv Hoff
+;
+; *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *
+;
+;
+;	NOTE:  If you add improvements or otherwise update
+;		  this program, please modem a copy of the
+;		  new file to "TECHNICAL CBBS" in Dearborn,
+;		  Michigan (313) 846-6127.
+;
+;
+; *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *
+;
+;
+; 12/02/82  Format changes.  Version 5.4 changed the original error for-
+;	    mat from:  ++ ERROR ++  to:  << Error >>.  Version 5.7 again
+;	    changed it, to: [Error].  After consulting with several RCPM
+;	    SYSOPs including the author (Keith Petersen), error messages
+;	    now use the original Christensen "++" notation.  Fixed a bug
+;	    from v5.7 which prohibited reception of checksum uploads.
+;						- Irv Hoff
+;
+;
+; *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *
+;
+;
+FALSE:	 EQU	0
+TRUE:	 EQU	NOT FALSE
+;
+;
+;-----------------------------------------------------------------------
+;
+;		-- Conditional Assembly Options --
+;
+;-----------------------------------------------------------------------
+;
+;
+STDCPM:	 EQU	TRUE	;TRUE, IS STANDARD CP/M
+ALTCPM:	 EQU	FALSE	;TRUE, IS TRS-80 OR H8 WITHOUT ZERO ORIGIN
+;
+DCH:	 EQU	FALSE	;TRUE, IS D.C. HAYES
+EXTMOD:	 EQU	FALSE	;TRUE, IS EXTERNAL MODEM, NONE OF THESE
+IEE696:	 EQU	FALSE	;TRUE, IF IEE696 Z-80 WITH 80-103A
+H8:	 EQU	FALSE	;TRUE, IS H8/H89 WITH 8250 MODEM CHIP
+INTER3:	 EQU	FALSE	;TRUE, IS COMPUPRO INTERFACER3/4 CARD
+PMMI:	 EQU	TRUE	;TRUE, IS PMMI
+;
+NOCOMS:	 EQU	TRUE	;TRUE, NO .COM FILES SENT
+NOLBS:	 EQU	TRUE	;TRUE, NO .??# FILES SENT
+NOCOMR:	 EQU	TRUE	;TRUE, CHANGE .COM TO .OBJ ON RECEIVE
+;
+MHZ:	 EQU	4	;CLOCK SPEED, USE INTEGER (2,4,5,8, ETC.)
+;
+FNTPNL:	 EQU	FALSE	;TO DISPLAY STATUS ON FRONT PANEL
+PANEL:	 EQU	0FFH	;DEFAULT ADDRESS OF FRONT PANEL
+;
+SETAREA: EQU	TRUE	;TRUE, IF USING DESIGNATED AREA TO RECEIVE 
+DEFDRV:	 EQU	'B'	;DRIVE TO RECEIVE FILE ON
+RECU:	 EQU	0	;USER AREA TO RECEIVE FILE IN
+;
+;
+;	FILE TRANSFER LOGGING OPTIONS
+;
+LOGCAL:	 EQU	FALSE	;IF USING LOGGING OF XMODEM TRANSFERS
+LOGUSR:	 EQU	14	;USER AREA TO PUT 'LOG.SYS' FILE
+LOGDRV:	 EQU	'A'	;DRIVE TO PLACE 'LOG.SYS' FILE
+LASTUSR: EQU	14	;USER AREA OF 'LASTCALR' FILE, IF 'LOGCAL' TRUE
+;
+LSPEED:	 EQU	FALSE	;TRUE IF USING BYE WITH SPEED SELECTION
+MSPEED:	 EQU	3CH	;LOCATION OF BAUD RATE FACTOR  (SET BY BYE)
+;			;SET LOCATION IN BYE TO AGREE.  3DH AND 3EH
+;			;OFTEN USED BY NEWER VERSIONS OF 'ZCPR'.
+;
+;-----------------------------------------------------------------------
+;
+; -- To Display the Record Count on the CRT During Program Transfers --
+;
+;	This one addition requires some work on the part of the user.
+; When "BYE" is added, CP/M is normally moved lower to accomodate the
+; new program above CP/M.  Whenever BYE is called to enable the RCPM
+; capability, it steals some of the addresses contained in the BIOS jump
+; vector table.  In order to display on the CRT during program transfers
+; you need to get into the BIOS console output routine directly, else
+; what is being displayed also tries to go out the modem.  This is a big
+; NO-NO at that time.  (This cannot be done automatically by XMODEM,
+; since BYE has already taken the address we need to find, by the time
+; XMODEM is automatically activated by the remote station.)
+;
+;	So with the disk containing BYE, but prior to activating BYE, do
+; this:
+;		1) Cold reboot to move CP/M (and BIOS) to the new area
+;		    needed when BYE is activated on the same disk.
+;		2) Use DDT and dump the area from 0000H to 0002H.  This
+;                   gives the warm reboot address in BIOS.
+;		3) Add 9 Bytes to that address to get your console out-
+;		     put jump vector.
+;		4) Pick off the address contained in the jump vector and
+;		     install that in "CONOUT", below.  Example of one
+;		     system in use:
+;
+;			FIRST, COLD REBOOT WITH DISK CONTAINING "BYE"
+;
+;	 0000  C3 03 E0      (location of warm reboot on disk with BYE
+;
+;			PRIOR TO ACTIVATING BYE BUT ON SAME DISK
+;
+;	 E003  C3 E9 E0      (BIOS warm reboot jump vector on this disk)
+;	 E006  C3 00 E9      (BIOS get console status routine)		
+;	 E009  C3 B7 E1      (BIOS console input routine)
+;	 E00C  C3 D4 E1      (BIOS console output routine)
+;
+;		The address we need is thus E1D4.  Put that below, in
+;		our example it would be:    CONOUT   EQU   0E1D4H
+;
+;
+CONOUT:	 EQU	0000H		;If you wish to show the record count
+;				;during program transfer, fill in this
+;				;address as described above.
+;
+;-----------------------------------------------------------------------
+;
+;			-- Modem Port Equates --
+;
+;-----------------------------------------------------------------------
+;
+;
+; If using the Hayes Modem, use these equates
+;
+	 IF	DCH
+MODCTLP: EQU	92H		;D.C.HAYES VALUES
+MODSNDB: EQU	2		;BIT TO TEST FOR SEND
+MODSNDR: EQU	2		;VALUE WHEN READY
+MODRCVB: EQU	1		;BIT TO TEST FOR RECEIVE
+MODRCVR: EQU	1		;VALUE WHEN READY
+MODDCDB: EQU	40H		;CARRIER DETECT BIT
+MODDCDA: EQU	40H		;VALUE WHEN ACTIVE
+MODPARE: EQU	04H		;VALUE FOR PARITY ERROR
+MODOVRE: EQU	10H		;VALUE FOR OVERRUN ERROR
+MODFRME: EQU	08H		;VALUE FOR FRAMING ERROR
+MODDATP: EQU	MODCTLP-2	;DATA IN PORT
+MODDATO: EQU	MODCTLP-2	;DATA OUT PORT
+MODCTL2: EQU	MODCTLP-1	;SECOND CONTROL/STATUS PORT
+	 ENDIF			;DCH
+;
+;
+; If you are using an external modem (not S-100 plug-in) change these
+; equates for your modem port requirements
+;
+	 IF	EXTMOD
+MODCTLP: EQU	31H		;PUT YOUR MODEM STATUS PORT HERE
+MODSNDB: EQU	1		;YOUR BIT TO TEST FOR SEND
+MODSNDR: EQU	1		;YOUR VALUE WHEN READY
+MODRCVB: EQU	2		;YOUR BIT TO TEST FOR RECEIVE
+MODRCVR: EQU	2		;YOUR VALUE WHEN READY
+MODDCDB: EQU	4		;CARRIER DETECT BIT
+MODDCDA: EQU	0		;VALUE WHEN ACTIVE
+MODDATP: EQU	MODCTLP-1	;YOUR MODEM DATA IN PORT
+MODDATO: EQU	MODCTLP-1	;YOUR MODEM DATA OUT PORT
+MODCTL2: EQU	MODCTLP		;SECOND CONTROL/STATUS PORT
+	 ENDIF			;EXTMOD
+;
+;
+; If using the Heath/Zenith H8/H-89 with 8250 I/O, use these equates
+;
+	 IF	H8
+MODCTLP: EQU	0DDH		;H8/H89 VALUES (LSR-LINE STATUS REG.)
+MODSNDB: EQU	20H		;TEST FOR SEND (LSR-THRE)
+MODSNDR: EQU	20H		;VALUE WHEN READY
+MODRCVB: EQU	01H		;TEST FOR RECEIVE (LSR-DR)
+MODRCVR: EQU	01H		;VALUE WHEN READY
+MODDCDA: EQU	10H		;VALUE WHEN ACTIVE
+MODDCDB: EQU	10H		;CARRIER DETECT BIT (MSR-CTS)
+MODPARE: EQU	04H		;VALUE FOR PARITY ERROR (LSR-PE)
+MODOVRE: EQU	02H		;VALUE FOR OVERRUN ERROR (LSR-OR)
+MODFRME: EQU	08H		;VALUE FOR FRAMING ERROE (LSR-FE)D
+MODDATP: EQU	MODCTLP-5	;DATA IN PORT
+MODDATO: EQU	MODCTLP-5	;DATA OUT PORT
+BAUDRP:	 EQU	MODCTLP+1	;BAUD RATE PORT (DALB IN LCR MUST=1)
+MODCTL2: EQU	MODCTLP+1	;MODEM STATUS REGISTER (MSR)
+MODCTL1: EQU	MODCTLP-2	;LINE CONTROL REGISTER (LCR)
+	 ENDIF			;H8
+;
+;
+; If you are using a CompuPro Interfacer 3 or Interfacer 4 card, use
+; these equates.
+;
+	 IF	INTER3
+MODDATP: EQU	10H		;YOUR MODEM DATA IN PORT
+MODDATO: EQU	MODDATP		;YOUR MODEM DATA OUT PORT
+MODUPRT: EQU	MODDATP+7	;YOUR MODEM CHIP SELECT PORT
+MODUSER: EQU	05H		;YOUR USART THAT'S HOOKED UP TO MODEM
+MODCTLP: EQU	MODDATP+1	;PUT YOUR MODEM STATUS PORT HERE
+MODCTL2: EQU	MODCTLP		;SECOND CONTROL/STATUS PORT
+MODSNDB: EQU	1		;YOUR BIT TO TEST FOR SEND
+MODSNDR: EQU	1		;YOUR VALUE WHEN READY
+MODRCVB: EQU	2		;YOUR BIT TO TEST FOR RECEIVE
+MODRCVR: EQU	2		;YOUR VALUE WHEN READY
+MODDCDB: EQU	40H		;CARRIER DETECT BIT
+MODDCDA: EQU	40H		;VALUE WHEN ACTIVE
+	 ENDIF			;INTER3
+;
+;
+; If using the PMMI S-100 modem card, use these equates
+;
+	 IF	PMMI
+MODCTLP: EQU	0C0H		;PMMI VALUES (BASE PORT ADDRESS)
+MODSNDB: EQU	1		;BIT TO TEST FOR SEND
+MODSNDR: EQU	1		;VALUE WHEN READY
+MODRCVB: EQU	2		;BIT TO TEST FOR RECEIVE
+MODRCVR: EQU	2		;VALUE WHEN READY
+MODDCDB: EQU	4		;CARRIER DETECT BIT
+MODDCDA: EQU	0		;VALUE WHEN ACTIVE
+MODPARE: EQU	08H		;VALUE FOR PARITY ERROR
+MODOVRE: EQU	10H		;VALUE FOR OVERRUN ERROR
+MODFRME: EQU	20H		;VALUE FOR FRAMING ERROR
+MODDATP: EQU	MODCTLP+1	;DATA IN PORT
+MODDATO: EQU	MODCTLP+1	;DATA OUT PORT
+BAUDRP:	 EQU	MODCTLP+2	;BAUD RATE OUTPUT/MODEM STATUS
+MODCTL2: EQU	MODCTLP+3	;SECOND CONTROL/STATUS PORT
+	 ENDIF			;PMMI
+;
+;
+;-----------------------------------------------------------------------
+;
+;			--- End of Options ---
+;
+;-----------------------------------------------------------------------
+;
+;
+ERRLIM:	 EQU	10		;MAX ALLOWABLE ERRORS (10 STANDARD)
+;
+;
+; Define ASCII characters used
+;
+SOH:	 EQU	1		;START OF HEADER
+EOT:	 EQU	4		;END OF TRANSMISSION
+ACK:	 EQU	6		;ACKNOWLEDGE
+NAK:	 EQU	15H		;NEG ACKNOWLEDGE
+CRC:	 EQU	'C'		;CRC REQUEST CHARACTER
+CAN:	 EQU	18H		;CONTROL-X FOR CANCEL
+LF:	 EQU	10		;LINEFEED
+CR:	 EQU	13		;CARRIAGE RETURN
+; 
+	 IF	STDCPM
+BASE:	 EQU	0		;CP/M BASE ADDRESS
+	 ENDIF
+;
+	 IF	ALTCPM
+BASE:	 EQU	4200H		;ALTERNATE CP/M BASE ADDRESS
+	 ENDIF
+;
+;
+;-----------------------------------------------------------------------
+;
+;			PROGRAM STARTS HERE
+;
+;-----------------------------------------------------------------------
+;
+;
+	ORG	BASE+100H
+;
+	JMP	BEGIN
+;
+SPEED:
+	DB	1	;SPEED FOR FILE TIME TRANSFER WITHOUT AUTO-SET
+;			;0=110, 1=300, 2=450, 3=600, 4=710, 5=1200
+;
+; SAVE CP/M STACK, INITIALIZE NEW ONE FOR THIS PROGRAM
+;
+BEGIN:
+	LXI	H,0		;HL=0
+	DAD	SP		;HL=STACK FROM CP/M
+	SHLD	STACK		;   SAVE IT
+	LXI	SP,STACK 	;SP=MY STACK
+;
+;
+; SAVE THE CURRENT DRIVE AND USER AREA
+;
+	IF	SETAREA
+	MVI	E,0FFH		;GET THE CURRENT USER AREA
+	MVI	C,USER
+	CALL	BDOS
+	STA	OLDUSR		;SAVE USER NUMBER HERE
+	MVI	C,CURDRV	;GET THE CURRENT DRIVE
+	CALL	BDOS
+	STA	OLDDRV		;SAVE DRIVE HERE
+	ENDIF
+;
+	CALL	ILPRT		;PRINT:
+	DB	CR,LF
+	DB	'XMODEM v6.0 (CRC capable)',CR,LF,0
+;
+;
+; GET OPTION
+;
+	LDA	FCB+2		;SECONDARY OPTION?
+	CPI	'C'		;CRC CHECKING REQUESTED?
+	JNZ	CHKOPTN		;NO, GO CHECK PRIMARY
+	LDA	FCB+1		;GET PRIMARY OPTION
+	CPI	'R'		;CRC VALID ONLY FOR RECEIVE
+	JNZ	OPTNERR		;PRT MSG, ABORT
+	XRA	A		;ZERO ACCUM
+	STA	CRCFLG		;TURN ON CRC FLAG
+CHKOPTN:
+	LDA	FCB+1		;GET OPTION (S or R)
+	PUSH	PSW		;SAVE OPTION
+;
+;
+; MOVE THE FILENAME FROM FCB2 TO FCB1
+;
+	CALL	MOVEFCB
+;
+;
+; GOBBLE UP GARBAGE CHARACTERS FROM THE LINE PRIOR TO RECEIVER OR SEND
+;
+	IF	INTER3
+	MVI	A,MODUSER	;SELECT PROPER CHIP
+	OUT	MODUPRT
+	ENDIF
+
+	MVI	A,MODDATP
+	IN	MODDATP
+	MVI	A,MODDATP
+	IN	MODDATP
+;
+;
+; JUMP TO APPROPRIATE FUNCTION
+;
+	POP	PSW		;GET OPTION
+;
+	IF	LOGCAL
+	PUSH	PSW		;BUT SAVE IT
+	ENDIF
+;
+	STA	OPTSAV		;SAVE OPTION IN CASE WE LOSE CARRIER
+	CPI	'S'		;SEND A FILE?
+	JZ	SENDFIL
+;
+	CPI	'R'		;RECEIVE A FILE?
+	JZ	RCVFIL
+;
+; INVALID OPTION
+;
+OPTNERR:
+	CALL	ERXIT		;EXIT W/ERROR
+	DB	'++ Invalid Option on XMODEM command ++',CR,LF
+	DB	'Use S for Send - R (or RC) for Receive',CR,LF,'$'
+;
+;
+;
+;* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+;
+;		SENDFIL: SENDS A CP/M FILE
+;
+;* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+;
+; The CP/M file specified in the XMODEM command is transferred over the
+; phone to another computer running MODEM with the "R" (receive) option.
+; The data is sent one record at a time with headers and checksums, and
+; retransmission on errors.  
+;
+SENDFIL:
+	CALL	TRAP		;CHECK FOR NO NAME OR AMBIG. NAME
+	CALL	CNREC		;COMPUTE # OF RECORDS.
+	CALL	OPENFIL 	;OPEN THE FILE
+	MVI	E,80		;WAIT 80 SEC FOR INITIAL NAK
+	CALL	WAITNAK
+;
+SENDLP:
+	CALL	RDRECD		;READ A RECORD
+	JC	SENDEOF		;SEND 'EOF' IF DONE
+	CALL	INCRRNO 	;BUMP RECORD #
+	XRA	A		;ZERO ERROR COUNT
+	STA	ERRCT
+;
+SENDRPT:
+	CALL	SENDHDR 	;SEND A HEADER
+	CALL	SENDREC 	;SEND DATA RECORD
+	LDA	CRCFLG		;GET CRC FLAG
+	ORA	A		;CRC IN EFFECT?
+	CZ	SENDCRC		;YES, SEND CRC
+	CNZ	SENDCKS 	;NO, SEND CKSUM
+	CALL	GETACK		;GET THE ACK
+	JC	SENDRPT 	;REPEAT IF NO ACK
+	JMP	SENDLP		;LOOP UNTIL EOF
+;.....
+;
+;
+; FILE SENT, SEND EOT's
+;
+SENDEOF:
+	MVI	A,EOT		;SEND AN 'EOT'
+	CALL	SEND
+	CALL	GETACK		;GET THE ACK
+	JC	SENDEOF 	;LOOP IF NO ACK
+	JMP	EXITLG		;ALL DONE
+;.....
+;
+;
+;* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+;
+;		RCVFIL:  RECEIVE A FILE
+;
+;* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+;
+; Receives a file in block format as sent by another person doing
+; "MODEM S FN.FT".  Can be invoked by "XMODEM R FN.FT" or by
+; "XMODEM RC FN.FT"' if CRC is to be used.
+;
+RCVFIL:
+	CALL	TRAP		;CHECK FOR NO NAME OR AMBIG. NAME
+;
+	IF	SETAREA
+	MVI	A,DEFDRV-40H
+	STA	FCB
+	ENDIF
+;
+	IF	NOCOMR
+	LXI	H,FCB+9 	;POINT TO FILETYPE
+	MVI	A,'C'		;1ST LETTER
+	CMP	M		;IS IT C ?
+	JNZ	CONTINU		;IF NOT, CONTINUE NORMALLY
+	INX	H		;GET 2ND LETTER
+	MVI	A,'O'		;2ND LETTER
+	CMP	M		;IS IT O ?
+	JNZ	CONTINU 	;IF NOT, CONTINUE NORMALLY
+	INX	H		;GET 3RD LETTER
+	MVI	A,'M'		;3RD LETTER
+	CMP	M		;IS IT M ?
+	JNZ	CONTINU 	;IF NOT, CONTINUE NORMALLY
+	CALL	ILPRT		;PRINT RENAMING MESSAGE
+	DB	'---> Auto-Renaming filetype to ".OBJ"',CR,LF,0
+	LXI	H,OBJEXT
+	LXI	D,FCB+9
+	MVI	B,3
+ALTEXT:
+	MOV	A,M
+	STAX	D
+	INX	H
+	INX	D
+	DCR	B
+	JNZ	ALTEXT
+	JMP	CONTINU
+;...
+;
+;
+OBJEXT:
+	DB	'OBJ'
+;
+	ENDIF
+;
+CONTINU:
+	CALL	CHEKFIL 	;SEE IF FILE EXISTS
+	CALL	MAKEFIL 	;   THEN MAKE A NEW ONE
+	CALL	ILPRT		;PRINT THE MESSAGE
+;
+	IF	SETAREA
+	DB	'---> File Will be Received on ',DEFDRV
+	ENDIF			;SETAREA
+;
+	IF	SETAREA AND NOT RECU/10
+	DB	RECU+30H	;DIGIT
+	ENDIF			;SETAREA AND NOT RECU<10
+;
+	IF	SETAREA AND RECU/10
+	DB	RECU/10+30H	;TENS DIGIT
+	DB	RECU-10+30H	;ONES DIGIT
+	ENDIF			;SETAREA AND RECU/10
+;
+	DB	':',CR,LF
+	DB	'---> File Open - Ready to Receive',CR,LF,0
+;
+RCVLP:
+	CALL	RCVRECD 	;GET A RECORD
+	JC	RCVEOT		;GOT 'EOT'
+	CALL	WRRECD		;WRITE THE RECORD
+	CALL	INCRRNO 	;BUMP RECORD #
+	CALL	SENDACK 	;ACK THE RECORD
+	JMP	RCVLP		;LOOP UNTIL 'EOF'
+;.....
+;
+;
+; GOT 'EOT' ON RECORD - FLUSH BUFFERS, END
+;
+RCVEOT:
+	CALL	WRBLOCK 	;WRITE THE LAST BLOCK
+	CALL	SENDACK 	;ACK THE RECORD
+	CALL	CLOSFIL 	;CLOSE THE FILE
+	JMP	EXITLG		;ALL DONE
+;.....
+;
+;
+;* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+;
+;			SUBROUTINES
+;
+;* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+;
+	IF	LOGCAL
+;
+	MACLIB SEQIO22
+;
+BSIZE	EQU	80H
+FILERR	SET	EXIT
+BUFFERS	SET	DBUF
+;
+;
+; THE FOLLOWING ALLOCATIONS ARE USED BY THE 'FILE' MACROS
+;
+DEFAULT$USER:
+	DB	LASTUSR
+CUR$USER:
+	DB	0FFH
+DEFAULT$DISK:
+	DB	LOGDRV-'A'
+CUR$DISK:
+	DB	0FFH
+PGSIZE:
+	DW	0
+LOGCALL:
+	FILE	INFILE,CALLER,,LASTCALR,,BSIZE,,PUBLIC,TRUE
+;
+	MVI	A,LOGUSR
+	STA	DEFAULT$USER
+;
+	FILE	APPEND,LOG,,LOG,SYS,BSIZE,,PUBLIC,TRUE
+;
+	POP	PSW		;GET OPTION
+	PUT	LOG		;PUT IT OUT TO LOG
+	LDA	MSPEED		;GET SPEED FACTOR
+	ADI	30H
+	PUT	LOG		;PUT OUT A SINGLE LETTER CODE
+	LDA	PGSIZE		;NOW THE PRGM SIZE IN MINS TRANSFER TIME
+	CALL	PNDEC
+	MVI	A,' '		;BLANK
+	PUT	LOG
+;
+;
+; LOG THE DRIVE AND USER AREA AS A PROMPT
+;
+	LDA	FCB
+	ORA	A
+	JNZ	WDRV
+	MVI	C,25
+	CALL	@BDOS
+	INR	A
+WDRV:
+	ADI	'A'-1
+	PUT	LOG
+	MVI	C,32		;NOW THE USER AREA (AS DECIMAL NUMBER)
+	MVI	E,0FFH
+	CALL	@BDOS
+	CALL	PNDEC
+	MVI	A,'>'		;MAKE IT LOOK LIKE A PROMPT
+	PUT	LOG
+	LXI	H,FCB+1		;NOW THE NAME OF THE FILE
+	MVI	B,11
+	CALL	PUTSTR
+	MVI	C,6
+SPLOOP:
+	PUSH	B
+	MVI	A,' '
+	PUT	LOG
+	POP	B
+	DCR	C
+	JNZ	SPLOOP
+CLOOP:
+	GET	CALLER		;AND THE CALLER
+	CPI	EOF
+	JZ	QUIT
+	CPI	CR		;DON'T PRINT 2ND LINE OF LASTCALR
+	JNZ	CLOP1
+	PUT	LOG		;BUT DO PRINT CR TO LOG
+	MVI	A,LF
+	PUT	LOG		;AND ADD A LF
+	JMP	QUIT
+CLOP1:	CPI	','		;DON'T PRINT THE ',' BTWN NAMES
+	JNZ	CLOP2
+	MVI	A,' '		;INSTEAD SEND A ' '
+CLOP2:	PUT	LOG
+	JMP	CLOOP
+;.....
+;
+;
+PNDEC:
+	CPI	10		;TWO COLUMN DECIMAL FORMAT ROUTINE
+	JC	ONE		;ONE OR TWO DIGITS TO AREA #?
+	JMP	TWO
+;...
+;
+;
+ONE:
+	PUSH	PSW
+	MVI	A,'0'
+	PUT	LOG
+	POP	PSW
+TWO:
+	MVI	H,0
+	MOV	L,A
+	CALL	DECOT
+	RET
+;.....
+;
+;
+DECOT:
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	LXI	B,-10
+	LXI	D,-1
+DECOT2:
+	DAD	B
+	INX	D
+	JC	DECOT2
+	LXI	B,10
+	DAD	B
+	XCHG
+	MOV	A,H
+	ORA	L
+	CNZ	DECOT
+	MOV	A,E
+	ADI	'0'
+	PUT	LOG
+	POP	H
+	POP	D
+	POP	B
+	RET
+;.....
+;
+;
+PUTSTR:
+	MOV	A,M
+	PUSH	H
+	PUSH	B
+	PUT	LOG
+	POP	B
+	POP	H
+	INX	H
+	DCR	B
+	JNZ	PUTSTR
+	RET
+;.....
+;
+;
+QUIT:	FINIS	LOG
+	JMP	EXIT
+;.....
+;
+	ENDIF			;LOGCAL
+;
+;
+; ---> TRAP:  Check for no file name or ambiguous name
+;
+TRAP:
+	LXI	H,FCB+1 	;POINT TO FILE NAME
+	MOV	A,M		;GET FIRST CHAR OF FILE NAME
+	CPI	' '		;ANY THERE?
+	JNZ	ATRAP		;YES, CHECK FOR AMBIGOUS FILE NAME
+	CALL	ERXIT		;PRINT MSG, EXIT
+	DB	'++ No File Name Specified ++',CR,LF,'$'
+ATRAP:
+	MVI	B,11		;11 CHARS TO CHECK
+TRLOOP:
+	MOV	A,M		;GET CHAR FROM FCB
+	CPI	'?'		;AMBIGUOUS?
+	JZ	TRERR		;YES, EXIT WITH ERROR MSG
+	INX	H		;POINT TO NEXT CHAR
+	DCR	B		;ONE LESS TO GO
+	JNZ	TRLOOP		;NOT DONE, CHECK SOME MORE
+	RET			;NO AMBIGUOUS NAME, RETURN
+;...
+;
+;
+TRERR:
+	CALL	ERXIT		;PRINT MSG, EXIT
+	DB	'++ Wild Card Options are not Valid ++',CR,LF,'$'
+;.....
+;
+;
+; ---> RCVRECD:  Receive a record
+;
+;
+; RETURNS WITH CARRY BIT SET IF 'EOT' RECEIVED
+;
+RCVRECD:
+	XRA	A		;GET 0
+	STA	ERRCT		;INIT ERROR COUNT
+RCVRPT:
+	IF	PMMI OR H8 OR DCH
+	XRA	A		;GET 0
+	STA	ERRCDE		;CLEAR RECEIVE ERROR CODE
+	ENDIF
+;
+	MVI	B,10		;10 SEC TIMEOUT
+	CALL	RECV		;GET SOH/EOT
+	JC	RCVSTOT 	;TIMEOUT
+;
+	IF	PMMI OR H8 OR DCH
+	CALL	RCVERR		;TRANS ERROR?
+	JC	RCVSERR		;CARRY SET IF ERROR
+	ENDIF
+;
+	CPI	SOH		;GET SOH?
+	JZ	RCVSOH		;  YES
+;
+;
+; Earlier versions of MODEM program send some nulls - ignore them
+;
+	ORA	A		;00 FROM SPEED CHECK?
+	JZ	RCVRPT		;YES, IGNORE IT
+	CPI	EOT		;END OF TRANSFER?
+	STC			;RETURN WITH CARRY SET IF 'EOT'
+	RZ
+;
+;
+; Didn't get SOH or EOT - or - didn't get valid header - purge the line,
+; then send NAK.
+;
+RCVSERR:
+	MVI	B,1		;WAIT FOR 1 SECOND
+	CALL	RECV		;   WITH NO CHARS
+	JNC	RCVSERR 	;LOOP UNTIL SENDER DONE
+	LDA	CRCFLG		;GET CRC FLAG
+	ORA	A		;CRC IN EFFECT?
+	MVI	A,NAK		;PUT NAK IN ACCUM
+	JNZ	RCVSER2		;NO, SEND THE NAK
+	LDA	FRSTIM		;GET FIRST TIME SWITCH
+	ORA	A		;HAS FIRST SOH BEEN RECEIVED?
+	MVI	A,NAK		;PUT NAK IN ACCUM
+	JZ	RCVSER2		;YES, THEN SEND NAK
+	MVI	A,CRC		;TELL SENDER CRC IS IN EFFECT
+RCVSER2:
+	CALL	SEND		;   THE NAK or CRC REQUEST
+	LDA	ERRCT		;ABORT IF
+	INR	A		;   WE HAVE REACHED
+	STA	ERRCT		;THE ERROR
+	CPI	ERRLIM		;   LIMIT?
+	JC	RCVRPT		;   NO, TRY AGAIN
+;
+;
+; 10 errors in a row -
+;
+RCVSABT:
+	CALL	CLOSFIL 	;KEEP WHATEVER WE GOT
+	CALL	ILPRT
+	DB	CR,LF,'++ Unable to Copy Block - Aborting ++',CR,LF,0
+	CALL	DELFILE		;DELETE RECEIVED FILE
+	CALL	ILPRT		;PRINT SECOND HALF OF MESSAGE
+	DB	'++ Incomplete Receive File Deleted ++',CR,LF,0
+	JMP	EXIT		;GIVE UP
+;
+; ---> DELFILE:  Deletes the received file (used if receive aborts)
+;
+DELFILE:
+	LXI	D,FCB		;POINT TO FILE
+	MVI	C,ERASEF	;GET FUNCTION
+	CALL	BDOS		;DELETE IT
+	INR	A		;DELETE OK?
+	RNZ			;   YES, RETURN
+	CALL	ERXIT		;   NO, ABORT
+	DB	'++ Can''t Delete Received File ++',CR,LF,'$'
+;
+;
+; Timed out on receive
+;
+RCVSTOT:
+	JMP	RCVSERR		;BUMP ERROR COUNT, ETC.
+;
+; ---> RCVERR:  Checks to see if framing error, overrun, or parity error
+;		occured
+;		   1. Error code [ERRCDE] was set in RECV routine	
+;		   2. ERRCDE=0 for no errors, ERRCDE<>0 for errors
+;		   3. If there has been an error, this routine sets
+;			the carry bit on.
+;
+	IF	PMMI OR H8 OR DCH
+RCVERR:
+	PUSH	PSW		;SAVE CHAR TRANSMITTED
+	LDA	ERRCDE		;GET RECEIVE ERR CODE
+	ANA	A		;IS IT ZERO?
+	JZ	RCVERR2		;YES, NO ERROR
+	POP	PSW		;RESTORE CHAR TRANSMITTED
+	STC			;SET CARRY ON FOR ERROR
+	RET
+;.....
+;
+;
+RCVERR2:
+	POP	PSW		;RESTORE CHAR TRANSMITTED
+	ORA	A		;CLEAR CARRY BIT
+	RET
+;.....
+;
+	ENDIF
+;
+;
+; Got SOH - get block #, block # complemented
+;
+RCVSOH:
+	XRA	A		;ZERO ACCUM
+	STA	FRSTIM		;INDICATE FIRST SOH RECV'D
+	MVI	B,1		;TIMEOUT = 1 SEC
+	CALL	RECV		;GET RECORD
+	JC	RCVSTOT 	;GOT TIMEOUT
+;
+	IF	PMMI OR H8 OR DCH
+	CALL	RCVERR		;TRANS ERROR?
+	JC	RCVSERR		;CARRY SET IF ERROR
+	ENDIF
+;
+	MOV	D,A		;D=BLK #
+	MVI	B,1		;TIMEOUT = 1 SEC
+	CALL	RECV		;GET CMA'D RECORD #
+	JC	RCVSTOT 	;TIMEOUT
+;
+	IF	PMMI OR H8 OR DCH
+	CALL	RCVERR		;TRANS ERROR?
+	JC	RCVSERR		;CARRY SET IF ERROR
+	ENDIF
+;
+	CMA			;CALC COMPLEMENT
+	CMP	D		;GOOD RECORD #?
+	JZ	RCVDATA 	;YES, GET DATA
+;
+;
+; Got bad record #
+;
+	JMP	RCVSERR 	;BUMP ERROR CT.
+;...
+;
+;
+RCVDATA:
+	MOV	A,D		;GET RECORD #
+	STA	RCVRNO		;SAVE IT
+	MVI	C,0		;INIT CKSUM
+	CALL	CLRCRC		;CLEAR CRC COUNTER
+	LXI	H,BASE+80H	;POINT TO BUFFER
+RCVCHR:
+	MVI	B,1		;1 SEC TIMEOUT
+	CALL	RECV		;GET CHAR
+	JC	RCVSTOT 	;TIMEOUT
+;
+	IF	PMMI OR H8 OR DCH
+	CALL	RCVERR		;TRANS ERROR?
+	JC	RCVSERR		;CARRY SET IF ERROR
+	ENDIF
+;
+	MOV	M,A		;STORE CHAR
+	INR	L		;DONE?
+	JNZ	RCVCHR		;NO, LOOP
+	LDA 	CRCFLG		;GET CRC FLAG
+	ORA	A		;CRC IN EFFECT?
+	JZ	RCVCRC		;YES, TO RECEIVE CRC
+;
+;
+; Verify checksum
+;
+	MOV	D,C		;SAVE CHECKSUM
+	MVI	B,1		;TIMEOUT LEN.
+	CALL	RECV		;GET CHECKSUM
+	JC	RCVSTOT 	;TIMEOUT
+;
+	IF	PMMI OR H8 OR DCH
+	CALL	RCVERR		;TRANS ERROR?
+	JC	RCVSERR		;CARRY SET IF ERROR
+	ENDIF
+;
+	CMP	D		;CHECKSUM OK?
+	JNZ	RCVSERR 	;NO, ERROR
+;
+; Got a record, it's a duplicate if = previous, or OK if = 1 + previous
+; record
+;
+CHKSNUM:
+	LDA	RCVRNO		;GET RECEIVED
+	MOV	B,A		;SAVE IT
+	LDA	RECDNO		;GET PREVIOUS
+	CMP	B		;PREV REPEATED?
+	JZ	RECVACK 	;'ACK' TO CATCH UP
+	INR	A		;CALCULATE NEXT RECORD #
+	CMP	B		;MATCH?
+	JNZ	ABORT		;NO MATCH - STOP SENDER, EXIT
+	RET			;CARRY OFF - NO ERRORS
+;
+; ---> RCVCRC:	Receive the cyclic redundancy check characters (2 bytes)
+;		and see if the CRC received matches the one calculated.
+;		If they match, get next record, else send a NAK request-
+;		ing the record be sent again.
+;
+RCVCRC:
+	MVI	E,2		;NUMBER OF BYTES TO RECEIVE
+RCVCRC2:
+	MVI	B,1		;1 SEC TIMEOUT
+	CALL	RECV		;GET CRC BYTE
+	JC	RCVSTOT		;TIMEOUT
+;
+	IF	PMMI OR H8 OR DCH
+	CALL	RCVERR		;TRANSMISSION ERROR?
+	JC	RCVSERR		;YES, IF CARRY IS ON
+	ENDIF
+;
+	DCR	E		;DECREMENT NUM OF BYTES
+	JNZ	RCVCRC2		;GET BOTH BYTES
+	CALL	CHKCRC		;CHECK RCVD CRC AGAINST CALC'D CRC
+	ORA	A		;IS CRC OKAY?
+	JZ	CHKSNUM		;YES, GO CHECK RECORD NUMBERS
+	JMP	RCVSERR		;GO CHECK ERROR LIMIT AND SEND NAK
+;
+;
+; Previous record repeated, due to the last ACK being garbaged.  ACK it
+; so sender will catch up 
+;
+RECVACK:
+	CALL	SENDACK 	;SEND THE ACK,
+	JMP	RCVRECD 	;GET NEXT BLOCK
+;.....
+;
+;
+; Send an ACK for the record
+;
+SENDACK:
+	MVI	A,ACK		;GET ACK
+	CALL	SEND		;   AND SEND IT
+	RET
+;.....
+;
+;
+; ---> SENDHDR:  Send the record header
+;
+; SEND: (SOH) (block #) (complemented block #)
+;
+SENDHDR:
+	MVI	A,SOH		;SEND
+	CALL	SEND		;   SOH,
+	LDA	RECDNO		;THEN SEND
+	CALL	SEND		;   RECORD #
+	LDA	RECDNO		;THEN RECORD #
+	CMA			;   COMPLEMENTED
+	CALL	SEND		;   RECORD #
+	RET			;FROM SENDHDR
+;.....
+;
+;
+; ---> SENDREC:  Send the data record
+;
+SENDREC:
+	MVI	C,0		;INIT CKSUM
+	CALL	CLRCRC		;CLEAR THE CRC COUNTER
+	LXI	H,BASE+80H	;POINT TO BUFFER
+SENDC:
+	MOV	A,M		;GET A CHAR
+	CALL	SEND		;SEND IT
+	INR	L		;POINT TO NEXT CHAR
+	JNZ	SENDC		;LOOP IF <100H
+	RET			;FROM SENDREC
+;.....
+;
+;
+; ---> SENDCKS:  Send the checksum
+;
+SENDCKS:
+	MOV	A,C		;SEND THE
+	CALL	SEND		;   CHECKSUM
+	RET			;FROM 'SENDCKS'
+;.....
+;
+;
+; ---> SENDCRC:  Send the two Cyclic Redundancy Check characters.  Call
+;		 FINCRC to calculate the CRC which will be in 'DE' upon
+;		 return.
+;
+SENDCRC:
+	CALL	FINCRC		;CALC THE CRC FOR THIS RECORD
+	MOV	A,D		;PUT FIRST CRC BYTE IN ACCUMULATOR
+	CALL	SEND		;SEND IT
+	MOV	A,E		;PUT SECOND CRC BYTE IN ACCUMULATOR
+	CALL	SEND		;SEND IT
+	XRA	A		;SET ZERO RETURN CODE
+	RET
+;.....
+;
+;
+; ---> GETACK:  Get the ACK on the record
+;
+; Returns with carry clear if ACK received.  If an ACK is not received,
+; the error count is incremented, and if less than "ERRLIM", carry is
+; set and control returns.  If the error count is at "ERRLIM", the pro-
+; gram aborts.
+;
+GETACK:
+	MVI	B,10		;WAIT 10 SECONDS MAX
+	CALL	RECVDG		;RECV W/GARBAGE COLLECT
+	JC	GETATOT 	;TIMED OUT
+	CPI	ACK		;OK? (CARRY OFF IF =)
+	RZ			;YES, RET FROM GETACK
+;
+;
+; Timeout or error on ACK - bump error count
+;
+ACKERR:
+	LDA	ERRCT		;GET COUNT
+	INR	A		;BUMP IT
+	STA	ERRCT		;SAVE BACK
+	CPI	ERRLIM		;AT LIMIT?
+	RC			;NOT AT LIMIT
+;
+;
+; Reached error limit
+;
+CSABORT:
+	CALL	ERXIT
+	DB	'++ Can''t send record - Aborting ++',CR,LF,'$'
+;
+; 
+; Timeout getting ACK
+;
+GETATOT:
+	JMP	ACKERR		;NO MSG
+ABORT:
+	LXI	SP,STACK
+ABORTL:
+	MVI	B,1		;1 SECOND WITHOUT CHARACTERS
+	CALL	RECV
+	JNC	ABORTL		;LOOP UNTIL SENDER DONE
+	MVI	A,CAN		;CTL- X
+	CALL	SEND		;STOP SENDING END
+ABORTW:
+	MVI	B,1		;1 SECOND WITHOUT CHRACTERS
+	CALL	RECV
+	JNC	ABORTW		;LOOP UNTIL SENDER DONE
+	MVI	A,CR		;GET A SPACE...
+	CALL	SEND		;TO CLEAR OUT CONTROL X
+	CALL	ERXIT		;EXIT WITH ABORT MSG
+	DB	'++ XMODEM Program Cancelled ++',CR,LF,'$'
+;
+;
+; ---> INCRRNO:  Increment record #
+;
+INCRRNO:
+	PUSH	H
+	LHLD	RECDNO		;INCREMENT RECORD NUMBER
+	INX	H
+	SHLD	RECDNO
+;
+	LXI	H,CONOUT	;CHECK TO SEE IF SHOWING COUNT ON CRT
+	MOV	A,H
+	ORA	L		;IF BOTH ZERO, USER DID NOT FILL OUT
+	POP	H		;   "CONOUT   EQU   0000H"   AREA
+	RZ			;   WITH HIS OWN CONSOLE OUTPUT ADDRESS
+;
+;
+; Display the record count on the CRT if "CONOUT" was filled out by user
+;
+	MVI	A,1
+	STA	CONONL		;SET LOCAL ONLY
+	CALL	ILPRT
+	DB	CR,'Record #',0
+	LHLD	RECDNO
+	CALL	DECOUT
+	CALL	ILPRT
+	DB	'  (',0
+	CALL	DHXOUT
+	CALL	ILPRT
+	DB	'H) ',0
+	ORA	A
+	STA	CONONL		;RESET LOCAL ONLY
+	RET
+;.....
+;
+;
+; ---> CHEKFIL:  See if file exists
+;
+; If it exists, say use a different name.
+;
+CHEKFIL:
+	IF	SETAREA		
+	CALL	RECAREA		;SET THE DESIGNATED AREA UP
+	ENDIF
+;
+	LXI	D,FCB		;POINT TO CTL BLOCK
+	MVI	C,SRCHF 	;SEE IF IT
+	CALL	BDOS		;   EXISTS
+	INR	A		;FOUND?
+	RZ			;   NO, RETURN
+	CALL	ERXIT		;EXIT, PRINT ERROR MESSAGE
+	DB	'++ File Exists - Use a Different Name ++',CR,LF,'$'
+;
+;
+; ---> MAKEFIL:	 Makes the file to be received
+;
+MAKEFIL:
+	XRA	A		;SET EXT & REC # TO 0
+	STA	FCBEXT
+	STA	FCBRNO
+	LXI	D,FCB		;POINT TO FCB
+	MVI	C,MAKE		;GET BDOS FNC
+	CALL	BDOS		;TO THE MAKE
+	INR	A		;FF=BAD?
+	RNZ			;OPEN OK
+;
+;
+; Directory full - can't make file
+;
+	CALL	ERXIT
+	DB	'++ ERROR - Can''t Make File --'
+	DB	' Directory may be full? ++',CR,LF,'$'
+;
+;
+; ---> CNREC:  Computes record count, and saves it until successful
+;	       file-OPEN.
+;
+;
+; LOOK UP THE FCB IN THE DIRECTORY
+;
+CNREC:
+	MVI	A,'?'		;MATCH ALL EXTENTS
+	STA	FCBEXT
+	MVI	A,0FFH
+	STA	MAXEXT		;INIT MAX EXT NO.
+	MVI	C,SRCHF 	;GET 'SEARCH FIRST' FNC
+	LXI	D,FCB
+	CALL	BDOS		;READ FIRST
+	INR	A		;WERE THERE ANY?
+	JNZ	SOME		;GOT SOME
+	CALL	ERXIT
+	DB	'++ File not Found ++',CR,LF,'$'
+;
+;
+; READ MORE DIRECTORY ENTRIES
+;
+MOREDIR:
+	MVI	C,SRCHN 	;SEARCH NEXT
+	LXI	D,FCB
+	CALL	BDOS		;READ DIR ENTRY
+	INR	A		;CHECK FOR END (0FFH)
+	JNZ	SOME		;NOT END OF DIR...PROCESS EXTENT
+	LDA	MAXEXT		;HIT END...GET HIGHEST EXTENT NO. SEEN
+	MOV	L,A		;WHICH GIVES EXTENT COUNT - 1
+	MVI	H,0
+	MOV	D,H
+	LDA	RCNT		;GET RECORD COUNT OF MAX EXTENT SEEN
+	MOV	E,A		;SAVE IT IN 'DE'
+	DAD	H
+	DAD	H		;MULTIPLY # OF EXTENTS - 1
+	DAD	H		;TIMES 128
+	DAD	H
+	DAD	H
+	DAD	H
+	DAD	H
+	DAD	D		;ADD IN SIZE OF LAST EXTENT
+	SHLD	RCNT		;SAVE TOTAL RECORD COUNT
+	RET			;AND EXIT
+;.....
+;
+;
+; POINT TO DIRECTORY ENTRY
+;
+SOME:
+	DCR	A		;UNDO PREV 'INR A'
+	ANI	3		;MAKE MODULUS 4
+	ADD	A		;MULTIPLY
+	ADD	A		;   BY 32 BECAUSE
+	ADD	A		;   EACH DIRECTORY
+	ADD	A		;   ENTRY IS 32
+	ADD	A		;   BYTES LONG
+	LXI	H,BASE+80H	;POINT TO BUFFER
+	ADD	L		;POINT TO ENTRY
+	ADI	15		;OFFSET TO RECORD COUNT
+	MOV	L,A		;'HL' NOW POINTS TO REC COUNT
+	MOV	B,M		;GET RECORD COUNT
+	DCX	H
+	DCX	H		;BACK DOWN TO EXTENT NUMBER
+	DCX	H
+	LDA	MAXEXT		;COMPARE WITH CURRENT MAX.
+	ORA	A		;IF NO MAX YET
+	JM	BIGGER		;THEN SAVE RECORD COUNT ANYWAY
+	CMP	M
+	JNC	MOREDIR
+BIGGER:
+	MOV	A,B		;SAVE NEW RECORD COUNT
+	STA	RCNT
+	MOV	A,M		;SAVE NEW MAX. EXTENT NO.
+	STA	MAXEXT
+	JMP	MOREDIR		;GO FIND MORE EXTENTS
+;.....
+;
+;
+
+; ---> OPENFIL:  Opens the file to be sent
+;
+OPENFIL:
+	XRA	A		;SET EXT & REC # TO 0 FOR PROPER OPEN
+	STA	FCBEXT
+	STA	FCBRNO
+	LXI	D,FCB		;POINT TO FILE
+	MVI	C,OPEN		;GET FUNCTION
+	CALL	BDOS		;OPEN IT
+	INR	A		;OPEN OK?
+	JNZ	OPENOK		;   YES
+	CALL	ERXIT		;   NO, ABORT
+	DB	'++ Open Error ++',CR,LF,'$'
+;
+;
+; Check for distribution-protected file
+;
+OPENOK:
+	LDA	FCB+1		;FIRST CHAR OF FILE NAME
+	ANI	80H		;CHECK BIT 7
+	JNZ	OPENOT		;IF ON, FILE CAN'T BE SENT
+	LDA	FCB+2		;ALSO CHECK "F2" FOR TAB
+	ANI	80H		;IS IS SET?
+	JZ	OPENOK2		;IF NOT, OK TO SEND FILE
+OPENOT:
+	CALL	ERXIT		;EXIT W/MESSAGE
+	DB	'++ File is Not for Distribution, Sorry ++',CR,LF,'$'
+OPENOK2:
+	IF	NOLBS OR NOCOMS ;CHECK FOR SEND RESTRICTIONS
+	LXI	H,FCB+11
+	MOV	A,M		;CHECK FOR PROTECT ATTR
+	ANI	7FH		;REMOVE CP/M 2.x ATTRS
+	ENDIF			;NOLBS OR NOCOMS
+;
+	IF	NOLBS		;DON'T ALLOW '#' TO BE SENT.
+	CPI	'#'		;CHK FOR '#' AS LAST FIRST
+	JZ	OPENOT		;IF '#', CAN'T SEND, SHOW WHY
+	ENDIF			;NOLBS
+;
+	IF	NOCOMS		;DON'T ALLOW .COM TO BE SENT
+	CPI	'M'		;IF NOT, CHK FOR '.COM'
+	JNZ	OPENOK3 	;IF NOT, OK TO SEND
+	DCX	H
+	MOV	A,M		;CHECK NEXT CHARACTER
+	ANI	7FH		;STRIP ATTRIBUTES
+	CPI	'O'		;'O'?
+	JNZ	OPENOK3 	;IF NOT, OK TO SEND
+	DCX	H
+	MOV	A,M		;NOW CHECK 1ST CHARACTER
+	ANI	7FH		;STRIP ATTRIBUTES
+	CPI	'C'		;'C' AS IN '.COM'?
+	JNZ	OPENOK3 	;IF NOT, CONTINUE
+	CALL	ERXIT		;EXIT W/MESSAGE
+	DB	'++ Can''t Send a .COM File ++',CR,LF,'$'
+	ENDIF			;NOCOMS
+;
+OPENOK3:
+	CALL	ILPRT		;PRINT:
+	DB	'File open:  ',0
+	LHLD	RCNT		;GET RECORD COUNT
+	CALL	DECOUT		;PRINT DECIMAL NUMBER OF RECORDS
+	CALL	ILPRT
+	DB	' (',0
+	CALL	DHXOUT		;NOW PRINT SIZE IN HEX
+	CALL	ILPRT
+	DB	' Hex) Records',CR,LF
+	DB	'Send time:  ',0
+
+	IF	LSPEED
+	LDA	MSPEED		;GET THE SPEED INDICATOR
+	ENDIF
+;
+	IF	NOT LSPEED
+	LDA	SPEED		;DEFAULT TO PRESET SPEED AT 0103H
+	ENDIF
+;	
+	LXI	D,0
+	MOV	E,A		;SET UP FOR TABLE ACCESS
+	LXI	H,BTABLE	;POINT TO BAUD FACTOR TABLE
+	DAD	D		;INDEX TO PROPER FACTOR
+	MOV	A,M		;FACTOR IN 'A'
+;	
+	LHLD	RCNT		;GET NUMBER OF RECORDS
+	CALL	DIVHLA		;DIVIDE HL BY VALUE IN A (RECORDS/MIN)	
+	PUSH	H
+;
+	IF	LOGCAL
+	SHLD	PGSIZE
+	ENDIF
+;
+	MVI	H,0
+	CALL	DECOUT		;PRINT DECIMAL NUMBER OF MINUTES
+	CALL	ILPRT
+	DB	' mins, ',0
+	LXI	H,RECTBL	;POINT TO DIVISORS FOR SECONDS CALC.
+	LXI	D,0
+;
+	IF	LSPEED
+	LDA	MSPEED		;GET INDEX FOR BAUD RATE
+	ENDIF
+;
+	IF	NOT LSPEED
+	LDA	SPEED
+	ENDIF
+;
+	MOV	E,A
+	DAD	D		;INDEX INTO TABLE
+	MOV	A,M		;GET MULTIPLIER
+	POP	H		;GET REMAINDER
+	CALL	MULHA		;MULTIPLY 'H' BY 'A'
+	CALL	SHFTHL
+	CALL	SHFTHL
+	CALL	SHFTHL
+	CALL	SHFTHL	
+;
+	MVI	H,0
+	CALL	DECOUT		;PRINT THE SECONDS PORTION
+	CALL	ILPRT
+	DB	' secs at ',0
+	LXI	H,SPTBL		;START OF BAUD RATE SPEEDS
+	MVI	D,0		;ZERO THE 'D' REGISTER
+;
+	IF	LSPEED
+	LDA	MSPEED		;GET INDEX FOR BAUD RATE
+	ENDIF
+;
+	IF	NOT LSPEED
+	LDA	SPEED
+	ENDIF
+;
+	ADD	A		;INDEX INTO THE BAUD RATE TABLE
+	ADD	A
+	MOV	E,A		;NOW HAVE THE INDEX FACTOR IN 'DE'
+	DAD	D		;ADD TO 'HL'
+	XCHG			;PUT ADDRESS IN 'DE' REGS.
+	MVI	C,PRINT		;SHOW THE BAUD
+	CALL	BDOS
+	CALL	ILPRT
+	DB	' Baud',CR,LF,0
+;
+	CALL	ILPRT
+	DB	'To cancel:  CTL-X',CR,LF,0
+	RET
+;.....
+;
+;
+BTABLE:	DB	5,13,19,25,29,49,0
+RECTBL:	DB	192,74,51,38,33,20,0
+SPTBL:	DB	'110$','300$','450$','600$','710$','1200$'
+;...
+;
+;
+; ---> DIVHL-A:  Divides 'HL' by value in 'A',
+;	 UPON EXIT: L=QUOTIENT,H=REMAINDER
+;
+DIVHLA:
+	PUSH	B
+	MVI	B,8		;SHIFT FACTOR TO 'B'
+	MOV	C,A		;DIVISOR TO 'C'
+DIV2:
+	XRA	A		;CLEAR CARRY FLAG AND ACCUMULATOR
+	DAD	H
+	MOV	A,H
+	SUB	C
+	JM	DIV3		;DONT BORROW ON NEG RESULTS
+	MOV	H,A
+	MOV	A,L
+	ORI	1		;BORROW 1
+	MOV	L,A
+DIV3:
+	DCR	B
+	JNZ	DIV2
+	POP	B
+	RET
+;...
+;
+;
+; ---> MULHA:  Multiply the value in 'H' by the value in 'A'
+;	 Return with answer in 'HL'.
+;
+MULHA:
+	MOV	B,A		;PUT LOOP COUNT IN 'B'
+	MVI	D,0
+	MOV	E,H
+	MOV	L,H
+	MVI	H,0
+MULLP:
+	DCR	B
+	RZ
+	DAD	D
+	JMP	MULLP
+	RET
+;
+;
+; Shift the 'HL' pair one bit to the right
+;
+SHFTHL:
+	MOV	A,L
+	RAR
+	MOV	L,A
+	ORA	A		;CLEAR THE CARRY BIT
+	MOV	A,H
+	RAR
+	MOV	H,A
+	RNC
+	MVI	A,80h
+	ORA	L
+	MOV	L,A
+	RET
+;.....
+;
+;
+; ---> CLOSFIL:  Closes the received file
+;
+CLOSFIL:
+	LXI	D,FCB		;POINT TO FILE
+	MVI	C,CLOSE 	;GET FUNCTION
+	CALL	BDOS		;CLOSE IT
+	INR	A		;CLOSE OK?
+	RNZ			;  YES, RETURN
+	CALL	ERXIT		;  NO, ABORT
+	DB	'++ Can''t close File ++',CR,LF,'$'
+;
+;
+; ---> DECOUT:  Decimal output routine
+;
+DECOUT:
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	LXI	B,-10
+	LXI	D,-1
+DECOU2:
+	DAD	B
+	INX	D
+	JC	DECOU2
+	LXI	B,10
+	DAD	B
+	XCHG
+	MOV	A,H
+	ORA	L
+	CNZ	DECOUT
+	MOV	A,E
+	ADI	'0'
+	CALL	CTYPE
+	POP	H
+	POP	D
+	POP	B
+	RET
+;.....
+;
+;
+; ---> DHXOUT:  Double precision hex output routine.  Call with hex
+;		value in 'HL'.
+;
+DHXOUT:
+	PUSH	H		;SAVE H,L
+	PUSH	PSW		;SAVE A
+	MOV	A,H		;GET MS BYTE
+	CALL	HEXO		;OUTPUT HIGH ORDER BYTE
+	MOV	A,L		;GET LS BYTE
+	CALL	HEXO		;OUTPUT LOW ORDER BYTE
+	POP	PSW		;RESTORE A
+	POP	H		;RESTORE H,L
+	RET			;RETURN TO CALLER
+;
+;
+; ---> RDRECD:  Reads a record
+;
+; For speed, this routine buffers up 16 records at a time.
+;
+RDRECD:
+	LDA	RECNBF		;GET # OF RECORDS IN BUFFER
+	DCR	A		;DECREMENT
+	STA	RECNBF		;   IT
+	JM	RDBLOCK 	;EXHAUSTED?  NEED MORE
+	LHLD	RECPTR		;GET POINTER
+	LXI	D,BASE+80H	;TO DATA
+	CALL	MOVE128 	;MOVE TO BUFFER
+	SHLD	RECPTR		;SAVE BUFFER POINTER
+	RET			;FROM "READRED"
+;.....
+;
+;
+; Buffer is empty - read in another block of 16
+;
+RDBLOCK:
+	LDA	EOFLG		;GET 'EOF' FLAG
+	CPI	1		;IS IT SET?
+	STC			;TO SHOW 'EOF'
+	RZ			;GOT 'EOF'
+	MVI	C,0		;RECORDS IN BLOCK
+	LXI	D,DBUF		;TO DISK BUFFER
+;
+RDRECLP:
+	PUSH	B
+	PUSH	D
+	MVI	C,SETDMA 	;SET DMA ADDRESS
+	CALL	BDOS
+	LXI	D,FCB
+	MVI	C,READ
+	CALL	BDOS
+	POP	D
+	POP	B
+	ORA	A		;READ OK?
+	JZ	RDRECOK 	;YES
+	DCR	A		;'EOF'?
+	JZ	REOF		;GOT 'EOF'
+;
+;
+; Read error
+;
+	CALL	ERXIT
+	DB	'<< File Read Error >>',CR,LF,'$'
+;
+RDRECOK:
+	LXI	H,80H		;ADD LENGTH OF ONE RECORD
+	DAD	D		;   TO NEXT BUFF
+	XCHG			;BUFF TO DE
+	INR	C		;MORE RECORDS?
+	MOV	A,C		;GET COUNT
+	CPI	16		;DONE?
+	JZ	RDBFULL 	;   YES, BUFF IS FULL
+	JMP	RDRECLP 	;READ MORE
+;...
+;
+;
+REOF:
+	MVI	A,1
+	STA	EOFLG		;SET EOF FLAG
+	MOV	A,C
+;
+;
+; Buffer is full, or got EOF
+;
+RDBFULL:
+	STA	RECNBF		;STORE RECORD COUNT
+	LXI	H,DBUF		;INIT BUFFER POINTEAR
+	SHLD	RECPTR
+	LXI	D,BASE+80H	;RESET DMA ADDRESS 
+	MVI	C,SETDMA
+	CALL	BDOS
+	JMP	RDRECD		;PASS RECORD TO CALLER
+;
+; ---> WRRECD:  Write a record
+;
+; Writes the record into a buffer.  When 16 have been written, writes
+; the block to disk.
+;
+; Entry point "WRBLOCK" flushes the buffer at EOF.
+;
+WRRECD:
+	LHLD	RECPTR		;GET BUFF ADDR
+	XCHG			;TO 'DE' FOR MOVE
+	LXI	H,BASE+80H	;FROM HERE
+	CALL	MOVE128 	;MOVE TO BUFFER
+	XCHG			;SAVE NEXT
+	SHLD	RECPTR		;   BLOCK POINTER
+	LDA	RECNBF		;BUMP THE
+	INR	A		;   RECORD #
+	STA	RECNBF		;   IN THE BUFF
+	CPI	16		;HAVE WE 16?
+	RNZ			;NO, RETURN
+;
+; ---> WRBLOCK:  Writes a block to disk
+;
+WRBLOCK:
+	LDA	RECNBF		;# OF RECORDS IN THE BUFFER
+	ORA	A		;0 MEANS END OF FILE
+	RZ			;NONE TO WRITE
+	MOV	C,A		;SAVE COUNT
+	LXI	D,DBUF		;POINT TO DISK BUFF
+DKWRLP:
+	PUSH	H
+	PUSH	D
+	PUSH	B
+	MVI	C,SETDMA 	;SET DMA
+	CALL	BDOS		;TO BUFFER
+	LXI	D,FCB		;THEN WRITE
+	MVI	C,WRITE 	;   THE
+	CALL	BDOS		;   BLOCK
+	POP	B
+	POP	D
+	POP	H
+	ORA	A
+	JNZ	WRERR		;OOPS, ERROR
+	LXI	H,80H		;LENGTH OF 1 RECORD
+	DAD	D		;'HL'= NEXT BUFF
+	XCHG			;TO 'DE' FOR SETDMA
+	DCR	C		;MORE RECORDS?
+	JNZ	DKWRLP		;   YES, LOOP
+	XRA	A		;GET A ZERO
+	STA	RECNBF		;RESET # OF RECORDS
+	LXI	H,DBUF		;RESET BUFFER BUFFER
+	SHLD	RECPTR
+RSDMA:
+	LXI	D,BASE+80H 	;RESET DMA ADDRESS
+	MVI	C,SETDMA
+	CALL	BDOS
+	RET
+;.....
+;
+;
+WRERR:
+	CALL	RSDMA		;RESET DMA TO NORM.
+	MVI	C,CAN		;CANCEL
+	CALL	SEND		;   SENDER
+	CALL	ERXIT		;EXIT W/MSG:
+	DB	'++ Error writing File ++ ',CR,LF,'$'
+;
+;
+;---->	RECV:  Receive a character
+;
+; Timeout time is in B, in seconds.  Entry via "RECVDG" deletes garbage
+; characters on the line.  For example, having just sent a record, 
+; calling RECVDG will delete any line-noise-induced characters "long"
+; before the ACK/NAK would be received.
+;
+RECVDG:
+	IF	INTER3
+	MVI	A,MODUSER	;SELECT PROPER CHIP
+	OUT	MODPRT
+	ENDIF
+;
+	MVI	A,MODDATP
+	IN	MODDATP 	;GET A CHAR
+	MVI	A,MODDATP
+	IN	MODDATP 	;   TOTALLY PURGE UART
+RECV:
+	PUSH	D		;SAVE 'DE' REGS.
+	MVI	E,MHZ		;GET THE CLOCK SPEED
+	XRA	A		;CLEAR THE 'A' REG.
+MSLOOP:
+	ADD	B		;NUMBER OF SECONDS
+	DCR	E		;ONE LESS MHZ. TO GO
+	JNZ	MSLOOP		;IF NOT ZERO, CONTINUE
+	MOV	B,A		;PUT TOTAL VALUE BACK INTO 'B'
+MSEC:
+	LXI	D,25000 	;1 SECOND DCR COUNT
+MWTI:
+	IF	INTER3
+	MVI	A,MODUSER	;SELECT PROPER CHIP
+	OUT	MODPRT
+	ENDIF
+;
+	IF	DCH
+	MVI	A,MODCTL2
+	IN	MODCTL2 	;CHECK STATUS
+	ENDIF
+;
+	IF	NOT DCH
+	IN	MODCTLP 	;CHECK STATUS
+	ENDIF
+;
+	IF	PMMI AND FNTPNL
+	OUT	PANEL		;DISPLAY STATUS ON PANEL LIGHTS
+	ENDIF
+;
+	ANI	MODRCVB 	;ISOLATE BIT
+	CPI	MODRCVR 	;READY?
+	JZ	MCHAR		;GOT CHAR
+	DCR	E		;COUNT
+	JNZ	MWTI		;   DOWN
+	DCR	D		;   FOR
+	JNZ	MWTI		;   TIMEOUT
+	DCR	B		;MORE SECONDS?
+	JNZ	MSEC		;YES, WAIT
+;
+;
+; Test for the presence of carrier - if none, go to CARCK and continue
+; testing for 15 seconds. If carrier returns, continue. If is doesn't
+; return, exit.
+;
+	IF	INTER3
+	MVI	A,MODUSER	;SELECT PROPER CHIP
+	OUT	MODPRT
+	IN	MODCTLP		;GET STATUS
+	ENDIF
+;
+	IF	EXTMOD OR H8 OR DCH
+	MVI	A,MODCTL2
+	IN	MODCTL2		;READ MODEM STATUS
+	ENDIF
+;
+	IF	PMMI
+	IN	BAUDRP		;READ MODEM STATUS
+	ENDIF
+;
+	IF	PMMI AND FNTPNL
+	OUT	PANEL		;DISPLAY STATUS ON PANEL LIGHTS
+	ENDIF
+;
+	ANI	MODDCDB		;CARRIER DETECT MASK
+	CPI	MODDCDA		;IS IT STILL ON?
+	CNZ	CARCK		;IF NOT, TEST FOR 15 SECONDS
+;
+; Modem timed out receiving - but carrier still on.
+;
+	POP	D		;RESTORE D,E
+	STC			;CARRY SHOWS TIMEOUT
+	RET
+;.....
+;
+;
+; Got character from modem.  Check to see if there was a framing error,
+; overrun, or parity error.
+;
+MCHAR:
+	IF	PMMI OR H8
+	IN	MODCTLP		;GET MODEM STATUS
+	ENDIF
+;
+	IF	DCH
+	MVI	A,MODCTL2
+	IN	MODCTL2		;GET MODEM STATUS
+	ENDIF
+;
+	IF	PMMI OR H8 OR DCH
+	MOV	D,A		;SAVE STATUS
+	ANI	MODFRME		;FRAMING ERROR?
+	CPI	MODFRME
+	JNZ	MCHAR2		;NO, CHECK FOR OVERRUN
+	LDA	ERRCDE		;GET RECV ERR CODE
+	ORI	MODFRME		;TURN ON RECV ERR CODE
+	STA	ERRCDE		;PUT IT BACK
+MCHAR2:
+	MOV	A,D		;RESTORE MODEM STATUS
+	ANI	MODOVRE		;OVERRUN?
+	CPI	MODOVRE
+	JNZ	MCHAR3		;NO, CHECK FOR PARITY ERROR
+	LDA	ERRCDE
+	ORI	MODOVRE		;TURN ON RECV ERR CODE
+	STA	ERRCDE
+MCHAR3:
+	MOV	A,D		;RESTORE MODEM STATUS
+	ANI	MODPARE		;PARITY ERROR?
+	CPI	MODPARE
+	JNZ	MCHAR4		;NO, GET DATA CHAR
+	LDA	ERRCDE
+	ORI	MODPARE
+	STA	ERRCDE
+MCHAR4:
+	ENDIF			;PMMI OR H8 OR DCH
+;
+;
+; Get data char
+;
+	IF	INTER3
+	MVI	A,MODUSER	;SELECT PROPER CHIP
+	OUT	MODPRT
+	ENDIF
+;
+	MVI	A,MODDATP
+	IN	MODDATP 	;READ THE CHAR
+	POP	D		;RESTORE 'DE'
+;
+;
+; Calculate checksum and CRC
+;
+	PUSH	PSW		;SAVE THE CHAR
+	CALL	UPDCRC		;CALC CRC
+	ADD	C		;ADD TO CHECKSUM
+	MOV	C,A		;SAVE CHECKSUM
+	POP	PSW		;RESTORE CHAR
+	ORA	A		;CARRY OFF: NO ERROR
+	RET			;FROM "RECV"
+;.....
+;
+;
+; CARCK - common 15 second carrier test for RECV and SEND.  If carrier
+; returns within 15 seconds, normal program execution continues.  Else,
+; it will abort to CP/M via EXIT.
+;
+CARCK:
+	MVI	E,150		;VALUE FOR 15 SECOND DELAY
+CARCK1:
+	CALL	DELAY		;KILL .1 SECONDS
+;
+	IF	INTER3
+	MVI	A,MODUSER	;SELECT PROPER CHIP
+	OUT	MODPRT
+	IN	MODCTLP		;GET STATUS
+	ENDIF
+;
+	IF	EXTMOD OR H8 OR DCH
+	MVI	A,MODCTL2
+	IN	MODCTL2		;READ MODEM STATUS
+	ENDIF
+;
+	IF	PMMI
+	IN	BAUDRP		;READ MODEM STATUS
+	ENDIF
+;
+	IF	PMMI AND FNTPNL
+	OUT	PANEL		;DISPLAY STATUS
+	ENDIF
+;
+	ANI	MODDCDB		;CARRIER DETECT MASK
+	CPI	MODDCDA		;IS IT STILL ON?
+	RZ			;RETURN IF CARRIER ON
+	DCR	E		;HAS 15 SECONDS EXPIRED?
+	JNZ	CARCK1		;IF NOT, CONTINUE TESTING
+	LDA	OPTSAV		;GET OPTION
+	CPI	'R'		;IF NOT RECEIVE
+	JNZ	EXIT		;THEN ABORT NOW, ELSE
+	CALL	DELFILE		;GET RID OF THE JUNK FIRST
+	JMP	EXIT		;ELSE, ABORT TO CP/M.
+;
+;
+; DELAY - 100 millisecond delay.
+;
+DELAY:
+	PUSH	B		;SAVE 'BC'
+	LXI	B,MHZ*4167	;VALUE FOR 100 MS. DELAY
+DELAY2:
+	DCX	B		;UPDATE COUNT
+	MOV	A,B		;GET MS BYTE
+	ORA	C		;COUNT = ZERO?
+	JNZ	DELAY2		;IF NOT, CONTINUE
+	POP	B		;RESTORE 'BC'
+	RET			;RETURN TO CARCK1.
+;.....
+;
+;
+; ---> SEND:  Send a character to the modem
+;
+SEND:
+	PUSH	PSW		;SAVE THE CHARACTER
+	CALL	UPDCRC		;CALC THE CRC
+	ADD	C		;CALC CKSUM
+	MOV	C,A		;SAVE CKSUM
+;
+	IF	INTER3
+	MVI	A,MODUSER	;SELECT PROPER CHIP
+	OUT	MODPRT
+	ENDIF
+;
+	IF	NOT DCH
+SENDW:
+	IN	MODCTLP 	;GET STATUS
+	ENDIF
+;
+	IF	DCH
+SENDW:
+	MVI	A,MODCTL2
+	IN	MODCTL2 	;GET STATUS
+	ENDIF
+;
+	IF	PMMI AND FNTPNL
+	OUT	PANEL		;DISPLAY STATUS
+	ENDIF
+;
+	ANI	MODSNDB 	;ISOLATE READY BIT
+	CPI	MODSNDR 	;READY?
+	JZ	SENDR		;   YES, GO SEND
+;
+;
+; Xmit status not ready, so test for carrier before looping - if lost,
+; go to CARCK and give it up to 15 seconds to return.  If it doesn't,
+; return abort via EXIT.
+;
+	PUSH	D		;SAVE 'DE'
+;
+	IF	INTER3
+	MVI	A,MODUSER	;SELECT PROPER CHIP
+	OUT	MODPRT
+	IN	MODCTLP		;GET STATUS
+	ENDIF
+;
+	IF	EXTMOD OR H8 OR DCH
+	MVI	A,MODCTL2
+	IN	MODCTL2		;READ MODEM STATUS
+	ENDIF
+;
+	IF	PMMI
+	IN	BAUDRP		;READ MODEM STATUS
+	ENDIF
+;
+	IF	PMMI AND FNTPNL
+	OUT	PANEL		;DISPLAY STATUS
+	ENDIF
+;
+	ANI	MODDCDB		;CARRIER DETECT MASK
+	CPI	MODDCDA		;IS IT STILL ON?
+	CNZ	CARCK		;IF NOT, CONTINUE TESTING IT
+	POP	D		;RESTORE D,E
+	JMP	SENDW		;ELSE, WAIT FOR XMIT READY.
+;.....
+;
+;
+; Xmit status ready, carrier still on - send the data.
+;
+SENDR:
+	POP	PSW		;GET CHAR
+;
+	IF	IEE696
+	PUSH	B
+	MVI	B,MODDATP
+	MOV	C,B
+	DB	0EDH,79H	;Z-80 OUT (C),A
+	POP	B
+	ENDIF
+;
+	IF	INTER3
+	MVI	A,MODUSER	;SELECT PROPER CHIP
+	OUT	MODPRT
+	ENDIF
+;
+	IF	NOT IEE696
+	OUT	MODDATP 	;OUTPUT IT
+	ENDIF
+;
+	RET			;FROM "SEND"
+;
+; ---> WAITNAK:  Waits for initial NAK
+;
+; To ensure no data is sent until the receiving program is ready, this
+; routine waits for the first timeout-NAK or the letter 'C' for CRC
+; from the receiver.  If CRC is in effect, then Cyclic Redundancy Checks
+; are used instead of checksums.  'E' contains the number of seconds to
+; wait.
+;
+; If the first character received is a CAN (CTL-X) then the send will be
+; aborted as though it had timed out.
+;
+WAITNAK:
+	MVI	B,1		;TIMEOUT DELAY
+	CALL	RECV		;DID WE GET
+	CPI	NAK		;   A NAK?
+	RZ			;YES, SEND BLOCK
+	CPI	CRC		;CRC INDICATED?
+	JZ	WAITCRC		;YES, GO PUT CRC IN EFFECT
+	CPI	CAN		;WAS IT A CANCEL (CTL-X)?
+	JZ	ABORT		;YES, ABORT
+	DCR	E		;80 TRIES?
+	JZ	ABORT		;YES, ABORT
+	JMP	WAITNAK 	;NO, LOOP
+;.....
+;
+;
+; ---> WAITCRC:  Turn on CRC Flag
+;
+WAITCRC:
+	XRA	A		;ZERO ACCUM
+	STA	CRCFLG		;TURN ON CRC OPT
+	RET
+;.....
+;
+;
+; ---> MOVEFCB:  Moves FCB(2) to FCB
+;
+; In order to make the XMODEM command 'natural', i.e., XMODEM SEND
+; FILENAME (MODEM S FN.FT) rather than XMODEM FILENAME SEND
+; (MODEM FN.FT S), this routine moves the filename from the second
+; FCB to the first.
+;
+MOVEFCB:
+	LXI	H,FCB+16	;FROM
+	LXI	D,FCB		;TO
+	MVI	B,16		;LEN
+	CALL	MOVE		;DO THE MOVE
+	XRA	A		;GET 0
+	STA	FCBRNO		;ZERO RECORD #
+	STA	FCBEXT		;   AND EXTENT
+	RET
+;.....
+;
+;
+CTYPE:
+	PUSH	B		;SAVE ALL REGISTERS
+	PUSH	D
+	PUSH	H
+	PUSH	PSW		;SAVE THE CHARACTER TEMPORARILY
+	LDA	CONONL		;WANT TO BYPASS 'BYE' OUTPUT TO MODEM?
+	ORA	A
+	JNZ	CTYPEL		;YES, GO DIRECTLY TO CRT, THEN
+	POP	PSW		;ELSE GET THE CHARACTER BACK
+	MOV	E,A		;CHARACTER TO 'E'
+	MVI	C,WRCON 	;BDOS CONSOLE OUTPUT, TO CRT AND MODEM
+	CALL	BDOS		;   SINCE "BYE" INTERCEPTS THE CHAR.
+	POP	H		;RESTORE ALL REGISTERS
+	POP	D
+	POP	B
+	RET
+;...
+;
+;
+CTYPEL:
+	POP	PSW		;GET THE CHARACTER BACK
+	MOV	C,A		;BIOS NEEDS IT IN 'C'
+	CALL	CONOUT		;BIOS CONSOLE OUTPUT ROUTINE, NOT BDOS
+	POP	H		;RESTORE ALL REGIESTER SAVED BY 'CTYPE'
+	POP	D
+	POP	B
+	RET
+;.....
+;
+;
+HEXO:
+	PUSH	PSW		;SAVE FOR RIGHT DIGIT
+	RAR			;RIGHT
+	RAR			;   JUSTIFY
+	RAR			;   LEFT
+	RAR			;   DIGIT
+	CALL	NIBBL		;PRINT LEFT DIGIT
+	POP	PSW		;RESTORE RIGHT
+NIBBL:
+	ANI	0FH		;ISOLATE DIGIT
+	CPI	10		;IS IT <10?
+	JC	ISNUM		;YES, NOT ALPHA
+	ADI	7		;ADD ALPHA BIAS
+ISNUM:
+	ADI	'0'		;MAKE PRINTABLE
+	JMP	CTYPE		;   THEN TYPE IT
+;.....
+;
+;
+; ---> ILPRT:  Inline print of message
+;
+; The call to ILPRT is followed by a message, binary 0 for its end.
+;
+ILPRT:
+	XTHL			;SAVE HL, GET HL=MSG
+;
+ILPLP:
+	MOV	A,M		;GET CHAR
+	ORA	A		;END OF MSG?
+	JZ	ILPRET		;   YES, RETURN
+	CALL	CTYPE		;TYPE THE MSG
+	INX	H		;TO NEXT CHAR
+	JMP	ILPLP		;LOOP
+;...
+;
+ILPRET:
+	XTHL			;RESTORE HL
+	RET			;PAST MSG
+;.....
+;
+;
+EXITLG:				; SPECIAL LOG CALLER EXIT
+	IF	LOGCAL
+	JMP	LOGCALL
+	ENDIF
+;
+	JMP	EXIT
+;.....
+;
+;
+; ---> ERXIT:  Exit printing message following call
+;
+ERXIT:
+	POP	D		;GET MESSAGE
+	MVI	C,PRINT 	;GET BDOS FNC
+	CALL	BDOS		;PRINT MESSAGE
+EXIT:
+	LHLD	STACK		;GET ORIGINAL STACK
+	SPHL			;RESTORE IT
+;
+	IF	SETAREA
+	CALL	RESTU		;RESTORE OLD AREA USER AND DRIVE
+	ENDIF
+;
+	RET			;--EXIT-- TO CP/M
+;.....
+;
+;
+	IF	SETAREA
+;
+; ---> RESTORE THE OLD USER AREA AND DRIVE FROM A RECEIVED FILE
+;
+RESTU:
+	LDA	OLDDRV		;RESTORE THE OLD DRIVE
+	MOV	E,A
+	CALL	RECDRX
+	LDA	OLDUSR		;RESTORE THE OLD USER NUMBER
+	MOV	E,A
+	JMP	RECARE
+;...
+;
+;
+; ---> SET USER AREA TO RECEIVE FILE
+;
+RECAREA:
+	CALL	RECDRV		;OK SET THE DRIVE TO ITS PLACE
+	MVI	E,RECU		;OK NOW SET THE USER AREA
+RECARE:
+	MVI	C,USER		;TELL BDOS WHAT WE WANT TO DO
+	CALL	BDOS		;DO IT
+	RET
+;.....
+;
+;
+RECDRV:
+	MVI	E,DEFDRV-'A'	;MAKE DRIVE CP/M NUMBER
+RECDRX:
+	MVI	C,SELDRV	;TELL BDOS
+	CALL	BDOS		;DO IT
+	RET			;BACK
+;.....
+;
+	ENDIF
+;
+;
+; Move 128 characters from 'HL' to 'DE' length in 'B'
+;
+MOVE128:
+	MVI	B,128		;SET MOVE COUNT
+MOVE:
+	MOV	A,M		;GET A CHAR
+	STAX	D		;STORE IT
+	INX	H		;TO NEXT "FROM"
+	INX	D		;TO NEXT "TO"
+	DCR	B		;MORE?
+	JNZ	MOVE		;   YES, LOOP
+	RET			;   NO, RETURN
+;.....
+;
+;
+;***********************************************************************
+;
+; CRCSUBS (Cyclic Redundancy Code Subroutines) version 1.20
+; 8080 Mnemonics
+;
+; These subroutines will compute and check a true 16-bit Cyclic Redun-
+; dancy Code for a message of arbitrary length.
+;
+; (Theory and appliction are discussed extensively in the XMODEMxx.HIS
+; file.  See that for additional information.)
+;
+;***********************************************************************
+;
+;
+; ENTRY	CLRCRC,UPDCRC,FINCRC,CHKCRC
+;
+CLRCRC:
+	PUSH	H		;RESET CRC ACCUMULATOR FOR A NEW MSG.
+	LXI	H,0
+	SHLD	CRCVAL
+	POP	H
+	RET
+;
+UPDCRC:
+	PUSH	PSW		;UPDATE CRC ACCUMULATOR WITH BYTE IN 'A'
+	PUSH	B
+	PUSH	H
+	MVI	B,8
+	MOV	C,A
+	LHLD	CRCVAL
+UPDLOOP:
+	MOV	A,C
+	RLC
+	MOV	C,A
+	MOV	A,L
+	RAL
+	MOV	L,A
+	MOV	A,H
+	RAL
+	MOV	H,A
+	JNC	SKIPIT
+;
+	MOV	A,H		;The generator is X^16 + X^12 + X^5 + 1
+	XRI	10H		;as recommended by CCITT.  An alternate
+	MOV	H,A		;generator which is often used in
+	MOV	A,L		;synchronous transmission protocols is
+	XRI	21H		;X^16 + X^15 + X^2 + 1. This may be used
+	MOV	L,A		;by substituting XOR 80H for XOR 10H and
+SKIPIT:
+	DCR	B		;XOR 05H for XOR 21H in the adj. code.
+	JNZ	UPDLOOP
+	SHLD	CRCVAL
+	POP	H
+	POP	B
+	POP	PSW
+	RET
+;
+FINCRC:
+	PUSH	PSW		;FINISH CRC CALC FOR OUTBOUND MSG.
+	XRA	A
+	CALL	UPDCRC
+	CALL	UPDCRC
+	PUSH	H
+	LHLD	CRCVAL
+	MOV	D,H
+	MOV	E,L
+	POP	H
+	POP	PSW
+	RET
+;.....
+;
+;
+CHKCRC:
+	PUSH	H		;CHECK CRC BYTES OF RECEIVED MSG.
+	LHLD	CRCVAL
+	MOV	A,H
+	ORA	L
+	POP	H
+	RZ
+	MVI	A,0FFH
+	RET
+;.....
+;
+;
+CRCVAL:	DB	0,0
+;
+;
+;
+; Temporary storage area
+;
+;
+CONONL:	DB	0		;CTYPE CONSOLE-ONLY FLAG		
+CRCFLG:	DB	'C'		;SET TO NULL IF CRC USED
+ERRCDE:	DB	0		;RECEIVE ERROR CODE
+ERRCT:	DB	0		;ERROR COUNT
+FRSTIM:	DB	1		;TURNED OFF AFTER FIRST 'SOH' RECEIVED
+MAXEXT:	DB	0		;HIGHEST EXT. # SEEN IN FILE SIZE CALC.
+RCNT:	DB	0,0		;RECORD COUNT
+RCVRNO:	DB	0		;RECORD # RECEIVED
+RECDNO:	DB	0,0		;CURRENT RECORD NUMBER 
+OLDDRV:	DB	0		;SAVE THE ORIGINAL DRIVE NUMBER
+OLDUSR:	DB	0		;SAVE THE ORIGINAL USER NUMBER
+OPTSAV:	DB	0		;SAVE OPTION HERE FOR CARRIER LOSS
+;
+;
+; Following 3 used by disk buffering routines
+;
+EOFLG:	DB	0		;'EOF' FLAG (1=TRUE)
+RECPTR:	DW	DBUF
+RECNBF:	DB	0		;# OF RECORDS IN THE BUFFER
+	DS	60		;STACK AREA
+;
+STACK:	DS	2		;STACK POINTER
+;
+;
+; 16 record disk buffer
+;
+DBUF:	DS	0		;16 RECORD DISK BUFFER
+;
+; BDOS equates
+;
+WRCON	EQU	2
+PRINT	EQU	9
+SELDRV	EQU	14		;SELECT DRIVE
+OPEN	EQU	15		;0FFH = NOT FOUND
+CLOSE	EQU	16		;	"       "
+SRCHF	EQU	17		;	"       "
+SRCHN	EQU	18		;	"       "
+ERASEF	EQU	19		;NO RET CODE
+READ	EQU	20		;0=OK, 1=EOF
+WRITE	EQU	21		;0=OK, 1=ERR, 2=?, 0FFH=NO DIR SPC
+MAKE	EQU	22		;0FFH=BAD
+CURDRV	EQU	25		;GET CURRENT DRIVE
+SETDMA	EQU	26		;SET DMA
+USER	EQU	32		;SET USER AREA TO RECEIVE FILE
+BDOS	EQU	BASE+5
+FCB	EQU	BASE+5CH	;SYSTEM FCB
+FCBEXT	EQU	FCB+12		;FILE EXTENT
+FCBRNO	EQU	FCB+32		;RECORD #
+FCB2	EQU	BASE+6CH	;SECOND FCB
+;.....
+;
+;
+	END
+

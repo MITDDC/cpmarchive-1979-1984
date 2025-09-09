@@ -1,0 +1,237 @@
+Miscellaneous Routines -- Introduction
+BDOS and BIOS Routines
+Capitalization Routines
+Convert ASCII to Hexadecimal
+End of Code
+Exchange Nybbles
+Memory Fill Routines
+Memory Move Routines
+Delay Routine
+Version Number of SYSLIB
+:Miscellaneous Routines -- Introduction
+
+     This  section  of  the  Help File  describes  the  following 
+Miscellaneous Routines --
+          BDOS      For Direct BDOS Interface
+          BIOS      For Direct BIOS Interface
+          CAPS      For Character Capitalization
+          CAPSTR    For String Capitalization
+          CATH      Convert ASCII Character to Hexadecimal
+          CODEND    Provide End of Code/Data Area
+          EN        Exchange Nybbles in A
+          FILLB     Fill Memory (up to 255 bytes)
+           FILLBC   Fill Memory (up to 65,535 bytes)
+           HFILB    Fill Memory (up to 255 bytes)
+           HFILBC   Fill Memory (up to 65,535 bytes)
+          MOVEB     Move Memory (up to 255 bytes)
+           MOVEBC   Move Memory (up to 65,535 bytes)
+           HMOVB    Move Memory (up to 255 bytes)
+           HMOVBC   Move Memory (up to 65,535 bytes)
+          PAUSE     Delay N 10th of a Second
+          VERSION   Return Version Number of SYSLIB
+:BDOS and BIOS Routines
+
+     Routine Name:  BDOS
+     Function:
+          Call  CP/M  Entry  Point  at location  5  and  preserve 
+Registers DE and BC.
+     Inputs:  C and DE provide input parameters
+     Outputs:  A and HL provide output parameters
+     Registers Affected:  PSW, HL
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -Determined by Routines Called-
+     Routine Name:  BIOS
+     Function:
+          BIOS provides the user with a direct interface into the 
+CP/M  BIOS.   It  is called with the A Reg containing  the  index 
+offset  into the BIOS JMP table.   No registers are preserved  by 
+this routine.   The contents of HL,  DE, and BC are passed to the 
+BIOS unchanged.
+
+     The following table summarizes the BIOS JMP Table Entries --
+
+   Offset Function
+      0   Cold Start
+      1   Warm Start
+      2   Console Status; Returns A=0FFH if char ready, A=0 if
+               not
+      3   Console Input; Returns char in A
+      4   Console Output; Char passed in C
+      5   List Output; Char passed in C
+      6   Punch Output; Char passed in C
+      7   Reader Input; Returns char in A
+
+BIOS, Con't
+   Offset Function 
+      8   Home Disk Head (Return Version Number); Returns
+               Version Number in HL
+      9   Select Disk; Disk Number (A=0, etc) passed in C
+     10   Set Track Number; Track Number passed in C
+     11   Set Sector Number; Sector Number passed in C
+     12   Set DMA Address; DMA Address passed in BC
+     13   Read Block from Disk; Returns A=0 if OK, A=1 if Error
+     14   Write Block to Disk; Returns A=0 if OK, A=1 if Error
+
+     15   List Status; Returns A=0FFH if ready to output, A=0
+               if not
+     16   Sector Translation; Logical-to-Physical Sector
+               Translation; Logical Sector Number passed in BC
+               and Translate Table Address passed in DE; Returns
+               Physical Sector Number in HL
+
+
+BIOS, Con't
+     Inputs:  A = Offset (as per Table Above)
+              BC = Input Parameters
+     Outputs:  A, HL = Output Parameters
+     Registers Affected:  All
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+:Capitalization Routines
+
+     Routine Name:  CAPS
+     Function:
+          Capitalize  ASCII  character  in Register A  if  it  is 
+lower-case  alphabetic  (a-z);  otherwise,  return A  unaffected.  
+Only  the lower seven bits of the byte are  considered,  and  the 
+Most Significant Bit is masked out to zero.
+     Inputs:  A = character to capitalize
+     Outputs:  A = capitalized character
+     Registers Affected:  PSW
+     SYSLIB Routins Called:  -None-
+     Special Error Conditions:  -None-
+
+
+     Routine Name:  CAPSTR
+     Function:
+          CAPSTR capitalizes the <NULL>-terminated string pointed 
+to by HL.  No Registers are affected.
+     Inputs:  HL pts to first byte of string
+     Outputs:  None (String is Capitalized)
+     Registers Affected:  None
+     SYSLIB Routines Called:  CAPS
+     Special Error Conditions:  None
+
+:Convert ASCII to Hexadecimal
+
+     Routine Name:  CATH
+     Function:
+          Convert  the  ASCII  Hexadecimal  character  in  the  A 
+Register to binary in the A Register.   If invalid character (not 
+0-9, A-F), return <SP> (20 Hex) in A Register as error code.
+     Input:  A = ASCII Hex Character (0-9, A-F)
+     Output:  A = Binary value represented by char
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:
+          If  invalid  hex  char,  <SP> (20 Hex)  returned  in  A 
+Register.
+
+:End of Code
+
+     Routine Name:  CODEND
+     Function:
+          Return  the address of the next page following the last 
+byte  of code.   This is useful in determining where the  scratch 
+area begins.
+     Inputs:  None
+     Output:  HL=Address of next page
+     Registers Affected:  HL
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+:Exchange Nybbles
+
+     Routine Name:  EN
+     Function:
+          Exchange  Nybbles in Register A;  High-order four  bits 
+are exchanged with Low-order four bits of Register A.
+     Inputs:  A = Byte input
+     Outputs:  A = Byte output
+     Registers Affected:  PSW
+     SYSLIB Routines Called:  -None-
+     Special Error Conditions:  -None-
+
+:Memory Fill Routines
+
+     Routine Names:  FILLB, FILLBC, HFILB, HFILBC
+     Function:
+          These  routines fill an area of memory with a  constant 
+byte value.   FILLB can fill up to a 256-byte buffer,  and FILLBC 
+can fill up to a 65,536-byte (within reason) buffer.
+     FILLB  and FILLBC have no effects on any  registers.   HFILB 
+and HFILBC both affect the HL register pair, and they return with 
+HL  pointing to the byte after the last byte filled.   HFILB  and 
+HFILBC  are  useful when further processing from the  last  point 
+filled is desired.
+
+     Inputs:  HL points to the first byte of the buffer to be filled
+              B (for FILLB) or BC (for FILLBC) = number of bytes in buffer
+              A = byte value to fill buffer with
+
+
+     Outputs:  None for FILLB and FILLBC (Buffer is filled)
+               HL points to next byte for HFILB and HFILBC
+
+     Registers Affected:  None for FILLB, FILLBC; HL for HFILB,
+                              HFILBC
+
+     SYSLIB Routines Called:  -None-
+
+     Special Error Conditions:  -None-
+
+:Memory Move Routines
+
+     Routine Names:  MOVEB, MOVEBC, HMOVB, HMOVBC
+     Function:
+          Move the block of memory pointed to by HL to the memory 
+location  pointed  to by DE.   MOVEB can move up  to  a  256-byte 
+buffer, and MOVEBC can move up to a 65,536-byte buffer.
+     MOVEB  and MOVEBC have no effects on any  registers.   HMOVB 
+and HMOVBC both affect the HL register pair, and they return with 
+HL and DE pointing to the byte after the last byte moved.   HMOVB 
+and HMOVBC are useful when further processing from the last point 
+filled is desired.
+
+     Inputs:  HL points to the first byte of the buffer to move
+              DE points to the first byte of the buffer to move to
+              B (for MOVEB) or BC (for MOVEBC) = number of bytes in buffer
+
+
+     Outputs:  None for MOVEB and MOVEBC (Buffer is moved)
+               HL and DE pt to byte after last byte moved for
+                    HMOVB and HMOVBC
+
+     Registers Affected:  None for MOVEB, MOVBC; HL, DE for
+                              HMOVB, HMOVBC
+
+     SYSLIB Routines Called:  -None-
+
+     Special Error Conditions:  -None-
+
+:Delay Routine
+
+     Routine Name:  PAUSE
+     Function:
+          Delay N 10ths of a Second.
+     Inputs:  HL = N (Number of 10ths of a Second Delay desired)
+              B = Processor Speed in MHz (1, 2, 3, 4, ...)
+     Outputs:  None (Routine returns N 10ths of a Second later)
+     Registers Affected:  None
+     SYSLIB Routines Called:  None
+     Special Error Conditons:  None
+
+
+:Version Number of SYSLIB
+
+     Routine Name:  VERSION
+     Function:
+          Return Version Number of SYSLIB.
+     Inputs:  None
+     Outputs:  HL=Version (H=Major, L=Minor; H=2, L=1 for 2.1)
+     Registers Affected:  HL
+     SYSLIB Routines Called:  None
+     Special Error Conditions:  None
+
+

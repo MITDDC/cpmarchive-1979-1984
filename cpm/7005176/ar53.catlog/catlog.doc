@@ -1,0 +1,222 @@
+(THIS IS FILE CATALOG.DOC AS OF 3/13/78)
+
+CP/M DISK CATALOGING SYSTEM FOR COMPUTER HOBBYISTS
+                BY WARD CHRISTENSEN
+
+                -----OVERVIEW-----
+
+I have always wanted to be able to keep track of
+where files are on my CP/M diskettes.  The first
+step was to make a 'DIR' listings with the printer on.
+
+Next I wrote a command called 'MAP' which printed the
+disk extent information also (but not any extent past
+the first).  Then I wrote 'SMAP' which produces a sorted
+directory listing.  This made finding files in the listings
+easier.  At this time I also adopted the convention of
+editing a 'dummy' file on each disk, called '-DISK.nnn'
+where nnn is the disk's serial number.  Later I changed
+the word 'DISK' to any more meaningful name, such as
+'-WORK.023' or '-CBIOS.019', etc.  The important
+thing was that each started with a '-' which meant it
+would sort to the top of the sorted listing.
+
+Eventually, I wrote 'FMAP' which creates a sorted
+directory listing, but also, if 'FMAP *.* F' is typed,
+writes 'NAMES.SUB' to disk with the names of all the
+files on the disk.
+
+This file of names then got me thinking about having
+a master file of names, or a 'master catalog'.
+
+That is what I did.  I now have 1 disk file which
+contains the file names and disk names for every
+pertinent file I have.  I also wrote a command
+which behaves like 'DIR' but scans the master catalog.
+
+                -----PROGRAMS-----
+
+UCAT.ASM/COM  Maintains 'MAST.CAT'
+
+CAT.ASM/COM   Allows 'DIR' search of 'MAST.CAT'
+
+FMAP.ASM      Creates a file of the names on a diskette
+              as input to 'UCAT.COM' along with 'MAST.CAT'
+              FMAP is on CP/M library volume 8 as program
+              number 8.14
+
+
+        -----INSTALLING THE CATALOGING SYSTEM-----
+
+1)      Edit 'MAST.CAT' in order to place entries
+in it for the file names you don't want to be placed in
+the catalog.  I already have ASM.COM, STAT.COM, PIP.COM,
+and others in the sample MAST.CAT.  Since these are on nearly
+every disk, I therefore don't want them to take room in the
+catalog.  N-O-T-E you don't have to edit the file -
+you may type it and decide to take my defaults.
+NOTE The format of the 'empty' MAST.CAT is simply
+a list of names which you don't want put in the catalog.
+This may be 1 or more file names.  It cannot be zero names.
+If you want everything cataloged, put a name such as
+'DUMMY.FIL' in the catalog.  The format is as follows:
+Each name is on a separate line.  The first name is pre-
+ceeded by a '('.  The last is followed by ')'. thus:
+(ASM.COM
+PIP.COM
+STAT.COM)
+
+2)      Pick a disk which will contain the master
+catalog 'MAST.CAT'.  You m-u-s-t serial number (3 digits)
+all your diskettes, placing a file '-anyname.nnn' on
+each disk.  The UCAT routine then takes this as the name
+of the disk.
+
+3)      Put the following files on this master disk:
+        MAST.CAT
+        FMAP.COM
+        UCAT.COM
+        CAT.COM
+        -anyname.nnn
+
+4)      Type: FMAP A: Q
+This will creates NAMES.SUB, which has the names of
+the files on this disk.  The 'q' means to write the file
+to disk 'quietly'.  If you want to see the listing, type:
+        FMAP A: F
+Which will write the file, but also print the sorted
+directory listing.
+
+5)      Type: UCAT
+This will merge the file names in 'NAMES.SUB' (created by
+FMAP) with the names in MAST.CAT.  It will report the names
+of any files which are added to, or deleted from, the
+catalog.
+
+        -----USING THE CATALOGING SYSTEM-----
+
+1)      Whenever you put a new diskette into service
+you must place a '-anyname.nnn' entry in the directory.
+nnn should be the disk's unique serial number.  The easiest
+way to place an entry in the directory, with 0 data as-
+sociated with it is to 'ED -anyname.nnn' then when
+'NEW FILE' types, type control-c.  This will leave the
+entry in the catalog, but will not take any data space.
+Then type:ERA *.$$$ (or ERA B:*.$$$) to erase the temporary
+file which was created by the editor.
+
+2)      Assuming the disk with the catalog programs is
+on drive a, whenever you want to catalog the disk on
+drive b, type:
+        FMAP B: Q
+ then type:
+        UCAT
+This results in the disk being added to the catalog. 
+This can be done whenever you want, as the entries for the
+disk are deleted from MAST.CAT and the new ones added. 
+This means the cataloging system properly keeps track of
+erased files also (i.e. erases them from the catalog when
+it no longer finds them on the disk being cataloged). If
+you want to re-catalog the 'A' disk, type:
+        FMAP A: Q
+then type:
+        UCAT
+
+3)      Use the 'CAT' command to scan the catalog
+as you use 'DIR' to scan the directory of the current
+disk.  The operands of 'CAT' are just like 'DIR' except
+that there is a second filename.type - namely the disk's name
+and serial.  N-O-T-E that UCAT deletes the leading '-'
+when it places a disk name in the directory.  Therefore
+you don't use the '-' when asking for a particular disk.
+
+
+Examples of 'CAT' command requests:
+
+CAT                     lists entire catalog
+CAT *.* *.002           lists entries for disk 002
+CAT *.asm               lists all asm files
+CAT A*.*                lists all files starting with 'A'
+CAT *.BAS WORK.*        lists all 'BAS' files on any
+                        disk with name 'WORK' (any serial)
+
+Note that what you type following the CAT command appears
+as the title of the resultant listing.  This is particularly
+useful for keeping hard copy listings of your catalog, such
+as by typing:
+
+        CAT *.* *.* AS OF 02/17/78
+
+this will result in the title:
+
+        FILES: *.* *.* AS OF 12/17/77
+
+appearing on each page of the catalog listing.
+
+4)      If you want to erase something from MAST.CAT
+you do so by erasing the file from the diskette it is
+on, then cataloging that disk.  If you crash a disk and
+want to erase all it's entries from the catalog, you have
+to edit a dummy 'NAMES.SUB' with just the disk name in it,
+then execute 'UCAT' which will be faked into thinking you
+are cataloging an empty disk.  This will cause all entries
+for the disk to be erased.
+
+                EXAMPLE:
+Suppose disk '-WORK.023' crashed, and you want to delete
+all references to it from MAST.CAT.  (you might first want
+to do 'CAT *.* *.023 to see what was lost).  Edit NAMES.SUB
+and place the following single line in it:
+-WORK.023
+then run UCAT.  This will result in all files referring to
+-WORK.023 being erased.
+
+-------------------------------------------------
+                N O T E S
+-------------------------------------------------
+
+The UCAT program creates a file 'NEW.CAT', and ONLY
+when the update appears to be successful, does it do
+the following functions internally:
+
+        ERA MAST.BAK
+        REN MAST.BAK=MAST.CAT
+        REN MAST.CAT=NEW.CAT
+
+Thus, there are 3 versions of the catalog on your disk at
+one time:  MAST.BAK, MAST.CAT, AND NEW.CAT, so if your disk
+is low on space, you may sacrifice this integrity, and manually
+ERA MAST.BAK before running UCAT.  The program could
+also be modified, to do the erase first.
+
+
+
+
+-------------------------------------------------
+-------------------------------------------------
+
+
+QCAT was submitted subsequently, with the following comments:
+
+QCAT allows cataloging disks on a 1 disk system.
+You type QCAT, and the program asks you to mount the
+disk to be cataloged, and press a D.  You do so.  It
+then tells you to mount the catalog disk, and press return.
+You do that.  This causes a "NAMES.SUB" file to be written
+to the catalog disk.  Type: UCAT which will then execute the
+catalog updating program, which alphabetically merges
+NAMES.SUB with the file MAST.CAT, then erases the NAMES.SUB
+file.
+
+NOTE that each disk to be cataloged must have a file
+"-diskname.serial" (such as "-MAC.005").  When the list
+of names on the disk is sorted, the leading "-" on this
+filename causes it to be sorted first.  It is then taken
+as the disk name and serial, and is written to the master
+catalog next to each filename on the disk.
+
+You are referred to the previous documentation on the
+cataloging system for more details.
+
+------
+

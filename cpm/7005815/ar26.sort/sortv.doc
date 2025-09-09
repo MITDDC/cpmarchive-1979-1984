@@ -1,0 +1,42 @@
+		SORTV.DOC (vevised 1/14/81)
+	   Brief commentary on the use of SORTV
+                   by Ward Christensen
+
+SORTV is a "simple" sort program for variable length (CR/LF
+terminated) record files, i.e. the typical CP/M file of
+lists of things.  It defaults to sorting from the 1st char
+in the line, but can skip past any particular characters
+that occur in the file.  The file being sorted must fit
+in memory.  You may write back to the input file, or to
+another.  /// A typical use would be to sort a list of 
+filenames into filetype sequence, i.e. names.sub from FMAP.
+Some examples: If you want to sort "files.nam" into se-
+quence: SORTV FILES.NAM;  To sort a list of names (as pro-
+duced by FMAP *.* Q, for example) by filetype: 
+SORTV NAMES.SUB @.  The "@" means to sort "at", and the "."
+means at the period.  Note EACH line must have the skip-
+character specified.  To sort a file skipping a period,
+a comma, and 2 spaces: "SORTV NAME @.,  " where you put 2
+spaces after the ",".
+
+
+Here's the general way to execute SORTV -
+
+To write back to file in place:   SORTV name
+
+To write to another: SORTV inputname outputname
+
+If you should want to use a tab as a skip character, you
+must either specify an output filename, or use a single
+"." for the output name (causes input to be overlaid with
+output)  This is because CP/M doesn't like having a con-
+trol character in a place it considers to be a filename
+(one of its two it may take on a command).  Thus to skip
+a tab, a period, and another tab, writing "FILE" back to
+itself:  SORTV FILE . @^I.^I  where "^I" means you pressed
+the "tab" key.  If you typed: SORTV FILE @^I.^I CP/M would
+reject the command because it thinks you are putting a
+tab into the second (output) filename.  P.S. bug: file must
+end with cr/lf.  Enjoy.
+			   Ward Christensen  01/14/81
+

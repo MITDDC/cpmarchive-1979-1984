@@ -1,0 +1,31 @@
+Sig/M volume 20      PCE System Monitor
+          
+          (original materials from Pascal Z User Group volume 2)
+
+          -CATALOG.020        contents of Sig/M volume 20
+          CRCKFILE.020        CRC of Sig/M volume 20
+          ABSTRACT.020        comments on PCE System Monitor
+
+20.1     SYSMON.DOC    103K  Complete Manual of System Monitor
+20.2     SYSMONA.Z80	 2K  Central subsystem module 
+20.3     ASPM1.Z80	11K  Command subsystem, module one 
+20.4     ASPM2.Z80	12K  Command subsystem, module two 
+20.5     VECTOR.Z80	 3K  Intel I/O standard vector subsystem
+20.6     CONSOL.Z80	14K  Console subsystem 
+20.7     DISK.Z80	 5K  Floppy disk subsystem, it ties CPM
+                             to the monitor so that both operate
+                             as an integrated whole 
+20.8     CASS.Z80	 8K  Cassette subsystem, controls the Dajen/
+                             Teletek UCRI, includes Zapple compatile
+			     (RI) & (PO)
+20.9     BMGEN.Z80	 1K  Bit map generator
+20.10    BMGEN.COM       1K  /
+20.11    LOADER.Z80     10K  Static loader for system
+20.12    LOADER.COM      3K  /
+20.13    SYS.COM	16K  Sys Monitor boot-up program
+20.14    ONE.HEX	14K  Used with bringing up bit map
+20.15    ZERO.HEX	14K  Used with bringing up bit map 
+20.16    COPYTT.Z80	 1K  Sample command, similiar to a COM file,
+                             this one is a Disk subsystem test utility
+20.17    COPYTT.SMC      1K  /
+

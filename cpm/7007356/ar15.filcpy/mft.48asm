@@ -1,0 +1,1088 @@
+;;;	MFT - multiple file transfer (for single drive systems)
+;
+;     **Based on article in Dr. Dobbs Journal of Computer**
+; **Calisthenics & Orthodontia #49, Box E, Menlo Park, Ca. 94025**
+;		by L.E. Hughes	9/79
+;		Mycroft Labs
+;		Atlanta, Ga
+;	-------------------------
+;Version 4.8...Added counter to loop that prints
+; out file names so that no more than 11 characters
+; are printed and added "." to delineate file name
+; from file type.  Added "disk reset" call when the
+; BDOS read function returns a value of 10 since that
+; indicates a media change under cp/m plus (v3.x).
+; Made slight modifications to messages that are
+; printed to console.  Also added disk reset call
+; before each read pass.  MFT now checks version of
+; cpm at run time so no conditional assemble
+; is necessary.
+;			(mabry...19 August 1983)
+;
+;Version 4.7B...Added symbol num$fls that must be
+; equated to the maximum number of files that your
+; system has on one logical drive.  Till now it was
+; fixed at 64 (ie "standard" CP/M).  A drive with
+; more than that would cause the file name table
+; to blow up into the stack.  (mabry)
+;
+;Version 4.7A...Added some code into disk reset
+; subroutine so that if logged-in disk is not A:
+; then files would be read from and written to
+; that logged-in disk and not automatically from
+; and to A:         (dave mabry...23 Dec 82)
+;
+;Ver 4.7 - fixed some bugs relating to disk i/o and added
+; switch for cp/m 2.2.
+;
+;Version 4.6A - gfn3 routine restored to version 4.5 -
+; 4.6 revision did not handle eight char. filenames.
+; I could not reproduce the error reported by cml when
+; copying ufn.<sp><sp><sp>. (CHS) 4/30/81
+;
+; Modified to VER. 4.6 to strip off $R/O attribute
+; in output filename.  If source was R/O then cp/m 
+; gave a "Bdos error on $R/O file" when an attempt was
+; made to write to the newly created file.
+;
+; Changed 'jz     gfn4' in rtn. gfn3
+; to	  'jz     gfn3' in order to ignore spaces
+; in the file type. Before, whenever an extension
+; was '.<sp><sp><sp>' multiple copies of the file
+; name were built in the ifnt.
+;
+; Added equate 'nosys' and associated rtn. in section
+; 'cfnt3:' in order to ignore all files with a 'sys'
+; attribute.  This will allow the user to mask-off
+; any file(s) he doesn't want to copy.
+;	   cml	4/10/81
+;
+;Version 4.5 - 10/29/80 - Deleted system disk request of V4.0
+; to shorten messages, minor changes in abort options and
+; other messages. Moved disk reset of V4.1 to point
+; before directory search. (CHS)
+;
+;Version 4.4 - 10/28/80 - Modified to bail out with message 
+; if no FCB is specified. Updates rearranged with most
+; recent first for reader convenience. (Charles H. Strom)
+;
+;VERSION 4.3 BY LEWIS MOSELEY, JR.  3/22/80
+; FIXED BUG WHICH SHOWED UP WHEN MULTIPLE COPIES WERE
+; MADE OF A MULTIPLE EXTENT FILE, IN THAT CP/M OPEN
+; THE NEXT EXTENT USING THE DATA AREA TO SEARCH THE
+; DIRECTORY, SCREWING UP THE DATA BLOCK THAT IS THERE.
+;
+;VERSION 4.2 BY LEWIS MOSELEY, JR.  2/23/80
+; FIXED BUG THAT OCCURRED WHEN ONLY A SINGLE FILE
+; WAS SPECIFIED AND THAT FILE WAS NOT FOUND:
+; PROGRAM HUNG IN A LOOP
+;
+;VERSION 4.1 BY LES FREED AND LEWIS MOSELEY 2/11/80
+; ADDED DISK RESET ON DISK CHANGE TO ALLOW
+; CHANGING DENSITY BETWEEN DISKS
+; ADDED CTL-C ABORT 
+;
+;VERSION 4.0 BY LEWIS MOSELEY, JR.  12/79
+; ADDED OPTION FOR MULTIPLE OUTPUT COPIES
+; ADDED REQUEST FOR SYSTEM DISK BEFORE REBOOT
+;
+;MODIFIED FOR SOL & COMPATABLE COMPUTERS BY
+;LEWIS MOSELEY, JR. - ATLANTA,GA.
+;
+VERSION EQU	4
+MODLEV	EQU	8
+;
+ENTRY	EQU	0005H		;bdos entry point
+TFCB	EQU	005CH		;system file control block
+DBUF	EQU	0080H		;system disk buffer
+;
+TRUE	EQU	(NOT 0) AND 0FFH ;proper true value
+FALSE	EQU	0H
+;
+NOSYS	EQU	TRUE		;true to ignore all $SYS files
+; The next symbol (NUM$FLS) must be set for the maximum number
+;  number of files you can possibly have on one disk.
+NUM$FLS	EQU	128	; <=== Be sure to set this for your system
+			;  Every file takes away 16 bytes of
+			;  buffer space for transfer so don't make
+			;  it larger than it has to be.
+;
+CR	EQU	0DH
+LF	EQU	0AH
+;
+RCFC	EQU	01		;read console
+WCFC	EQU	02		;write console
+VNFC	EQU	12		;return version number
+RDFC	EQU	13		;reset disk
+SDFC	EQU	14		;select disk
+OFFC	EQU	15		;open file
+CFFC	EQU	16		;close file
+SFFC	EQU	17		;search first
+SNFC	EQU	18		;search next
+DFFC	EQU	19		;delete file
+RRFC	EQU	20		;read record
+WRFC	EQU	21		;write record
+MFFC	EQU	22		;make file
+CDFC	EQU	25		;get current disk
+SAFC	EQU	26		;set address
+;
+FN	EQU	01		;file name offset
+FT	EQU	09		;file type offset
+EX	EQU	12		;extent number offset
+NR	EQU	32		;next record offset
+;
+MEDCH	EQU	10		; error value for media changed (cpm plus)
+;
+	ORG	100H
+;
+	JMP	MFT		; Jump over switches
+;
+IGN$SYS: DB	NOSYS		; True to ignore "system" files
+	DB	0		; Reserved for future enhancements
+	DB	0		;    "      "    "         "
+	DB	0		;    "      "    "         "
+;
+MFT:	LXI	SP,STACK+64
+	LXI	H,MSG1		;print 'MFT VX.X (date)'
+	CALL	WASC
+	XRA	A		;clear break flags
+	STA	IBFLG
+	STA	OBFLG
+	STA	NDFLG		;clear no dup flag
+	STA	CPM2		; Clear CP/M 2.x flag
+	STA	CPM3		; Clear CP/M Plus flag (3.x)
+	STA	CPM2O3		; Clear "CP/M 2 or 3" flag
+;
+; Now check for version of CP/M and set flags appropriately
+;
+	MVI	C,VNFC		; Version number function
+	CALL	ENTRY
+	MOV	A,L		; Get return code
+	ORA	A		; Is it CP/M V1.4 ?
+	JZ	VER14		; Yes, branch around this junk
+	ANI	0FH		; Mask off high nybble
+	ORI	'0'		; Make if ascii
+	STA	CPMVN+2		; Store version number of release
+	MOV	A,L		; Get return code again
+	RLC			; Get high nybble
+	RLC
+	RLC
+	RLC
+	ANI	0FH		; Mask off low nybble
+	ORI	'0'		; Make it ascii
+	STA	CPMVN		; Store release number
+	MOV	A,L		; Get full number again
+	CPI	20H		; Find version number for flags
+	JC	VER14		; Jump if CP/M V1.4
+	CPI	30H		; Is it 2.x ?
+	MVI	A,TRUE		; Get ready to set flags
+	JC	VER2X		; Jump if CP/M V2.x
+	STA	CPM3		; Set CP/M Plus flag only
+	JMP	VER14
+;
+VER2X:
+	STA	CPM2		; Set flag for CP/M V2.x
+;
+VER14:
+	LDA	CPM2		; Set flag for cpm 2 or cpm 3
+	LXI	H,CPM3
+	ORA	M
+	STA	CPM2O3
+;
+; Tell user version of cpm under which we are running
+;
+	LXI	H,CPMV1
+	CALL	WASC
+	LXI	H,CPMV2
+	LDA	CPM3		; Is it CP/M Plus or CP/M ?
+	RRC
+	CC	WASC		; If yes, write "Plus"
+	LXI	H,CPMV3
+	CALL	WASC		; Write version number
+;
+	LDA	TFCB+1		;If no FCB specified
+	CPI	' '		;then say so
+	JNZ	OK
+	LXI	H,MSGK		;and bail out
+	CALL	WASC		;here
+	JMP	0000H		;via warm boot
+;
+;Calculate buffer size = fwa(BDOS) - fwa(MBUF)
+;
+OK:	LHLD	ENTRY+1	 	;hl = (entry+1) - 6
+	LXI	D,-6
+	DAD	D
+	MOV	A,L
+	ANI	80H		;hl = hl mod 128
+	MOV	L,A
+	LXI	D,MBUF		;hl = hl - fwa(MBUF)
+	MOV	A,L
+	SUB	E
+	MOV	L,A
+	MOV	A,H
+	SBB	D
+	MOV	H,A
+	DAD	H		;hl = hl / 128
+	MOV	L,H
+	MVI	A,0
+	ACI	0
+	MOV	H,A
+	DCX	H		;subtract one
+	SHLD	SPACE		;save as buffer size
+	LXI	H,MSG2		;write 'Buffer size = '
+	CALL	WASC
+	LHLD	SPACE		;write size of buffer
+	CALL	WDWC
+	LXI	H,MSG3		;write ' sectors'
+	CALL	WASC
+;
+;Ask user to mount source disk
+;
+MFT1:	LXI	H,MSG4		;write 'Mount source disk, type CR'
+	CALL	WASC
+	CALL	RACC		;read response
+	CPI	03		;CTL-C ?
+	JZ	MFTL		;abort with message
+	CPI	CR		;loop if anything but CR
+	JNZ	MFT1
+	CALL	WEOLC		;echo CR,LF
+	CALL	RESET		;reset disk system since disk has changed
+	LDA	IBFLG		;jump if ibflg set
+	ORA	A
+	JNZ	MFT2A
+;
+;Copy command line into cbuf
+;
+	LXI	H,DBUF		;fwa of command line image
+	LXI	D,CBUF		;fwa of command buffer
+	MOV	B,M		;fetch command line image length
+	INX	H
+;
+MFT2:	MOV	A,M		;fetch next byte from cli
+	INX	H
+	STAX	D		;store in dbuf
+	INX	D
+	DCR	B		;decrement count
+	JNZ	MFT2		;loop until zero
+	XRA	A		;store zero byte at end
+	STAX	D
+	LXI	H,CBUF		;reset cbufp
+	SHLD	CBUFP
+	CALL	CFNT		;create file name table
+	LXI	H,FNT		;reset fnt pointers
+	SHLD	IFNTP
+	SHLD	OFNTP
+;
+MFT2A:	LXI	H,MBUF		;reset mbuf pointer
+	SHLD	MBUFP
+	LHLD	SPACE		;reset msize
+	SHLD	MSIZE
+	LDA	IBFLG		;jump if ibflg not set
+	ORA	A
+	JZ	MFT3
+	LXI	H,IFCB		;copy IFCB into TFCB
+	LXI	D,TFCB
+	MVI	B,33
+	CALL	MOVE
+	XRA	A		;clear ibflg
+	STA	IBFLG
+	INR	A		;set obflg
+	STA	OBFLG
+	LHLD	IFNTP		;back ifntp up 4 bytes
+	LXI	D,-4
+	DAD	D
+	SHLD	IFNTP
+	LXI	H,TFCB+FN	;write filename
+	CALL	WFNC
+	LXI	H,MSG6		;write ' - '
+	CALL	WASC
+	LHLD	IFNTP		;DE = ifntp
+	XCHG
+	JMP	MFT4		;continue reading previous file
+;
+;Parse off next name from cbuf
+;
+MFT3:	LHLD	IFNTP		;fetch input fnt pointer
+	MOV	A,M		;jump if end of table
+	CPI	0FFH
+	JZ	MFT9
+	MVI	M,1		;set 'file read' flag
+	INX	H
+	LXI	D,TFCB+FN	;copy filename into tfcb
+	MVI	B,11
+	CALL	MOVE
+	SHLD	IFNTP		;save input fnt pointer
+	LXI	H,TFCB+FN	;write filename
+	CALL	WFNC
+	LXI	H,MSG6		;write ' - '
+	CALL	WASC
+	XRA	A		;setup tfcb
+	STA	TFCB
+	STA	TFCB+EX
+	STA	TFCB+NR
+	CALL	OPEN		;open file
+	LHLD	IFNTP
+	XCHG
+;
+MFT4:	LHLD	MBUFP
+	MOV	A,H		;copy into fnt entry
+	STAX	D
+	INX	D
+	MOV	A,L
+	STAX	D
+	INX	D
+	XCHG			;save fnt pointer
+	SHLD	IFNTP
+	LXI	H,0		;file size (in sectors) = 0
+	SHLD	FSIZE
+;
+;Read next file from input disk
+;
+MFT6:	LHLD	MBUFP
+	XCHG
+	CALL	SETDMA
+	CALL	READ		;read next sector
+	ORA	A		;jump if normal transfer
+	JZ	MFT7
+; Next file instructions are for compatibility with CP/M Plus
+	CPI	MEDCH		; is error media change ?
+	JNZ	MFT6A		; no, branch around
+	CALL	RESET		; else, reset and reopen
+	CALL	OPEN
+	JMP	MFT6		; and try read again
+;
+MFT6A:	CPI	1		;jump if EOF
+	JZ	MFT8
+	LXI	H,MSG8		;write 'read error - '
+	CALL	WASC
+	JMP	MFT8		;continue as if EOF
+;
+MFT7:	LHLD	MBUFP		;mbufp = mbufp + 128
+	LXI	D,128
+	DAD	D
+	SHLD	MBUFP
+	LHLD	FSIZE		;fsize = fsize + 1
+	INX	H
+	SHLD	FSIZE
+	LHLD	MSIZE		;decrement msize
+	DCX	H
+	SHLD	MSIZE
+	MOV	A,H		;loop if still positive
+	ORA	L
+	JNZ	MFT6
+	LXI	H,TFCB		;copy tfcb into ifcb
+	LXI	D,IFCB
+	MVI	B,33
+	CALL	MOVE
+	MVI	A,1		;set ibflg
+	STA	IBFLG
+;
+MFT8:	LXI	D,DBUF		;reset dma pointer
+	CALL	SETDMA
+	CALL	CLOSE		;close file
+	LHLD	FSIZE		;write file size
+	CALL	WDWC
+	LXI	H,MSG9		;write ' sectors read'
+	CALL	WASC
+;
+;Update fnt, loop
+;
+	LHLD	FSIZE		;DE = file size
+	XCHG
+	LHLD	IFNTP		;store file size in fnt entry
+	MOV	M,D
+	INX	H
+	MOV	M,E
+	INX	H
+	SHLD	IFNTP		;save fnt pointer
+	LDA	IBFLG		;loop if ibflg not set
+	ORA	A
+	JZ	MFT3
+;
+;Flag that the memory buffer has been exceeded, and
+;tell user that duplicate copies cannot be made
+;
+	LDA	NDFLG		;told him already?
+	ORA	A
+	JNZ	MFT9		;jump if so
+	LXI	H,MSGH		;if not, tell him
+	CALL	WASC
+	MVI	A,1		;set NDFLG this time
+	STA	NDFLG
+;
+;Ask user to mount output disk
+;
+MFT9:	LXI	H,MSGA		;write 'Mount destination disk, type CR'
+	CALL	WASC
+	CALL	RACC		;read response
+	CPI	03		;CTL-C?
+	JZ	MFTL		;abort with message if so
+	CPI	CR		;loop if anything but CR
+	JNZ	MFT9
+	CALL	WEOLC		;echo CR,LF
+	CALL	RESET		;reset disk system 
+				;make r/w and check density
+	LDA	OBFLG		;jump if obflg not set
+	ORA	A
+	JZ	MFTA
+	LXI	H,OFCB		;copy ofcb into tfcb
+	LXI	D,TFCB
+	MVI	B,33
+	CALL	MOVE
+	CALL	OPEN		;open previous file
+	LHLD	OFNTP		;backup output fnt pointer 4 bytes
+	LXI	D,-4
+	DAD	D
+	SHLD	OFNTP
+	LXI	H,TFCB+FN	;write file name
+	CALL	WFNC
+	LXI	H,MSG6		;write ' - '
+	CALL	WASC
+	JMP	MFTB		;continue writing previous file
+;
+;Write next file to output disk
+;
+MFTA:	LHLD	OFNTP
+	MOV	A,M
+	ORA	A
+	JZ	MFTF
+	CPI	0FFH
+	JZ	MFTF
+	INX	H
+	LXI	D,TFCB+FN
+	MVI	B,11
+	CALL	MOVE
+	SHLD	OFNTP
+;
+	LDA	CPM2O3
+	RRC			; Is this cpm 2 or cpm 3 ?
+	JNC	NORO		; No, don't reset $R/O bit
+	LXI	H,TFCB+FT	;pt to $R/O byte
+	MOV	A,M		;get it from storage
+	ANI	7FH		;force it to $R/W
+	MOV	M,A		;put it back
+;
+NORO:
+	LXI	H,TFCB+FN
+	CALL	WFNC
+	LXI	H,MSG6
+	CALL	WASC
+	XRA	A
+	STA	TFCB
+	STA	TFCB+EX
+	STA	TFCB+NR
+	CALL	DELT		;try to create output file
+	CALL	MAKE
+	CPI	255		;jump if ok
+	JNZ	MFTB
+	LXI	H,MSGB		;write 'unable to create'
+	CALL	WASC
+	JMP	MFTG
+;
+MFTB:	LHLD	OFNTP
+	MOV	D,M		;fetch fwa of file from fnt
+	INX	H
+	MOV	E,M
+	INX	H
+	XCHG
+	SHLD	MBUFP		;save it
+	XCHG
+	MOV	D,M		;fetch size of file from fnt
+	INX	H
+	MOV	E,M
+	INX	H
+	XCHG
+	SHLD	FSIZE		;save it
+	SHLD	XSIZE		;save for printout
+	XCHG
+	SHLD	OFNTP
+	LHLD	FSIZE		;jump if fsize=0
+	MOV	A,H
+	ORA	L
+	JZ	MFTDA
+;
+MFTC:	LHLD	MBUFP		;set dma address to mbufp
+	XCHG
+	CALL	SETDMA
+	CALL	WRITE		;write next sector
+	ORA	A		;jump if ok
+	JZ	MFTD
+	LXI	H,MSGC		;write 'error writing file'
+	CALL	WASC
+	JMP	MFTG
+;
+MFTD:	LHLD	MBUFP		;mbufp = mbufp + 128
+	LXI	D,128
+	DAD	D
+	SHLD	MBUFP
+	LHLD	FSIZE		;fsize = fsize - 1
+	DCX	H
+	SHLD	FSIZE
+	MOV	A,H		;loop until zero
+	ORA	L
+	JNZ	MFTC
+;
+MFTDA:	LXI	H,TFCB		;copy tfcb into ofcb
+	LXI	D,OFCB
+	MVI	B,33
+	CALL	MOVE
+	LXI	D,DBUF		;reset dma pointer
+	CALL	SETDMA
+	CALL	CLOSE		;try to close file
+	CPI	255		;jump if ok
+	JNZ	MFTE
+	LXI	H,MSGD		;write 'unable to close'
+	CALL	WASC
+;
+MFTE:	LHLD	XSIZE		;write number of sectors written
+	CALL	WDWC
+	LXI	H,MSGE		;write ' sectors written'
+	CALL	WASC
+	JMP	MFTA
+;
+MFTF:	LDA	IBFLG		;loop if ibflg set
+	ORA	A
+	JNZ	MFT1
+;
+;Terminate program here on unrecoverable error or
+;when all files have been copied.  Must reload system
+;disk to avoid crash when copying to someone else's disk.
+;If normal end, and if buffer has not been exceeded, give
+;user the option of making another copy of the same
+;set of files.
+;
+MFTG:	LXI	H,MSGF		;see if option is allowed
+	LDA	NDFLG
+	ORA	A
+	JNZ	MFTH		;jump if not allowed
+	CALL	WASC		;else tell about option
+;
+MFTH:	LXI	H,MSGG		;ask for system disk
+	CALL	WASC
+	CALL	RACC		;wait for response
+	CPI	03H		;warm boot if ^C
+	JZ	0
+	CPI	CR		;attempt repeat if <RETURN>
+	JZ	MFTJ
+	JMP	MFTG		;else loop till good response
+;
+MFTJ:	CALL	WEOLC		;acknowledge command
+	LDA	NDFLG		;repeat allowed?
+	ORA	A
+	JNZ	MFTK		;jump if not
+	LXI	H,FNT		;else reset FNT pointer
+	SHLD	OFNTP
+	LXI	H,MBUF		;reset MEM BUF pointer
+	SHLD	MBUFP
+	XRA	A		;reset output interrupted flag
+	STA	OBFLG
+	JMP	MFT9		;and do again
+;
+MFTK:	LXI	H,MSGH		;cannot repeat, tell him again
+	CALL	WASC
+	JMP	MFTG		;and wait for system disk
+;
+MFTL:	LXI	H,MSGJ		;abort message
+	CALL	WASC
+	JMP	0000H		;warm boot
+
+;Subroutines
+;
+MOVE:	MOV	A,M
+	INX	H
+	STAX	D
+	INX	D
+	DCR	B
+	JNZ	MOVE
+	RET
+;
+;GFN - get file name
+;
+GFN:	MOV	A,M
+	ORA	A
+	RZ
+	CPI	' '
+	JNZ	GFN0
+	INX	H
+	JMP	GFN
+;
+GFN0:	LXI	D,XFCB
+	XRA	A
+	STAX	D
+	INX	D
+	PUSH	D
+	MVI	B,11
+	MVI	A,' '
+;
+GFN6:	STAX	D
+	INX	D
+	DCR	B
+	JNZ	GFN6
+	POP	D
+	MVI	B,9
+;
+GFN1:	MOV	A,M
+	ORA	A
+	JZ	GFN4
+	INX	H
+	CPI	' '
+	JZ	GFN4
+	CPI	'.'
+	JZ	GFN2
+	CPI	'*'
+	JZ	GFN7
+	STAX	D
+	INX	D
+	DCR	B
+	JZ	GFN5
+	JMP	GFN1
+;
+GFN7:	DCR	B
+	JZ	GFN9
+	MVI	A,'?'
+	STAX	D
+	INX	D
+	JMP	GFN7
+;
+GFN9:	MOV	A,M
+	CPI	'.'
+	JNZ	GFN4
+	INX	H
+;
+GFN2:	LXI	D,XFCB+FT
+	MVI	B,4
+;
+GFN3:	MOV	A,M
+	ORA	A
+	JZ	GFN4
+	INX	H
+	CPI	' '
+	JZ	GFN4
+	CPI	'*'
+	JZ	GFN8
+	STAX	D
+	INX	D
+	DCR	B
+	JZ	GFN5
+	JMP	GFN3
+;
+GFN8:	DCR	B
+	JZ	GFN4
+	MVI	A,'?'
+	STAX	D
+	INX	D
+	JMP	GFN8
+;
+GFN4:	XRA	A
+	RET
+;
+GFN5:	STC
+	RET
+;
+;CFNT - create file name table
+;
+CFNT:	CALL	RESET		;reset disk system
+	LXI	H,FNT		;reset ifntp
+	SHLD	IFNTP
+	MVI	M,0FFH
+;
+CFNT1:	LHLD	CBUFP		;get cbufp
+	MOV	A,M		;exit if end of list
+	ORA	A
+	RZ
+	CALL	GFN		;get next afn
+	SHLD	CBUFP		;save command buffer ptr
+	JNC	CFNT2		;jump if filename ok
+	LXI	H,MSG5		;write 'Syntax error in filename'
+	CALL	WASC
+	JMP	CFNT1		;loop
+;
+CFNT2:	XRA	A		;clear xfcb extent field
+	STA	XFCB+EX
+	LXI	D,XFCB		;search for first occurance
+	CALL	SRCHF
+	CPI	255		;jump if found
+	JNZ	CFNT3
+	LXI	H,XFCB+FN	;write filename
+	CALL	WFNC
+	LXI	H,MSG7		;write ' not found'
+	CALL	WASC
+	JMP	CFNT1		;loop
+;
+CFNT3:	ANI	3		;index into cbuf
+	MOV	L,A
+	MVI	H,0
+	DAD	H
+	DAD	H
+	DAD	H
+	DAD	H
+	DAD	H
+	LXI	D,DBUF
+	DAD	D
+;
+	LDA	IGN$SYS		; Supposed to ignore "system" files
+	RRC
+	JNC	CFNT3A		; Jump if no, ie. do copy sys files
+	PUSH	H
+	PUSH	D
+	LXI	D,10
+	DAD	D
+	MOV	A,M		;get 't2'
+	ANI	80H		;look at sys bit
+	POP	D
+	POP	H
+	JNZ	CFNT4		;'sys file'-ignore
+;
+CFNT3A:
+	XCHG			;copy filename into fnt
+	LHLD	IFNTP
+	XCHG
+	MVI	B,12
+	CALL	MOVE
+	LXI	H,ZEROS		;zero fill rest of entry
+	MVI	B,4
+	CALL	MOVE
+	XCHG
+	SHLD	IFNTP		;save input fnt pointer
+	MVI	M,0FFH		;insure FF byte at end
+;
+CFNT4:	LXI	D,XFCB		;search for next occurance
+	CALL	SRCHN
+	CPI	255		;jump if found
+	JNZ	CFNT3
+	JMP	CFNT1		;go get next afn
+;
+;WASC - write ascii string to console
+;
+WASC:	MOV	A,M
+	ORA	A
+	RZ
+	CALL	WACC
+	INX	H
+	JMP	WASC
+;
+;WFNC - write file name to console
+;printing 11 characters starting at <HL>
+;
+WFNC:	PUSH	B		; save registers used
+	MVI	B,8		; number of characters in file name
+	CALL	WFNC1		; print file name
+	MVI	A,'.'		; print "." between file name and type
+	CALL	WACC
+	MVI	B,3		; number of characters in file type
+	CALL	WFNC1		; print file type
+	POP	B		; restore
+	RET
+
+WFNC1:	MOV	A,M		; get character
+	CALL	WACC		; go print it
+	INX	H
+	DCR	B		; last character ?
+	JNZ	WFNC1		; loop if not
+	RET
+;
+;WEOLC - write end of line to console
+;
+WEOLC:	MVI	A,CR
+	CALL	WACC
+	MVI	A,LF
+	JMP	WACC
+;
+;WDWC - write decimal word to console
+;
+WDWC:	PUSH	H
+	PUSH	D
+	PUSH	B
+	MVI	B,0		;clear 'digit written' flag
+	LXI	D,10000		;write 1st digit
+	CALL	WNDD
+	LXI	D,1000		;write 2nd digit
+	CALL	WNDD
+	LXI	D,100		;write 3rd digit
+	CALL	WNDD
+	LXI	D,10		;write 4th digit
+	CALL	WNDD
+	LXI	D,1		;write 5th digit
+	MVI	B,1		;force last digit to print
+	CALL	WNDD
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+WNDD:	MVI	C,0		;c=0
+;
+WNDD1:	MOV	A,L		;hl = hl - de
+	SUB	E
+	MOV	L,A
+	MOV	A,H
+	SBB	D
+	MOV	H,A
+	JC	WNDD2		;jump if < 0
+	INR	C		;c = c + 1
+	JMP	WNDD1		;loop
+;
+WNDD2:	DAD	D		;hl = hl + de
+	MOV	A,C		;jump if c non-zero
+	ORA	C
+	JNZ	WNDD4
+	MOV	A,B		;jump if digit written
+	ORA	B
+	JNZ	WNDD4
+	MVI	A,' '		;write one space
+	JMP	WACC
+;
+WNDD4:	MVI	B,1		;set 'digit written' flag
+	MOV	A,C		;encode c into decimal ascii
+	ADI	'0'
+	JMP	WACC		;go write it
+;
+;WACC - write ascii character to console
+;
+WACC:	PUSH	H
+	PUSH	D
+	PUSH	B
+	PUSH	PSW
+	MVI	C,WCFC
+	MOV	E,A
+	CALL	ENTRY
+	POP	PSW
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+;RACC - read ascii character from console
+;
+RACC:	PUSH	H
+	PUSH	D
+	PUSH	B
+	MVI	C,RCFC
+	CALL	ENTRY
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+;RESET - reset disk system and make
+;sure current default disk will
+;remain after reset operation
+;
+RESET:	PUSH	H
+	PUSH	D
+	PUSH	B
+;
+	LDA	CPM2O3		; Can we request current disk ?
+	RRC
+	JNC	RESET5		; Jump around if no
+	MVI	C,CDFC		;request current disk
+	CALL	ENTRY
+	STA	CURDSK		;Save it for after reset
+;
+RESET5:
+	MVI	C,RDFC
+	CALL	ENTRY
+;
+	LDA	CPM2O3		; Can we select disk ?
+	RRC
+	JNC	RESET10		; Jump around if no
+	MVI	C,SDFC		;Select disk
+	LDA	CURDSK		;Get previous disk
+	MOV	E,A
+	MVI	D,0
+	CALL	ENTRY
+;
+RESET10:
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+;OPEN - open disk file
+;
+OPEN:	PUSH	H
+	PUSH	D
+	PUSH	B
+	LXI	D,TFCB
+	MVI	C,OFFC
+	CALL	ENTRY
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+;READ - read record from disk file
+;
+READ:	PUSH	H
+	PUSH	D
+	PUSH	B
+	LXI	D,TFCB
+	MVI	C,RRFC
+	CALL	ENTRY
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+;CLOSE - close disk file
+;
+CLOSE:	PUSH	H
+	PUSH	D
+	PUSH	B
+	LXI	D,TFCB
+	MVI	C,CFFC
+	CALL	ENTRY
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+;DELT - delete disk file
+;
+DELT:	PUSH	H
+	PUSH	D
+	PUSH	B
+	LXI	D,TFCB
+	MVI	C,DFFC
+	CALL	ENTRY
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+;MAKE - make new disk file
+;
+MAKE:	PUSH	H
+	PUSH	D
+	PUSH	B
+	LXI	D,TFCB
+	MVI	C,MFFC
+	CALL	ENTRY
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+;WRITE - write record to file
+;
+WRITE:	PUSH	H
+	PUSH	D
+	PUSH	B
+	LDA	TFCB+NR		;LAST RECORD IN EXTENT?
+	CPI	7FH
+	JNZ	WRITE1		;NO, CONTINUE
+	LHLD	MBUFP		;EXISTING DATA AREA
+	LXI	D,DBUF		;POINT TO SAFE AREA
+	CALL	SETDMA		;TELL CP/M WHERE TO GET DATA
+	MVI	B,80H		;LENGTH TO MOVE
+	CALL	MOVE		;MOVE DATA AWAY SO...
+				;CP/M DOESN'T OVERWRITE THE REAL
+				;DATA IN OPENING NEXT EXTENT
+;
+WRITE1: LXI	D,TFCB
+	MVI	C,WRFC
+	CALL	ENTRY
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+;SETDMA - set dma address
+;
+SETDMA: PUSH	H
+	PUSH	D
+	PUSH	B
+	MVI	C,SAFC
+	CALL	ENTRY
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+;SRCHF - search for first occurance of afn
+;
+SRCHF:	PUSH	H
+	PUSH	D
+	PUSH	B
+	MVI	C,SFFC
+	CALL	ENTRY
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+;SRCHN - search for next occurance of afn
+;
+SRCHN:	PUSH	H
+	PUSH	D
+	PUSH	B
+	MVI	C,SNFC
+	CALL	ENTRY
+	POP	B
+	POP	D
+	POP	H
+	RET
+;
+MSG1:	DB	'MFT V'
+	DB	VERSION+'0'	; Version #
+	DB	'.',MODLEV+'0',0 ; Modification level
+CPMV1:	DB	' for CP/M ',0
+CPMV2:	DB	'Plus, ',0
+CPMV3:	DB	'V'
+CPMVN:	DB	'1.4',CR,LF
+	DB	'Multi-File-Transfer for single disk drive, '
+	DB	'with multiple copy option.',CR,LF,0
+MSG2:	DB	'Buffer size = ',0
+MSG3:	DB	' sectors',CR,LF,LF,0
+MSG4:	DB	'Mount SOURCE disk, type RETURN (or ^C to reboot)',0
+MSG5:	DB	'Syntax error in filename',CR,LF,0
+MSG6:	DB	' - ',0
+MSG7:	DB	' not found',CR,LF,0
+MSG8:	DB	'read error - ',0
+MSG9:	DB	' sectors read',CR,LF,0
+MSGA:	DB	'Mount DESTINATION disk, type RETURN (or ^C to reboot)',0
+MSGB:	DB	'unable to create',CR,LF,0
+MSGC:	DB	'error writing file',CR,LF,0
+MSGD:	DB	'unable to close',CR,LF,0
+MSGE:	DB	' sectors written',CR,LF,0
+MSGF:	DB	CR,LF,'Completed. '
+	DB	'Type RETURN for another copy, OR...',0
+MSGG:	DB	CR,LF,'type ^C to reboot.',CR,LF,0
+MSGH:	DB	CR,LF,'++ Memory buffer exceeded, cannot make duplicate ',CR,LF
+	DB	'copies this time...last output file is incomplete ++'
+	DB	CR,LF,LF,0
+MSGJ	DB	CR,LF,'++ PROGRAM ABORTED ++',CR,LF,0
+MSGK	DB	CR,LF,'No file name specified',CR,LF,0
+;
+;
+ZEROS:	DB	0,0,0,0
+;
+	ORG	($+15)/16*16
+;
+FNT:	DS	16*NUM$FLS+1
+;
+STACK:	DS	64
+SPACE:	DS	2		;available space
+MSIZE:	DS	2		;memory size
+CBUF:	DS	80		;command buffer
+CBUFP:	DS	2		;command buffer pointer
+FSIZE:	DS	2		;file size in sectors
+XSIZE:	DS	2		;file size for printout
+IFNTP:	DS	2		;input fnt pointer
+OFNTP:	DS	2		;output fnt pointer
+MBUFP:	DS	2		;memory buffer pointer
+IFCB:	DS	33		;input fcb
+OFCB:	DS	33		;output fcb
+XFCB:	DS	33		;temporary fcb
+IBFLG:	DS	1		;input break flag
+OBFLG:	DS	1		;output break flag
+NDFLG:	DS	1		;no duplicate allowed flag
+CURDSK:	DS	1		;save location for current disk
+CPM2:	DS	1		; Flag for CP/M 2.x
+CPM3:	DS	1		; Flag for CP/M Plus (V3.x)
+CPM2O3:	DS	1		; Flag for CP/M 2 or 3
+;
+MBUF	EQU	$
+;
+	END	MFT
+  

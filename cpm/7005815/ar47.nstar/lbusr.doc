@@ -1,0 +1,248 @@
+February 24, 1981			          R. L. Plouffe
+					          (703) 527-3215
+
+                          GENEUSYS.DOC
+
+                        a description of:	
+
+                 GENEUSER.ASM  and  GENESYS.ASM
+
+                         * * * * * * *
+12/14/81  GENEUSER.ASM rev 3.0 is a major re-write which  extends 
+the  CCP  and  allows  N  additional  user-defined  commands.  As 
+distributed,  it contains CCP-included code for BYE, LOGIN, ORIG, 
+ANSWR,  and PASS.  It has three password levels (0, 1, & 2) which 
+permit certain commands at each level.   Transient commands  have 
+the same three levels by placing transients in user 13, 14, or 15 
+respectively on drive A. Files are universal in all user areas on 
+drive  A  only if they are in one of these three user  areas  and 
+depending on password level achieved.
+                         * * * * * * *
+
+The purpose of the files on this disk is to create a user area in 
+cp/m  as distributed by Lifeboat associates for north star double 
+density controller oriented systems that is expanded by either  1 
+or 2 kb.   This is done by writing to and reading from the  first 
+four sectors of the north star disk. This is where the additional 
+user  code  is  made  to  reside.  The  key  to  the  process  is 
+GENESYS.COM  which initially loads at 100H but immediately  moves 
+itself to just above the 'sysgen' image (2D00H), thus leaving the 
+ram space from 100H to 08FFH available to write user code. When a 
+cpm.com  file is SAVEd after patching in user code with DDT,  the 
+second  area of user code is saved along with the rest  of  cp/m. 
+GENESYS  is  then  used to write this cp/m system to  the  system 
+tracks starting from the first sector of the first track and from 
+RAM  starting at 100H.  The code in the first block in  the  100H 
+page  must contain a special ORG at 05CH of that page and a DS  1 
+placed  there.  This  is to provide storage space for the  format 
+byte which the lifeboat bios checks there.   This special ORG  is 
+contained in GENEUSER.ASM in its INIT routine.
+
+GENESYS patches into your system a completely new coldboot loader 
+that  loads  all 10 sectors of both system tracks except that  it 
+skips  sector  four of the first track since the boot  prom  will 
+have  already loaded that code.   The coldboot loader is made  to 
+run  at CCP-100H as before and it loads the rest of the  code  to 
+ram starting at CCP-900H. Thus, the cp/m system is in it's normal 
+location  with  additional code from CCP-900H to CCP-100H  (2kB).  
+The  scheme in GENEUSER.ASM is to run the user INIT routine  here 
+since  it is throw away code anyhow and will get clobbered  since 
+this  is  in the top of the TPA.   The INIT routine  in  GENEUSER 
+contains  a mover which moves the second user area code which  is 
+also  now in ram between CCP-100 and CCP-900H to just  above  the 
+running cp/m system.
+
+A  feature of the new cold boot loader is that in the event of  a 
+bad  disk read,  the loader will permit a reboot only eight times 
+and then reset the controller and halt the computer if still  not 
+successful  instead of rebooting endlessly as the loader in  your 
+distribution  version  will do.   This is important if  you  have 
+implemented  auto  power up and power down using the  PMMI  modem 
+auxiliary interface and your computer is activated remotely.  Who 
+wants  the  possibility  of  endless  head  loading,   unloading, 
+stepping and disks whirring until you get home - yuk.
+
+GENESYS  also  patches your cp/m system so that it is  boot  PROM 
+independent. This is done by having the coldboot loader patch all 
+of  the PROM dependent bytes in the BIOS regardless of where your 
+PROM is located.  The coldboot loader is made to point to a table 
+already in your cp/m system that contains the addresses of  these 
+bytes.  Someone  put  an error in each of these tables  for  each 
+version  that  GENESYS knows about so it simply patches  out  the 
+error prior to writing out a system.   The error is apparently an 
+introduced  bug  to  prevent  the system from  working  when  you 
+relocate  your disk controller PROM.   The coldboot  loader  then 
+uses  the  table to patch all of the prom dependent  bytes  using 
+knowledge  of  the  prom location passed to it by the  boot  prom 
+firmware itself.
+
+GENESYS  and GENEUSER will work with Lifeboat's cp/m 1.45,  2.01, 
+2.2, 2.21A & 2.22.  The tables,  prom info storage locations, and 
+exit  to  bios addresses are different from one  version  to  the 
+other,  however  GENESYS  knows about all of that and  tests  for 
+version number in the second byte of the serial number. That byte 
+is 0EH (14 decimal) for version 1.45, 20H for version 2.0 and 22H 
+for  version 2.2.  If anyone has modified the serial number  (who 
+would  do that?) and changed the second byte,  then GENESYS won't 
+work and will give a bad version message. Once the second byte is 
+tested,  then GENESYS patches the cold boot loader to contain the 
+proper addresses before writing out your system to either a  file 
+or  to  your  system tracks.  Oh yes,  I forgot to  mention  that 
+GENESYS  (unlike Sysgen) has an option which you will see in  the 
+prompts  to  make  and write a cpm.com file or to  write  to  the 
+system tracks on the selected destination drive.  When writing  a 
+cpm.com  file  with GENESYS,  writing a system from one  disk  to 
+another,  or  taking  a  cpm.com file from one disk  and  writing 
+either a system or a file to another drive,  GENESYS will  always 
+check  the  format byte of the destination drive and  patch  that 
+byte  into the image before writing to that disk.  So the  format 
+byte  which  the files on that drive were written for is  assured 
+not  to be changed.   This is especially important for  cp/m  2.2 
+which  can  read or write from or to any of the defined  lifeboat 
+formats.
+
+Since  GENESYS initially loads at 100H (but not above  8FFH),  it 
+will  not permit you to skip the source drive prompt as  'Sysgen' 
+will in order to write out a system that had been brought in with 
+DDT.  This  is  because  GENESYS first loads at  100H  and  would 
+clobber  any code from 100H to 08FFH that DDT would have written. 
+So,  you must bring in the image with GENESYS from either a  file 
+or  system tracks and not with DDT.  You can bring in a  cp/m.com 
+file  on the command line with GENESYS,  but it must be 40  North 
+Star blocks in length because GENESYS tests such a file to see if 
+it is complete.   So,  when you save a cpm.com file that has been 
+patched  with  DDT  always  save it  as  SAVE  40  (Dr:)CPMxx.COM 
+(xx=sysize).  Even if the SAVE prompt as a result of making a new 
+system  with  MOVCPM  under  1.45 says to SAVE 36 do  a  SAVE  40 
+instead.
+
+When  patching  in a revised user area with DDT use  the  overlay 
+offset  computed in the GENEUSER.PRN file but first fill 100H  to 
+8FFH  and  2700H  to 28FFH to zero (2400H  to  28FFH  when  using 
+version  1.45).  All of the code will appear in the right  places 
+from 100H to 2900H.
+
+**************************IMPORTANT******************************
+Start  out  fresh with a cpm.com file made from MOVCPM  with  the 
+prom  dependent  bytes  unchanged and at  the  standard  location 
+(0E800H).  Then  overlay the user code from GENEUSER  using  DDT. 
+Then SAVE this image as a cpm.com file. Then use GENESYS to write 
+to  the system tracks.  The prom dependent bytes will be  changed 
+only  in the running system and not in the cpm.com file  although 
+other  clean up to the cpm.com file will be done when making such 
+a  file  with  GENESYS.  If you have  already  changed  the  prom 
+dependent bytes in MOVCPM manually, then you must change the PROM 
+equate  in the coldboot loader of GENESYS.ASM as well as the disk 
+read  command (0EB40H) in the bios options area  of  GENEUSER.ASM 
+for  version 1.45 in spite of the admonitions in those files  not 
+to do so.  Then perform the four steps just covered above in this 
+paragraph.  Either  procedure will then give you a disk that will 
+boot  up and run on any North Star regardless of where it's  disk 
+controller  PROM  is located.  Procedure 1 is preferred  but  any 
+other procedure will invite DISASTER since the coldboot loader is 
+going  to add the difference between the actual prom hi byte  and 
+the  value  contained in the coldboot loader to all of  the  prom 
+dependent bytes in the bios.  So if you had already patched these 
+bytes  manually  and don't start fresh (procedure  1)  or  follow 
+procedure  2,  the  new  coldboot loader will add  an  additional 
+offset  to all of the prom dependent bytes and your  system  wont 
+run.  So,  a  word  to  the wise - be careful and make  sure  you 
+understand  this procedure.  Once you have started fresh  (either 
+procedure) as outlined above,  you can always make your CPMxx.COM 
+file  using  GENESYS prior to patching in a new or  revised  user 
+code  using GENEUSER and DDT provide that the image brought in is 
+one that originated from a fresh start.
+ 
+If  you change the user code in GENEUSER,  keep the same skeletal 
+organization.  Key parts of the skeletal are the movers, the orgs 
+including the special org at INIT+5CH.  You may add code in front 
+of  USR1END and USR2END to the extent that you have space in  the 
+two areas available and have properly allocated space above  cp/m 
+by  sizing  your system appropriately.  Also any code in an  area 
+that  has  labels  followed by EQU  $+OFFSET  must  be  similarly 
+labelled and equated.  The GENEUSER file provides for USER1 to be 
+256  bytes to be compatible with version 1.45 without the  buffer 
+being  moved (you can make USER1 an additional 1k bytes  resident 
+on  the system tracks with 1.45 by moving the buffer up by 1k  or 
+to any place else out of the way).  USER2 can be either 1 or 2 kB 
+and  you must make space above cp/m by appropriately sizing  your 
+system.  Actually USER2 in its running location will be less than 
+2  kB  by the amount of code in the INIT routine since that  code 
+doesn't  get  moved but gets thrown away,  so if you make  a  2kB 
+USER2 area there will be some space at the top which you can  use 
+as a scratch area for other purposes.
+
+GENESYS is written using only 8080 mnemonics.  GENEUSER uses Z-80 
+code  stored  as  DB's  so that it will  assemble  with  an  8080 
+assembler.  The Z-80 implementation saves considerable space  but 
+you  should easily be able to convert it if your computer is 8080 
+based. Just keep the same skeletal arrangement.
+
+GENEUSER  contains  a  number  of goodies  such  as  full  IOBYTE 
+implementation,   PMMI  modem  routines,  Computime  T-102  clock 
+routine,  and  North Star parity memory error detection  and  ram 
+parity  error message.  Look through it carefully to check all of 
+the conditional assemblies, port assignments and equates for your 
+system including clear screen,  mode byte and selection of  drive 
+characteristics in the bios options area,  and configuration byte 
+also in the bios options area.  You don't need to know controller 
+PROM  location  for parity memory option since GENEUSER will  get 
+this as a passed parameter either from the bios in 2.0/2.2 or the 
+coldboot loader for 1.45.
+
+Now,  what  the  heck is all of this good for.  Well  aside  from 
+GENESYS  cleaning  up  your  system  so  that  it  will  be  disk 
+controller PROM independent, work with any version in conjunction 
+with GENEUSER and provide for expansion of user space resident on 
+the  system  tracks,  the reason this project got started was  to 
+provide  for  substantial  amounts  of  space  for  communication 
+networking  and  file  transfer software to be  resident  at  the 
+user's  beck  and call and available remotely as well  upon  auto 
+start up and answer using the PMMI modem.  The next project is to 
+get that code in there.
+
+                         SPECIAL NOTE
+
+If you have version 2.21A by Lifeboat, there are a couple of bugs 
+which you should know about.   First,  the user area code on  the 
+distribution diskette has an IOBYTE implementation but contains a 
+serious  flaw.   The author apparently forgot to save and restore 
+registers  in the routine that maps logical to physical  devices. 
+If you wish to use that code,  it is recommended that you  change 
+the  mapping routine to the one contained in GENEUSER.ASM that is 
+on this disk as a companion to GENESYS.   Otherwise you will find 
+that the user code on the distibution diskette will not work with 
+software  such as BYE.COM and MODEM.COM by Ward  Christianson  as 
+well as MBASIC ver 4.4 although it will work with MBASIC 4.51. It 
+is  suspected that plenty of other software that is not expecting 
+registers  to  be  corrupted would not  work  either.  Of  course 
+GENEUSER will work with all of the above.   The second bug has to 
+do   with the MODE byte.   The bios on the distribution  diskette 
+has a stack imbalance in the routine that tests the MODE byte and 
+POPs  the  PSW  once too many times if the 40H  bit  (READ  AFTER 
+WRITE) is set high.   This is corrected in the FIX221A subroutine 
+of  GENESYS by setting the extra POP PSW byte  to  NOP.   Without 
+this  correction,  the  read-after-write function does  not  work 
+properly  and  FORMAT.COM as well as PIP.COM do not work.   So  a 
+system  that is 'gened' with GENESYS has this bug fixed  and  you 
+can  set  the read-after-write function in the MODE byte  without 
+fear. These bugs were fixed by Lifeboat in ver 2.22.
+ 
+
+
+
+
+                   ****** C A U T I O N ******
+
+          ONCE YOU USE GENESYS TO 'GEN' YOUR  SYSTEM,  DO 
+          NOT USE 'SYSGEN' ANYMORE SINCE IT WILL NOT READ 
+          OR  WRITE  THE FIRST FOUR SECTORS OF THE  FIRST 
+          TRACK.  RETIRE 'SYSGEN' TO THE ARCHIVES,  SINCE 
+          GENESYS  WILL  DO  THE SAME AND  MORE  EVEN  ON 
+          SYSTEMS THAT HAVE BEEN 'GENED' USING 'SYSGEN'.
+
+Have  fun  and let me know how you make out,  but  no  complaints 
+please.
+
+					r.l.plouffe
+

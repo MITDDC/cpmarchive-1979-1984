@@ -1,0 +1,40 @@
+;
+;  FILLB and FILLBC --
+;	Memory fill routines; fill the memory buffer pointed to by HL
+; with the byte in Register A; for FILLB, B=number of bytes in buffer,
+; and for FILLBC, BC=number of bytes in buffer
+;	No registers are affected.
+;
+
+FILLB::
+	PUSH	B	; SAVE BC
+	MOV	C,B	; C=B
+	MVI	B,0	; SET B=0
+	CALL	FILLBC	; USE FILLBC
+	POP	B	; RESTORE BC
+	RET
+
+FILLBC::
+	PUSH	PSW	; SAVE REGISTERS
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	MOV	D,A	; BYTE IN D
+
+FILLL:
+	MOV	M,D	; STORE BYTE
+	INX	H	; PT TO NEXT
+	DCX	B	; COUNT DOWN
+	MOV	A,B	; DONE?
+	ORA	C
+	JNZ	FILLL
+
+	POP	H	; RESTORE REGISTERS
+	POP	D
+	POP	B
+	POP	PSW
+
+	RET
+
+	END
+

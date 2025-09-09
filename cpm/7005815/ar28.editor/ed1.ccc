@@ -1,0 +1,37 @@
+/*
+Screen editor:  special key definitions
+Source:  ed1.ccc
+This file was created by the configuration program:
+Version 2:  September 6, 1981.
+*/
+
+/*
+Define which keys are used for special edit functions.
+*/
+
+#define UP1 21
+#define DOWN1 13
+#define UP2 11
+#define DOWN2 10
+#define LEFT1 8
+#define RIGHT1 12
+#define INS1 14
+#define EDIT1 5
+#define ESC1 27
+#define DEL1 127
+#define ZAP1 26
+#define ABT1 24
+#define SPLT1 19
+#define JOIN1 16
+
+/*
+Define length and width of screen and printer.
+*/
+
+#define SCRNW 80
+#define SCRNW1 79
+#define SCRNL 24
+#define SCRNL1 23
+#define SCRNL2 22
+#define LISTW 80
+

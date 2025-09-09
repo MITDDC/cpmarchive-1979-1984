@@ -1,0 +1,43 @@
+The following is MNEXEC.DOC, downloaded from MicroNet.
+------------------------------------------------------
+
+Please include this file whenever you redistribute the  exec 
+further downline. The MNEXEC files may be  redistributed  by
+you as long as:  this file is contained with any part of the
+package which is redistributed,  the  Compuserve   copyright 
+notice is untouched, Compuserve is given any enhancements or
+improvements, and the distributed copy is not sold.
+
+Thank You, David Kozinn, Charles Strom,  and  Tom  Jorgenson
+(the CP-MIG Sysops)
+
+-----------------------------------------------------------
+DOCUMENTATION for MICRONET EXECUTIVE SOURCE CODE - 10/03/81
+-----------------------------------------------------------
+
+Thanks   to  the  generosity  of  Wiz-10  and  the  MicroNet
+management, we have been  authorized  to  distribute  source
+code  for  the  MicroNet  executive.   In  return  for  this
+courtesy,  we  ask  that  all  users  please  preserve   the
+copyright  notices  in all future modificationns and updates
+of the code.  Note that the code contained  therein  is  the
+property  of  Compuserve  and thus may not be sold by anyone
+else without prior express consent.
+
+Now for the goodies!  The complete package  is  resident  on
+[70000,642]  as  a  packed file called CPM.PAK.  You may use
+the MNet PAC commands to get a directory, type  files,  copy
+individual  files  to  your  UFD,  etc.  Note that there are
+several versions of the  executive  available.   It  appears
+that  the  latest (and therefore fully-debugged version) for
+vanilla CP/M systems is CPMMNE.ASM.  Also be aware that  the
+Zenith   (Heath)   version   does   not   incorporate   port
+initialization, so you must add this.
+
+We welcome your comments and  encourage  all  CP-MIG'ers  to
+customize  the  packages  to  their  hearts'  content.   For
+example, I have modified the EXEC to allow me to control  my
+PMMI  modem board.  If you think you have a mod or "whistle"
+that would be of wide interest, let us know about it!
+
+

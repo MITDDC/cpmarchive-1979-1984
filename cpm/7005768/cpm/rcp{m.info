@@ -1,0 +1,196 @@
+
+********************   RCPMDATA.12  ***************************
+
+    [This data, formerly at the end of RCPMLIST, has been
+     made into a separate file.  Extended comments relevant
+     to updates of the list should be placed here]
+
+		** last updated 03/25/81 **
+
+    + Interested in setting up a RCPM system of your own?   +
+    + Read the comments on programs at the end of this file +
+
+1.  The  systems listed here only carry programs that will  run 
+   under the CP/M operating system,  most of them public domain 
+   software  distributed by CPMUG or SIG/M,  the two main  CP/M 
+   users'  groups.   Some of the programs involved  (especially 
+   those  in  BASIC and PASCAL but also a few in Z-80  or  8080 
+   assembly language) can be converted to run on other machines 
+   quite easily.  But systems dedicated to downloading programs 
+   for	the PET,  APPLE,  TRS-80 and NORTHSTAR do  exist.   Ask 
+   experienced	users  in your area,  or check	through  "other 
+   systems" listings on local CBBS's, ABBS's, FORUM-80's, etc.
+
+2.  XMODEM  is	a modification of Ward	Christensen's  original 
+   MODEM  program  designed  to allow  the  transfer  of  files 
+   between the exchange system and yours.   The exchange system 
+   needs the program,  not you;  you will probably be using one 
+   of  the  many  versions  of	MODEM  itself:	 e.g.,	MODEM2, 
+   MODEM527, MODEM7, MBOOT, etc.
+
+3.  Non-XMODEM program transfer systems are starting to appear: 
+   e.g., LICA's BBS on Long Island [at (516) 561-6590; 110-600+ 
+   baud;  24  hrs]  has a few downloadable ASCII files	but  at 
+   present  (01/8l)  these must be captured like CBBS  messages 
+   and then saved to disk, without any error-checking protocol. 
+   Santa Clara CBBS [at (408) 241-1956;110-600+ baud;  24  hrs) 
+   has	announced  plans  to  implement  late-night  exchanges; 
+   whether these will use XMODEM is not yet clear.
+
+4.  Some XMODEM systems also operate as real CBBS's,  including 
+   those operated by Dick Mead and Steve Vinokouroff.	Others, 
+   like Keith Petersen's &  CCCC's  use a  skeletal  subprogram
+   for handling messages called "MINICBBS".   Their emphasis is 
+   on exchanging software, not bulletin board-type information.
+   Most RBBS systems focus on software, but even here there are
+   variations...
+
+5.  A  few CBBSs have software exchange functions that	require 
+   the use of a password.  Such systems are not listed here.
+
+6.  At	present  (03/81)  the  systems with  the  largest  disk 
+   capacity and the most programs up at once are Kelly	Smith's 
+   and	Keith Petersen's,  both running 10 Mb hard disks.  Bill
+   Earnest's has a 4.25 Mb hard disk,  all for RCPM use.   Dave 
+   Hardy's, with 3 Morrow-controlled drives giving @ 3 Mb is in 
+   4th place.	Rick Martinek & Calamity Cliffs say  they  have
+   plans  to  go  over	to hard  disk  quite  soon.  Dick  Mead 
+   (Pasedena CBBS) will have a 10 Mb hard disk up in 2 weeks.
+
+7.  Note: look for the appearance of a new RCPM on this list to
+   appear in 2-3 weeks based  in Resada,  California (213  area
+   code),  with 500 Kb floppies and 10 Mb hard disk.  System is
+   checked out	(XMODEM, RIBBS, etc.),	SYSOP  (Ed Currie)  now
+   waiting for installation of telephone.
+
+8.  No RCPM (or straight CBBS) system is currently running MP/M 
+   or  another multi-tasking OS in combination with  more  than 
+   one modem & telephone line.	Footnote:  Kelly Smith did have 
+   MP/M  running (2 user's) for 3 months,  but reverted back to 
+   "normal"  CP/M  because the average caller did  not	utilize 
+   most  of the new facilities or were overwhelmed by  the  the 
+   system capabilities. After hard disks,this is expected to be 
+   the	 next  important  development  in  non-profit  computer 
+   communications.  Tim Nicholas is currently working on a two-
+   modem system and expects to be up with it shortly.
+
+9.  The fastest system is Tim Nicholas's, with a Bell 212-type
+   modem capable of 1200 baud, full duplex, at the same freque-
+   cies other micro modems use. He will soon have a half-duplex
+   1200-baud modem running as well.    Any of the systems using 
+   PMMIs can sometimes reach 710 baud but usually are  untrust-
+   worthy beyond 600 baud.   Systems based on D.C.Hayes & other
+   brands of modem do not send or receive faster than 300 baud.
+   While IDS on-board modems and at  least one of the externals
+   are capable of  reaching 600, none  has yet been  used in an
+   RCPM system.
+
+10. And please, most of these systems operate from private home
+   telephones...   be courteous and call only during the posted
+   operating hours.
+
+11. Helpful Hint, CBBS/RBBS Log-on: Getting to CP/M FAST!
+
+    On	some RCPM systems that sign-on	with CBBS or  the  RBBS 
+   message  programs,  would  you just as soon get to the  CP/M 
+   files as soon as possible and cut through all the B**L S**T?
+
+    Well here's the method I use to do it, with an example that 
+   applies  to	either CBBS (copyright,  Ward  Christensen)  or 
+   RBBS (public domain,  courtesy of Bruce Ratoff).  I hope you 
+   find  this  helpfull,  and it should save you some money  on 
+   your telephone bill!  Best regards;	Kelly  Smith,  CP/M-Net 
+   (tm) SYSOP, (805) 527-9321.
+
+    Ever notice that both program always (EVENTUALLY) will ask: 
+   (1) first time user?  (2) first name ? (3) last name ?, etc. 
+   and	so  on,  and  so on...well FIRST  OF  ALL,  answer  the 
+   question  "HOW  MANY NULLS?" and "CAN YOUR  TERMINAL  HANDLE 
+   LOWER  CASE"...then	hold down Control-C on	your  key-board 
+   'till  the only remaining thing you see on your terminal  is 
+   '?'...it's now waiting for your 'Y/N' response to the "First 
+   time user?" question. Then:
+
+    This  works on Dick Mead's Pasadena CBBS,  (213)  799-1632, 
+   and always shows 00 minutes logged on...now THAT'S FAST!:
+
+     .-- No, not first time on system
+     | .-- First name
+     | |    .-- Last name
+     | |    |	   .-- Goodbye
+     | |    |	   | .-- No comment
+     | |    |	   | |	
+     n;Imma;Hacker;g;n<cr>
+
+    But  DON'T	use  this on Bruce  Ratoff's  Remote  CP/M  and 
+   Bulletin Board System of Cranford, New Jersy (201) 272-1874, 
+   that uses his RBBS program... if you say "Goodbye",	he will 
+   promptly disconnect! So use this (almost identical) method:
+
+     .-- No, not first time on system
+     | .-- First name
+     | |    .-- Last name
+     | |    |	   .-- CP/M (how clever...'C' for CP/M!)
+     | |    |	   |
+     n;Imma;Hacker;c<cr>
+
+    There  may	be 'variations on a theme',  so watch  out  for 
+   other systems that may (or may not) work similarly...now how 
+   about  it  guys  and gals (?)...any one want to  start-up  a 
+   'standards commitee' so we all operate pretty much the same?
+
+
+13. RUNNING YOUR OWN REMOTE CP/M SYSTEM   [Ben Bronson, 3/21]
+
+If you want to put up a bulletin board or a program exchange
+system that runs under CP/M (and if you don't want to write all
+your own software from scratch) you have two choices: Ward
+Christensen's and Randy Suess's assembly-language CBBS and the
+BASIC-language RBBS written by Howard Moulton, Bruce Ratoff,
+Ron Fowler, Tim Nicholas and others.
+
+CBBS, although originally intended for bulletin board use,
+has been extended for RCPM functions by several sysops,
+including Dick Mead and Steve Vinokouroff.  Setting it up
+requires good assembly-language programming skills.  To get it,
+send a check for $50 made out to Randy Suess to: CBBS, 5219
+W Warwick, Chicago, Ill. 60641.  You will receive a copy of
+the CBBS source program and files on 2 CP/M format soft
+sectored 8" floppy disks.
+
+MINICBBS requires much less knowledge of assembler and is well
+adapted to RCPM use.  Keith Petersen adapted it from the full
+CBBS, and it can be obtained from him or any of the other
+sysops who use it: Dave Hardy, Dave Moritz, Calamity Cliffs,
+etc.  However, as CBBS is copyrighted and as MINICBBS needs
+several of the auxiliary and maintenance programs supplied on
+the CBBS distribution disks) they will only release it to
+those who have bought CBBS.
+
+The main (and only) alternative to the CBBS series is RBBS or
+its two RCPM-specialized descendants, ENTERBBS and MINIRBBS.
+They can probably be obtained on this system.
+
+All are written in MBASIC 5 and can be set up and altered by
+persons with a minimal knowledge of that language.  The RBBS
+programs must be compiled with BASCOM unless you are satis-
+fied with very slow response tmes.
+
+RBBS25.ASC or BAS is the current version of the standard RBBS
+(or RIBBS) program.  It resembles the full CBBS quite closely
+(except in its poorer message editing features and its greater
+bulk when compiled) and can be used as an orthodox bulletin
+board program.	However, it also has built-in capability to
+serve as the front end to an RCPM system and is so used by most
+RBBS sysops: e.g., Bruce Ratoff, Ron Fowler, and David Kozinn.
+
+ENTERBBS and MINIRBBS (ENTBBS24 & MINBBS25.BAS/ASC) are spec-
+ialized versions of RBBS aimed at RCPM use with minimal
+message-handling capability.  They are currently used by Tim
+Nicholas, Ben Bronson and Chuck Witbeck.
+
+RBSUTL22.BAS/ASC is the message maintenance program that works
+with any of the RBBS series.  RBBS-USE.DOC gives some of the
+special information you would need in actually setting an RBBS
+system up.
+

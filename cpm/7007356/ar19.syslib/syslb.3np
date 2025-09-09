@@ -1,0 +1,331 @@
+                        SYSLIB User and Reference Manual
+
+
+
+             Routine Names:  MOVEB, MOVEBC, HMOVB, HMOVBC
+             Function:
+                  Move the block of memory pointed to by HL to the memory 
+        location  pointed  to by DE.   MOVEB can move up  to  a  256-byte 
+        buffer, and MOVEBC can move up to a 65,536-byte buffer.
+
+             MOVEB  and MOVEBC have no effects on any  registers.   HMOVB 
+        and HMOVBC both affect the HL register pair, and they return with 
+        HL and DE pointing to the byte after the last byte moved.   HMOVB 
+        and HMOVBC are useful when further processing from the last point 
+        filled is desired.
+
+
+             Inputs:  HL points to the 1st byte of the buffer to move
+                      DE points to the 1st byte of the buffer to move to
+                      B (for MOVEB) or BC (for MOVEBC) = number of bytes
+                       in buffer
+
+             Outputs:  None for MOVEB and MOVEBC (Buffer is moved)
+                       HL and DE pt to byte after last byte moved for
+                            HMOVB and HMOVBC
+
+             Registers Affected:  None for MOVEB, MOVBC; HL, DE for
+                                      HMOVB, HMOVBC
+
+             SYSLIB Routines Called:  -None-
+
+             Special Error Conditions:  -None-
+
+
+
+
+             Routine Name:  PAUSE
+             Function:
+                  Delay N 10ths of a Second.
+             Inputs:  HL = N (Number of 10ths of a Second Delay desired)
+                      B = Processor Speed in MHz (1, 2, 3, 4, ...)
+             Outputs:  None (Routine returns N 10ths of a Second later)
+             Registers Affected:  None
+             SYSLIB Routines Called:  None
+             Special Error Conditons:  None
+
+
+
+
+             Routine Name:  VERSION
+             Function:
+                  Return Version Number of SYSLIB.
+             Inputs:  None
+             Outputs:  HL = Version Number (H=Major, L=Minor)
+             Registers Affected:  HL
+             SYSLIB Routines Called:  None
+             Special Error Conditons:  None
+
+
+
+        19 - Miscellaneous Routines                            Page 71
+
+
+
+
+
+                        SYSLIB User and Reference Manual
+
+
+
+        20.0 Cross-Reference Listing of SYSLIB Routines
+
+        Symbol  Defined Referenced
+
+        ADDHD   SMATH
+        ADRCPY  SFILEI  S0FILE  S1FILE  S2FILE  S3FILE  
+        ANDHD   SMATH
+
+        BBLINE  SBBLIN
+        BDOS    SBODS   SZFNAM  SZCPR   SFOPEN  SFEXIS  SFMAKE
+                        SFCLOS  SRENAM  SFREAD  SFWRIT  SFDEL
+                        SUD
+        BIOS    SBIOS   
+        BLINE   SBLINE
+
+        CAPS    SCAPS   SZFNAM  SFNAME  SEVAL   SEVAL2  SBBLIN
+                        SBLINE  SCAPST  
+        CAPSTR  SCAPST  
+        CATH    SCATH   
+        CCOUT   SCCOUT  SINLIN  SPSTR
+        CIN     SCIN    SCONDI  SINLIN  
+        CLOUT   SCLOUT  SLPSTR
+        CMPH    SMATH
+        CODEND  SCODEN  
+        COMPB   SCOMP   
+        COMPBC  SCOMP   
+        COMPHD  SCOMPH  
+        CONDIN  SCONDI  SRAND
+        COUT    SCOUT   SINLIN  SPSTR   SPHL5D  SPA2HC  SPADC
+                                SCRLF   SCCOUT
+        CPOUT   SCPOUT  
+        CRC1CL  SCRC1   
+        CRC1DO  SCRC1   
+        CRC1K   SCRC1   
+        CRC1UP  SCRC1   
+        CRCCLR  SCRC    
+        CRCDON  SCRC    
+        CRCK    SCRC    
+        CRCUPD  SCRC    
+        CRLF    SCRLF   SINLIN
+        CST     SCST    SCONDI  
+
+        DBUFFE  SDIR
+        DFREE   SDIR
+        DIRALP  SDIR
+        DIRF    SDIR
+        DIRFS   SDIR
+        DIRLOA  SDIR
+        DIRNPA  SDIR
+        DIRPAC  SDIR
+        DIRSEL  SDIR
+        DIRSLO  SDIR
+        DIVHD   SMATH
+        DPARAM  SDIR    
+
+
+        20 - Cross-Reference Listing of SYSLIB Routines        Page 72
+
+
+
+
+
+                        SYSLIB User and Reference Manual
+
+
+
+        Symbol  Defined Referenced
+
+        EN      SEN     SMA2HC  SLA2HC  SPA2HC  
+        EVAL    SEVAL   
+        EVAL10  SEVAL1  SEVAL   
+        EVAL16  SEVAL2  SEVAL   
+        EVAL2   SEVAL4  SEVAL   
+        EVAL8   SEVAL3  SEVAL   
+
+        F$CLOS  SFCLOS
+        F$DELE  SFDEL   SFMAKE
+        F$EXIS  SFEXIS
+        F$GET   SFILEI  S0FILE  S1FILE  S2FILE  S3FILE  
+        F$MAKE  SFMAKE
+        F$MOPE  SFOPEN  SFILEI
+        F$OPEN  SFOPEN  SFILEI
+        F$PUT   SFILEI  S0FILE  S1FILE  S2FILE  S3FILE  
+        F$READ  SFREAD
+        F$RENA  SRENAM
+        F$WRIT  SFWRIT
+
+        F0$GET  S0FILE  
+        F1$GET  S1FILE  
+        F2$GET  S2FILE  
+        F3$GET  S3FILE  SZFNAM
+        F0$PUT  S0FILE  
+        F1$PUT  S1FILE  
+        F2$PUT  S2FILE  
+        F3$PUT  S3FILE  
+        FI$CLO  SFILEI  S0FILE  S1FILE  S2FILE  S3FILE  
+        FI0$CL  S0FILE  
+        FI1$CL  S1FILE  
+        FI2$CL  S2FILE
+        FI3$CL  S3FILE  SZFNAM
+        FI$OPE  SFILEI  S0FILE  S1FILE  S2FILE  S3FILE  
+        FI0$OP  S0FILE  
+        FI1$OP  S1FILE  
+        FI2$OP  S2FILE  
+        FI3$OP  S3FILE  SZFNAM
+
+        FILLB   SFILL   SINITF
+        FILLBC  SFILL   
+        FNAME   SFNAME  
+
+
+
+
+
+
+
+
+
+
+
+
+
+        20 - Cross-Reference Listing of SYSLIB Routines        Page 73
+
+
+
+
+
+                        SYSLIB User and Reference Manual
+
+
+
+        Symbol  Defined Referenced
+
+        FO$CLO  SFILEI  S0FILE  S1FILE  S2FILE  S3FILE
+        FO$OPE  SFILEI  S0FILE  S1FILE  S2FILE  S3FILE  
+        FO0$CL  S0FILE  
+        FO1$CL  S1FILE  
+        FO2$CL  S2FILE  
+        FO3$CL  S3FILE
+        FO0$OP  S0FILE  
+        FO1$OP  S1FILE  
+        FO2$OP  S2FILE  
+        FO3$OP  S3FILE
+
+        FSIZE   SDIR    
+
+        GETUD   SUD
+
+        HFILB   SFILL   
+        HFILBC  SFILL   
+        HMOVB   SMOVE   
+        HMOVBC  SMOVE   
+
+        INITFC  SINITF  SFIELI  SZFNAM
+        INLINE  SINLIN
+        INSTR   SINSTR  
+
+        LA2HC   SLA2HC  SLHL4H
+        LA3DC   SLADC
+        LADC    SLADC
+        LCRLF   SLCRLF  
+        LHL4HC  SLHL4H
+        LHL5DC  SLHL5D
+        LHLDC   SLHL5D
+        LOGUD   SUD
+        LOUT    SLOUT   SLPSTR  SLHL5D  SLA2HC  SLADC   SLCRLF
+                                SCLOUT
+        LPRINT  SLPRIN
+        LPSTR   SLPSTR  SLPRIN
+
+        MA2HC   SMA2HC  SMHL4H  
+        MA3DC   SMADC   
+        MADC    SMADC   
+        MHL4HC  SMHL4H  
+        MHL5DC  SMHL5D  
+        MHLDC   SMHL5D  
+        MOVEB   SMOVE   SZFNAM  SSORT   SRENAM  SZGPIN
+        MOVEBC  SMOVE   
+        MULHD   SMATH
+
+        NEGH    SMATH
+
+        ORHD    SMATH
+
+
+
+
+        20 - Cross-Reference Listing of SYSLIB Routines        Page 74
+
+
+
+
+
+                        SYSLIB User and Reference Manual
+
+
+
+        Symbol  Defined Referenced
+
+        PA2HC   SPA2HC  SPHL4H  
+        PA3DC   SPADC   
+        PADC    SPADC   
+        PAUSE   SPAUSE  
+        PHL4HC  SPHL4H  
+        PHL5DC  SPHL5D  
+        PHLDC   SPHL5D  
+        POUT    SPOUT   SCPOUT  
+        PRINT   SPRINT  SDIR    SSORT   SRAND
+        PSTR    SPSTR   SPRINT  
+        PUTUD   SUD
+
+        RETUD   SUD
+        RIN     SRIN    
+        ROTLH   SMATH
+        ROTRH   SMATH
+        RND     SRAND
+        RNDINI  SRAND
+        RNDSEE  SRAND
+
+        SCANNE  SSCANN  
+        SHFTLH  SMATH
+        SHFTRH  SMATH
+        SORT    SSORT   
+        SSBINI  SSORT
+        SUBHD   SMATH
+
+        VERSIO  SVERSI
+
+        XORHD   SMATH
+
+        ZCPRQ   SZCPR
+        ZCPRSE  SZCPR   SZGPIN
+        ZDNAME  SZFNAM
+        ZDNFIN  SZFNAM
+        ZFNAME  SZFNAM
+        ZFNINI  SZFNAM  SZGPIN
+        ZFSTAT  SZCPR
+        ZGPINS  SZGPIN
+        ZINIEX  SZCPR   SZGPIN
+        ZINIMC  SZCPR   SZGPIN
+        ZMCPTR  SZCPR
+        ZPFIND  SZCPR   SZFNAM
+
+
+
+
+
+
+
+
+
+
+
+        20 - Cross-Reference Listing of SYSLIB Routines        Page 75
+
+
+
+
+
+

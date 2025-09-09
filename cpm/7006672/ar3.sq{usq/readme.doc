@@ -1,0 +1,23 @@
+Many  of  the  files  on this tape  or  diskette  have  been 
+squeezed  by the data compression program SQ.COM.  Names  of 
+squeezed files have Q as the second letter of the file type. 
+These files can be unsqueezed individually by USQ.COM.
+
+The  file SQUEEZER.DOC (SQUEEZER.DQC if squeezed) contains a 
+complete tutorial on the use of these programs. It will tell 
+you how to unsqueeze a whole diskette with one command,  and 
+much more.
+
+None of this requires extra disk drives except to get enough 
+space.  Allow  about  half again the space occupied  by  the 
+squeezed files, which will not be disturbed.
+
+For example,
+     A>usq b: c:squeezer.dqc
+will create on drive B the abovementioned file  SQUEEZER.DOC 
+if the squeezed version, SQUEEZER.DQC is on drive C.
+
+If you just want to look at the first few lines, try:
+     A>usq -14 c:squeezer.dqc
+
+7/18/81                  Dick Greenlaw

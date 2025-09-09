@@ -1,0 +1,29 @@
+Date: 08/26/81
+From: Bob Mathias and Keith Petersen
+To:   All
+Re:   Bios TYPESQ (TYPESQ version 1.4)
+
+TYPESQ14 uses direct CBIOS console I/O to get around the problem
+of echoing line noise garbage on remote CP/M systems.   Also,  a
+special version, TYPESQNT, does not expand TABs.  This is useful
+for those  systems which would like to allow non-CP/M callers to
+"TYPE"  files without taking up an undo amount of time expanding
+tabs.
+
+The source code requires BDS-C version 1.44 to compile. SPCLDIO.C
+is no longer needed.  Users should use DIO.C and UTR.C  from  the
+squeezer package for the support libraries.
+
+The new files are:
+
+--> FILE:  TYPESQ14.COM		CRC = 2D 63
+
+--> FILE:  TYPESQ14.C  		CRC = CF 0A
+
+--> FILE:  TYPESQNT.COM		CRC = C2 EA  <--no tab expansion
+
+--> FILE:  TYPSQ80B.COM		CRC = F8 5E  <--80 lines maximum
+
+--> FILE:  TYPSQ40B.COM		CRC = B0 00  <--40 lines maximum
+
+

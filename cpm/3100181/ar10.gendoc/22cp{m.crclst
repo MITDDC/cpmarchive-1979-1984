@@ -1,0 +1,20 @@
+
+This is a list of CRCK's of all files associated with CP/M 2.2.
+Notice that some files are the same as version 2.1.
+
+Program		CRCK	NOTES
+-----------	-----	-----
+ASM.COM		CB A8	same as 2.1
+DDT.COM		34 B9	new
+DEBLOCK.ASM	83 D0	new
+DISKDEF.LIB	2F D6	same as 2.1
+DUMP.ASM	9C 4C	same as 2.1
+DUMP.COM	3C E0	same as 2.1
+ED.COM		7D 38	same as 2.1
+LOAD.COM	2A 62	same as 2.1
+PIP.COM		B7 5C	new
+STAT.COM	4C ED	same as 2.1
+SUBMIT.COM	B0 78	same as 2.1
+XSUB.COM	E8 6D	new
+
+

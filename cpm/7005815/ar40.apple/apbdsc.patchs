@@ -1,0 +1,218 @@
+		      Customizing BDS-C for the Apple ][
+			     Jeff Martin 10/24/81
+
+The Softcard-equipped Apple runs a pretty standard CP/M 2.2, and so in most
+respects supports the BDS C package without modification.  Problems arise only
+if C programs invoke certain standard library functions involved with physical
+input/output.  Specifically, the standard library is incompatible with the
+Apple in the following two areas:
+
+	  The plotting functions (setplot, clrplot, plot,
+          txtplot, and line) don't apply to the Apple, being
+          oriented towards an S-100 VDM1-like video board.
+
+	  The inp() and outp() functions assume the
+          processor does its input and output via I/O ports.
+          The Apple's I/O is strictly memory-mapped, so the
+          standard inp and outp functions won't work.
+
+A third potential problem is the csw() function, but it's so blatantly
+non-portable that I assume nobody ever uses it.  Letting it sit there and read
+an unequipped port seems as good an approach as any.
+
+The solution to the first problem is simply to disable (undefine) the plotting
+functions, so accidental invocation won't do horrible things to RAM. (The
+default initialization done by C.CCC sets the plotting base at CC00H, which for
+56K Apple CP/M points a loaded gun at the BDOS).
+
+The second problem requires a little more thought. First it should be noted
+that programs that use these functions can hope at best for near-portability at
+the C-source level.  Even among CP/M systems that use I/O ports, there is
+little standardization of the port assignments.  It is expected that programs
+using inp and outp will need easily-modified defines for the ports. On that
+basis, the best inward portability for the Apple can be achieved by changing
+inp and outp to do memory reads and writes, respectively.  Then the only
+required change to a source program will be changing the "port" definition
+value to the appropriate memory address.  This scheme also allows for outward
+portability, with one caveat: Apple programmers must resist the temptation to
+do I/O via pointers or the peek() and poke() functions and instead use the
+"redundant" (for the Apple) inp() and outp().
+
+Now for the nuts-and-bolts of making the required mods.  Changes must be made
+to five source files, and the order of the changes is sometimes important.
+
+1. Make the following changes to CCC.ASM:
+	a. Change the DMAVIO equate to 0.
+	b. Insert a new equate, MEMMAPIO EQU 1.
+	c. Surround the iohack initialization code in "init" with an
+	   IF NOT MEMMAPIO...ENDIF conditional assembly directive.
+	d. Similarly "feature out" the iohack ds directive.
+	e. Feature the ds's for pbase through psize as a function
+	   of DMAVIO.
+
+2. Assemble CCC.ASM, noting the new locations of "ram" and "setdma".  Load
+   the result of the assembly, and rename it as your new C.CCC.
+
+3. Make the following changes in BDS.LIB:
+	a. Change the equates for ram and setdma to the values
+	   noted above.
+	b. Add equates for MEMMAPIO (1) and DMAVIO (0).
+	c. "Feature" the ds's for iohack and pbase-psize
+	   the same as you did in CCC.ASM.
+
+4. Make the following changes in DEFF2.ASM:
+	a. Change the "inp" function to generate code identical to
+	   that of the "peek" function if MEMMAPIO is 1.
+	b. Change the "outp" function to generate code identical
+	   to that of the "poke" function if MEMMAPIO is 1.
+
+5. Change DEFF2A.ASM so functions "setplot" through "txtplot" are not assembled
+   if DMAVIO is 0.  Note that directives must also be put in the "direct" area.
+
+6. Assemble and load DEFF2.ASM and DEFF2A.ASM, and merge them with CLIB to
+   create a new DEFF2.CRL.
+
+7. Finally, change the "port" definitions (and other attributes) in BDSCIO.H
+   to the correct memory addresses and masks for your console and modem.
+
+Just so you won't think I missed the obvious, I'll point out that the inp() and
+outp() problems could have been "solved" in most cases by adding the following
+two lines to BDSCIO.H: 
+#define inp peek 
+#define outp poke
+I just don't think it's good to have unusable and potentially dangerous code
+lying around in libraries.
+
+To be \really/ specific, what follows are UNIX-style "diff" outputs that
+indicate the specific changes made to V1.44 sources.  The BDSCIO.H changes
+are for a CCS serial card in slot 3 (for the console) and a MICROMODEM ][
+in slot 2.
+
+************************************************************
+Difference listing for CCC.ASM
+
+34c34
+< DMAVIO:	EQU 1		;True if using DMA video library routines and
+---
+> DMAVIO:	EQU 0		;True if using DMA video library routines and
+35a36,37
+> MEMMAPIO: EQU 1		;True if I/O is memory-mapped, false if uses I/O ports
+>
+681c683
+< 			;Initialize I/O hack locations:
+---
+> 	IF NOT MEMMAPIO	;Initialize I/O hack locations:
+689c691
+<
+---
+> 	ENDIF
+1098a1101
+> 	IF DMAVIO
+1102a1106
+> 	ENDIF
+1107a1112
+> 	IF NOT MEMMAPIO
+1109a1115
+> 	ENDIF
+
+
+************************************************************
+Difference listing for BDS.LIB
+
+16a17,18
+> MEMMAPIO: EQU 1		;true if I/O is memory-mapped, false if uses I/O ports
+> DMAVIO	EQU 0		;true if equipped with DMA video I/O board, else false
+43c45
+< ram:	equ cccorg+471h	;THIS WILL PROBABLY CHANGE IF YOU CUSTOMIZE CCC.ASM
+---
+> ram:	equ cccorg+447h	;THIS WILL PROBABLY CHANGE IF YOU CUSTOMIZE CCC.ASM
+89d90
+< setdma:	equ cccorg+460h	;set CP/M internal DMA pointer to BASE+80h (tbuff)
+90a92,96
+> 			;**************************************************
+> 			;THIS WILL PROBABLY CHANGE IF YOU CUSTOMIZE CCC.ASM
+> setdma:	equ cccorg+436h	;set CP/M internal DMA pointer to BASE+80h (tbuff)
+> 			;**************************************************
+>
+104a111
+> 	if dmavio
+108a116
+> 	endif
+113a122
+> 	if not memmapio
+114a124
+> 	endif
+
+
+************************************************************
+Difference listing for DEFF2.ASM
+
+731c731
+< ; Sample data at an input port:
+---
+> ; Sample data at an input port (or address, if memory mapped):
+734a735,740
+> 	if memmapio
+> 	call ma1toh	;when mapped, inp == peek
+> 	mov l,m
+> 	mvi h,0
+> 	ret
+> 	else
+740a747
+> 	endif
+749c756
+< ; Output a byte to an output port:
+---
+> ; Output a byte to an output port (or address, if memory mapped):
+752a760,766
+> 	if memmapio
+> 	call arghak	;when mapped, outp == poke
+> 	lhld arg1
+> 	lda arg2
+> 	mov m,a
+> 	ret
+> 	else
+757a772
+> 	endif
+
+
+************************************************************
+Difference listing for DEFF2A.ASM
+
+11a12
+> 	if dmavio
+16a18
+> 	endif
+27c29
+<
+---
+> 	if dmavio
+313a316
+> 	endif	;dmavio
+315d317
+<
+
+************************************************************
+Difference listing for BDSCIO.H:
+
+41,42c41,42
+< #define CSTAT	0355	/* status port	*/
+< #define CDATA	0350	/* data port	*/
+---
+> #define CSTAT	0xE0BE	/* status port	*/
+> #define CDATA	0xE0BF	/* data port	*/
+44c44
+< #define COMASK	0x20	/* output data ready mask  */
+---
+> #define COMASK	0x02	/* output data ready mask  */
+53,54c53,54
+< #define	MSTAT	0335	/* status port	*/
+< #define MDATA	0330	/* data port	*/
+---
+> #define	MSTAT	0xE0AE	/* status port	*/
+> #define MDATA	0xE0AF	/* data port	*/
+56c56
+< #define MOMASK	0x20	/* ready to send a character mask	*/
+---
+> #define MOMASK	0x02	/* ready to send a character mask	*/
+

@@ -1,0 +1,455 @@
+begin "xmodem"
+
+
+
+comment		   XMODEM program---to transfer CP/M files
+
+Written by Max Diaz (MMD at SAIL) based on Keith Petersen's XMODEM.ASM v. 4.3
+
+
+
+PDP-10 (20) files come in three flavours: text files, that have 5 ascii chars
+(35 bits) per word---these are the ones you can TYPE & get sensible results.
+If not, they are binary, and then have 4 bytes (32 higher bits) per word. But
+these are of two types:  image (ie, all words in the file have this format) or
+CPM, which have the identifying mark sixbit/DSK8/ in the first word and it
+has to be skipped.   Note CP/M text files may be binary in PDP-10.
+
+So, to download a non-text file, try first mode "C" to make sure you are not
+sending that identifying word into your file.  If this mark is not present
+the program will notify you:  switch, then, to I(mage) mode.
+
+This prog was written first for the WAITS o.s. (at SU-AI), and later on
+modified for TENEX/TOPS20.   TENEX "R" will almost surely loose a lot
+of sectors at 9600 baud (the reason being that I didn't found out how to
+increase the buffer size, TENEX doc being so nice and clear...) but it'll
+get there --- however, better use 1200 (maybe 2400) baud.  WAITS "R" has not
+been tested.  Command "S" will work nicely in both cases.
+
+To compile it, just set the appropiate switch in the next page.   Warning: may
+require some default libraries such as LIBSA8.REL.;
+
+
+
+	require "{}{}" delimiters;
+	define ! = {comment};
+	define end!code	= {end};
+
+
+
+   define WAITS = {false},
+	  TENEX = {true};
+
+
+   define errlim = {10};	     ! max errors allowed;
+   define nakslp = {75};	     ! max wait for initial NAK;
+   define msgslp = {10};	     ! max wait for recv ACK/SOH;
+   define chrslp = {1};		     ! max wait for data,csum;
+   define markbeg = {'446353300000}; ! 1st word, CP/M files: sixbit/DSK8/;
+   define markend = {'12};	     ! last wrd, CP/M files: sometimes!;
+
+   define soh = {'1},
+	  eot = {'4},
+	  bel = {'7},
+	  ack = {'6},
+	  lf  = {'12},
+	  cr  = {'15},
+	  nak = {'25},
+       cpmeof = {'32},
+	 crlf = {cr&lf};
+
+   define debug = {false};   ! DEBUG ONLY;
+   define his(str) = {IFC debug thenc hist:=hist&str; ENDC};
+
+
+   define finis(m) = {begin print(m&crlf); go to fin; end};
+
+
+   integer ttychn, tiw2, tiw3, ttymod,
+	   dskchn,dskeof,flag,
+	   csum,errct,sectno,
+	   lastchar;
+
+   boolean image, cpm;	 ! true for binary files;
+
+   integer array sector[0:128];
+
+   label abort;
+
+   string hist;
+
+   external integer !skip!;   ! tenex (or tops20);
+
+
+
+! Special Text Translation (weird character sets);
+
+IFC WAITS thenc
+   define schr(chr) =
+	      {if saiasc[tc:=((chr) land '177)] then saiasc[tc] else tc},
+	  rchr(chr) =
+	      {if ascsai[tc:=((chr) land '177)] then ascsai[tc] else tc};
+   integer tc;
+   preload!with [4]0,'136,['23]0,'137,0,'176,['143]0,'175,0;
+      integer array sai!asc[0:'177];
+   preload!with ['136]0,'4,'30,['35]0,'176,'32,0;
+      integer array ascsai[0:'177];
+ELSEC
+   define schr(c) = {c},
+	  rchr(c) = {c};
+ENDC
+
+
+
+! SysDep I/O;
+
+
+simple procedure sleep(integer ssecs);	! in 60ths of a sec;
+   begin "sleep"
+IFC WAITS thenc
+      integer t0, t;
+      define clock(v) =
+	     {quick!code TIMER '13; MOVEM '13,v; end!code;};
+      clock(t0);
+      do clock(t) until abs(t-t0) geq ssecs;
+ENDC ifc TENEX thenc
+      integer msecs;
+      msecs := (ssecs*1000)/60;
+      start!code MOVE 1,msecs; DISMS; end!code;
+ENDC
+   end "sleep";
+
+
+
+simple procedure clearinbuf;
+   begin
+IFC WAITS thenc
+      clrbuf;
+ENDC ifc TENEX thenc
+      quick!code MOVE 1,ttychn; CFIBF; end!code;
+ENDC
+   end;
+
+
+
+simple procedure initty;  ! open for i/o, dump (binary) mode;
+   begin "initty"
+      sleep(3*60);
+      outchr(bel);
+IFC WAITS thenc
+      open(ttychn := getchan,"tty",'10,1,1,0,0,0);
+ENDC ifc TENEX thenc
+      ttychn := gtjfn("TTY:",'200001000000);
+      openf(ttychn,'100000300000);   ! 8bit,normal mode,r/w;
+      ttymod := rfmod(ttychn);
+      sfmod(ttychn,0);
+      stpar(ttychn,0);
+      quick!code MOVEI 1,-5; RTIW; MOVEM 2,tiw2; MOVEM 3,tiw3;
+		 MOVEI 1,-5; MOVEI 2,0; MOVEI 3,0; STIW; end!code;
+ENDC
+      clearinbuf;
+   end "initty";
+
+
+
+simple procedure closetty;
+begin
+IFC TENEX thenc
+   quick!code MOVEI 1,-5; MOVE 2,tiw2; MOVE 3,tiw3; STIW; end!code;
+   sfmod(ttychn,ttymod);
+   stpar(ttychn,ttymod);
+ENDC
+   release(ttychn);
+end;
+
+
+
+   ! branch (goto) if input buffer is empty;
+IFC WAITS thenc
+   define ttyuuo       = {'51000000000};
+   define inskip(goto) =
+	  {quick!code TTYUUO '13,; JRST goto; end!code};   ! uuo = INSKIP;
+ENDC ifc TENEX thenc
+   define inskip(goto) =
+	  {quick!code MOVE 1,ttychn; SIBE; SKIPA; JRST goto; end!code};
+ENDC
+
+
+
+
+simple procedure out8(integer chr);
+IFC WAITS thenc
+   outchr(chr land '377);
+ENDC ifc TENEX thenc
+   quick!code MOVE 1,ttychn; MOVE 2,chr; BOUT; end!code;
+ENDC
+
+
+
+simple integer procedure in8(reference integer chr;integer secs);
+   ! Returns true if timed out (SECS secs).  Otherwise result in CHR;
+   begin "in8"
+      integer tic;
+      label notyet;
+      for tic := 59 step -1 until 0 do
+      begin
+	 inskip(notyet);
+IFC WAITS thenc
+	 chr := wordin(ttychn);
+ENDC ifc TENEX thenc
+	 quick!code MOVE 1,ttychn; BIN; MOVEM 2,chr; end!code;
+ENDC
+	 chr := chr land '377;
+	 return(false);
+  notyet:sleep(secs);	! i.e., (secs/60)*60  60ths;
+      end;
+      return(true);
+   end "in8";
+
+
+
+
+simple integer procedure timout(integer chr;integer secs);
+   ! True if char received isn't CHR, or if none received in SECS secs;
+   begin "timout"
+      chr := chr land '377;
+      his(" w"&cvs(secs)&":"&cvos(chr));
+      if in8(lastchar,secs) then
+      begin
+	 his("$");
+	 lastchar := 0;
+	 return(true);
+      end else
+      begin
+	 his("="&cvos(lastchar));
+	 return(lastchar neq chr);
+      end;
+   end "timout";
+
+
+
+! Miscellanea;
+
+
+define getack(xmit) =
+   {do begin
+       if (errct:=errct+1) > errlim then abortit;
+       xmit;
+       clrbuf;
+   end until not timout(ack,msgslp)};
+
+
+
+
+simple procedure abortit;
+   begin
+      closetty;
+      IFC debug thenc inchwl; print(hist) ENDC;
+      go to abort;
+   end;
+
+
+
+simple procedure sndfile(string filnam);
+begin "sndfile"
+   label fin;
+   string str;
+   integer aa,ee,nn,lastsec;
+
+   simple integer procedure rdsect;
+   begin "rdsect"
+      errct := 0;
+      if image then
+	 for nn:= 1 step 1 until 128 do
+	 begin
+	    if ee:=(nn-1)mod 4 then else aa:=wordin(dskchn);
+	    if ((aa land markend) or dskeof) and nn=1 then return(true);
+	    sector[nn] := aa rot ((ee+1)*8) land '377;
+	 end
+      else begin "ascii"
+	 if lastsec then return(true);
+	 str := input(dskchn,0);
+	 aa := length(str);
+	 for nn:=aa step -1 until 1 do
+	    sector[nn] := schr(cvasc(str[nn for 1]) rot 7);
+	 if lastsec:=dskeof then
+	 begin	 ! note 1 <= aa+1 <= 128;
+	    sector[aa+1] := cpmeof;
+	    for nn:=aa+2 step 1 until 128 do sector[nn]:=0;
+	 end;
+      end "ascii";
+      return(false);
+   end "rdsect";
+
+   if image then open(dskchn:=getchan,"dsk",'10,5,0,0,0,dskeof)
+       else open(dskchn:=getchan,"dsk",0,5,0,128,0,dskeof);
+   lookup(dskchn,filnam,flag);
+   if flag then finis("> File "&filnam&" not found.  Try again");
+   if image and cpm then
+      if (wordin(dskchn) xor markbeg) then
+      finis("> Not a CPM file; try I(mage) mode");
+   print("> Ready to send "&filnam);
+   if image then print(" (BINARY)"&crlf) else print(" (ASCII)"&crlf);
+   initty;
+   if timout(nak,nakslp) then abortit;
+   sectno := lastsec := 0;
+   while not rdsect do
+   begin
+      sectno := sectno + 1;
+      his(crlf&"["&cvs(sectno)&"]");
+      getack(begin
+	 out8(soh);
+	 out8(sectno);
+	 out8(lnot sectno);
+	 csum := 0;
+	 for nn:=1 step 1 until 128 do begin
+	    out8(sector[nn]);
+	    csum := csum + sector[nn];
+	 end;
+	 out8(csum);
+      end);
+   end;
+   his(crlf&"[EOF]");
+   getack(out8(eot));
+   closetty;
+fin:release(dskchn);
+end "sndfile";
+
+
+
+
+simple procedure rcvfile(string filnam);
+begin "rcvfile"
+   label hshake, fin;
+   string str;
+   integer aa,ee,nn;
+
+   simple integer procedure rcvsect;
+   begin "rcvsect"
+      label retry, abo;
+
+      errct:=0;
+      sectno := sectno + 1;
+      his(crlf&"["&cvs(sectno)&"]");
+retry:if timout(soh,msgslp) then
+      begin
+	 if lastchar=eot then return(true);
+     abo:if (errct:=errct+1)>errlim then abortit;
+	 out8(nak);
+!	 sleep(1*60);
+	 clearinbuf;
+	 go to retry;
+      end;
+      if timout(sectno,chrslp) then go to abo;
+      if timout(lnot sectno,chrslp) then go to abo;
+      csum:=0;
+      his(" |data");
+      for nn:=1 step 1 until 128 do
+      begin
+	 if in8(ee,chrslp) then
+	 begin
+	    his(" "&cvs(nn-1)&"|");
+	    go to abo;
+	 end;
+	 csum := csum + (sector[nn]:=ee);
+      end;
+      his("|");
+      if timout(csum,chrslp) then go to abo;
+      out8(ack);
+      return(false);
+   end "rcvsect";
+
+
+   if image then open(dskchn:=getchan,"dsk",'10,0,5,0,0,dskeof)
+       else open(dskchn:=getchan,"dsk",0,0,5,128,0,dskeof);
+   lookup(dskchn,filnam,flag);
+   if not flag then
+   begin
+      print("> File exists. Overwrite (y)?");
+      if str:=inchrw neq "y" and str neq "Y" then finis("  Try again.");
+      print(crlf);
+   end;
+   enter(dskchn,filnam,flag);
+   if flag then finis("> Cannot write file "&filnam);
+   print("> Ready to receive "&filnam);
+   if image then print(" (BINARY)"&crlf) else print(" (ASCII)"&crlf);
+   if image and cpm then wordout(dskchn,markbeg);
+   initty;
+
+hshake:errct := 0;   ! this avoids stupid handshake feature of MODEM;
+   out8(nak);
+   sleep(1*60);
+   if (errct:=errct+1)=nakslp then abortit;
+   inskip(hshake);
+   sectno := aa := 0;
+   while not rcvsect do
+   if image then
+      for nn:=1 step 1 until 128 do
+      begin
+	 aa:=aa lor (sector[nn] lsh (28-8*(ee:=(nn-1)mod 4)));
+	 if ee=3 then
+	 begin
+	    wordout(dskchn,aa);
+	    aa:=0;
+	 end;
+      end else
+      for nn:=1 step 1 until 128 do
+      begin
+	 if sector[nn]=cpmeof then done;
+	 out(dskchn,sector[nn]);
+      end;
+   out8(ack);
+   closetty;
+   if image and cpm then wordout(dskchn,markend);
+fin:release(dskchn);
+end "rcvfile";
+
+
+
+
+! Execution;
+
+simple procedure givehelp;
+begin
+   print("> Data transmission may be performed in a(scii) for text;"&crlf&
+     "	or binary:  c(P/M mode) or  i(mage = 32 bits per word)."&crlf&
+     "	If data is not text, try `c' first, then `i'." &crlf&crlf&
+
+     "	FTP commands are: s(end) <file> or r(eceive) <file>. To"&crlf&
+     "	end: q(uit).  Note ^C no good; wait for 75 secs timeout."&crlf);
+end;
+
+   string com, lin;
+
+   print("> XMODEM  version 3.0  (March 1982)"&crlf);
+   image := cpm := true;   ! silly, but safer;
+   hist := "";
+   while true do
+   begin
+      print("<");
+      lin := inchwl;
+      com := lin[1 for 1];   ! command;
+      do lin := lin[2 to inf] until lin[1 for 1] neq " ";
+      if com neq null then
+      case com of begin "case"
+	   ["$"]      IFC debug thenc print(hist,crlf) ENDC;
+	   ["S"]["s"] begin hist:=lin; sndfile(lin); end;
+	   ["R"]["r"] begin hist:=lin; rcvfile(lin); end;
+	   ["C"]["c"] image := cpm := true;
+	   ["A"]["a"] image := cpm := false;
+	   ["I"]["i"] begin image := true; cpm := false; end;
+	   ["Q"]["q"] done;
+	   ["?"]      givehelp;
+	   else       print("> Whaaat?	Type `?' for help"&crlf)
+	   end "case";
+   end;
+   print("> Ciao"&crlf);
+abort:
+end "xmodem";
+
+
+
+
+
+
+    

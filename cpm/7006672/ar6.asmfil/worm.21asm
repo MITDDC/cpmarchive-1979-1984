@@ -1,0 +1,259 @@
+;		WORM.ASM ver 2.1 (revised 10/9/81)
+;
+;Jim Eccleston July 19 1980 - program originally written
+;
+;Keith Petersen, W8SDZ, October 9, 1981 - fixed bug which
+;	caused program to print one trap error at start.
+;	Added REPORT conditional assembly so addresses
+;	won't be reported unless there is an error.
+;	Added equates for console ports.
+;
+;Allen Mar August 8, 1980 - added 'label + offset'
+;	so COM file can be generated without DDT.COM
+;	Thanks to Bill Precht and Ward Christensen
+;	who used it in his 'PMMIBYE2' remote CP/M
+;	program...
+;
+;************************************************************************
+;*									*
+;*			W O R M T E S T					*
+;*									*
+;*	A serious flaw exists in most memory test routines when		*
+;*	applied to Z-80 systems. A board can be tested for hours	*
+;*	and never drop a bit, then when it's loaded with a program	*
+;*	fail instantly. The problem is that access timing on a		*
+;*	Z-80 instruction fetch (the M-1 cycle) is significantly		*
+;*	more critical than on a simple read cycle. No matter how	*
+;*	fancy a normal memory test gets, it never makes demands		*
+;*	on memory speed that an actual program does. The only way	*
+;*	to check this memory for full speed operation is to 		*
+;*	actually run a program in it. Wormtest does just that.		*
+;*					vide The M-1 Worm. P.C. July 73 *
+;*									*
+;************************************************************************
+;
+;The first few lines relocate the program down to low memory
+;There are two parts to the test program. The larger portion
+;consists of service routines, but the Worm itself consists of
+;a short 12 byte routine that upon initialization breaks away
+;from the main body and crawls up through memory space giving a
+;running travelogue as he goes.  If he stops talking, you know
+;something bad happened, and where.  The Worm acts as the main
+;program loop. It manipulates two test bytes and calls two sub-
+;routines. One of the subroutines reports the location of the
+;worm and detects and reports any errors in the test bytes. The
+;other subroutine shifts the Worm up in memory one location and
+;adjusts the return to begin execution for another loop.  There
+;are seven instruction fetches per loop, with the data manipulation
+;instructions in complementary pairs to ensure full speed testing
+;on both ones and zeroes.  The instruction RST 7 is embedded in
+;the Worm in non-executable locations as traps in case a memory
+;error causes the program counter to get out of sync. The Worm
+;leaves behind a slime-trail of FF's as it travels. Any execution
+;of a trap is reported and the trap subroutine attempts to return
+;execution back to the worm.  The error reports indicate which data
+;byte was bad and what the erroneous value was.  A "D" indicates
+;that bits were dropped, while a "P" indicates that bits were
+;picked.  A trap error is flagged by a "T" followed by the address.
+;Upon execution the Worm will immediately start reporting its
+;location (by address).  Bad memory will trash the program or
+;else trigger the error reports.  No memory looks like a string
+;of FF's and a sequential string of traps will be reported.
+;When ROM is hit, execution of the ROM program will begin,
+;so if you have the Morrows Disk Controller you will know
+;your memory is ok when the system re-boots.
+;
+stport	equ	20h		;console status port
+txrdy	equ	04h		;console putput mask
+daport	equ	21h		;console data port
+;
+report	equ	0	;<--make non-zero for address reporting
+;
+	org	0100h
+;
+; Move routine relocates WORM program down to 08H
+;
+start	lxi	d,dest		;Destination address
+	lxi	h,source	;Source address
+	mvi	b,pend-source+1	;Number of bytes to move
+;
+loop	mov	a,m		;Get byte
+	stax	d		;Put byte
+	inx	h		;Bump up source adr.
+	inx	d		;Bump up destination adr.
+	dcr	b		;Decrease byte count
+	jnz	loop		;Do again if not zero count
+	lxi	sp,stack	;Set up stack pointer
+	lxi	b,data		;Set up data pointer
+	jmp	worm+1
+;
+dest	equ	08h		;destination
+;
+source	equ	$
+offset	equ	dest-source	;reloc amount
+;
+stwrm	equ	$+offset	;Start of relocated code (08h)
+	dw	0ffffh
+	dw	0ffffh
+	dw	0ffffh
+	dw	0ffffh		;Rst 7s
+;
+movwrm	equ	$+offset
+	pop	h		;Get address of worm + 1
+	mov	d,h		;Duplicate address in d
+	mov	e,l		;and e regs.
+	dcx	d		;Set DE to last address of worm
+	mvi	b,0ch		;Set length of worm
+;
+getwrm	equ	$+offset
+	ldax	d		;;Get byte of worm 
+	mov	m,a		;Move it up one location
+	dcx	d		;Adjust pointers
+	dcx	h
+	dcr	b
+	mov	a,b
+	cpi	00
+	jnz	getwrm
+	lxi	b,data		;Restore data pointer
+	inx	h		;HL to start of worm
+	inx	h
+	pchl			;Return to worm
+	rst	7		;RST 7
+;
+rptadr	equ	$+offset
+	cpi	0ffh		;Check for dropped bit error
+	jnz	errdrp
+	mov	a,b
+	cpi	00h		;Check for picked bit error
+	jnz	errpik
+	jmp	rptad2		;Show the address
+	rst	7
+	rst	7		;Trap
+;
+trap	equ	$+offset
+	mvi	a,54h		;Print a "T"
+	call	output
+	mvi	a,20h		;Print a " "
+	call	output
+	pop	h		;Recover address
+	dcx	h		;Adjust address
+	call	adout		;Print the address
+	inx	h		;Adjust address
+	pchl			;Return
+;
+rptad2	equ	$+offset
+	pop	h		;Recover address
+;
+	if	report
+	call	adout		;Print address
+	endif
+;
+	if	not report
+	nop ! nop ! nop		;Don't print address
+	endif
+;
+	inx	h		;Adjust return address
+	inx	h
+	inx	h
+	pchl			;Return
+;
+errdrp	equ	$+offset
+	mvi	b,44h		;Show it's dropped bit(s)
+	jmp	errprt		;Print error message
+;
+errpik	equ	$+offset
+	mvi	b,50h		;Show it's picked bit(s)
+;
+errprt	equ	$+offset
+	mov	c,a		;Save error data
+	mvi	a,2ah		;Print "*"
+	call	output
+	mvi	a,20h		;Print " "
+	call	output
+	mov	a,b		;Print type of error
+	call	output
+	mvi	a,20h		;Print " "
+	call	output
+	mov	a,c		;Get error data
+	call	bowcl		;Print and end line
+	jmp	rptad2		;Now try for address and return
+;
+adout	equ	$+offset
+	push	h		;Save address
+	mov	a,h
+	call	bytout		;Its nybble time
+	mov	a,l
+	call	bowcl		;Same with cr/lf
+	pop	h		;Restore address
+	ret
+;
+bytout	equ	$+offset
+	push	psw		;Save A
+	rrc			;Shift nybble
+	rrc
+	rrc
+	rrc
+	call	nybout		;Nybble out 1
+	pop	psw		;Restore A
+	call	nybout		;Nybble out 2
+	ret
+;
+bowcl	equ	$+offset
+	call	bytout
+	mvi	a,0Dh		;C/R time
+	call	output
+	mvi	a,0Ah		;LF time
+	call	output
+	ret
+;
+nybout	equ	$+offset
+	ani	0fh		;Strip high nibble
+	cpi	0ah		;Divide alpha v numeric
+	jm	isnum		;If numeric
+	adi	07h		;Add alpha offset
+isnum	equ	$+offset
+	adi	30h		;Add numeric offset
+	call	output
+	ret
+;
+;************************************************
+;* Insert Your DIRECT Console Output Call Here  *
+;* unless you want to use cp/m calls till crash *
+;************************************************
+;
+output	equ	$+offset
+	push	b		;save bc
+	push	psw		;save character
+;
+lp	equ	$+offset
+	in	stport		;get console status
+	ani	txrdy		;ready for character?
+	jz	lp		;no, loop and wait
+	pop	psw		;get character
+	out	daport		;output to console
+	pop	b		;restore bc
+	ret
+;
+data	equ	$+offset
+	db	00
+;
+	ds	20
+stack	equ	$+offset-1
+;
+worm	equ	$+offset
+	rst	7		;Trap
+	ldax	b		;Move data to A; start of worm
+	push	psw		;Push test data onto stack
+	mvi	a,0ffh		;Move second test byte to A
+	pop	b		;Pop first test byte into B
+	rst	5		;call "rptadr"
+	rst	7		;Trap
+	rst	7
+	rst	7
+	nop			;"rptadr" return location
+	rst	2		;call "movwrm"
+;
+pend	equ	$		;program end
+;
+	end	0100h
+

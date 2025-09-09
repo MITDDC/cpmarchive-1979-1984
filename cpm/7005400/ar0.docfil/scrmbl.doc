@@ -1,0 +1,32 @@
+SCRAMBLE is a command used to encode a CP/M file.
+
+The format of the command is:
+	SCRAMBLE filename.type password
+where "password" is an 8 character password made of characters
+perissible in a file name (i.e. no ".", etc).  To obtain a good
+"initial seed" for the scrambling process, no character in the
+password may appear more than twice.
+
+The requested file is scrambled, and re-written in place.
+To un-scramble the file, the IDENTICAL command is issued,
+i.e. SCRAMBLE filename.type password.  This is because
+SCRAMBLE does an "exclusive-or" type modification to the file,
+and doing two identical exclusive-or's to data result
+in the same data being retuned. 
+
+I feel a scrambled file is quite secure.  Given that a file
+was scrambled and the password forgotten, I know of no way to
+determine what the original file was.  Even a file which
+is all binary-0's, is sufficiently scrambled to defy finding
+out what the password or original data was.  ...But I assume
+no responsibility for the "security" of files scrambled
+with SCRAMBLE as I am not a "student of cryptology".
+
+Note also, that if an attempt is made to unscramble a scrambled
+file, using the WRONG password, then the file is technically
+"double scrambled" and SCRAMBLE would then have to be executed
+TWICE, once with the original password, and once with the
+erroniously-used password.  Because of the exclusive or-ing
+process, either password may be used either time.
+
+03/11/79 Ward Christensen

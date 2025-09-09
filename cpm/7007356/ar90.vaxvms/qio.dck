@@ -1,0 +1,6 @@
+
+C              QIO.DCK  TO BE INCLUDED IN SUBROUTINES USING 
+C                             SYS$QIOW
+      INTEGER*2 CHAN,STATUS(4)
+      COMMON /QIO/ CHAN,STATUS
+

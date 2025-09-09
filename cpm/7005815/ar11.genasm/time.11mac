@@ -1,0 +1,1064 @@
+;  Program:  TIME
+;  Version:  1.1
+;  Author:  Richard Conn
+;  Date:  6 Mar 82
+;  Previous Versions:  1.0 (2 Mar 82)
+VERS	equ	11	;Version Number
+
+;	TIME is invoked by a command line of the form:
+;
+;		TIME <time> <date> <weekday> <display cmd>
+;
+;	All parameters are optional and may be present in any order.
+;If all parameters are omitted, the time and date are printed.
+;The various parameters are:
+;	<time> -- Current time as hh:mm (hh and mm are 1-2 digits)
+;		hh:mm may be followed by A or P (hh:mmA) for AM or PM
+;			(defaults to current AM or PM)
+;	<date> -- Current date as dd/mm/yy (all are 1-2 digits)
+;	<weekday> -- Day of week (3 letters are generally required)
+;	<display cmd> -- Either:
+;		DISPLAY TIME, DISPLAY DATE, XDISK, or PRINT
+;			(only 1st letter of each word required)
+;			DISPLAY Sets Display on Chronograph
+;			PRINT Sends Output to Printer
+;			XDISK Sends Output to Disk File TIME.SYS
+;	Each parameter is separated from its predecessor by one or more spaces.
+;
+
+;
+;  External Routines in SYSLIB Library
+;
+	ext	cin	; Console Input
+	ext	cout	; Console Output
+	ext	lout	; List Output
+	ext	pout	; Punch (Clock) Output
+	ext	rin	; Reader (Clock) Input
+	ext	crlf	; New Line
+	ext	lcrlf	; New Line to LST:
+	ext	print	; Print String at Return Address
+	ext	lprint	; Print String at Return Address on LST:
+	ext	pstr	; Print String Pointed to by HL
+	ext	lpstr	; Print String Pointed to by HL on LST:
+	ext	f$make	; Create File
+	ext	fo$open	; Open File for Byte-Oriented Output
+	ext	fo$close	; Close File for Byte-Oriented Output
+	ext	f$put	; Put Byte into File
+
+;  ASCII Constants
+CR	equ	0dh	; <CR>
+LF	equ	0ah	; <LF>
+CTRLC	equ	3	; ^C
+
+;
+;  CP/M Constants
+;
+buff	equ	80H	;Command Line Buffer
+
+;
+;  Macros
+;
+;** Send AT Code and 2-letter command from Stack to Clock **
+sendat	macro
+	xthl		;;Point to 1st letter of command
+	mvi	a,'A'	;;Send AT Command Prefix
+	call	coclk	;;Send to Clock
+	mvi	a,'T'
+	call	coclk
+	mov	a,m	;;Get 1st Command Letter
+	call	coclk	;;Send to Clock
+	inx	h	;;Point to 2nd Command Letter
+	mov	a,m	;;Get it
+	call	coclk	;;Send to Clock
+	inx	h	;;Point to Return Address
+	xthl		;;Save it on Stack
+	endm
+
+;
+;  TIME Program --
+;
+	aseg
+	org	100H
+
+;
+;  Set up for return
+;
+	lxi	h,0	;Obtain SP in HL
+	dad	sp
+	shld	stack	;Save Return SP Value
+	lxi	sp,stack	;Reset SP
+
+;
+;  Check for Help Request
+;
+	call	helpck
+
+;
+;  Extract Data from Clock
+;
+	call	readclock
+
+;
+;  Set New Date or Time if one is specified
+;
+	call	setclock
+
+;
+;  Check Date and Time for Numeric Syntax Error
+;
+	call	check
+
+;
+;  Open Disk File for Output if Requested
+;
+	call	dskopen
+
+;
+;  Print Time/Date/Weekday on CON:, LST:, or Disk
+;
+	call	prclock
+	call	dskclos	;Close Disk if Disk Output Requested
+	lda	prflg	;Check for LST: output and send CRLF if so
+	ora	a	;0=CON: only
+	cnz	lcrlf	;New Line to LST:
+
+;
+;  Set Time/Date/Weekday if requested
+;
+	lda	setit	;Flag Set?
+	ora	a	;0=no
+	cnz	doset
+
+;
+;  Set Display if Requested
+;
+	lda	disp	;Flag Set?
+	ora	a	;0=no
+	cnz	dodisp
+
+;
+;  Return to Caller (CP/M or CP/ZM)
+;
+return:
+	lhld	stack	;Get original stack pointer
+	sphl		;Load it
+	ret
+
+;
+;  Clock Input/Output Entry Routines
+;
+ciclk:
+	jmp	rin	;Clock is on RDR:
+coclk:
+	jmp	pout	;Clock is on PUN:
+
+;
+;  Open Disk for Output if Requested
+;
+dskopen:
+	lda	dskflg	;Check flag
+	ora	a	;0=no
+	rz
+	lxi	d,fcb	;Pt to FCB
+	call	f$make	;Make File
+	lxi	d,fcb	;Pt to FCB
+	call	fo$open	;Open File
+	ret
+
+;
+;  Close Disk for Output if Requested
+;
+dskclos:
+	lda	dskflg	;Check flag
+	ora	a	;0=no
+	rz
+	mvi	a,cr	;New Line to file
+	call	f$put
+	mvi	a,lf
+	call	f$put
+	lxi	d,fcb	;Pt to FCB
+	call	fo$close	;Close File
+	ret
+
+;
+;  Print Time/Date/Weekday on CON:
+;
+prclock:
+	call	banner	;Print Name of Program
+	call	prtime	;Print Time
+	call	cprint
+	db	' on ',0
+	call	prweek	;Print Weekday
+	call	space	;Space
+	call	prmonth	;Print Month Name
+	call	space
+	call	prday	;Print Day Number
+	call	pryear	;Print Year
+	ret
+
+;
+;  Print Name and Version of Program
+;
+banner:
+	call	print
+	db	'TIME  Version '
+	db	VERS/10+'0','.',(VERS MOD 10)+'0'
+	db	'    ',0
+	ret
+
+;
+;  Scan Input Buffer of Help Request (Token beginning with /)
+;
+helpck:
+
+;  Place 0 after last char in command line
+	lxi	h,buff	;Point to char count in command line
+	mov	a,m	;Get char count
+	inx	h	;Point to first char
+	add	l	;Point to after last char in line
+	mov	l,a
+	mov	a,h
+	aci	0
+	mov	h,a	;HL now points to after last char
+	mvi	m,0	;Store 0 after last char
+
+;  Check for Token Beginning with /
+	lxi	h,buff+1	;Pt to 1st char
+hckloop:
+	call	spskip	;Skip to next token
+	ora	a	;EOL?
+	rz		;Done if so
+	cpi	'/'	;Help?
+	jnz	hckloop	;Fall thru to PRHELP if so
+
+;
+;  Print Help Message
+;
+prhelp:
+	call	crlf	; New Line
+	call	banner	; Print banner
+	call	crlf	; New Line
+	call	print
+	db	cr,lf,'	TIME is invoked by a command line of the form:'
+	db	cr,lf
+	db	cr,lf,'		TIME <time> <date> <weekday> <display cmd>'
+	db	cr,lf
+	db	cr,lf,'	All parameters are optional and may be present in any'
+	db	' order.'
+	db	cr,lf,'If all parameters are omitted, the time and date are'
+	db	' printed.'
+	db	cr,lf,'The various parameters are:'
+	db	cr,lf,'	<time> -- Current time as hh:mm (hh and mm are 1-2'
+	db	' digits)'
+	db	cr,lf,'		hh:mm may be followed by A or P (hh:mmA) for'
+	db	' AM or PM '
+	db	cr,lf,'			(defaults to current AM or PM)'
+	db	cr,lf,'	<date> -- Current date as dd/mm/yy (all are 1-2'
+	db	' digits)'
+	db	cr,lf,'	<weekday> -- Day of week (3 letters are generally'
+	db	' required)'
+	db	cr,lf,'	<display cmd> -- Either:'
+	db	cr,lf,'		DISPLAY TIME, DISPLAY DATE, XDISK, or PRINT'
+	db	cr,lf,'			(only 1st letter of each word '
+	db	'required)'
+	db	cr,lf,'			DISPLAY Sets Display on Chronograph'
+	db	cr,lf,'			PRINT Sends Output to Printer'
+	db	cr,lf,'			XDISK Sends Output to Disk File '
+	db	'TIME.SYS'
+	db	cr,lf
+	db	cr,lf,'	Each parameter is separated from its predecessor by'
+	db	' one or more spaces.'
+	db	cr,lf,0
+	jmp	return
+
+;
+;  Set Time/Date/Weekday
+;
+doset:
+	lda	sett	;Set time?
+	ora	a	;0=no
+	jz	doset1
+	call	print
+	db	cr,lf,'<< Setting Time -- Strike Any Key (^C=Abort) when '
+	db	'Ready >>',0
+	call	cin	;Get Response
+	call	crlf	;New Line
+	cpi	ctrlc	;Abort?
+	jz	doset1	;Continue if so
+	lxi	h,time	;Set Time from Buffer
+	call	cmdo
+	db	'ST'	;Set Time
+doset1:
+	lda	setd	;Set date?
+	ora	a	;0=no
+	jz	doset2
+	call	print
+	db	cr,lf,'<< Setting Date >>',cr,lf,0
+	lxi	h,date	;Set Date from Buffer
+	call	cmdo
+	db	'SD'	;Set Date
+doset2:
+	lda	setw	;Set weekday?
+	ora	a	;0=no
+	rz
+	call	print
+	db	cr,lf,'<< Setting Weekday >>',cr,lf,0
+	lxi	h,week	;Set Weekday from Buffer
+	call	cmdo
+	db	'SW'	;Set Weekday
+	ret
+
+;
+;  Set Display Date or Time
+;
+dodisp:
+	cpi	'D'	;Date?
+	jz	dod1
+	call	cmd	;Send Command
+	db	'DT'	;Display Time
+	ret
+dod1:
+	call	cmd	;Send Command
+	db	'DD'	;Display Date
+	ret
+
+;
+;  Send command pointed to by Return Address and command string pointed
+;    to by HL to Clock and get Return Code
+;
+cmdo:
+	sendat		;Send ATcc
+cmdo1:
+	mov	a,m	;Send command string
+	ora	a	;End of string?
+	jz	cmdo2
+	call	coclk	;Send to Clock
+	inx	h	;Pt to next
+	jmp	cmdo1
+cmdo2:
+	mvi	a,cr	;Send CR
+	call	coclk	;To Clock
+	call	ciclk	;Get Response
+	mov	b,a	;Save in B
+	call	ciclk	;Clear CR
+	mov	a,b	;Get Result Code
+	sui	'0'	;Convert to binary
+	rz		;OK
+	cpi	9	;Write Protect?
+	jnz	cmderr
+	call	print
+	db	cr,lf,'** Clock is Write-Protected -- Unprotect it to Set **',0
+	jmp	return	;Immediate Return
+cmderr:
+	call	print
+	db	cr,lf,'** TIME Internal Syntax Error **',0
+	jmp	return	;Immediate Return
+
+;
+;  Simply send command at Return Address and check for error code
+;
+cmd:
+	sendat		;Send ATcc
+	jmp	cmdo2	;Send CR and Check Error Code
+
+;
+;  Read Time, Date, and Weekday from Clock
+;
+readclock:
+	lxi	h,time	;Point to Time Buffer
+	call	command
+	db	'RT'	;Read Time
+	lxi	h,date	;Point to Date Buffer
+	call	command
+	db	'RD'	;Read Date
+	lxi	h,week	;Point to Weekday Buffer
+	call	command
+	db	'RW'	;Read Weekday
+	ret
+
+;
+;  Print Time on CON: or LST:
+;
+prtime:
+	lxi	h,time	;Print Time Info
+	call	pr2s	;Print 2 digits
+	call	colon	;Print :
+	call	pr2	;Print 2 digits
+	call	colon	;Print :
+	call	pr2	;Print 2 digits
+	call	space	;Space
+	mov	a,m	;Get A or P
+	call	cpout
+	mvi	a,'M'	;Print M
+	call	cpout
+	ret
+
+;
+;  Print Weekday on CON: or LST:
+;
+prweek:
+	lda	week	;Get week day number
+	sui	'0'	;Convert to Binary
+	inr	a	;Add 1
+	lxi	d,dlen	;Length of Day Strings
+	lxi	h,days	;Beginning of Day Strings
+	call	offset	;Compute offset to desired string
+	call	cpstr	;Print Day Name
+	ret
+
+;
+;  Print Month Name
+;
+prmonth:
+	lxi	h,date+2	;Convert month number
+	mov	a,m	;Get first digit
+	sui	'0'	;Convert to Binary
+	mov	b,a	;Save in B
+	add	a	;*2
+	add	a	;*4
+	add	b	;*5
+	add	a	;*10
+	inx	h	;Point to next digit
+	mov	b,a	;Value in B
+	mov	a,m	;Get Digit
+	sui	'0'	;Convert to Binary
+	add	b	;Add in
+	lxi	d,mlen	;Length of Month Strings
+	lxi	h,months	;Beginning of Month Strings
+	call	offset	;Compute Offset to Desired String
+	call	cpstr	;Print Month Name
+	ret
+
+;
+;  Print Day Number
+;
+prday:
+	lxi	h,date+4	;Point to Day Digits
+	call	pr2s	;Print as 2 Digits
+	ret
+
+;
+;  Print Year
+;
+pryear:
+	call	cprint	;Print Year Prefix
+	db	', 19',0
+	lxi	h,date	;Point to Year
+	call	pr2	;Print 2 Digits
+	ret
+
+;
+;  Print colon or space
+;
+colon:
+	mvi	a,':'	;Print colon
+	jmp	cpout
+space:
+	mvi	a,' '	;Print space
+	jmp	cpout
+
+;
+;  Command -- Issue 2-letter command pointed to by Return Address to Clock
+;    and copy response into buffer pointed to by HL; affect all registers
+;
+command:
+	sendat		;Send ATcc
+	mvi	a,CR	;Send <CR>
+	call	coclk	;Send to Clock
+;  Collect Response Chars
+cmdloop:
+	call	ciclk	;Get letter
+	cpi	CR	;End of Response?
+	jz	cmddone
+	mov	m,a	;Store in Buffer
+	inx	h	;Point to next position
+	jmp	cmdloop
+cmddone:
+	mvi	m,0	;Store ending zero
+	ret
+
+;
+;  PR2S -- Print chars pointed to by HL and HL+1; if first character is '0',
+;    print only one char; affect all registers; on exit, HL points to byte
+;    after 2nd char printed
+;  PR2 -- PR2S but always print 2 digits
+;
+pr2:
+	mov	a,m	;Get first char
+	jmp	pr2a
+pr2s:
+	mov	a,m	;Get first char
+	cpi	'0'	;Leading zero?
+	jz	pr2b
+pr2a:
+	call	cpout	;Print char
+pr2b:
+	inx	h	;Point to next
+	mov	a,m	;Get it
+	call	cpout
+	inx	h	;Point to next
+	ret
+
+;
+;  Compute Offset to selected string; on input, HL points to first
+;    string, DE=string length, A=Number of String desired (first string = 1)
+;
+offset:
+	dcr	a	;Count down
+	rz
+	dad	d	;Point to next
+	jmp	offset
+
+;
+;  Check Date and Time for Numeric Error (Range)
+;
+check:
+	lda	setit	;Any Change?
+	ora	a	;0=no
+	rz
+	lxi	h,time	;Hours can't exceed 12
+	call	get2	;Get 2 digits
+	cpi	12+1	;Range ok?
+	jnc	chkerr	;Error
+	lxi	h,time+2	;Minutes can't exceed 60
+	call	get2	;Get 2 digits
+	cpi	60+1	;Range ok?
+	jnc	chkerr	;Error
+	lxi	h,date+2	;Month can't exceed 12
+	call	get2	;Get 2 digits
+	cpi	12+1	;Range ok?
+	jnc	chkerr	;Error
+	lxi	h,date+4	;Day can't exceed 31
+	call	get2	;Get 2 digits
+	cpi	31+1	;Range ok?
+	rc		;Done if so
+chkerr:
+	call	print
+	db	cr,lf,'Argument Range Error -- Value in Error is ',0
+	mov	a,m	;Get 1st digit
+	call	cout
+	inx	h	;Pt to 2nd
+	mov	a,m	;Get 2nd digit
+	call	cout
+	call	print
+	db	cr,lf,'Aborting to CP/M',0
+	jmp	return
+;
+;  Get two ASCII chars pted to by HL and convert them to integer in A
+;
+get2:
+	push	h	;Save ptr
+	mov	a,m	;Get 10's digit
+	sui	'0'	;Convert to binary
+	mov	b,a	;Save in B
+	add	a	;*2
+	add	a	;*4
+	add	b	;*5
+	add	a	;*10
+	mov	b,a	;Result in B
+	inx	h	;Pt to next
+	mov	a,m	;Get 1's digit
+	sui	'0'	;Convert to binary
+	add	b	;Add in
+	pop	h	;Get ptr
+	ret
+
+;
+;  Set Time, Date, or Weekday
+;
+setclock:
+;  Assume no Display Change and no Time/Date/Weekday Set
+	xra	a	;A=0
+	sta	disp	;No Display
+	sta	setit	;No Set
+	sta	sett	;No Set Time
+	sta	setd	;No Set Date
+	sta	setw	;No Set Weekday
+	sta	prflg	;No Print
+	sta	dskflg	;No Disk Output
+
+;  Skip to first non-blank char
+	lxi	h,buff+1	;Point to first char
+	call	spskip	;Skip to EOL or first token
+	ora	a	;EOL?
+	rz
+	jmp	nxt1
+
+;  Skip to next token in command line
+nxtoken:
+	call	spskip	;HL now points to first non-blank char; A is char
+	ora	a	;Check for EOL
+	jnz	nxt1	;Continue if not
+	mvi	a,0ffh	;Set flag
+	sta	setit	;Clock Set Flag
+	ret
+
+;  Main Token Processing Loop
+nxt1:
+
+;  Check for Number (Date or Time)
+	mov	a,m	;Get next char
+	call	digit	;Digit?
+	jz	wdchk	;If not, check for Print, Weekday, or Display Command
+
+;  It is a number -- Determine if date or time
+	call	dtchk	;Scan for ':' or '/' or ' ' or <NULL>
+	cpi	' '+1	;Error if no ':' or '/'
+	jnz	nxt2	;Print error message and then Help message
+	call	print
+	db	cr,lf,'** Numeric Argument contains no Date (/) or Time (:)'
+	db	' Separator **',0
+	jmp	prhelp
+nxt2:
+	cpi	':'	;Time?
+	jz	setime	;Set Time
+
+;  Set Date
+	mvi	a,0ffh	;Set flag
+	sta	setd	;Set Date
+	call	number	;Extract token as number char string
+	cpi	6	;Must be 6 digits
+	jz	nxt3	;Date error if not
+	call	print
+	db	cr,lf,'** Invalid Date Specification **',0
+	jmp	prhelp
+nxt3:
+	push	h	;Save ptr
+	lxi	h,numbuf+4	;Extract year digits
+	lxi	d,date	;1st 2 in date buffer
+	call	copy2
+	lxi	h,numbuf+2	;Extract month digits
+	call	copy2
+	lxi	h,numbuf	;Extract day digits
+	call	copy2
+	pop	h	;Get ptr
+	jmp	nxtoken	;Get next token
+
+;  Set Time
+setime:
+	mvi	a,0ffh	;Set flag
+	sta	sett	;Set Time
+	call	number	;Extract token as number char string
+	cpi	4	;Must be 4 digits
+	jz	nxt4
+	jc	timerr	;OK if more than 4 digits
+	call	print
+	db	cr,lf,'Warning -- Seconds Specified in Time Argument Ignored',0
+	jmp	nxt4
+timerr:
+	call	print
+	db	cr,lf,'** Invalid Time Specification **',0
+	jmp	prhelp
+nxt4:
+	push	h	;Save ptr
+	lxi	h,numbuf	;Place number in time buffer
+	lxi	d,time
+	call	copy4	;Copy into buffer
+	mvi	a,'0'	;Store ending 0's for seconds
+	stax	d
+	inx	d
+	stax	d
+	lda	letter	;Get trailing letter, if any
+	cpi	'A'	;AM?
+	cz	setlet	;Set Letter
+	cpi	'P'	;PM?
+	cz	setlet
+	pop	h	;Get ptr
+	jmp	nxtoken
+
+;
+;  Set Time Letter
+;
+setlet:
+	sta	time+6	;6th position
+	ret
+
+;  Check for Print, Weekday, or Display Command and Set it if so
+wdchk:
+	mov	a,m	;Get 1st letter of command
+	cpi	'P'	;Print?
+	jz	setpr
+	cpi	'X'	;Disk Output?
+	jz	setdsk
+	cpi	'D'	;Display Time or Date?
+	jz	display
+	mvi	a,0ffh	;Set flag
+	sta	setw	;Set Weekday
+	mov	a,m	;Get Letter back
+	cpi	'T'	;Tuesday or Thursday?
+	jnz	wdchk0
+	inx	h	;Point to next char
+	mov	a,m	;Get it
+	jmp	wdchk1
+wdchk0:
+	cpi	'S'	;Saturday or Sunday?
+	jnz	wdchk1
+	inx	h	;Point to next char
+	mov	a,m	;Get it
+	cpi	' '+1	;In range?
+	jc	wderr
+	inx	h	;Point to 3rd char
+	mov	a,m	;Get it
+wdchk1:
+	push	h	;Save ptr
+	lxi	h,daytab	;Point to table of single letters (reverse)
+	mov	b,a	;Char in B
+	mvi	c,7	;Scan for 7 entries
+wdchk2:
+	mov	a,m	;Get letter
+	cmp	b	;Match?
+	jz	wdmatch
+	inx	h	;Pt to next
+	dcr	c	;Count down
+	jnz	wdchk2
+	pop	h	;Get ptr
+wderr:
+	call	print	;Error
+	db	cr,lf,'** Invalid Weekday Specification **',0
+	jmp	prhelp
+wdmatch:
+	pop	h	;Get ptr
+	mov	a,c	;Get weekday number +1
+	dcr	a	;Adjust
+	adi	'0'	;Convert to ASCII
+	sta	week	;Set Day
+	jmp	nxtoken	;Continue processing
+
+;  Display Time or Date
+display:
+	call	spskip	;Skip to next token
+	cpi	'D'	;Date?
+	jz	disp1
+	cpi	'T'	;Time?
+	jz	disp1
+	call	print
+	db	cr,lf,'** Invalid Display Option -- Not Time or Date **',0
+	jmp	prhelp
+disp1:
+	sta	disp	;Set Display Command
+	jmp	nxtoken	;Continue
+
+;
+;  Set Print Flag
+;
+setpr:
+	mvi	a,0ffh	;Set flag
+	sta	prflg
+	jmp	nxtoken	;Continue
+
+;
+;  Set Disk Output
+;
+setdsk:
+	mvi	a,0ffh	;Set flag
+	sta	dskflg
+	jmp	nxtoken	;Continue
+
+;
+;  Copy HL to DE for 2 or 4 bytes
+;
+copy2:
+	mvi	b,2	;2 Bytes
+	jmp	copyl
+copy4:
+	mvi	b,4	;4 Bytes
+copyl:
+	mov	a,m	;Get byte
+	stax	d	;Put byte
+	inx	h	;Pt to next
+	inx	d
+	dcr	b	;Count down
+	jnz	copyl
+	ret
+
+;
+;  Scan for Date or Time separator; terminate scan if found or <SP> or <NULL>
+;    encountered; Do NOT affect HL
+;
+dtchk:
+	push	h	;Save HL
+dtchk1:
+	mov	a,m	;Get char
+	inx	h	;Pt to next
+	ora	a	;<NULL>?
+	jz	dtchk2
+	cpi	' '	;<SP>?
+	jz	dtchk2
+	cpi	':'	;Time?
+	jz	dtchk2
+	cpi	'/'	;Date?
+	jnz	dtchk1	;Continue if not
+dtchk2:
+	pop	h	;Found delimiter - Return with it in A
+	ret
+
+;
+;  Skip to next space or <NULL>
+;
+tosp:
+	mov	a,m	;Get char
+	cpi	' '	;<SP>?
+	rz
+	ora	a	;<NULL>?
+	rz
+	inx	h	;Pt to next char
+	jmp	tosp
+
+;
+;  Skip to next non-blank char after current token
+;
+spskip:
+	call	tosp	;Skip to white space
+spsk1:
+	mov	a,m	;Get char
+	cpi	' '	;<SP>?
+	rnz
+	inx	h	;Pt to next
+	jmp	spsk1
+
+;
+;  Extract Number pted to by HL into numbuf; if number is followed by a letter,
+;    return letter in 'letter' buffer; on exit, HL points to <SP> or <NULL>
+;    after argument
+;
+number:
+	lxi	d,numbuf	;Pt to buffer
+	call	num2	;Get 2 digits
+	mvi	c,0	;0 so far
+	ora	a	;No 1st digit?
+	jz	numb1
+	call	sepchk	;Check for ':' or '/' separator and adv HL if so
+	mvi	c,2	;2 so far
+	call	num2	;Get 2 more digits
+	ora	a	;No 1st digit?
+	jz	numb1
+	call	sepchk	;Separator check
+	mvi	c,4	;4 so far
+	call	num2	;Get 2 more digits
+	ora	a	;No 1st digit?
+	jz	numb1
+	mvi	c,6	;6 so far
+numb1:
+	mov	a,m	;Get terminating char
+	cpi	' '+1	;Letter?
+	jc	numb2
+	sta	letter	;Set letter
+	call	tosp	;Skip to <SP> or <NULL>
+numb2:
+	mov	a,c	;Get digit count
+	ret
+
+;  Check to see that char pted to by HL is ':' or '/'; HL=HL+1 if so
+sepchk:
+	mov	a,m	;Get char
+	cpi	':'	;':'?
+	jz	sepadv
+	cpi	'/'	;'/'?
+	rnz
+sepadv:
+	inx	h	;Inc HL
+	ret
+
+;  Extract at most 2 digits; on return, A=0 if no 1st digit; on return, A<>0
+;    if 1st digit, DE=DE+2, HL pts to after digits
+num2:
+	mov	a,m	;Get first char
+	call	digit	;Digit?
+	rz		;A=0
+	push	h	;Save ptr
+	mvi	c,1	;Assume 1 digit
+	mov	a,m	;Get char
+	call	digit	;Digit?
+	jnz	num2a	;Continue if so
+num2err:
+	call	print
+	db	cr,lf,'** Invalid Digit Form in Numeric Argument **',0
+	jmp	prhelp
+num2a:
+	inx	h	;Pt to next
+	mov	a,m	;Get it
+	call	digit	;Digit?
+	jz	num2b	;Continue if not -- 1 digit
+	mvi	c,2	;2 Digits
+	inx	h	;Pt to next
+	mov	a,m	;Get it
+	call	digit	;Should NOT be digit
+	jnz	num2err	;Error if it is
+num2b:
+	pop	h	;Pt to first digit
+	mov	a,c	;Get number of digits
+	cpi	2	;2?
+	jz	numb2c	;Skip if 2 digits
+	mvi	a,'0'	;Store leading zero
+	stax	d
+	inx	d	;Pt to next
+numb2c:
+	mov	a,m	;Get digit
+	stax	d	;Put digit
+	inx	h	;Pt to next
+	inx	d
+	dcr	c	;Count down
+	jnz	numb2c
+	mvi	a,1	;Set OK
+	ret
+
+;  Determine if byte in A is ASCII digit; return with A=0 and Z if not
+digit:
+	cpi	'0'	;Less than '0'?
+	jc	nodig
+	cpi	'9'+1	;Greater than '9'?
+	jnc	nodig
+	mvi	a,0ffh	;Set OK
+	ora	a	;Set flags
+	ret
+nodig:
+	xra	a	;Not digit
+	ret
+
+;
+;  Send output to CON: or LST: depending on PRFLG
+;
+cpout:
+	call	cout	;Output to CON:
+	push	psw	;Save char
+	lda	prflg	;Check flag
+	ora	a	;0=CON:
+	jz	cpout1
+	pop	psw	;Get char
+	push	psw	;Save char
+	call	lout	;LST:
+cpout1:
+	lda	dskflg	;Check flag
+	ora	a	;<>0 = Disk
+	jz	cpout2
+	pop	psw	;Get char
+	push	psw	;Save char
+	call	f$put	;Disk
+cpout2:
+	pop	psw	;Get char
+	ret
+
+;
+;  Print string pted to by return address on CON: or LST:
+;
+cprint:
+	xthl		;Pt to string
+cpr1:
+	mov	a,m	;Get char
+	inx	h	;Pt to next
+	ora	a	;Done?
+	jz	cpr2
+	call	cpout	;Print to CON: or LST:
+	jmp	cpr1
+cpr2:
+	xthl		;Restore HL and Ret Adr
+	ret
+
+;
+;  Print string pted to by HL on CON: or LST:
+;
+cpstr:
+	push	h	;Save ptr
+	push	psw	;Save char
+cpstr1:
+	mov	a,m	;Get next char
+	inx	h	;Pt to next char
+	ora	a	;Done?
+	jz	cpstr2
+	call	cpout	;Print char
+	jmp	cpstr1
+cpstr2:
+	pop	psw	;Get char
+	pop	h	;Get ptr
+	ret
+
+;
+;  Disk Output FCB
+;
+fcb:
+	db	0,'TIME    SYS',0,0,0,0
+	db	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	db	0,0,0
+
+;
+;  Day Strings
+;
+days:
+	db	'Monday',0,0,0,0
+days2:
+	db	'Tuesday',0,0,0
+	db	'Wednesday',0
+	db	'Thursday',0,0
+	db	'Friday',0,0,0,0
+	db	'Saturday',0,0
+	db	'Sunday',0,0,0,0
+dlen	equ	days2-days	;Number of Bytes in Each Entry
+
+;
+;  Quick-Reference Day Table (in Reverse Order)
+;
+daytab:
+	db	'N'	; suNday
+	db	'T'	; saTurday
+	db	'F'	; Friday
+	db	'H'	; tHursday
+	db	'W'	; Wednesday
+	db	'U'	; tUesday
+	db	'M'	; Monday
+
+;
+;  Month Strings
+;
+months:
+	db	'January',0,0,0
+month1:
+	db	'February',0,0
+	db	'March',0,0,0,0,0
+	db	'April',0,0,0,0,0
+	db	'May',0,0,0,0,0,0,0
+	db	'June',0,0,0,0,0,0
+	db	'July',0,0,0,0,0,0
+	db	'August',0,0,0,0
+	db	'September',0
+	db	'October',0,0,0
+	db	'November',0,0
+	db	'December',0,0
+mlen	equ	month1-months	;Number of Bytes in Each Entry
+
+;
+;  Stack Area
+;
+	ds	40	;20-Elt Stack
+stack:	ds	2	;Return SP Value
+
+;
+;  Input Buffers
+;
+time:
+	ds	10	; Time Buffer
+date:
+	ds	10	; Date Buffer
+week:
+	ds	10	; Weekday Buffer
+numbuf:
+	ds	10	; Number Input Buffer
+disp:
+	ds	1	; Display Flag (0=Don't change Chronograph Display,
+			;   D=Display Date, T=Display Time)
+letter:
+	ds	1	; Optional Letter after Time (A/P)
+setit:
+	ds	1	; Set Time/Date/Weekday Flag (0=no)
+sett:
+	ds	1	; Set Time (0=no)
+setd:
+	ds	1	; Set Date (0=no)
+setw:
+	ds	1	; Set Weekday (0=no)
+prflg:
+	ds	1	; Print (0=no)
+dskflg:
+	ds	1	; Disk Output (0=no)
+
+	end
+

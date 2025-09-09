@@ -1,0 +1,123 @@
+;
+;			PIPPAT2.ASM
+;
+; PIP patch to add '(E)xit', '(R)eset Disks' and '(Q)uick Repeat'
+; functions.
+;
+;The R- and Q-commands are from:
+;Kelly Smith, Lifelines, Vol. III No. 3 (1982) pg. 15.
+;
+;The E-command added by P.L.Kelley
+;
+;E-command: Exit, to allow exit from PIP in SUBMIT files.
+;R-command: Reset disks, ie. log in freshly inserted disks.
+;Q-command: Reset disks and repeat last operation.
+;
+;
+BDOS		EQU	0005H	;BDOS entry address
+FCB		EQU	005CH	;default file control block address
+DFCB		EQU	0080H	;default disk/command buffer
+;
+PMESSG		EQU	09H	;print message function
+RDCBUF		EQU	0AH	;read console buffer function
+RSETDSK		EQU	0DH	;reset disk system function
+;
+START$PIP	EQU	04CEH	;normal start of pip
+CON$BUFF	EQU	1ECBH	;pip's internal console buffer
+PIP$CR$LF	EQU	082EH	;pip's internal cr/lf output routine
+PIP$PROMPT	EQU	053CH	;pip's command parser entry address
+PIP$EXIT	EQU	0554H	;pip's exit routine
+PIP$PATCH	EQU	096FH	;pip gets patched at this address
+;
+LF		EQU	0AH	;linefeed character
+CR		EQU	0DH	;carriage return character
+;
+;
+	ORG	0100H
+;
+	JMP	BEGIN		;jump over INP:/OUT: vectors and EOF
+;
+	ORG	010AH
+;
+BEGIN:
+;
+	LDA	DFCB		;filename specified?
+	ORA	A		;zero, if no filename
+	LXI	D,MSG1		;and sign in please
+	CZ	PRNT$MESSG	;print message
+	JMP	START$PIP	;and off to pip
+;
+ADDED:
+;
+	LXI	H,CON$BUFF	;point to pip's console buffer
+	MVI	M,80H		;set up for 128 character command string
+	XCHG			;pointer swapped to [DE] for CP/M
+	MVI	C,RDCBUF	;read console buffer function
+	CALL	BDOS		;let CP/M do the work
+	LDA	CON$BUFF+1	;check how many characters typed
+	CPI	1		;just one?
+	JNZ	SAVE$CHR$CNT	;if not, save character count and return
+	LDA	CON$BUFF+2	;get single character command
+	ANI	05FH		;force to upper case character
+	CPI	'E'		;exit?
+	JZ	PIP$EXIT	;go exit if so
+	CPI	'Q'		;repeat pip function last specified?
+	JNZ	RESET$DSK$SYS	;if not, check for reset disk system
+	LHLD	CHAR$CNT	;get character count
+	SHLD	CON$BUFF+1	;stuff back to console buffer
+	LXI	D,MSG3		;tell'em repeating last process
+	CALL	PRNT$MESSG	;print message
+	LXI	H,CON$BUFF+1	;point to last command entry in console buffer
+	MOV	C,M		;get command length to calculate offset
+	MVI	B,0		;clean up high byte bias
+	INX	H		;bump to start of command string address
+	DAD	B		;add bias to locate end of string
+	MVI	M,'$'		;tag end of command string for message
+	LXI	D,CON$BUFF+2	;point to command string for message
+	CALL	PRNT$MESSG	;print message
+	MVI	C,RSETDSK	;reset disk system function
+	CALL	BDOS		;let CP/M do the work
+	RET
+;
+RESET$DSK$SYS:
+;
+	CPI	'R'		;reset disk system?
+	JNZ	SAVE$CHR$CNT	;if not, restore character count and return
+	LXI	D,MSG2		;tell'em all disks are set to R/W
+	CALL	PRNT$MESSG	;print message
+	MVI	C,RSETDSK	;reset disk system function
+	CALL	BDOS		;let CP/M do the work
+	CALL	PIP$CR$LF	;do cr/lf
+	POP	H		;clean the stack for pip restart
+	JMP	PIP$PROMPT	;do pip '*' prompt and wait for command
+;
+SAVE$CHR$CNT:
+;
+	LHLD	CON$BUFF+1	;get character count and character
+	SHLD	CHAR$CNT	;save character count
+	RET
+;
+PRNT$MESSG:
+;
+	MVI	C,PMESSG	;print message function
+	CALL	BDOS		;let CP/M do the work
+	RET
+;
+MSG1	DB	CR,LF,'PIP 1.5 with (E)xit, (R)eset Disks and (Q)uick repeat.'
+	DB	CR,LF,'$'
+;
+MSG2	DB	CR,LF,'Resetting all disks to R/W$'
+;
+MSG3	DB	CR,LF,'Repeating:  $'
+;
+CHAR$CNT	DW	0	;console buffer character count
+;
+	ORG	PIP$PATCH	;patch to get added code goes here
+;
+	JMP	ADDED		;check for new commands
+;
+;
+	END
+;
+
+

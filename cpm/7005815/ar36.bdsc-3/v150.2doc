@@ -1,0 +1,397 @@
+
+
+
+
+
+
+
+
+
+
+
+
+                                        
+                           New Features of BDS C v1.5:
+                    A Summary for Users of Pre-1.50 Versions
+
+                                   Leor Zolman
+                                   BD Software
+                                   P.O. Box 9
+                         Brighton, Massachusetts, 02135
+                                 (617) 782-0836
+                                        
+
+
+         WARNING! Version 1.5 of the  BDS  C Compiler will not work under
+       pre-2.x versions of the CP/M  operating  system.  In order to take
+       full  advantage  of  CP/M 2.x I/O mechanisms  without  introducing
+       really  painful  configuration  complications, compatibility  with
+       CP/M  1.4 (or earlier versions) has been  sacrificed.   Users  who
+       cannot upgrade their  CP/M's to version 2.x must go on using v1.46
+       of the compiler.  Sorry about that.) 
+
+
+
+
+             You Can Now Get BDS C From Vendors Other Than Lifeboat
+
+
+    So  far,  the  only  definite alternative distributor is the BDS C  User's
+  Group.  I  am  at  a  very  flexible position  right  now  regarding  dealer
+  distribution    arrangements,   and   welcome   inquiries   from   potential
+  distributors.  I'm not going to go running  to  every outfit that advertises
+  in BYTE and beg them to sell the compiler, simply because  I'm  not sure how
+  much  of  a hassle I'd be signing up for by that behavior.  Rather, I'd like
+  to see small-scale hacker types involved in  distribution, so that end-users
+  can  have a prayer of receiving INTELLIGENT customer service.  Gads, anytime
+  I get  to  rambling  about  something interesting I begin to wonder if it is
+  bordering on a commercialistic exploitation of the ARPA net!????  To play it
+  safe: if anyone reading this paragraph objects  to the content, feel free to
+  delete it from this file. 
+
+
+
+
+
+
+
+
+
+
+
+
+                                      - 1 -                                   
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            New Command Line Options
+
+
+    CLINK now takes a new  option,  -n, which causes the resulting COM file to
+  not  perform  a  warm-boot  after  it  is finished executing.   This  option
+  performs the function that v1.46's  NOBOOT.C  program  had been doing.  Note
+  that when -n is used,  there  is approximately 2K less user memory available
+  because the CCP is not overwritten. 
+
+    CC (formerly named  CC1) now takes the option -k, to activate the Kirkland
+  debugger  mechanism.  This  causes  a  special  symbol  table  file  (having
+  extension .CDB) to be written  to  disk, and causes the compiler to generate
+  special restart instructions at the  start  of  every  statement to interact
+  with David Kirkland's C debugger package.  The  debugger may not be included
+  on the distribution disk for  space limitation reasons, but is available for
+  nominal cost-of-media cost from the  BDS  C User's Group or from BD Software
+  (on 8" disk) via special arrangement. 
+
+
+
+
+                      Functional Changes to Major Commands
+
+
+    CLINK now automatically loads all functions, by  default,  from  each  CRL
+  given on the command line in a  linkage.   The  -f option is now reversed in
+  sense from previous versions, and operates  exactly  the  same  as  L2's  -l
+  option...i.e.,  -f  appearing on a CLINK command line causes all  CRL  files
+  named after it  to  be  scanned instead of loaded, while all CRL files named
+  before the  -f  flag  are  loaded.  This makes the general format of a CLINK
+  command line be:
+
+          A>clink <main file> [<other files in prog>] [-f <lib files>] <cr>
+
+  Other options may be interspersed in the command line, of course. 
+
+
+
+
+                         New Low-Level File I/O Features
+
+
+    -   All the low-level file I/O now uses the CP/M 2.2x  random-record  read
+       and  write  calls.  Therefore, files may be up to 8 megabytes in length
+       instead of only up to 256K bytes. 
+
+    -  The "seek" function may be given an origin  code  of 2, meaning to seek
+       relative to the end of the file.  Note that the offset must be negative
+       in this case to make sense, since it is always added to the base, which
+
+
+
+                                      - 2 -                                   
+
+
+
+
+
+
+
+
+
+       in this case is the end of the file.  For example, the  following  call
+       seeks to the next-to-last sector in the file:
+
+               seek(fd, -2, 2);        /* seek to 2nd sector from end of file */
+
+    -  User number prefixes are now accepted wherever a filename  argument  is
+       called for.  Such  a  prefix consists of a decimal number between 0 and
+       31, followed immediately by a slash (/) character and then the filename
+       (with or without an optional  disk  designator).   This causes the file
+       I/O mechanism to switch into the user area associated  with  each  file
+       for the duration  of any I/O operation involving that file, then switch
+       back  to  the current user area when done.  Any filename may  now  take
+       either an explicit disk designator, an explicit user area, or both.  If
+       both are given, then the  user area specification must precede the disk
+       designator.  Here is an example:
+
+               if (open("0/A:DATABASE.DAT",2) == ERROR)
+                       exit(puts("Can't open the database, turkey. \n"));
+
+       Note  that  this allows programs in separate user areas to manipulate a
+       common  data  file  kept  on  one  particular   drive  and  user  area,
+       eliminating the need to have a separate copy of the data file  in  each
+       user area  needing it.  If you are running the "ZCPR" public-domain CCP
+       replacement program for CP/M, or any shell  (such as "MicroShell") that
+       searches  special  drives  and  user areas for command files, then that
+       feature  combined  with the user-area  enhancements  to  the  file  I/O
+       library allow a very efficient utilization of the CP/M filesystem. 
+
+    -  There are some new  functions  that  provide better diagnosis of errors
+       caused by low-level file I/O calls.  Whenever a call such as open, read
+       or  write  returns  a  value  of  -1 (ERROR), the errno function may be
+       called to return  a  more  detailed  error  description code explaining
+       exactly  what  went wrong.  The errmsg function may be used to return a
+       pointer to a string corresponding to the error value returned by errno.
+       A typical usage of these functions is as follows:
+
+               i = read(fd, buffer, 20);       /* try to read 20 sectors */
+               if (i == ERROR) {               /* if an error occurred...*/
+                       printf("\n%s -- ABORTING THIS PROGRAM.",
+                                       errmsg(errno));
+                       exit();
+               }
+
+
+
+
+                     New Library File Searching Capabilities
+
+
+    Both the compiler and linker (CC and CLINK) now have the ability to search
+  for  library files in a default CP/M  drive  and  user  area,  sometimes  in
+  addition  to  the  currently-logged  drive  and  user  area.   If  the  user
+  configures CC and  CLINK  as  described  in the configuration section below,
+
+
+
+                                      - 3 -                                   
+
+
+
+
+
+
+
+
+
+  then CC will know to search a default directory for included  files named in
+  angle  brackets,  and  CLINK  will  know to search a default  directory  for
+  library  files.   Also, if a CRL file is named on the CLINK command line and
+  CLINK cannot find that file in  the  current  drive  and user area, then the
+  default area (as configured) will be searched for that file. 
+
+    CLINK now accepts user area prefixes on CRL filenames given on the command
+  line  (except  for  the  main  CRL file, which must be in the  current  user
+  area.)  If an explicit disk drive and/or user area specification is given on
+  the  CRL  filename  to  CLINK,  then the default area will not  be  searched
+  automatically.  This is so that if an  explicit user area is given for a new
+  test  version  of a CRL file, and a similarly named CRL file exists  in  the
+  default library area, then the one in the default area will not be  used  if
+  the explicitly named one is not found. 
+
+
+
+
+                                  Configuration
+
+
+    BDS  C  commands should simply come up  running  under  any  CP/M  system,
+  without  any  special  configuration procedure necessary.  There are several
+  optional  features  of the compiler and linker that may be configured by the
+  user to increase the flexibility  of  the package.  This subsection explains
+  each of those options and how to select them. 
+
+
+
+
+  If Running MPM II:
+
+
+    If you are running BDS C under  MP/M II, you must re-assemble the run-time
+  package  with  the  "MPM2" symbol equated to 1 (it comes configured  to  0).
+  Simply edit the CCC.ASM file,  assemble  it  using  ASM,  use LOAD to create
+  CCC.COM, then rename that to C.CCC.
+
+
+
+
+  CC and CLINK configuration
+
+
+    There  are  several  user-configurable  features in CC.COM  and  CLINK.COM
+  controlled by a specific bytes of memory very close to the beginning of each
+  command  file.  In order to change these features, use DDT or  SID  to  read
+  CC.COM  or CLINK.COM into memory (noting the length of the file printed upon
+
+
+
+
+
+
+
+
+                                      - 4 -                                   
+
+
+
+
+
+
+
+
+
+
+  successful loading 1),  make the changes using the s command, hit control-C,
+  and  use the CP/M SAVE command to write the modified command back to  disk. 
+  Make sure to have your master distribution disk safely tucked away somewhere
+  before attempting these modifications! 
+
+    Both  CC.COM  and  CLINK.COM  contain  an identically structured four-byte
+  configuration block.  The base address of the block for CC.COM is 0155h, and
+  for CLINK it is 0103h. The contents of the block are as follows:
+
+          Addr.   Function                                Default value
+
+          base+0  Default library disk                      FF  (current)
+
+          base+1  Default library user area                 FF  (current)
+
+          base+2  Disk where SUBMIT files are processed     00  (disk A)
+
+          base+3  Poll console for interrupts (0 or 1)      01  (enabled)
+
+    Note that each item in the block is exactly one byte in length.  The first
+  two items specify a default disk and user area  to  be treated as a "library
+  directory" by CC and CLINK. For CC, the library directory specifies where to
+  find the files named in #include directives when the filename is enclosed in
+
+  angle  brackets  2,  and also where to find CC2.COM for the second phase  of
+  compilation.   For  CLINK,  this  says  where  to  find  the files DEFF.CRL,
+  DEFF2.CRL, DEFF3.CRL (if present) and C.CCC.
+
+    For the  default library disk, a value of 0 specifies drive A, 1 specifies
+  drive  B,  etc.,  and  a  value  of  FFh  (255 decimal) specifies  that  the
+  currently-logged  disk is to be used as the default library disk.   For  the
+  default  library  user  area,  the values 0-15 denote the corresponding user
+  area, and  a value of FFh (255 decimal) specifies that the current user area
+  is to be the default library user area.  Both the library disk and user area
+  come configured to FFh; thus, the distribution version of the v1.50 compiler
+  and linker behave the same as earlier versions, in  which  the current drive
+  and user area were always assumed to contain the library files by default. 
+
+
+
+  ----------
+
+  1. To convert the hex address printed  by DDT or SID for the last address of
+  the  file into the decimal number you must give to the SAVE command, use the
+  following algorithm: take the leftmost  two  hex  digits,  and compute their
+  decimal equivalent (e.g.,  3C80  yields  3C,  which  is  60 decimal).  Then,
+  subtract 1 from that if the rightmost two digits are 00. The final result is
+  the number to give SAVE.
+
+  2.  Filenames  enclosed in double quotes always cause the #include directive
+  to   search  the  current  directory  for  the  named  file,  regardless  of
+  configuration
+
+
+
+                                      - 5 -                                   
+
+
+
+
+
+
+
+
+
+    The third location designates which CP/M drive contains the  $$$.SUB  file
+  that exists during  "Submit  File"  processing.  CLINK always tries to erase
+  pending submit files when an error occurs, while CC only tries to do so when
+  the -x option is given.  Since most systems always place the $$$.SUB file on
+  drive  A,  that is the way CC and CLINK come configured by default.  But, if
+  the user  has  customized  his system to put the $$$.SUB file on the current
+  drive  instead of always on A:, then the byte pointed to by the  address  in
+  these locations should be changed from 01 to 00.
+
+    The  fourth and final location in the configuration block is a simple flag
+  telling CC or CLINK whether or not  the  system console should be polled for
+  the  interrupt  character  (^C) during execution of the command.  If enabled
+  (non-zero), then any input typed on the console by the user during execution
+  of the command will be ignored unless ^C is typed, in which case the command
+  will be immediately aborted  and  control  will return to command level.  If
+  disabled  (zero), then the console will never be polled.  This is useful for
+  certain interrupt driven systems that  need  to recognize type-ahead and can
+  handle  interruption  on  their  own  without  needing  to be polled by  the
+  currently executing transient command. 
+
+    This configuration scheme allows  users  with large-capacity disks to pick
+  some particular drive and user area in which to keep all standard header and
+  library  files.  The library disk and user area bytes should  be  considered
+  together as a unit; if you change one,  you'll  probably  want to change the
+  other also. 
+
+    Note that CC2.COM does not need to be configured; CC.COM passes it all the
+  relevant information upon transfer of control. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                      - 6 -                                   
+
+
+
+

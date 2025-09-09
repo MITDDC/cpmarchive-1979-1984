@@ -1,0 +1,361 @@
+;	title	'PASSWORD.ASM'
+;	page	60
+;
+;
+;		PASSWORD.ASM
+;		Version 3.0
+;	 By Bo McCormick       8/6/81
+;
+; This is a program that adds password protection
+; to programs. Format:
+;
+; PASSWORD name_of_file
+;
+; Then answer the prompt with the password to be
+; applied to the program:
+;
+; Password?  enter password here
+;
+; If everything goes well, the program will be saved to disk.
+; If not, a message is printed and control is passed
+; to the CCP.
+;
+; The good part of this is, when you type in the program
+; program name next time, instead of running the program
+; right away, the program asks you for the password. If you
+; reply with something other than the original password, the
+; program doesn't run, and it returns to the ccp.
+;
+; 2/10/82: Set DMA before open because 1.4 CP/M uses buffer at 80H
+; Removed "$" from labels so other assemblers can be used. Fixed
+; "offset" to use tpa instead of 100H so it would work with
+; modified CP/M.  Added encryption of password so dumping .COM
+; file will not reveal it.  (Thanks to author of XYZZY.COM)
+; Fixed test of supplied password to check all characters.
+; Ted Shapin
+;
+; 12/10/81: changed ot$pw routine to input password one character
+; at a time invisibly from BIOS rather than using BDOS's string input
+; function.  This allows password to be typed in without anyone
+; seeing what it was that was typed.  Jim Mills
+;
+;EQUATES
+rdchar: equ	1
+mesout: equ	9		;BDOS functions
+incon:	equ	10
+open:	equ	15
+close:	equ	16
+delete: equ	19
+read:	equ	20
+write:	equ	21
+setdma: equ	26
+;
+cr	equ	0dh		;ascii values
+lf	equ	0ah
+eos	equ	'$'
+;
+boot	equ	0;4200H 	;0 for standard CP/M
+				;4200H for ALT. CP/M;
+bdos	equ	boot+5
+fcb	equ	boot+5ch
+defbuf	equ	boot+80h
+tpa	equ	boot+100h
+stack	equ	tpa		;out of way of tpa
+;
+	org	tpa
+
+;
+;
+start:	lxi	h,0		;save stack pointer
+	dad	sp		;put stack in hl
+	shld	oldstack-offset ;save it
+	lxi	sp,stack	;get new stack
+;
+; stack saved so program can return to CCP without
+; intervening warm start.
+;
+	lda	fcb+9		;get first char of extension
+	cpi	' '		;if ' ' then change to .COM
+	jz	notype
+	cpi	'C'		;If there is an extension,
+	jnz	notright	;make sure it's .COM
+	lda	fcb+10		;check second letter
+	cpi	'O'
+	jnz	notright
+	lda	fcb+11
+	cpi	'M'		;last letter
+	jz	iscom		;if it is a COM, then cont.
+notright:
+	call	endmes		;it's not a com file, so tell
+;
+	db	cr,lf,'Must be a command (.COM) file'
+	db	cr,lf,eos
+;
+endmes:
+	pop	d		;get address of message
+	mvi	c,mesout	;PRINT STRING command
+	call	bdos		;print error message
+;
+finish: lhld	oldstack-offset ;get old stack
+	sphl			;put it in HL
+	ret			;return to CP/M
+;
+notype: mvi	a,'C'		;if there was space, change
+	sta	fcb+9		;to COM
+	mvi	a,'O'
+	sta	fcb+10
+	mvi	a,'M'
+	sta	fcb+11
+;
+iscom:	lxi	d,buffer-offset ;point to where program goes
+	mvi	c,setdma	;SET DMA command
+	push	d		;save it
+	call	bdos		;and tell CP/M
+	mvi	a,0		;zero record count
+	sta	fcb+32
+	mvi	c,open		;OPEN file command
+	lxi	d,fcb		;load address of FCB in DE
+	call	bdos		;Open file
+	inr	a		;successful?
+	jnz	openok		;if so, then continue
+	call	endmes		;if not, then tell
+;
+	db	cr,lf,'Cannot open file',cr,lf,eos
+;
+openok: pop	d		;get starting dma back
+rloop:	mvi	c,setdma	;and set it in loop
+	push	d		;save it
+	call	bdos
+	lxi	d,fcb		;point to FCB
+	mvi	c,read		;READ sector command
+	call	bdos		;do it
+	pop	d		;get DMA address back
+	ana	a		;EOF?
+	jnz	doneread	;if so, then ask for password
+	lxi	h,80h		;length of sector
+	dad	d		;bump DMA
+	xchg			;put new address in DE
+	jmp	rloop		;and read some more
+;
+doneread:
+	xchg			;dma ==> hl
+	shld	endprog-offset	;save last address
+gpasag	call	getpas		;print password message
+;
+pasmes	db	'Password? ',eos
+;
+getpas	pop	d		;get address of message
+	mvi	c,mesout	;PRINT STRING function
+	call	bdos		;print it
+	lxi	d,defbuf	;point to default buffer
+	mvi	a,8		;tell CP/M max chars
+	stax	d		;put it there
+	mvi	c,incon 	;READ LINE command
+	call	bdos		;do it
+	lxi	h,defbuf+1	;point to length
+	lxi	d,password-offset	;point to storage
+	mov	a,m		;get length
+	ana	a		;set flags
+	jz	gpasag		;if 0 then ask again
+	inr	a		;plus 1 for length byte
+	mov	b,a		;put length in B
+	xra	b		;cancel first xra in loop
+	mov	m,a		;and put it back
+mploop	mov	a,m		;get char
+	xra	b		;encrypt it
+	stax	d		;save it
+	inx	h		;increment pointer
+	inx	d		;  "	      "
+	dcr	b		;decrement length
+	jnz	mploop		;if not zero, then next char
+	xra	a		;zero a
+	sta	fcb+12		;zero bytes in FCB
+	sta	fcb+14
+	sta	fcb+32
+	mvi	c,open		;OPEN file command
+	lxi	d,fcb		;point to FCB
+	call	bdos		;open the file
+	lxi	d,nstart	;point to new program start
+;
+	push	d
+wloop1	pop	d		;get DMA
+	push	d		;put it back on stack
+	mvi	c,setdma	;SET DMA command
+	call	bdos		;tell CP/M
+	lxi	d,fcb		;point to FCB
+	mvi	c,write 	;WRITE SECTOR command
+	call	bdos		;do it
+	pop	h		;get DMA address from stack
+	lxi	d,80h		;length of sector
+	dad	d		;HL has new DMA
+	push	h		;put it on stack
+	mov	a,h		;this is to get 2's complement
+	cma			;of address. We are subtracting
+	mov	d,a		;the current address from the
+	mov	a,l		;high address. If the high byte
+	cma			;<1 , we are done
+	mov	e,a		;
+	inx	d		;Now 2's comp. of address in DE
+	lhld	endprog-offset	;get ending address
+	dad	d		;Subtract (add 2's comp)
+	mov	a,h		;get high byte
+	inr	a		;is it FF (-1)?
+	ana	a		;set flags
+	jnz	wloop1		;if not, write another sector
+;
+	mvi	c,close 	;That's it. Close the file
+	lxi	d,fcb		;point to FCB
+	call	bdos		;do it
+	jmp	finish		;goto finish
+;
+;
+nstart:
+offset	equ	tpa-nstart
+;
+;	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;	%% WARNING -					    %%
+;	%% From now on, all labels are in		    %%
+;	%% the form:					    %%
+;	%%	LABEL	EQU  $+OFFSET			    %%
+;	%%  This is to allow the program to run at100H	    %%
+;	%% when it is saved by the earlier portion.	    %%
+;	%%  ALL new labels added MUST be in the form	    %%
+;	%% LABEL   EQU	$+OFFSET for this program to work   %%
+;	%% properly.					    %%
+;	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;
+;This is portion of the program is placed at the beginning
+;of the program to be PASSWORDed. When it is executed, it will
+;ask for a password. If the password is incorrect, the program
+;warm starts. If the password is correct, the program is moved
+;to the TPA and executed.
+;
+	lxi	h,0		;save stack pointer
+	dad	sp		;stack is in HL
+	shld	oldstack	;save it
+	lxi	sp,stack	;get new stack
+	call	otpw		;print password message
+;
+	db	cr,lf,'Password? '
+	db	eos
+;
+otpw	equ	$+offset
+	pop	d		;get address of message
+	mvi	c,mesout	;PRINT STRING command
+	call	bdos		;print it
+
+	lxi	d,newbuf+1	;point to storage area
+	xra	a
+	mov	b,a		;init counter
+	stax	d		;# of chars typed (for compare)
+	inx	d		;and point to string
+;
+; we don't want to allow 'lookers' to see the password, so call
+; bios instead of bdos to prevent echo.  also allows control chars.
+;
+	lhld	boot+1		;get addr of warm start routine
+	push	d
+	lxi	d,6		;+ offset to kbd input routine
+	dad	d
+	pop	d
+	shld	bconin+1	;now init'd to bios conin
+
+otpw1	equ	$+offset
+	push	b		;save counter..
+	push	d		;..& pointer
+bconin	equ	$+offset
+	call	$-$		;to be filled in by above routine
+	pop	d		;restore pointer..
+	pop	b		;..& counter
+	stax	d		;store char
+	inx	d		;bump pointer..
+	inr	b		;..& counter
+	cpi	cr
+	jnz	otpw1		;loop until cr typed
+; B has the length of password furnished + 1 for count.
+	lxi	h,password	;point to actual password
+	lxi	d,newbuf+1	;point to user's input
+	xra	a		;this 0 xra with length in B
+	stax	d		;should equal count in passwd
+;
+; first char compared is a count of # of chars in password,
+; followed by password itself.
+;
+clp	equ	$+offset
+	ldax	d		;get char
+	xra	b		;encrypt it
+	cmp	m		;are they the same?
+	jnz	boot		;if not, restart
+	inx	h		;point to next characters
+	inx	d		;  "	"  "	    "
+	dcr	b		;decrement length
+	jnz	clp		;if not done, then loop
+;
+; Now we move a segment of code to a part of the default
+; buffer. This segment moves the actual program down to the
+; TPA
+;
+	lxi	h,nmv		;point to code
+	lxi	d,defbuf+20h	;point to new postion
+	mvi	b,nmlen ;length
+;
+move	equ	$+offset
+	mov	a,m		;get byte
+	stax	d		;save it
+	inx	d		;point to next addresses
+	inx	h		;  "   "    "	   "
+	dcr	b		;decrement length
+	jnz	move		;if not done, loop
+	jmp	defbuf+20h	;go to segment
+;
+nmv	equ	$+offset	;segment that gets moved
+	lhld	oldstack	;get stack pointer
+	push	h		;save it on stack
+	lxi	h,buffer	;get start of actual program
+	mov	a,h		;We have to compute the length
+	cma			;and because X-Y equals
+	mov	d,a		;X + Two's complent(Y), we have
+	mov	a,l		;to find the 2's comp. of the
+	cma			;first address
+	mov	e,a		;
+	inx	d		;Y is in DE
+	lhld	endprog ;get last address
+	dad	d		;subtract (add 2's comp)
+	mov	b,h		;put length in BC
+	mov	c,l		; "    "     "	"
+	lxi	d,tpa		;point to TPA
+	lxi	h,buffer	;point to first address
+nmlp	equ	defbuf+20h+$+offset-nmv
+	mov	a,m		;get byte
+	stax	d		;save byte
+	inx	h		;increment address
+	inx	d		;    "	      "
+	dcx	b		;decrement length
+	mov	a,b		;check for zero left
+	ora	c		;Are we done?
+	jnz	nmlp		;if not, loop some more
+	pop	h		;get stack from stack
+	sphl			;put stack in SP
+	jmp	tpa		;run program
+;
+nmlen	equ	$+offset-nmv	;length of segment
+;
+;
+password	equ	$+offset ;password storage
+	db	0,'	    '
+;
+;12/10/81 changed to allow use of tbuf as input area
+;
+newbuf	equ	$+offset	;Users input buffer
+	db	10H,0,' 	       '
+;
+oldstack	equ	$+offset ;place for stack
+	ds	2
+;
+endprog equ	$+offset ;place for address
+	ds	2
+;
+buffer	equ	$+offset	;where actual program goes
+	end
+$
+

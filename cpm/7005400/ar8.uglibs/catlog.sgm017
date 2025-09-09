@@ -1,0 +1,30 @@
+Sig/M volume 17		miscellaneous CP/M utilies
+
+	Name		Size	Description
+
+	-CATALOG.017		contents of Sig/M volume 17
+	-CATALOG.ACK		acknowledgement file
+
+17.1	SCRAMBLE.DOC	 2K	command used to encode a CP/M file
+17.2	SCRAMBLE.ASM	 6K	/
+17.3	SORTV.DOC	 2K	sort program for variable length records
+17.4	SORTV-12.ASM	13K	/
+17.5	TAG2.ASM	 6K	set/reset display the "no copy" flag
+17.6	MNEXEC.COM	 3K	MicroNet executive
+17.7	MNOVRLAY.ASM	 4K	   overlay for  MicroNet executive
+17.8	WHICH/1.ASM	 4K	returns size and version of CP/M
+17.9	STATUS.ASM	 8K	present various systems information under 2.2
+17.10	NEWQCAT.ASM	 5K	quick catalog routine
+17.11	WORM8/8.ASM	 7K	memory test
+17.12	TFX12/18.ASM	21K	CP/M to CP/M file transfer utility
+17.13	XMODEM41.ASM	29K	remote CP/M to CP/M file transfer
+17.14	MOVPATCH.ASM	 3K	modifies MOVCPM for remote access
+17.15	21BIOS.ASM	48K	new BIOS for CP/M 2.0
+17.16	21BIOS.DOC	 3K	    /
+17.17	21BOOT.ASM	 4K	   /
+17.18	MACRO.LIB	18K	  /
+17.19	NPGEN.ASM	 9K	 /
+17.20	SPCLMAC.LIB	 4K	/
+17.21	XDIR.ASM	13K	updated CP/M directory display
+17.22	XDIR.COM	 2K	/
+

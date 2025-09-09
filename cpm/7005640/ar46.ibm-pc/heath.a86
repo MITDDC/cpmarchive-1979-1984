@@ -1,0 +1,940 @@
+|	 HEATH-19 emulator for the IBM personal computer
+| 	   Copyright (C) 1982 by William E. Westfield
+|   Originally written for SRI International, Menlo Park, CA
+|
+| this program is Internet (ARPA and CSNet at least) public.  It
+| may be used for any purpose, but may not under any circumstances be
+| resold for profit.  Duplicate copies must include this notice.
+| If you bought this program, please dont share it with your friends,
+| though I dont mind if you tell them (ahem) how great it is. As someone put
+| it: "If I make a lot of money selling this program, I will be encouraged
+| to produce more high quality software at reasonable prices.  If I find
+| pirated copies floating around, I am likely to keep future efforts to
+| myself...."
+
+| Emulates the most important functions of an H19 terminal, including
+| Character and line insert and delete.  Thr program ends when one of
+| the function keys is typed.  It is designed to be "callable"
+| from IBM PC basic, and also runable independently.  When called
+| from basic, you have to put an intersegment RET 2 (hex CA 02) at
+| location 0 (the program loads at 100h). BASIC should use a
+|	ADDR% = 256 : CALL ADDR%(CHAR%)
+| on input, the low order 8 bits of CHAR will be sent to the serial
+| line if they are not 0.  On exit, it is set to the number of the
+| function key that was typed.  Since my unix software produces .COM
+| files, I read it byte by byte and poke it into memory, and then BSAVE
+| it by hand (to speed up loading...).
+
+| The following features of the heath are not (yet) supported.
+|	Ansi mode.
+|	  Actually, insert N lines abd delete N lines in ansi mode are
+|	  supported, since they are necessary for Tops-20 EMACS to work
+|	  Strange things are likely to happen if anything else (including
+|	  ordinary characters) is sent while the terminal is in "ansi" mode.
+|	$xx, $yx modes.  The 25th line is always "enabled"
+|	  They keys always click.
+|	  the cursor is always an underline.
+|	  CR and LF are seperate characters.
+|	  Wraparound does not occur at end of line.
+|	baud rate and communications parameter changes.
+|	  The program relys on something else (basic or MODE)
+|	  to set these up properly.
+|	Hold screen mode
+|	Graphics mode and character set.
+|	keypad and funktion key stuff
+|	  actually, I hacked the DEL key to transmit a rubbout,
+|	  the INS key to transmit a ^_ (octal 37 - pause on many
+|	   Tops-20 systems).  It might be nice to be able to use
+|	  the ALT key as a meta key, but this would require a
+|	  whole new keyboard routine (to handle ALT ESC, for example).
+|	Transmit XXX.  This would be a ****serious security flaw**** !!!!
+|	
+| This program is written using the unix->8086 cross assembler supplied
+| by MIT with their 8086 version of the portable C compiler.  Thanks to
+| the people at MIT for writing and supplying this software.
+
+
+
+| definitions for flag word
+
+BCKxDEL= 1	| replace backspace (from backspace key) with DEL char
+HALFDUP= 2	| Half deuplex mode
+INSMOD=  4	| Insert mode
+STOPED=	 8	| XOff has been sent to remote computer
+CAPTURE= 16	| data capture mode is on
+DODISK=	 32	| need to write a buffer to disk
+
+FCB= 0x5C
+
+	.text
+
+	.= 0x100		| standard MSDOS start address
+
+start:	.byte 0x90,0x90
+	pushf
+	seg	cs
+	cmpb	0,#0xCA		|is there intersegment return (for basic ?)
+	jne	noarg
+	 push	bp
+	 mov	bp,sp
+	 mov	bx,8(bp)	| get address of argument
+	 mov	al,(bx)		|  get low 8 bits of arg
+	 seg	cs
+	 mov	inichr,al	| save character
+	 seg	cs
+	 mov	argadr,bx	| save address
+noarg:	seg	cs
+	mov	oldstk,sp
+	seg	cs
+	mov	oldstk+2,ss
+	mov	ax,cs
+	mov	ss,ax
+	mov	sp,#stack	|set up new (bigger) stack
+
+	push	es		| save some registers
+	push	ds
+	push	si
+	push	di
+	push	cx
+
+	cld			| string instructions increment
+	cli			| disable interupts
+	xor	ax,ax		| clear ax
+	mov	ds,ax		|  and Data segment
+	mov	cx,ax		|   and CX
+	push	0x30		| serial card interupt vector
+	push	0x32
+	push	0x6C		| "break" interupt vector
+	push	0x6E
+	mov	0x30,#serint	| set up interupt address for asynch interface
+	mov	0x32,cs
+	mov	0x6C,#intret	| ignore break interupts by pointing to
+	mov	0x6E,cs		|  an interupt return instruction
+	mov	al,0x410	|get interface card in use
+	and	al,#0x30	| from equipment byte 30 -> monochrome
+	seg	cs
+	mov	DISPLA,al	| save it.
+	mov	dx,0x413	| get memory size
+	mov	cl,#6
+	shl	dx,cl		| change it to a segment value
+	mov	ax,cs		|get our current code segment
+	mov	ds,ax		| make data segment the same
+	mov	bx,ax
+	mov	ax,#bigbuf	| compute segment for buffers
+	mov	cl,#4		| note the buffer can be up to 64K long
+	shr	ax,cl		| change address into segment value
+	add	ax,bx		| take current segment into account
+	inc	ax		|  (round up)
+	mov	BUFSeg,ax	| save the computed segment value
+	sub	dx,ax		| compute amount of memory left...
+	cmp	dx,#0x1000	| more than 64K ?
+	jl	init2
+	 mov	dx,#0x1000	| (64K is maximum buffer size...)
+init2:	mov	cl,#4
+	shl	dx,cl
+	dec	dx
+	mov	BUFSiz,dx	| save memory size
+	and	dx,#0xFF80
+	sub	dx,#0x80
+	mov	DSKSiz,dx	| disk buffer is even number of blocks long
+	xor	ax,ax
+	mov	BUFTail,ax	| load place for interupt routine to put chars
+	mov	BUFHead,ax	| load place for main routine to get chars
+	andb	flags,#255-CAPTURE
+	cmpb	0x80,#0		| any disk output file ?
+	jz	init3
+	call	append
+
+init3:	in	0x21		| Set up 8259 interupt controller
+	andb	al,#0xEF	|  enabling INT4
+	out	0x21
+
+	mov	dx,#0x3FB	| Set up 8 bit chars/no parity/1 stop bit
+	movb	al,#3
+	out
+	movb	dl,#0xF9	| Interupt Enable register
+	movb	al,#1		| enable "data available" serial interupt
+	out
+	movb	dl,#0xFC
+	movb	al,#0xB		| enable interupts from serial card
+	out
+	sti			| enable CPU to receive interupts
+	movb	dl,#0xF8	|
+	in
+	mov	al,inichr
+	or	al,al
+	je	setcur
+	call	NotFnc		| send initial character
+	j	setcur		| find out where the cursor is
+
+
+|	********** The main loop **********
+| wait for characters from serial card, processing most of them ourselves
+| using the bios routines so that we can write attributes as well as the
+| characters themselves.  Only 24 lines of the display are scrolled. Some
+| control characters use the higher level routines in the BDOS (bell,
+| carriage return...)
+
+loop:	call	waitch		|wait for a character from serial card
+	cmp	al,#32
+	jl	cntrl		| is it a control character ?
+	jmp	wrtchr		| (if not, write it to the display)
+
+cntrl:	cmp	al,#033		| escape  ?
+	jz	doesc
+	cmp	al,#10		| line feed ?
+	jnz	NotLF
+	  cmpb	VPos,#23	| does it go off the bottom ?
+	  jl	usedos		| if not, just send it out.
+	  mov	ax,#0x0601	| scroll region 1 line
+	  xor	cx,cx		| upper left corner
+	  mov	dx,#0x174F	| lower right corner
+	  movb	bh,#7		| always use Black on white for attributes
+	  int	0x10		| scroll the region
+	  mov	dl,HPos		| make sure the cursor is where it should be
+	  mov	dh,#23
+	  call	csr2
+	  j	loop
+NotLF:	cmp	al,#7		| Bell ?
+	 jz	usedos
+	cmp	al,#8		| BackSpace ?
+	jne	NotBS
+	 call	cback		| move cursor
+	 j	loop
+NotBS:	cmp	al,#9		| tab ?
+	jne	NotTab
+	  mov	dx,HPos
+	  and	dl,#0xF8	| truncate
+	  add	dl,#8		| and advance to next tab stop
+	  call	csr2
+	  j	loop
+NotTab:	cmp	al,#13		| CR ?
+	 jz	usedos
+	j	loop		| all other control characters ignored
+
+usedos:	mov	dl,al
+	mov	ah,#2
+	int	0x21
+setcur:	mov	ah,#3
+	mov	bh,#0
+	int	0x10		| read cursor position
+	mov	HPos,dx		|save it.
+	jmp	loop
+
+|	********** escape code dispatch **********
+| possible escape sequences are stored in the string at EscChrs, and the
+| corrosponding routines in the same order at EscFncs.  Note that you can
+| quickly implement any termial with similarly constructed escape sequences
+| just by changing these two tables.  Other structures (for example ANSI)
+| would require more work.  Invalid escape sequences are flushed and ignored.
+
+doesc:	;handle h19 compatable escape codes
+	call	waitch		|get next character
+	push	es
+	mov	di,cs
+	mov	es,di
+	mov	di,#EscChrs
+	mov	cx,#ncmds
+	repnz			|scan list of escape characters for
+	 scab			| this command...
+	jcxz	notimp		| It might be illegal or not implemented.
+	sub	di,#EscChrs+1
+	add	di,di		| * 2 to get word offset into...
+	call	@EscFncs(di)	| table of routines
+notimp:	pop	es
+	jmp	loop
+
+EscChrs: .ascii "YKHCDBAInjkEJLMN@OxypqZo<lb"
+ncmds= .-EscChrs+1
+
+EscFncs: .word movcur, clreol, home, cforw, cback, cdown, cup, revind
+	 .word rdcur, csave, crest, clear, clreop, inslin, dellin
+	 .word delchr, ins.st, ins.ex, setmod, clrmod, doinv, donorm
+	 .word idVT52, clrbol, doansi, clrlin, clrbop
+
+
+
+| write a character to the display, paying attention to such things as whether
+| insert mode is on, and what the current video modes are.  Note that the BIOS
+| call to write a character to the display does not change the cursor position
+| so that that must be done explicitly.  Also note that if the cursor is in
+| the last column, the character there is overwritten rather than wrapping
+| around to the next line.  This is the way systems I use expect terminals
+| to behave, but if you dont like it, this is where the change is made.
+
+wrtchr:	testb	flags,#INSMOD
+	je	wrtch2
+	push	ax
+	call	inschr			| insert a position if in insert mode
+	pop	ax
+wrtch2:	mov	bx,attrib		|get current attributes
+	mov	cx,#1
+	mov	ah,#9
+	int	0x10			|use bdos to write char + attribute
+	mov	dx,HPos
+	cmp	dl,#79			| if not in last column
+	jge	wrtret
+	 inc	dl
+	 call	csr2			| then increment cursor position
+wrtret:	jmp	loop
+
+|	********** Clear things (like lin0 pages...) **********
+
+clear:	call	home
+	call	clreop
+	ret
+
+clreol:	mov	ax,#0x0920
+	mov	bx,#7
+	mov	cx,#80
+	sub	cl,HPos
+	int	0x10
+	ret
+
+clrbol:	push	HPos		| Save cursor position
+	mov	dh,VPos
+	mov	dl,#0		| do carriage return
+	call	csr2
+	mov	ax,#0x0920	| write previous HPos # of blanks
+	mov	bx,#7
+	mov	ch,bh
+	pop	HPos
+	mov	cl,HPos
+	int	0x10
+	mov	dx,HPos
+	j	csr2
+
+clreop:	call	clreol
+	cmpb	VPos,#23	| in last line ?
+	jl	clrep2
+	 ret
+clrep2:	mov	ax,#0x0600	| use scroll function to clear page...
+	movb	ch,VPos		| from next line to line 24
+	inc	ch
+	mov	cl,#0
+	mov	dx,#0x174F
+	mov	bh,#7
+	int	0x10
+	ret
+
+clrbop:	call	clrbol		| first clear beginning of line
+	cmpb	VPos,#0		| in first line ?
+	jg	clrbp2
+	 ret
+clrbp2:	mov	ax,#0x0600	| use scroll function to clear page...
+	movb	dh,VPos		| from previous line to line 0
+	dec	dh
+	xor	cx,cx		
+	mov	dl,#79
+	mov	bh,#7
+	int	0x10
+	ret
+
+clrlin:	call	clreol		| un-elegant but simple solution
+	j	clrbol
+
+|	********** Cursor movment **********
+
+home:	xor	dx,dx		| same as cursor move to 0,0
+	j	csr2
+movcur:	call	waitch		|get line
+	sub	al,#32
+	movb	dh,al
+	call	waitch
+	sub	al,#32
+	movb	dl,al
+csr2:	movb	bh,#0		| page number
+	movb	ah,#2		| set cursor position call
+	mov	HPos,dx		| save the new cursor
+	int	0x10
+cpopj:	ret
+
+csave:	movb	ah,#3
+	movb	bh,#0
+	int	0x10		| read cursor psoition
+	mov	curstk,dx
+	ret
+
+crest:	mov	dx,curstk
+	jmp	csr2
+
+cforw:	mov	dx,HPos		| get current position
+	cmp	dl,#79
+	jge	cpopj		| dont move past last column
+	inc	dl
+	j	csr2		| move cursor
+
+cback:	mov	dx,HPos		|get current cursor position
+	dec	dl		| decrement Horizontal part
+	jge	csr2		| move cursor to new position if still on
+	ret			| this line, otherwise just return
+
+cdown:	mov	dx,HPos
+	cmp	dh,#23
+	jge	cpopj		| dont move off bottom line
+	inc	dh
+	j	csr2
+
+cup:	mov	dx,HPos
+	cmp	dh,#0
+	jle	cpopj		| dont move up past top line
+	dec	dh
+	j	csr2
+
+revind:	cmpb	VPos,#0		| top line already ?
+	jg	cup		|  then we have it easy
+	  mov	ax,#0x0701	| scroll region 1 line downwards
+	  mov	cx,#0x0000	| upper left corner
+	  mov	dx,#0x174F	| lower right corner
+	  movb	bh,#7		| always use Black on white for attributes
+	  int	0x10		| scroll the region
+	  mov	dx,HPos
+	  j	csr2
+
+|	********** insert / delete   line / character
+
+inslin:	mov	ax,#0x0701	| scroll region down 1 line
+insli2:	mov	ch,VPos
+	mov	cl,#0		| starting with this line
+	mov	dx,#0x174F	| down to bottom of screen
+	mov	bh,#07
+	int	0x10		| call the bios
+	mov	dh,VPos
+	mov	dl,#0
+	jmp	csr2		| move to beginning of created line
+
+dellin:	mov	ax,#0x0601	| scroll region up 1 line
+delli2:	mov	ch,VPos
+	mov	cl,#0		| starting with this line
+	mov	dx,#0x174F	| down to bottom of screen
+	mov	bh,#07
+	int	0x10		| call the bios
+	mov	dh,VPos
+	mov	dl,#0
+	jmp	csr2		| move to beginning of created line
+
+delchr:	cmpb	HPos,#79	| last column ?
+	jl	delch2
+lstcol:	mov	ax,#0x920	| then we just write a space in this column
+	mov	bx,attrib	|get current attributes
+	mov	cx,#1
+	int	0x10		|use bios to write char + attribute
+	ret	
+delch2:	push	es
+	push	ds		|save segment registers we will use
+	mov	al,VPos
+	mulb	eighty
+	add	al,HPos
+	adc	ah,#0		|offset into buffer....
+	add	ax,ax		| 2 bytes/char (char + attribute)
+	mov	di,ax		|destination is here
+	inc	ax
+	inc	ax		|source is one character further
+	mov	si,ax
+	mov	cx,#79
+	sub	cl,HPos		|Number of characters we have to move
+	mov	ax,#0xB000	| monchrome display buffer
+	cmpb	DISPLA,#0x30	| see if we are using the monochrome display
+	je	monoch
+	mov	ax,#0xB800	|color card buffer
+	mov	dx,#0x3DA
+	push	ax
+vidlp:	in
+	testb	al,#8		| wait for retrace
+	jz	vidlp
+	pop	ax
+monoch:	mov	ds,ax
+	mov	es,ax
+	repz
+	 movw			| do the move
+	pop	ds
+	pop	es
+	ret
+eighty:	.byte	80
+
+inschr:	cmpb	HPos,#79	| last column ?
+	je	lstcol		| handle it the easy way
+	push	es
+	push	ds		|save segment registers we will use
+	pushf
+	std			|decrement string pointers
+	mov	al,VPos
+	inc	al
+	mulb	eighty
+	dec	ax		| back to end of previous line
+	add	ax,ax		| 2 bytes/char (char + attribute)
+	mov	di,ax		|destination is here at end of line
+	dec	ax
+	dec	ax		|source is one character further back
+	mov	si,ax
+	mov	cx,#80
+	sub	cl,HPos		|Number of characters we have to move
+	mov	ax,#0xB000	| monchrome display buffer
+	cmpb	DISPLA,#0x30	| see if we are using the monochrome display
+	je	insch2
+	mov	ax,#0xB800	|color card buffer
+	mov	dx,#0x3DA
+	push	ax
+vidlp1:	in
+	testb	al,#8		| wait for retrace
+	jz	vidlp1
+	pop	ax
+insch2:	mov	ds,ax
+	mov	es,ax
+	repz
+	 movw			| do the move
+	popf
+	pop	ds
+	pop	es
+	ret
+
+ins.st:	orb	flags,#INSMOD
+	ret
+ins.ex:	andb	flags,#255-INSMOD
+	ret
+
+
+|	**********  Ansi mode, such as it is **********
+
+doansi:	| only insert line and delete line operations are supported !!!!
+ansilp:	movb	savarg,#0
+	call	waitch		| escape
+	cmp	al,#27
+	jne	cret
+	call	waitch		| [
+	call	waitch
+	cmp	al,#63		| maybe leave heath mode
+	je	ansi2
+getnum:	cmp	al,#071
+	jg	cret		| not a number
+	cmp	al,#060
+	jl	cret
+	sub	al,#48		| it better be a number
+	mov	bl,al
+	mov	al,savarg
+	mul	ten
+	add	al,bl
+	mov	savarg,al
+	call	waitch
+	cmp	al,#76		| "L" ?
+	je	ansiIL		| then insert lines
+	cmp	al,#77		| "M"
+	je	ansiDL		| then delete lines
+	j	getnum		| otherwise better be more numbers
+ten:	.byte 10
+
+ansi2:	call	waitch		| 2
+	call	waitch		| h
+cret:	ret
+	
+
+ansiIL:	mov	al,savarg
+	mov	ah,#7
+	call	insli2
+	j ansilp
+ansiDL:	mov	al,savarg
+	mov	ah,#6
+	call	delli2
+	j	ansilp
+
+|	********** Misc functions **********
+
+setmod: clrmod:
+	call	waitch		| flush the mode we are supposed to set/clear
+	ret
+
+doinv:	andb	attrib,#0x88	| save possible blink and intensity bits
+	orb	attrib,#0x70
+	ret	
+donorm:	andb	attrib,#0x88	| save possible blink and intensity bits
+	orb	attrib,#7
+	ret
+
+doblink: orb	attrib,#0x80
+	ret
+noblink: andb	attrib,#0x7F
+	ret
+
+hiinten: orb	attrib,#8
+	ret
+nohiint: andb	attrib,#0xF7
+	ret
+
+rdcur: 
+idVT52:	ret		| ******* Not yet implemented ********
+
+
+waitch:	mov	ah,#1
+	int	0x16		| check keyboard status
+	jz	skip1		| no input available
+	mov	ah,#0
+	int	0x16
+	cmpb	al,#00		| maybe a fuction key ?
+	jnz	NotFnc		| no.
+	cmpb	ah,#3		| 3 returned in AH means nul code,
+	jz	NotFnc		| so send it on to computer
+notDEL:	cmp	ah,#0		| Cntrl-Break ?
+	jne	notBRK
+	 xor	cx,cx
+	 mov	dx,#0x3fb
+	 in
+	 or	al,#0x40	| set send break bit
+	out
+pause:	loop	pause
+	xor	al,#0x40
+	out
+notBRK:		
+
+| change values of IBM special purpose keys
+| this uses two tables.  The first is 255 bytes long and contains either
+| a single ascii character value (< 128) or 128 + an offset/2 into the
+| second table, which contains asciz strings for key redefinitions longer
+| than a single character (there are up to 256 characters of strings)
+
+	push	ax
+	mov	bx,#transtab
+	mov	al,ah
+	xlat			| get translated code
+	or	al,al		| test it...
+	jz	NotDef		| 0 -> Not defined, ignore it...
+	pop	bx		| discard old value
+	jns	NotFnc		| sign bit 0 -> send this character to remote
+	shl	al,#1		| otherwise a string. Multiply by 2
+	mov	ah,#0		|  high order nonsense is 0
+	add	ax,#strings
+	call	sout		| output a string
+	j	skip1		|finished
+
+| Now we see if it is an exit function key (F1-F10).  note that even those
+|  Keys may be redefined, but if you redefine them all, there isnt any way
+|  to stop the program.  (hee hee)
+
+NotDef:	pop	ax		|  get back scan code...
+	sub	ah,#58		| return function code value
+	jle	skip1		| ignore non-function extended codes
+	cmp	ah,#10
+	jg	skip1
+	pop	bx		| this routine was CALLed.  get rid of the
+	jmp	exit		|  Return address.
+
+NotFnc:	cmp	ah,#14		| is it the backspace key ?
+	jne	NotBKS
+	testb	flags,#BCKxDEL	| do we want it to be a DEL rather than ^H ?
+	je	NotBKS
+	mov	al,#127
+
+NotBKS:	push	dx
+	mov	dx,#0x3f8
+	out
+	pop	dx
+
+echo:	testb	flags,#HALFDUP	| half duplex ?
+	jz	skip1
+	ret			| yes: return and type character on display
+
+skip1:	cli
+	cmp	COUNT,#0
+	jz	skip2
+	 sti			| if no characters then loop around waiting
+	 jmp	getchr
+skip2:	mov	si,BUFTail	| make sure pointers are equal when buffer
+	mov	BUFHead,si	|  is empty
+	testb	flags,#DODISK	|if we dot need to write to te disk, and
+	jz	skip3
+
+wrtDSK:	mov	dx,#FCB		| point to file FCB
+	mov	ax,DSKSiz
+	mov	cl,#7
+	shr	ax,cl
+	mov	cx,ax		| number of records to write
+	mov	ah,#0x28
+	int	0x21
+	or	al,al
+	je	wrtDS2
+	int
+wrtDS2: xor	di,di
+	mov	cx,BUFTail
+	sub	cx,DSKSiz	| see if any characters have been received
+	jbe	wrtDS3		|  since  we tryed to stop output
+	 mov	si,DSKSiz
+	 push	ds
+	 mov	es,BUFSeg
+	 mov	ds,BUFSeg
+	 repz
+	  movb
+	 pop	ds
+wrtDS3:	mov	BUFTail,di
+	mov	BUFHead,di
+	andb	flags,#255-DODISK
+	mov	al,StartChr
+	mov	dx,#0x3F8
+	out
+	sti
+skip3:	jmp	waitch
+
+getchr:
+getch1:	push	ds
+	mov	si,BUFHead
+	seg	cs
+	mov	ds,BUFSeg
+	cli
+	lodb
+	pop	ds
+	cmp	si,BUFSiz
+	jb	getch2
+	xor	si,si		| make buffer loop around
+getch2:	dec	COUNT
+	testb	flags,#STOPED	| have we stopped output ?
+	je	getch3
+	cmp	COUNT,#100	|  and do we have lots of space now ?
+	ja	getch3
+	 mov	dx,#0x3F8	| If both of the above are true, then
+	 mov	al,StartChr	| we want to send a command to the remote
+	 out			| computer to restart output
+	 andb	flags,#255-STOPED
+getch3:	mov	BUFHead,si
+	sti			| renable interupts
+	ret
+
+| sout -  output a string (terminated by a 0 byte) to the serial port
+|	  AX contains the address of the string.
+sout:	push	si
+	push	dx
+	mov	si,ax
+soutlp:	mov	dx,#0x3FD	| status register
+soutwt:	in
+	testb	al,#0x20	| see if ready for next character
+	jz	soutwt		|  (if not, wait)
+	lodb			| get next character to send
+	or	al,al
+	jz	soutEnd		| if a null, its the end
+	mov	dl,#0xF8	|  otherwise, output it to serial port
+	out
+	j	soutlp		| next character
+soutEnd:
+	pop	dx
+	pop	si
+	ret
+
+
+|	open a file in "append mode"
+
+append:	mov	dx,#FCB
+	mov	ah,#0xF
+	int	0x21		| try to open file
+	or	al,al
+	 jnz	create		| if it doesnt already exist, create it
+
+oldfil:	push	ds
+	xor	dx,dx
+	mov	ds,BUFSeg
+	mov	ah,#0x1A
+	int	0x21		| set disk transfer address
+	pop	ds
+	mov	dx,FCB+18	| get file size in bytes
+	mov	ax,FCB+16
+	test	al,#0x7F	| test if partially filled record
+	jne	shift1
+	sub	ax,#80		| if not, decrement record number
+	sbb	dx,BUFTail	| subtract 0
+shift1:	mov	cx,#7
+shift:	clc			| note: shift rather than divide because
+	rcr	dx,#1		| # records may be > 65536
+	rcr	ax,#1		| shift double word right 7 bits to get
+	loop	shift		| number of records
+	mov	FCB+33,ax
+	mov	FCB+35,dx	| save record number
+	mov	dx,#FCB
+	mov	ah,#0x21
+	int	0x21		| read the last block of the file
+	push	ds
+	mov	ds,BUFSeg
+	xor	si,si
+fndlst: lodb
+	cmp	al,#0x1a	| end of text file signified by either
+	je	lstbyt
+	cmp	al,#0
+	jne	fndlst
+lstbyt:	dec	si
+	pop	ds
+	mov	BUFTail,si
+	mov	BUFHead,si
+	j	opened
+
+create:	mov	dx,#FCB
+	mov	ah,#0x16
+	int	0x21		| create file
+	or	al,al
+	jnz	abort		| dont capture data if open error
+	xor	dx,dx
+	mov	FCB+33,dx	| relative record number is 0
+	mov	FCB+35,dx	| relative record number is 0
+	push	ds
+	mov	ds,BUFSeg
+	mov	ah,#0x1A
+	int	0x21		| set disk transfer address
+	pop	ds
+opened:	orb	flags,#CAPTURE
+abort:	ret
+
+exit:	push	ax
+	mov	dx,#0x3FC
+	mov	al,#3		|disable modem interupts
+	out
+	mov	ch,#0x80
+exitlp:	loop	exitlp
+	cli
+	testb	flags,#CAPTURE
+	jz	exit1
+	 mov	di,BUFTail
+	 mov	es,BUFSeg
+	 xor	ax,ax
+exit3:	 test	di,#127		| pad block out to even number of bytes
+	 jz	exit4
+	 stob
+	 j	exit3
+exit4:	 mov	cl,#7
+	 shr	di,cl
+	 mov	cx,di
+	 mov	dx,#FCB		| point to file FCB
+	 mov	ah,#0x28
+	 int	0x21
+	 mov	dx,#FCB
+	 mov	ah,#0x10
+	 int	0x21
+exit1:	xor	bx,bx
+	mov	ds,bx		|need to address low memory to
+	pop	ax
+	pop	0x6E
+	pop	0x6C
+	pop	0x32		| restore the old interupt vectors
+	pop	0x30
+	pop	cx
+	pop	di
+	pop	si
+	pop	ds
+	pop	es
+	seg	cs
+	mov	ss,oldstk+2
+	seg	cs
+	mov	sp,oldstk
+	sti
+	seg	cs
+	cmpb	0,#0xCA
+	jne	exit2
+retarg:	 seg	cs
+	 mov	di,argadr
+	 mov	al,ah
+	 mov	ah,#0
+	 mov	(di),ax		|return argument (function key number)
+	 pop	bp
+exit2:	popf
+	jmp	0
+
+
+|	********** serial port interupt routine **********
+
+serint:	push	dx
+	push	ax
+	push	es
+	push	ds
+	push	di
+	cld
+	seg	cs
+	mov	es,BUFSeg
+	seg	cs
+	mov	di,BUFTail	|get registers we need
+intlp:	mov	dx,#0x3fd	| asynch status port
+	in
+	testb	al,#1		| see if data available
+	jz	retint		|  no.
+	movb	dl,#0xf8	| yes, get it
+	in
+	andb	al,#0x7f	| take 7 bits
+	jz	retint		| ignore nulls
+	cmpb	al,#0x7f	| rubout ?
+	jz	retint		| yes, ignore it.
+	stob
+	mov	ax,cs
+	mov	ds,ax		| deal with global variables now...
+	inc	COUNT		| increment count of characters in buffer
+	cmp	di,BUFSiz	| does it loop around past end of the buffer ?
+	jb	serin2
+	 xor	di,di		| yes, reset to beginning.
+serin2:	mov	BUFTail,di
+	mov	ax,BUFSiz
+	sub	ax,COUNT	| how much space is left ?
+	cmp	ax,#50		| less than 50 characters ?
+	jae	serin3
+	testb	flags,#STOPED+DODISK
+	jne	serin3
+	mov	dx,#0x3F8
+	mov	al,StopChr	| send character to stop output	
+	out
+	orb	flags,#STOPED
+serin3:	testb	flags,#CAPTURE
+	je	retint
+	mov	ax,BUFTail
+	cmp	ax,DSKSiz
+	jb	retint
+	testb	flags,#STOPED+DODISK
+	jne	serin4
+	mov	dx,#0x3F8
+	mov	al,StopChr	| send character to stop output	
+	out
+serin4:	orb	flags,#DODISK	| Need to do disk write !	
+retint:	movb	al,#0x64
+	out	0x20		| send  End-Of-Interupt to 8259
+	pop	di
+	pop	ds
+	pop	es
+	pop	ax
+	pop	dx
+intret:	iret
+
+|	********** Data Storage **********
+
+	.=0x800
+
+transtab: .byte 0	| extended key translation table
+	.=.+255
+strings: .byte 0
+	.=.+255
+ 
+flags=transtab			| no extended key return scan code of 0-2
+StartChr=transtab+1
+StopChr=transtab+2
+
+
+HPos:	.byte 0			| current cursor position.  This is arranged
+VPos:	.byte 0			| so that a word MOVe instruction from HPos
+				| will put the line number in the high order
+				| byte, which all of the BIOS calls expect.
+
+attrib:	.byte 7			| 7 -> white on black, 0x70 -> black on white
+	.byte 0			| (page number (always 0))
+
+BUFHead: .word 0
+BUFTail: .word 0		| serial card FIFO pointers and character
+BUFSeg:	.word 0			| count.
+BUFSiz:	.word 1500
+DSKSiz:	.word 0
+COUNT:	.word 0
+
+curstk:	.word 0			| cursor "stack" saves cursor position
+
+oldstk:	.word 0,0		| the old stack pointer and stack segment
+
+argadr:	.word 0			| the address of an argument from basic
+inichr:	.byte 0			| The entry argument (if any)
+
+DISPLA:	.byte 0			| 0x30 -> monochrome dispay, else color card
+
+savarg:	.byte 0			| a saveed argument for ANSI mode
+
+
+stkbot:	.=.+100			| 50 words of stack for local use
+stack:	.word 0
+
+bigbuf: .word 0
+   

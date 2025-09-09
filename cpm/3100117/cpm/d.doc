@@ -1,0 +1,91 @@
+		D.DOC - DOCUMENTATION OF D PROGRAM
+			by Ward Christensen
+
+D.COM is a directory list program, which writes
+5 entries on a line, separated by commas.
+
+The command contains an internal table of file
+names, which are not to be shown when just "D" is typed.
+(NOTE typing "D *.*" always shows all files)
+
+Why is this useful:  A typical CP/M disk contains many
+utility files: ed.com, asm.com, submit.com, etc.  When
+you do a directory listing, you typically aren't interested
+in seeing all those files, but rather just the "current"
+or "active" files.  This is what "D.COM" can do.
+
+		HOW TO USE THE "D" PROGRAM
+
+D *.* <<types a directory listing of ALL files on disk>>
+
+D <<types a directory listing of ONLY those files on disk
+which are NOT in the D.COM name table.  It also reports which
+files ARE in D.COM but NOT on disk, such as if you erased
+the file.>>
+
+D SET <<sets all current files on the disk into the D.COM's
+internal table of names.  NOTE the program must write itself
+back to disk, modified, so your disk must not be write
+protected.>>
+
+D ADD filename.type <<Adds the specified filename
+to the list of filenames in the D.COM program.  D.COM
+modifies itself and writes itself back to disk.>>
+
+D DEL filename.type <<Deletes the specified filename
+to the list of filenames in the D.COM program.  D.COM
+modifies itself and writes itself back to disk.>>
+
+------------------------------------------------
+
+Examples:  Suppose your disk has: 
+D.COM
+ASM.COM
+ED.COM		on it initially.
+LOAD.COM
+DDT.COM
+
+You would type:  D SET
+to set these names into the D.COM program.
+
+Typing "D" would then list NO files.
+
+Suppose you ED TEST.ASM, ASM it, and LOAD it.
+Typing D would then list:
+
+TEST    ASM,TEST    BAK,TEST    HEX,TEST    COM
+
+i.e. it tells you of the "current" files on the disk.
+
+Now, supposing you wanted to add TEST.COM as a "regular"
+file on your disk.  Type:
+
+D ADD TEST.COM
+
+Now, typing D will show:
+
+TEST    ASM,TEST    BAK,TEST    HEX
+
+i.e. TEST.COM is now considered a "permanent" file.
+
+-----
+
+Now, suppose you accidentally erased ASM.COM from your
+disk.  Typing D gives:
+
+TEST    ASM,TEST    BAK,TEST    HEX
+
+--->not found:
+ASM     COM
+
+showing you are missing one of the "regular" files.
+
+If, in fact, you didn't want ASM.COM to be on the disk,
+type:
+
+D DEL ASM.COM
+
+which will delete the name from the D.COM table, so ASM.COM
+won't show up a "not found".
+
+END

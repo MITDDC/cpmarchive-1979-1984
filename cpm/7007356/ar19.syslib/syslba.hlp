@@ -1,0 +1,156 @@
+Introduction
+BDOS-Based Input Line Editors -- BBLINE and BLINE
+Independent Input Line Editor -- INLINE
+:Introduction
+
+     An  Input Line Editor is used to accept a line of text  from 
+the user, allowing him to issue commands like backspace and Ctrl-
+X  (erase  all  of line typed so far) to edit his text as  he  is 
+inputting  it.   Once the text has been entered,  the Input  Line 
+Editor returns to the calling program with the user's text stored 
+in a buffer.  This text is terminated by a binary 0.
+
+     Two of the Input Line Editors in SYSLIB use the CP/M BDOS to 
+provide the line editor function.   They mainly serve to preserve 
+the  registers  during  the  function  call  and  to  store   the 
+terminating zero at the end of the text.   They occupy less space 
+than the third Input Line Editor, INLINE.
+
+
+     The third Input Line Editor,  INLINE,  is used when security 
+is  important.   Unlike  the other two,  when typing a Ctrl-C  to 
+INLINE,  the  Input  Line  Editor (and calling  program)  is  not 
+aborted and control returned to CP/M.   Instead,  the Ctrl-C char 
+is simply stored in the user's line.  Also, unlike the other two, 
+INLINE  can  be  instructed  to  echo  or  not  echo  the   input 
+characters.   This  feature is useful for programs which want  to 
+input  a  password.   INLINE  can be instructed not to  echo  the 
+password,  but  it will still provide the line editing  functions 
+for the user so that he can correct mistakes if he makes them.
+
+
+:BDOS-Based Input Line Editors -- BBLINE and BLINE
+
+     Routine Name:  BBLINE
+     Function:
+          BBLINE provides a very convenient interface to the BDOS 
+for  input line editor functions.   It contains its own  internal 
+buffer  for storage of the input line (200 bytes allocated),  and 
+it  returns a pointer to the first byte of the line upon  return.  
+The  line  stored in this buffer is terminated by a  binary  zero 
+(0).
+     To  use  BBLINE,   the  user  need  only  call  it,  with  a 
+capitalization flag stored in the A Register.   If A = 0,  BBLINE 
+does not capitalize the input line characters;  if A <> 0, BBLINE 
+capitalizes  the  input line characters before returning  to  the 
+caller.
+     No error codes are returned by BBLINE.  On return, HL points 
+to the first byte of the input line and A contains a count of the 
+number of characters in that line (not counting the ending zero).
+
+
+BBLINE, Con't
+     Inputs:  A=0 to Not Capitalize Line, A<>0 to Capitalize Line
+     Outputs:  HL pts to first char in the line
+               A is number of characters in the line (not
+                    counting the ending zero)
+     Registers Affected:  PSW, HL
+     SYSLIB Routines Called:  CAPS
+     Special Error Conditions:  None
+
+
+     Routine Name:  BLINE
+     Function:
+          BLINE provides a very convenient interface to the  BDOS 
+for  input line editor functions.   It performs the same type  of 
+function  as  BBLINE,  but it does not contain its  own  internal 
+buffer.   The user is expected to provide such a buffer, which is 
+structured as follows:
+
+               SIZE:     DB   <Size of Buffer>
+               CCNT:     DS   1
+               LINE:     DS   <Size of Buffer + 1>
+ 
+BLINE returns a pointer to the first byte of the line (LINE) upon 
+return.  The line stored in this buffer is terminated by a binary 
+zero (0).
+     To use BLINE,  the user need only call it, with a pointer to 
+the user's buffer in HL and a capitalization flag stored in the A 
+Register.   If  A = 0,  BLINE does not capitalize the input  line 
+characters;   if  A  <>  0,  BLINE  capitalizes  the  input  line 
+characters before returning to the caller.
+
+BLINE, Con't
+
+     No error codes are returned by BLINE.   On return, HL points 
+to the first byte of the input line and A contains a count of the 
+number of characters in that line (not counting the ending zero).
+
+     Inputs:  A=0 to Not Capitalize Line, A<>0 to Capitalize Line
+              HL pts to first byte (SIZE) of user-supplied buffer
+     Outputs:  HL pts to first char in the line
+               A is number of characters in the line (not
+                    counting the ending zero)
+     Registers Affected:  PSW, HL
+     SYSLIB Routines Called:  CAPS
+     Special Error Conditions:  None
+
+:Independent Input Line Editor -- INLINE
+     Routine Name:  INLINE
+     Function:
+          INLINE  allows  the user to input a line of  text  from 
+CON:  into the buffer pointed to by HL.   The user is allowed  to 
+edit  the  text  as  he types it,  and  INLINE  responds  to  the 
+following editor commands:
+
+   Key Command    Function
+     <BS>           Delete previous character and back up cursor
+     <DEL>          Delete previous character and echo it
+     <CR>           Input complete -- return to calling program
+     <LF>           Skip down to next physical line and insert a
+                      <CR> <LF> into buffer
+     <TAB>          Tabulate to next tab stop (every 8)
+     Ctrl-U,        Erase current line (clear buffer) and restart
+       Ctrl-X         input
+     Ctrl-R         Retype current line
+     Ctrl-E         Skip down to next physical line; insert 
+                      nothing into buffer
+
+
+INLINE, Con't
+
+     On exit,  the buffer contains the text entered followed by a 
+<NULL> (binary 0);  the <CR> typed to end the input is NOT placed 
+in the buffer.
+
+     Inputs:  HL = pointer to input line buffer
+              A = Echo Flag (A=0 Means Don't Echo Input)
+     Outputs:  -None- (Input line buffer contains text typed by user)
+     Registers Affected:  -None-
+     SYSLIB Routines Called:  CCOUT, CIN, COUT, CRLF
+     Special  Error Conditions:
+          <BEL>  (Beep at CON:) is output if attempt is  made  to 
+delete  character (<BS> or <DEL>) before beginning of  line.   No 
+limit  or  error checking is done on the size of the  input  line 
+buffer  (buffer overflow is possible,  so it is recommended  that 
+buffer  is made arbitrarily large).   Hash mark (#) is printed in 
+response to Ctrl-R, Ctrl-U, and Ctrl-X.
+
+
+INLINE, Con't
+
+     Note:   INLINE  offers  two features not found in BLINE  and 
+BBLINE.   First,  it cannot be aborted by a Ctrl-C; this is good, 
+since  it  can be used in "secure" programs without fear  of  the 
+user breaking out of the program.  Second, it can be made to echo 
+or  not  echo  the  input;  this  provides  some  protection  for 
+inputting sensitive information, like a password.
+
+     INLINE  essentially  provides all of the conventional  input 
+line editor functions.   It is somewhat more flexible than  BLINE 
+and  BBLINE,  but the tradeoff is that INLINE takes up more space 
+than either BLINE or BBLINE.   If security is not required, it is 
+recommended that the programmer employ BLINE or BBLINE instead of 
+INLINE.
+
+

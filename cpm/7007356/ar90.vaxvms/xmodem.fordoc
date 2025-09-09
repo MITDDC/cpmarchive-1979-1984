@@ -1,0 +1,48 @@
+
+This is a document about XMODEM.FOR and associated files for the
+Digital Equipment Corporation VAX 11/780 running the VMS operating system.
+
+By J. James (Jim) Belonis II
+Computer Cost Center Manager
+Physics Hall FM-15
+University of Washington
+Seattle, Washington 98195
+ 
+The files in the package are:
+XMODEM.FQR     sqeezed XMODEM.FOR, equivalent to XMODEM 5.0:  binary files,
+                    with checksum or CRC, most timeouts, no BATCH,
+                    in VAX Fortran (special I/O dependency encapsulated in two
+                    subroutines so it should be translatable to other
+                    Fortrans).
+                    works up to 9600 baud on a moderately loaded VAX 11/780
+                    running VMS version 2.0 (commented out portions allow
+                    cleaner program for version 3.0 and up)
+TOXMOD.FQR     squeezed TOXMOD.FOR, converts VAX text file (variable length
+                    records with no CRLF) into CP/M compatible file
+                    for transfer by XMODEM (fixed length 128 byte records
+                    with CRLF at ends of lines).
+FROMXMOD.FQR   sqeezed FROMXMOD.FOR, similarly converts CP/M file from
+                    the form received by XMODEM.FOR to a VAX text file.
+XMODEM.HQP     a VAX HELP file about the three programs.
+CPM.CQM        a VAX command procedure file defining XMODEM,TOXMOD,FROMXMOD as
+                    foreign commands.
+QIO.DCK        an INCLUDE file for XMODEM.FOR defining a COMMON area.
+ 
+The file format produced by XMODEM is 128 character fixed length records.
+These files may PRINT and TYPE reasonably, but to edit them on your VAX
+they must be converted to ordinary VAX text files by FROMXMOD.
+If you forget which files have been converted by TOXMOD or FORMXMOD,
+just do a DIRECTORY/FULL to see the file format on the VAX.
+Similarly XMODEM will only send text files reasonably if they have
+been converted to CP/M form by TOXMOD, otherwise the FORTRAN input statements
+in XMODEM will append lots of blanks to each line of text and no
+carriage returns will be sent.
+ 
+A version of MODEM7 for the VAX is also available.
+XMODEM is also available from the
+LOCKE COMPUTER CENTER at the UNIVERSITY OF WASHINGTON  for the PDP-10.  
+ 
+If anyone hears of XMODEM or MODEM7 available for other MAINFRAMES 
+especially Control Data CYBER or Digital Equipment Company PDP-10, PDP-11, VAX
+I would like to hear about them.  Send mail to me at the above address. 
+

@@ -1,0 +1,89 @@
+                        A MEMORY RESIDENT
+                       FLOPPY DISK PROGRAM
+
+                               by
+
+                        Michail J. Karas
+
+
+
+
+     This   is   from   the  Lifelines/The   Software   Magazine, 
+September1982 issue,  about ADD-ON MODULE Construction. An add-on 
+module  is designed for use under single user  CP/M-80  2.2.  The 
+next several paragraphs, from the previous articles, January, and 
+February  1982,  show  the  procedure  to get a  version  up  and 
+running.
+
+The source file,  RAMDISK.ASM,  being very similar to a BIOS  for 
+CP/M-80 2.2, requires the extension disk definitions to have disk 
+parameter  tables,   check  vector  and  allocation  vectors.  In 
+addition,  a directory buffer must be allocated. An ADD-ON MODULE 
+generates  the  appropriate tables through the use of  the  macro 
+library  DISKDEF.LIB provided by Digital Research on the  CP/M-80 
+2.2 distribution diskette. This macro capability requires a macro 
+assembler to properly process the DISKDEF macros.
+
+An  additional implementation requirement is the availability  of 
+the  assembler  output  as  a .REL  file.  The  Digital  Research 
+Relocating  Macro Assembler RMAC is just the tichet  to  generate 
+the  appropriate  .REL  file and process  the  DISKDEF.LIB  macro 
+includes.  The  command structure below shows how to assemble  an 
+ADD-ON  MODULE program like the RAM disk demo listing on the disk 
+as RAMDISK.ASM. The following is an example on the assembly.
+
+     A>RMAC RAMDISK $+S PZ<cr>
+
+The resulting .REL file has to be converted to a page relocatable 
+format.  After agonizing over the problem of easily making a "BIT 
+MAP",  I found that the Digital Research Link program distributed 
+with  RMAC and PL/I-80 can generate page relocatable files  (.PRL 
+type) which are compatible with MP/M-80. After reviewing the LINK 
+output format of a .PRL file,  I designed the PRLMOVE program  to 
+relocate the LINK output files. The command structure below shows 
+how to produce the required .HEX file from PRLMOVE.
+
+     A>MAC PRLMOVE $+S PZ<cr>
+
+The  command  structure below shows how to produce the .PRL  file 
+from the RMAC output.
+
+     A>LINK RAMDISK[OP]<cr>
+
+where  [OP] directs LINK to generate the desired .PRL  file.  The 
+program PRLMOVE.HEX and the page relocatable RAMDISK.PRL must  be 
+combined into a single executable command file as follows:
+A>DDT<cr>
+DDT Vers. 2.2
+-IRAMDISK.PRL<cr>
+-R<cr>                   <-Load  of .PRL file to RAM to  address 
+                           0100H  with  code image  starting  at 
+                           address 0200H.
+MEXT PC
+nnmm  0000               <-Convert nn to decimal  and  remember 
+                           value.
+-IPRLMOVE.HEX<cr>
+-R<cr>                   <-Read  PRLMOVE program in  over  the 
+                           .PRL file at load address of 0100H.
+-G0<cr>                  <-Exit DDT to CP/M-80.
+
+A>SAVE dd RAMDISK.COM    <-Save dd pages of memory to get command 
+                           file. dd = converted nn from above!
+
+This  results  in  the  .COM command file necessary  to  make  an 
+executable module out of the ADD-ON MODULE.
+
+The present design of the ADD-ON MODULE with the negative  offset 
+pointer calculation reentry to CCP requires that the BDOS and CCP 
+combination  be genuine (REAL Digital Research CP/M-80 Ver 2.2 of 
+total length 01600H bytes. If your system uses a modified BDOS or 
+CP/M-80 system look-alike,  then the negative offset to the stack 
+pointer will require a different value. See NOT$PRES: in listing. 
+Also,  for non-genuine CP/M-80 systems, if the CCP is a different 
+size  (not  0800H)  bytes,  the program PRLMOVE will have  to  be 
+modified  to set down the relocation load address calculation  by 
+an amount equal to the difference in the alien CCP size.
+
+
+
+

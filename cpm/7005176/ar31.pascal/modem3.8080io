@@ -1,0 +1,61 @@
+; Assembly language functions for MODEM3.PAS
+; for Intel 8080 processor.
+; Written by Jack M. Wierda  Chicago Illinois
+; This software is in the public domain.
+;
+; Routines: STAT, INPUT, OUTPUT
+;
+	.FUNC   STAT,3
+;
+	POP     HL      ;GET RETURN ADDRESS
+	POP     DE      ;GET ZERO
+	POP     BC      ;GET ZERO
+	POP     BC      ;GET MASK
+	POP     DE      ;GET EXPECTED RESULT
+	LD      D,C
+	POP     BC      ;GET PORT
+	LD      A,C     ;PUT PORT IN A
+	LD      ($1+1),A  ;STUFF PORT
+$1      IN      A,(0)     ;PORT LOADED ABOVE
+	AND     D       ;AND DATA & MASK
+	CP      E       ;COMPARE WITH EXPECTED RESULTS
+	JP      NZ,$2
+	LD      DE,1    ;LOAD BOOLEAN TRUE
+	PUSH    DE      ;RETURN RESULT ON STACK
+	JP      (HL)
+$2      LD      DE,0    ;LOAD BOOLEAN FALSE
+	PUSH    DE      ;RETURN RESULT ON STACK
+	JP      (HL)    ;RETURN
+;
+;
+	.FUNC   INPUT,2
+;
+	POP     HL      ;GET RETURN ADDRESS
+	POP     DE      ;GET ZERO
+	POP     BC      ;GET ZERO
+	POP     DE      ;GET MASK
+	POP     BC      ;GET INPUT PORT
+	LD      A,C     ;PUT PORT IN A
+	LD      ($1+1),A  ;STUFF PORT
+$1      IN      A,(0)     ;PORT LOADED ABOVE
+	AND     E       ;MASK DATA
+        LD      E,A
+	PUSH    DE      ;RETURN RESULT ON STACK
+	JP      (HL)    ;RETURN
+;
+;
+	.PROC   OUTPUT,2
+;
+	POP     HL      ;GET RETURN ADDRESS
+	POP     DE      ;GET DATA
+	POP     BC      ;GET OUTPUT PORT
+	LD      A,C     ;PUT PORT IN A
+	LD      ($1+1),A  ;STUFF PORT
+        LD      A,E     ;PUT DATA IN A
+$1      OUT     (0),A     ;PORT LOADED ABOVE
+	JP      (HL)    ;RETURN
+;
+;
+	.END
+	
+

@@ -1,0 +1,4815 @@
+!<arch>
+6800test.s      360813377   99    31    100644  124       `
+	title	"s.s 6800 assembler test"
+	seg	1
+	org	1000
+foo	ds	2
+bar	ds	2
+	seg	0
+	org	20
+start	lda	a,foo
+	psh	a
+	psh	b
+	end	start
+Makefile        360813474   99    31    100644  1700      `
+COPTS=  -g -O
+
+HEADS=  mac.h mac.x m.out.h
+
+CFILES= mac00.c \
+	mac10.c mac11.c \
+	mac20.c mac21.c mac22.c mac23.c mac24.c \
+	mac30.c mac31.c mac32.c mac33.c mac34.c mac35.c\
+	mac40.c mac41.c mac42.c mac43.c
+
+FILES=  mac00.o \
+	mac10.o mac11.o \
+	mac20.o mac21.o mac22.o mac23.o mac24.o \
+	mac30.o mac31.o mac32.o mac33.o mac34.o mac35.o \
+	mac40.o mac41.o mac42.o mac43.o
+
+mac: ${FILES}
+	cc -N ${COPTS} -o mac ${FILES}
+
+${FILES}:
+	cc -c ${COPTS} $*.c
+
+depend:
+	grep '^#include' ${CFILES} | sed 's/:[^"]*"\([^"]*\)".*/: \1/' \
+		| sed 's/\.c/.o/' | sed '/.*<.*/d' >makedep
+	echo '/^# DO NOT DELETE THIS LINE/+2,$$d' >eddep
+	echo '$$r makedep' >>eddep
+	echo 'w' >>eddep
+	cp Makefile Makefile.bak
+	ed - Makefile < eddep
+	rm eddep makedep
+	echo '# DEPENDENCIES MUST END AT END OF FILE' >> Makefile
+	echo '# IF YOU PUT STUFF HERE IT WILL GO AWAY' >> Makefile
+	echo '# see make depend above' >> Makefile
+
+# DO NOT DELETE THIS LINE -- make depend uses it
+# DEPENDENCIES MUST END AT END OF FILE
+mac00.o: mac.h
+mac00.o: m.out.h
+mac00.o: mac.x
+mac10.o: mac.h
+mac10.o: mac.x
+mac11.o: mac.h
+mac11.o: m.out.h
+mac11.o: mac.x
+mac20.o: mac.h
+mac20.o: mac.x
+mac21.o: mac.h
+mac21.o: mac.x
+mac22.o: mac.h
+mac22.o: mac.x
+mac23.o: mac.h
+mac23.o: mac.x
+mac24.o: mac.h
+mac24.o: m.out.h
+mac24.o: mac.x
+mac30.o: mac.h
+mac30.o: m.out.h
+mac30.o: mac.x
+mac31.o: mac.h
+mac31.o: mac.x
+mac32.o: mac.h
+mac32.o: mac.x
+mac33.o: mac.h
+mac33.o: m.out.h
+mac33.o: mac.x
+mac34.o: mac.h
+mac34.o: mac.x
+mac35.o: mac.h
+mac35.o: mac.x
+mac40.o: mac.h
+mac41.o: mac.h
+mac41.o: mac.x
+mac42.o: mac.h
+mac42.o: mac.x
+mac43.o: mac.h
+mac43.o: mac.x
+# DEPENDENCIES MUST END AT END OF FILE
+# IF YOU PUT STUFF HERE IT WILL GO AWAY
+# see make depend above
+README          363303605   99    31    100644  1517      `
+Mods by Mike Nielsen so that if the -r switch is off, i.e., absolute assembly
+then expressions involving labels are not flagged as nonrelocatable. 6 July 81
+
+Mods to mac by Bill Hollier for cruddy non-byte machines
+and souped-up PDP-8's which don't have immediate instructions.
+
+run options
+
+	-w	listing in 'word' format - ie one word per listing line
+	-f	listing in 'field' format - split up into the format
+		string units. Useful for your 'classical' 1 1/2 address
+		index register machine (like DEC10 say, but squeezing
+		36 bits into 16 might be fun!). Also like CM202 assembler
+		listing format, and useful for debugging D-files.
+	-i	listing in 'instruction' format - one instruction
+		listed per source line  - how it used to be, bugs 'n' all.
+
+Literal pools
+
+	=<constant expr>	put a magic entry with no name but
+		a value and the flag bit 'LITR' in the symbol table. At the
+		moment there is nothing else done with them - they just
+		sit there and never even get put in the m.out file.
+		Mainly for the CM202.
+
+Mods to mac by Peter Lamb to make org's nicer
+
+	There are no visible changes
+
+prl again - listing control
+
+	pseudo's 'list' and 'nlist' have been added. They don't nest
+	(i.e. nlist turns off listings no matter how many preceding
+	lists) but that could be changed easily.
+
+		Peter Lamb
+		Comp. Sci.
+		Melb. Uni.
+
+prl again - somewhat later
+
+	pseudo 'include' added. acts like 'C' #include, but only
+	searches the given pathname. I.e. doesn't search /usr/include.
+
+	include	"file"	;is how it's used
+
+
+m.out.h         363223746   99    31    100644  1600      `
+#define INTERDATA
+/*
+ *   M.out structure generation.
+ */
+
+struct	out	{
+	int	ou_nseg;		/* segment no or SYMBOLS or RELOCATION */
+	int	ou_start;		/* start addr of segment */
+	int	ou_length;		/* seg len in bytes */
+	}	out;
+
+struct	aout	{
+	int	ao_mword;		/* header - magic word */
+	int	ao_bu_len;		/* byte width in bits */
+	int	ao_startad;		/* execution start addr */
+	}	aout;
+
+struct	g_sym	{			/* symbol & literal table */
+	char	gs_name[8];		/* symbol name */
+	int	gs_value;		/* actual value */
+	int	gs_mode;			/* symbol mode */
+	int	gs_lcntr;		/* segment containing sym */
+	};
+
+struct	relocate  { /* Relocation info for a location if relocatable or
+			relative to an undefined global */
+	int	rel_type;	/* relocation type */
+	int	rel_mask;	/* relocation bit mask */
+	int	rel_addr;	/* address of item to be relocated */
+	/* Other interesting info. which depends on the relocation type */
+	union {
+	 	int	rel_lcntr;	/* which locn cntr if not global ref */
+		int	rel_gln;		/* index of global label */
+	}rel_u;
+};
+
+#ifdef		PDP11
+
+#define	MWORD	(011223)
+#define MWORDR	(011222)
+
+#endif
+
+
+#ifdef		INTERDATA
+
+#define	MWORD	(0371242)
+#define MWORDR	(0371241)	/* magic wd for r-files */
+
+#endif
+
+#define	SYMBOLS		(-1)
+#define RELOCATION	(-2)
+
+#define	AOUT	(sizeof (struct aout))
+#define	OUT	(sizeof (struct out))
+
+/*
+	Relocation types
+*/
+#define	RSTOR	0x0000	/* block storage - not used at the moment */
+#define	RABS	0x4000	/* absolute - should never get into reloc info */
+#define	RREL	0x8000	/* relocatable */
+#define	RLBL	0xc000	/* relative to global label */
+#define RPMOD	0x2000	/* pc-relative modifier */
+mac.h           360813988   99    31    100644  7599      `
+#include <stdio.h>
+
+#define		INTERDATA
+/*
+#define		PDP11
+*/
+
+/* #define		MAPCH		/* map UC -> lc in symbols */
+
+/*
+ *   getsym symbol descriptors.
+ */
+#define	NUL	0		/* null descriptor */
+#define	LBL	1		/* label */
+#define	CON	2		/* constant */
+#define	SPA	3		/* spaces */
+#define	DEL	4		/* delimiter */
+#define	EOL	5		/* end of line */
+#define	EoF	6		/* end of file - different from stdio */
+#define	COM	7		/* comment */
+#define	OPR	8		/* operator */
+#define	STR	9		/* string */
+#define	MCH	10		/* global match */
+#define LPL	11		/* literal pool */
+
+#define	EXP	20		/* for mactab only - will NEVER appear */
+#define	SKP	21		/* no match symbol */
+
+#define	LIT	22		/* literal */
+#define	CHR	23		/* extra character */
+
+
+/*
+ *   pass1 action table descriptors
+ */
+#define	NOOP	0		/* no-op */
+#define	ALBL	1		/* add label to ifield */
+#define	DOPV	2		/* decode op & value */
+#define	OLBL	3		/* out label to i_opr */
+#define	OOPR	4		/* out opr */
+#define	ODEL	5		/* out del ',' */
+#define	OCON	6		/* out constant */
+#define	OCHR	7		/* out character */
+#define	OSTR	8		/* output string */
+#define	ENDP	9		/* end pass */
+#define	SELC	10		/* select options */
+#define	EXPR	11		/* call expr parser */
+#define	RETN	12		/* return from call */
+#define	GOTO	13		/* fail return */
+#define	OERR	14		/* error on scan */
+#define	OREC	15		/* out i_rec (ok) */
+#define LITP	16		/* literal table entry */
+#define CLBL	17		/* only label of class mem may appear */
+
+/*
+ *   symbol table mode descriptors.
+ */
+#define	REFR	0x0001
+#define	DEFN	0x0002
+#define CLAS	0x0004
+#define	LITR	0x0008
+#define	GLOB	0x0010
+
+#define	REL	0x0100
+#define	ABS	0x0200
+
+#define	PMODE	0x1000
+#define	RMODE	0x2000
+
+
+/*
+ *   misc. descriptors.
+ */
+#ifdef	PDP11
+
+#define	WORDSIZ	16		/* word size of host in bits */
+
+#endif
+
+
+#ifdef	INTERDATA
+
+#define	WORDSIZ	32
+
+#endif
+
+#define	ERR	-1		/* error or undef */
+#define	MAXBUF	256		/* general usage buffer size */
+#define MAXOPR	256		/* number of slots for intercode operands */
+#define	LCOUNT	8		/* number of locn counters */
+#define	TRUE	1		/* some truth value */
+#define	FALSE	0		/* zero => false */
+#define	DEF	1		/* define symbol */
+#define	LKP	2		/* lookup flag */
+#define	SELFMT	0x01		/* select format */
+#define	SELOPC	0x02		/* select opcode class */
+#define	SELVAL	0x04		/* select value field */
+
+#define	OP	0x0001		/* opcode bit */
+#define	PS	0x0002		/* pseudo bit */
+
+#define	OPTION(c)	flags[(c - 'a')]
+#define	BITMASK(m)	(bitmask[(m)])
+#define L_PCVAL		s_lit.s_pcvalue
+#define L_LCNTR		s_lit.s_llcntr
+
+#define SYMHASH		97		/* size of symbol hash table
+					 * - should be a nice number for
+					 * mod n hashing (a prime or something
+					 */
+
+#define MAXINCL		5		/* max file inclusion level */
+
+/*
+ *   struct definition
+ */
+struct	st	{			/* symbol & literal table */
+
+	union s_ut	{
+		char	s_name[8];	/* symbol name */
+
+		struct	{		/* literal ident. for loader */
+			int	s_pcvalue;	/* location of literal */
+			int	s_llcntr;	/* segment containing lit */
+		} s_lit;
+	} s_u;
+
+	int	s_value;		/* actual value */
+	int	s_mode;			/* symbol or literal relocation mode */
+	int	s_lcntr;		/* segment containing sym */
+	int	s_class;		/* label class */
+	struct	st	*s_next;	/* next in chain */
+	};
+
+struct	it	{			/* intermediate code */
+	int	i_flags;		/* tag bits - op, pseudo */
+	struct st *i_label;		/* label index to symtab */
+	int	i_op;			/* opcode table entry */
+	int	i_locn;			/* current location */
+	char	i_selc[4];		/* action selection */
+	char	i_opr[MAXOPR];		/* operand description */
+	};
+
+struct	lt	{			/* location counter table */
+	int	l_value;		/* lcntr value */
+	int	*l_next;		/* next object word */
+	int	l_lop;			/* previous instruction pad type */
+	struct ol	*l_orgs;		/* code origin block list */
+	struct ol	*l_currorg;	/* current code origin block */
+	struct rl	*l_rlsts;	/* start of relocation info */
+	struct rl	*l_rlste;	/* end of relocation list */
+	int	l_rsize;		/* no of relocation entries */
+	};
+
+struct	ol	{
+	int	*ol_start;		/* code buffer for this origin */
+	int	ol_lcstart;		/* loc cntr start */
+	int	ol_lcend;		/* loc cntr of end of block */
+	int	ol_reloc;		/* relocatability of PC for this org */
+	struct ol	*ol_next;		/* link down chain */
+};
+
+struct	rl	{ /* Relocation info for a location if relocatable or
+			undefined global */
+	int	rl_type;	/* relocation type */
+	int	rl_mask;	/* relocation bit mask */
+	int	rl_addr;	/* address of item to be relocated */
+	/* Other interesting info. which depends on the relocation type */
+	union {
+		int	rl_lcntr;	/* which locn. cntr if not global ref */
+		int	rl_gln;		/* index of global label - output form */
+		struct st	*rl_glp;	/* pointer to undef global sym */
+	}rl_u;
+	struct rl	*rl_next;
+};
+
+struct	fd	{			/* format descriptor */
+	char	f_class;		/* instr class */
+	char	f_len;			/* len of instr in bu's */
+	int	f_desc[8];		/* descriptor type */
+	int	f_value[8];		/* values */
+	int	f_width[8];		/* widths of bits */
+/* the following entries used to be first .. possible alignment problems */
+	};
+
+struct	bt	{			/* i/o buffer */
+	int	b_fdesc;		/* file desc */
+	int	b_left;			/* nleft */
+	char	*b_next;		/* next */
+	char	b_buf[512];		/* char buffer */
+	};
+
+struct	ht	{			/* header record */
+	int	h_mword;		/* magic wd */
+	int	h_macmword;
+	int	h_literals;		/* # of literals */
+	int	h_labels;		/* # pre-def labs */
+	int	h_formats;		/* # of f desc */
+	int	h_ops;			/* # of ops */
+	struct	oc *h_opstart;		/* for relocation of the op table */
+	struct	fd	dctype[5];
+	int	h_pc_post;		/* pc incr */
+	int	h_bu_len;		/* len of bu in bits */
+	int	h_w_len;		/* len of wrd in bu */
+	int	h_i_len;		/* length of basic instruction */
+	int	h_i_flg;		/* address bounded instruction set */
+	int	h_addr;			/* bit length of address's */
+	int	h_o_len;		/* opcode table len (bytes) */
+	int	h_p_len;		/* len of parser table */
+	int	h_p_start;		/* start of parser */
+	int	h_page;			/* page len */
+	char	h_mac[32];		/* title */
+	};
+
+struct oc {		/* there is one of these per opcode */
+	char oc_name[8];    /* name of the opcode */
+	struct os *oc_list; /* selector list for opcode */
+};
+
+struct os {		/* There is one of these for each legal opcode
+			 * arg picture match
+			 */
+	int	os_sel,	/* select this when match with arg pic. value */
+		os_fmt, /* use this format for if SELFMT is on */
+		os_opc;	/* this is the opcode value */
+	struct os *os_next;
+};
+
+struct	tbl	{			/* parser table */
+	int	tb_sym;			/* symbol type */
+	int	tb_mem;			/* member type */
+	int 	tb_next;		/* next entry */
+	int	tb_act;			/* action before next case */
+	char	tb_arg[4];		/* args for action */
+	};
+
+struct	pt	{			/* print constants */
+	int	c_dw;			/* code digit width */
+	int	c_bw;			/* code bit width */
+	int	l_dw;			/* locn digit width */
+	int	l_iw;			/* locn incr. width */
+	int	l_ai;			/* locn addr. incr. */
+	int	w_dw;			/* word digit width */
+	int	w_bt;			/* word bit tally */
+	int	w_bw;			/* word bit width */
+	int	w_rw;			/* MSD bit width */
+	int	f_dw;			/* format digit width */
+	int	f_bt;			/* format bit tally */
+	int	f_bw;			/* format bit width */
+	int	i_dw;			/* instruction form digit width */
+	};
+
+struct inclstk {
+	FILE	*inc_fil;		/* file pointer for included file */
+	char	*inc_name;		/* name of stacked file */
+	int	inc_line;		/* line no. of stacked file */
+	int	inc_list;		/* stacked liston flag */
+};
+
+
+#define	ST	(sizeof (struct st))
+#define	IT	(sizeof (struct it))
+#define	LT	(sizeof (struct lt))
+#define	FD	(sizeof (struct fd))
+#define	BT	(sizeof (struct bt))
+#define	HT	(sizeof (struct ht))
+#define PT	(sizeof (struct pt))
+#define	TBL	(sizeof (struct tbl))
+#define OL	(sizeof (struct ol))
+#define RL	(sizeof (struct rl))
+#define	INT	(sizeof (int))
+
+mac.x           360814121   99    31    100644  3204      `
+extern	int	nline;
+extern	int	liston;
+extern	int	lline;
+extern	int	lpage;
+extern	int	nsyms;
+extern	int	nlit;
+extern	int	errcount;
+extern	char	flags[ ];
+/* gone with stdio
+extern	int	afd;
+*/
+extern FILE	*mout;				/* m.out file ptr */
+extern	int	wf;
+extern	int	ff;
+extern	int	bp;
+extern	struct st	*globptr;
+extern	int	globno;
+
+extern	char	*p;				/* char line pointer */
+extern	char	*fp;				/* print string next char */
+extern	char	*fst;				/* print string first char */
+extern	char	buf[ ];				/* line buffer */
+extern	char	fbuf[];				/* format string buffer */
+extern	char	clabel[ ];			/* identifiers */
+extern	char	ctitle[ ];			/* title buffer */
+extern	char	*literals;			/* -> predefined "literals" */
+
+extern	struct oc	*opcode;		/* -> to op desc */
+extern	struct	st	*symtab;		/* -> to symbol tab */
+extern	struct	st	*lithd;			/* -> head of literal list */
+extern	struct	st	*litnxt;		/* -> next literal in list */
+extern	struct	fd	*memory;		/* start of core */
+extern	struct	tbl	*parse;			/* parser */
+extern	char	*endcore;			/* end of core */
+extern	char	*coreptr;			/* cur. free */
+extern	int	*code;				/* start of code */
+
+extern	int	sym;				/* next symbol */
+extern	int	mem;				/* member of symbol */
+extern	int	oprstac[ ];			/* gen. opr. stack */
+extern	int	relstac[ ];			/* reloc factor */
+extern	int	*cp;				/* pointer to object */
+extern	int	nstruc;				/* struc offset counter */
+
+extern	int	(*fn)();
+extern	char	*getmem();
+extern	char	*num();
+extern	struct	lsb	*getlsb();
+extern	struct	symt	*cpget();
+extern 	struct	st	*lscan();
+extern	struct	st	*nextsym();
+extern	struct	st	*dslot();
+extern	struct	ol	*getol();
+extern	struct	rl	*getrel();
+extern	struct	os	*scanop();
+
+extern	short	lcntr;				/* curr. locn counter */
+extern	int	eof;				/* eof flag */
+extern	int	length;				/* len of instr */
+/* gone with stdio
+extern	int	unit;				/* io unit */
+extern FILE	*intercd;			/* intercode file ptr */
+extern	int	bl;				/* byte length in bits */
+extern	int	bu;				/* bytes/addr. unit */
+extern	int	ib;				/* bytes/basic instr. */
+extern	int	ibx;				/* addr. bounded instr. set */
+
+extern	int	reloc;
+extern	int	mreloc;
+extern int	class;
+
+extern	char	*plabel[ ];
+extern	int	(*pradr[ ])();
+extern	int	(*peadr[ ])();
+
+extern	char	hextab[ ];
+extern	char	octtab[ ];
+extern	char	dectab[ ];
+extern	char	alptab[ ];
+extern	char	xalptab[ ];
+extern	char	oprtab[ ];
+extern	char	chtab[ ];
+
+extern	struct	st	*symhash[ ];		/* symbol hash indices */
+extern	struct	ht	head;			/* header record */
+extern	struct	lt	locn[];
+/*	gone with stdio
+extern	struct	bt	ibuf;
+*/
+extern	FILE	*src;				/* file ptr for source */
+extern	char	outbuf[];			/* output buffer */
+extern	struct	it	intercode;
+extern	struct	pt	pt;			/* print definitions */
+
+extern	int	states[9][10];			/* state table */
+extern	int	action[9][10];			/* actions of states */
+
+extern	int	bitmask[ ];
+
+extern	int	startad;		/* startaddress for loader */
+extern	struct	inclstk inclstk[];	/* include file stack */
+extern	int	inclevel;		/* include file level */
+extern	char	*currfile;		/* current file name */
+extern	int	listchs;		/* no of chars in listing line */
+
+extern	struct	lsb	*lsb_head;	/* head of lsb chain */
+extern	struct	lsb	*lsb_last;	/* tail of lsb chain */
+mac00.c         364038124   99    31    100644  6621      `
+#include	"mac.h"
+#include	"m.out.h"
+#include	"mac.x"
+
+char	tmp[]	=	"/tmp/macXXXXXX";		/* Space for tmp file name */
+char	*arg[8];				/* Exec arg list */
+extern	struct	bt	fout;
+
+main(argc, argv)
+char	*argv[ ];
+{
+	register int nfile;
+	register int pid;
+	register FILE *rfile;
+	register int i;
+	register char *r;
+	int unit;
+
+	nfile = 0;					/* No args seen */
+	OPTION('h') = TRUE;				/* defaults */
+	OPTION('i') = TRUE;
+	for (i=1; i<argc; i++)  {
+		p = argv[i];
+		if (*p == '-')  {
+			/* Option flag */
+			while (*(++p) != '\0') {
+				if (*p == 'h' || *p == 'o' || *p == 'b')  {
+					OPTION('h') = FALSE;
+					OPTION('o') = FALSE;
+					OPTION('b') = FALSE;
+					OPTION('l') = TRUE;
+					}
+
+				if (*p == 'w' || *p == 'f' || *p == 'i')
+					OPTION('l') = TRUE;
+
+				OPTION(*p) = TRUE;
+				}
+			}
+		else
+			/* File-name */
+			arg[nfile++] = p;
+		}
+
+	if (nfile > 2)  {
+		/* object file needed */
+		OPTION('a') = TRUE;
+		}
+
+	if (OPTION('n'))  {
+		OPTION('d') = FALSE;
+		OPTION('l') = FALSE;
+		OPTION('e') = TRUE;
+		}
+
+
+	if (nfile < 1)  {
+		fprintf(stderr, "Usage: %s opcode-file [source] [object]\n", argv[0]);
+		exit(1);
+		}
+
+	/*
+	 *   Try to open r-file.
+	 *   try 'file' first, and if that fails,
+	 *   try '/usr/lib/mac/file'.
+	 *   This has been hacked to '/mnt/nielsen/bin/file'. 26Jun81
+	 */
+	for (i=0; i<17; i++)
+		buf[i] = "/mnt/nielsen/bin/"[i];
+	r = arg[0];
+	for (i=17; *r != '\0'; i++)
+		buf[i] = *r++;
+	rfile = fopen(&buf[17], "r");
+	if (rfile == NULL)
+		/* try lib */
+		rfile = fopen(&buf[0], "r");
+
+	if (rfile == NULL)  {
+		synerr("Can't open r-file");
+		exit(1);
+		}
+
+	currfile = "<standard input>";
+	if (nfile > 1 && (src = fopen((currfile = arg[1]), "r")) == NULL)  {
+		fprintf(stderr, "Can't find source file\n");
+		exit(1);
+		}
+
+
+	/*
+	 *   Make temp file.
+	 */
+	mktemp(tmp);
+	unit = creat(tmp, 0600);
+	if (unit < 0)  {
+		fprintf(stderr, "Can't create temp\n");
+		exit(1);
+		}
+
+	close(unit);
+	unit = open(tmp, 2);
+	intercd = fdopen(unit, "w");
+
+	if (!OPTION('u'))
+		/* unlink temp file if OPTION('u') is not on */
+		unlink(tmp);
+
+	if (intercd == NULL) {
+		fprintf(stderr, "Can't open temp\n");
+		exit(1);
+	}
+
+	tbl(rfile);		/* initialise tables */
+	pass1();		/* parse source, build symtab, temp code */
+
+	if (errcount)  {
+		synerr("Errors in pass 1.");
+		exit(1);
+		}
+
+	fflush(intercd);
+	lseek(unit, 0, 0);
+	setbuf(stdout, outbuf);
+	intercd = fdopen(unit, "r");
+
+	if (OPTION('l'))
+		if (nfile < 2)  {
+			warning("Listing from std. input impossible!!");
+			OPTION('l') = FALSE;
+			}
+		else	{
+			if (rewind(src) == -1) {
+				synerr("Can't rewind source");
+				exit(1);
+				}
+			}
+
+	if (nfile > 2 && (mout = fopen(arg[2], "w")) == NULL) {
+		synerr("Can't create object file");
+		OPTION('a') = FALSE;
+		}
+
+	if (nfile < 3  &&  OPTION('a'))
+		if ((mout = fopen("m.out", "w")) == NULL) {
+			synerr("Can't create m.out");
+			OPTION('a') = FALSE;
+			}
+
+
+	adjust();		/* adjust location counters for assembly */
+	setprint();		/* initialize print parameters */
+	if (OPTION('c'))		/* display print constants */
+		dprintc();
+	pass2();		/* initiate pass2 */
+	mouthdr();
+	sdump();		/* symbol table dump to std output */
+	cdump();		/* code dump to std output */
+
+	exit(0);
+}
+
+tbl(rfile)
+register FILE *rfile;
+{
+	register struct st *s;
+	struct st *ss;
+	register int i;
+	register struct lt	*q;
+	register struct ol	*o;
+
+
+	/*
+	 *	read header record:
+	 *
+	 *	contains number of format descriptors,
+	 *	and number of opcode descriptors,
+	 *	pre-defined labels, literals,
+	 *	and the size of the parser table.
+	 *	It also contains interesting information
+	 *	about the target machine.
+	 *
+	 *	the file contains:-
+	 *		literals;
+	 *		format descriptors;
+	 *		opcode table;
+	 *		parser table;
+	 *		pre-defined labels;
+	*		instruction & address lengths
+	 *
+	 *	calculate core requirements and getmem() 
+	 *	for the core.
+	 */
+
+	fread(&head, HT, 1, rfile);
+
+	if(head.h_mword != MWORDR) {
+		fprintf(stderr, "Not an r-file\07\r\n");
+		exit(1);
+	}
+
+	i = head.h_literals;
+	if (i)  {
+		i *= 8;			/* sizeof literal */
+		literals = getmem(i);
+		fread(literals, i, 1, rfile);
+		}
+	i = FD * head.h_formats;
+	memory = (struct fd *)getmem(i);
+	fread(&memory[0], i, 1, rfile);
+	i = head.h_o_len;
+	opcode = (struct oc *)getmem(i);
+	fread(&opcode[0], i, 1, rfile);
+	relopcodes(opcode);	/* relocate the opcode table pointers */
+	i = head.h_p_len * TBL;
+	parse = (struct tbl *)getmem(i);
+	fread(&parse[0], i, 1, rfile);
+
+	/* Initialise origin block chains, one for each loc cntr */
+
+	for(q = locn; q < &locn[LCOUNT]; q++) {
+		q->l_currorg = q->l_orgs = o = (struct ol *)getmem(OL);
+		o->ol_lcstart = o->ol_lcend = 0;
+		o->ol_start = NUL; o->ol_next = NUL;
+		o->ol_reloc = RREL;
+	}
+
+	symtab = NULL;
+	coreptr = (char *)cpget();
+
+	i = head.h_labels;
+	while (i-- > 0)  {
+		fread(buf, ST, 1, rfile);
+		/* enter label in symbol table */
+		s = (struct st *)buf;
+		ss = lscan(s->s_u.s_name, DEF, hash(s->s_u.s_name), s->s_value, s->s_mode);
+		ss->s_class = s->s_class;
+		}
+
+	bl = head.h_bu_len;
+	bu = head.h_w_len;
+	ib = head.h_i_len;
+	ibx = head.h_i_flg;
+
+}
+
+adjust()
+{
+	register struct lt *q;
+	register struct ol *o;
+	register int mem;
+	register int *c;
+
+	mem = 0;
+
+	for(q = locn; q < &locn[LCOUNT]; q++) {
+		(q->l_currorg)->ol_lcend = q->l_value;
+		o = q->l_orgs;
+		mem += (o->ol_lcend - o->ol_lcstart) * bu;
+
+		o = o->ol_next;
+
+		while(o != NUL) {
+			mem += (o->ol_lcend - o->ol_lcstart) * bu;
+			o = o->ol_next;
+		}
+	}
+
+	c = code = (int *)getmem(mem * INT);
+	for(q = locn; q < &locn[LCOUNT]; q++) {
+		o = q->l_currorg = q->l_orgs;
+
+		q->l_value = o->ol_lcstart;
+		q->l_next = o->ol_start = c;
+		c += (o->ol_lcend - o->ol_lcstart) * bu;
+
+		o = o->ol_next;
+
+		while(o != NUL) {
+			o->ol_start = c;
+			c += (o->ol_lcend - o->ol_lcstart) * bu;
+			o = o->ol_next;
+		}
+	}
+	nline = lcntr = 0;
+}
+
+dprintc()
+{
+	fprintf(stderr, "\t\t\tPrint Constants\n\n");
+	fprintf(stderr, "\n\ttotal    digit width = %d",pt.c_dw);
+	fprintf(stderr, "\n\tchar.    bit   width = %d",pt.c_bw);
+	fprintf(stderr, "\n\tlocn.    digit width = %d",pt.l_dw);
+	fprintf(stderr, "\n\t         incr. width = %d",pt.l_iw);
+	fprintf(stderr, "\n\t         addr. incr. = %d",pt.l_ai);
+	fprintf(stderr, "\n\tword     digit width = %d",pt.w_dw);
+	fprintf(stderr, "\n\t         bit   tally = %d",pt.w_bt);
+	fprintf(stderr, "\n\t         bit   width = %d",pt.w_bw);
+	fprintf(stderr, "\n\t         bit   MSD   = %d",pt.w_rw);
+	fprintf(stderr, "\n\tformat   digit width = %d",pt.f_dw);
+	fprintf(stderr, "\n\t         bit   tally = %d",pt.f_bt);
+	fprintf(stderr, "\n\t         bit   width = %d",pt.f_bw);
+	fprintf(stderr, "\n\tinstr    digit width = %d",pt.i_dw);
+	fprintf(stderr, "\n\n\n\n");
+
+	return;
+}
+
+mac10.c         360814648   99    31    100644  6946      `
+#include	"mac.h"
+#include	"mac.x"
+
+
+int	next;			/* next state in the automaton */
+char	*opr;			/* pointer to temp code */
+
+pass1()
+{
+	register struct fd *f;		/* fmt descr */
+	register int sret;		/* success return */
+	register int fret;		/* failure return */
+	register int s;
+	register int i;
+	register int len;
+	register struct oc *r;		/* opcode table ptr */
+	struct os *os;
+	int	itlen;			/* length of intercode needed to
+					 * be written out
+					 */
+
+
+	eof = FALSE;
+	newline();			/* general initialisation */
+
+	/*
+	 *   Start the automaton.  Once it is going, -
+	 *   it keeps itself going until end-of-input.
+	 */
+	while (!eof)  {
+
+
+		s = parse[next].tb_sym;
+
+
+		/*
+		 *   If no match or sym != MCH (always match)
+		 *   proceed to next case in parser table.
+		 */
+		if (sym != (s < 0  ?  -s : s)  &&  s != MCH)  {
+			next++;
+			continue;
+			}
+
+		/*
+		 * A special match is applied here. If the symbol to match
+		 * is a label, check if a classed label is wanted. MATCH
+		 * if the symbol's class matches the required class
+		 */
+
+		if (sym == LBL && parse[next].tb_act == CLBL )
+			printf("%s class: %04x required: %04x\n",
+clabel, lscan(clabel, LKP, mem, NUL, NUL)->s_class, parse[next].tb_mem);
+		if (sym == LBL && parse[next].tb_act == CLBL &&
+			(lscan(clabel, LKP, mem, NUL, NUL)->s_class &
+			parse[next].tb_mem) == 0) {
+				next++;
+				continue;
+		}
+
+		/*
+		 *   Have a sym match.
+		 *   If sym < 0 this implies that the member
+		 *   must be checked as well !.
+		 *   Failure to match can occur here as well.
+		 */
+		if (s < 0  &&  mem != parse[next].tb_mem)  {
+			next++;
+			continue;
+			}
+
+		/*
+		 *   Sym (and mem) match -
+		 *   perform action specified.
+		 */
+		switch (parse[next].tb_act)  {
+
+
+				/* no operation */
+			case NOOP:
+				break;
+
+
+				/* add label tag */
+			case ALBL:
+				i = alocn(bu);
+				i = (int)lscan(clabel, DEF, mem, i/bu, REL);
+				if (i == ERR)  {
+					newline();
+					continue;
+					}
+				intercode.i_label = (struct st *)i;
+				break;
+
+				/* a label of a predefined class is required
+				 * here. Precede the label by a class name
+				 */
+
+			case CLBL:
+				i = (int)lscan(clabel, LKP, mem, NUL, NUL);
+				*opr++ = '{';
+				opr = num(parse[next].tb_mem, opr);
+				*opr++ = '$';
+				opr = num(i, opr);
+				break;
+
+				/* decode opcode value */
+			case DOPV:
+				i = pscan();		/* pseudo ? */
+				if (i != ERR)  {
+					intercode.i_flags = PS;
+					intercode.i_op = i;
+					fn = pradr[i];
+					break;
+					}
+
+				i = oscan();		/* opcode ? */
+				if (i == ERR)  {
+					synerr("op not found");
+					newline();
+					continue;
+					}
+
+				intercode.i_flags = OP;
+				intercode.i_op = i;
+				break;
+
+
+				/* out literal operand */
+			case LITP:
+				linkl(LKP);
+				*opr++ = '=';
+				break;
+
+
+				/* out operand label */
+			case OLBL:
+				i = (int)lscan(clabel, LKP, mem, NUL, NUL);
+				*opr++ = '$';
+				opr = num(i, opr);
+				break;
+
+
+				/* out operand operator */
+			case OOPR:
+				*opr++ = oprtab[mem];
+				break;
+
+
+				/* out operand delimiter */
+			case ODEL:
+				*opr++ = ',';
+				break;
+
+
+				/* out operand constant */
+			case OCON:
+				*opr++ = '#';
+				opr = num(mem, opr);
+				break;
+
+
+				/* out extra character */
+			case OCHR:
+				*opr++ = mem;
+				break;
+
+
+				/* out string in "'s */
+			case OSTR:
+				*opr++ = '"';
+				for (i=0; i<mem; i++)
+					*opr++ = clabel[i];
+				*opr++ = '"';
+				break;
+
+
+				/* end pass 1 */
+			case ENDP:
+				warning("no end stmt");
+				prend();
+				return;
+
+
+				/* select options */
+			case SELC:
+				for (i=0; i<4; i++)
+					intercode.i_selc[i] = parse[next].tb_arg[i];
+				next = parse[next].tb_next;
+				continue;
+
+
+				/* call expr parser */
+			case EXPR:
+				fret = next + 1;
+				sret = parse[next].tb_next;
+				next = 0;		/* start of expr */
+				continue;
+
+
+				/* good expr return */
+			case RETN:
+				next = sret;
+				sret = NUL;
+				continue;
+
+
+				/* fail expr return */
+			case GOTO:
+				next = fret;
+				fret = NUL;
+				continue;
+
+
+				/* input line error */
+			case OERR:
+				synerr("syntax error");
+				*opr = '\0';
+				if(opr >= &intercode.i_opr[MAXOPR]) {
+					synerr("expression too long");
+					exit(1);
+					}
+				itlen = IT - (&intercode.i_opr[MAXOPR] - opr)
+					   + 1;
+				fwrite(&itlen, INT, 1, intercd);
+				fwrite(&intercode, itlen, 1, intercd);
+				newline();
+				continue;
+
+
+				/* scan ok - write intercode */
+			case OREC:
+				if (intercode.i_flags & OP)  {
+					r = &opcode[intercode.i_op];
+					if (intercode.i_selc[0] & SELOPC)
+						/* select opcode column */
+						i = intercode.i_selc[2];
+	
+					else
+						/* select default */
+						i = 0;
+
+					os = scanop(r, i);
+	
+					if (intercode.i_selc[0] & SELFMT)
+						/* select new format */
+						f = &memory[intercode.i_selc[3]];
+	
+					else
+						/* select default */
+						if(p != NULL)
+							f = &memory[os->os_fmt];
+						else
+							f = &memory[0];
+
+					intercode.i_op = (int)os;
+
+					/* adjust instruction location */
+					len = f->f_len;
+					clocn(len);
+
+					/* increment pc */
+					locn[lcntr].l_value += f->f_len;
+					}
+
+
+				if (intercode.i_flags & PS)  {
+					/* call pseudo routine */
+					intercode.i_locn = locn[lcntr].l_value;
+					(*fn)();
+					}
+
+				*opr = '\0';
+				if(opr >= &intercode.i_opr[MAXOPR]) {
+					synerr("expression too long");
+					exit(1);
+					}
+				itlen = IT - (&intercode.i_opr[MAXOPR] - opr)
+					   + 1;
+				fwrite(&itlen, INT, 1, intercd);
+				fwrite(&intercode, itlen, 1, intercd);
+
+				newline();
+				continue;
+
+
+
+				/* bad action - fatal */
+			default:
+				synerr("pass 1 non-existant action");
+				exit(1);
+
+			}
+
+
+		/*
+		 *   Successful match - get new input symbol
+		 *   and move to next automaton state.
+		 */
+		getsym();
+		next = parse[next].tb_next;
+		if(opr >= &intercode.i_opr[MAXOPR]) {
+			synerr("expression too long");
+			exit(1);
+			}
+
+		}
+
+	/*
+	 *   end of pass 1
+	 */
+}
+
+
+newline()
+{
+	register char *r;
+	register int i;
+
+	if (eof)
+		return;
+
+	getlin();
+	getsym();
+
+	nline++;
+	intercode.i_label = (struct st *)ERR; intercode.i_op = ERR;
+	intercode.i_flags = NUL;
+	intercode.i_selc[0] = NUL;		/* no actions */
+	opr = r = &intercode.i_opr[0];
+	for (i=0; i<32; i++)
+		/* clear intercode argument buffer */
+		*r++ = '\0';
+
+	next = head.h_p_start;
+
+	return;
+}
+/*
+ *	adjust location to the next location modulo 'inc'
+ *
+ */
+alocn(inc)
+register int inc;
+{
+	register int i;
+	i = locn[lcntr].l_value;
+	i = ((i+inc-1)/inc)*inc;
+	locn[lcntr].l_value = intercode.i_locn = i;
+	return i;
+}
+/*
+ *	adjust instruction location
+ *		- to commence on a specified byte multiple
+ *		- if ibx set -  not to overlap an address boundary
+ */
+clocn(len)
+register int len;
+{
+	register int i,j;
+
+	/*
+	 * if adjusted to an address boundary for a label
+	 */
+	if (intercode.i_label != (struct st *)ERR) return;
+	i =alocn(ib);
+
+	/*
+	 * if addresses larger than instructions
+	 * & instructions cannot overlap words
+	 */
+	if (ibx) {
+		j = (i/bu)*bu;
+		if ((j != i) && (i+len > j+bu))
+			locn[lcntr].l_value = intercode.i_locn = j+bu;
+		}
+ 	return;
+}
+mac11.c         360814856   99    31    100644  5254      `
+#include	"mac.h"
+#include	"m.out.h"
+#include	"mac.x"
+
+
+/*
+ *   Define constant routines.
+ */
+prdc1()
+{
+	prdc(0);
+	return;
+}
+
+prdc2()
+{
+	prdc(1);
+	return;
+}
+
+prdc3()
+{
+	prdc(2);
+	return;
+}
+
+prdc4()
+{
+	prdc(3);
+	return;
+}
+
+prdc(n)
+register int n;
+{
+	p = intercode.i_opr;
+	if (!*p)  {
+		synerr("expression required");
+		return;
+		}
+
+	/*
+	 *   Bump pc up by the length of the constant.
+	 */
+	locn[lcntr].l_value += head.dctype[n].f_len;
+
+	return;
+}
+
+
+
+/*
+ *   Special dc.
+ *	Can define strings or constants.
+ */
+prdcs()
+{
+	register struct fd *f;
+	register int len;
+
+	/*
+	 *   Allow a string, or a single expr.
+	 */
+
+	f = &head.dctype[4];
+	if (!f->f_len)  {
+		/* dc has not been declared in the r-file */
+		synerr("dc not allowed");
+		return;
+		}
+
+	p = intercode.i_opr;
+
+	if (*p == '"')  {
+		p++;
+		len = 0;
+		while (*p++ != '"')
+			len++;
+
+		locn[lcntr].l_value += len;
+		return;
+		}
+	synerr("string required");
+	return;
+}
+
+
+
+/*
+ *   Null routine - just return.
+ */
+prnull()
+{
+	return;
+}
+
+
+
+/*
+ *   Equate a label to a value. (defined expression)
+ *   A check has already been made for a re-defined
+ *   label tag.
+ */
+prequ()
+{
+	register struct	st *q;
+
+	p = intercode.i_opr;		/* operand field */
+	q = intercode.i_label;
+	if (q == NULL)  {
+		synerr("label tag required");
+		return;
+		}
+
+	q->s_value = expr();
+	q->s_mode &= ~(ABS|REL|GLOB); /* These are set to the relocatability
+					 of the expression */
+
+	switch(reloc & RLBL) {
+
+	case 0:
+		break;
+
+	case RABS:
+		q->s_mode |= ABS;
+		break;
+
+	case RREL:
+		q->s_mode |= REL;
+		break;
+
+	case RLBL:
+		q->s_mode |= GLOB;
+		q->s_mode &= ~DEFN;
+		break;
+	}
+
+	/* set the new label's class */
+
+	q->s_class = class == -1 ? 0 : class;
+
+	return;
+}
+
+
+/*
+ *   Turn on global indicator.
+ *   Useful only for loader format output.
+ */
+prglobal()
+{
+	register struct	st *q;
+
+	p = intercode.i_opr;
+	if (*p++ != '$')  {
+		synerr("label required");
+		return;
+		}
+
+	q = (struct st *)argnum();
+	q->s_mode |= GLOB;
+
+	return;
+}
+
+
+/*
+ *   Align pc to an even multiple of expr().
+ *   If already at the boundary - no align done.
+ */
+pralign()
+{
+	register int v;
+	register int r;
+	register int l;
+
+	p = intercode.i_opr;
+	v = expr();
+	if (v < 1)
+		v = bu;
+	else
+		v *= bu;
+	l = locn[lcntr].l_value;
+	r = l % v;
+	if (!r)
+		/* no align needed */
+		return;
+
+	locn[lcntr].l_value += v-r;
+	return;
+}
+
+
+/*
+ *   Set origin of pc
+ */
+prorg()
+{
+	register int v;
+	register int l;
+	register struct lt *lc = &locn[lcntr];
+	register struct ol *ol;
+
+	p = intercode.i_opr;
+	v = expr();
+	v *= bu;
+	if (v < 0)  {
+		synerr("negative org");
+		return;
+		}
+
+	ol = getol(OL);
+
+	(lc->l_currorg)->ol_lcend = lc->l_value;
+	(lc->l_currorg)->ol_next = ol;
+	lc->l_currorg = ol;
+
+	ol->ol_lcstart = ol->ol_lcend = lc->l_value = v;
+	ol->ol_start = NUL; ol->ol_next = NUL;
+
+	/* no pading */
+	intercode.i_locn = 0;
+	return;
+}
+
+
+/*
+ *   Set segment indicator
+ */
+prseg()
+{
+	register int v;
+	register int l;
+
+	p = intercode.i_opr;
+	v = expr();
+	if (v < 0 || v >= LCOUNT)  {
+		synerr("no such location counter");
+		return;
+		}
+
+	lcntr = v;
+	return;
+}
+
+
+/*
+ *   Reserve (n) bu's of null storage.
+ */
+prds()
+{
+	register int v;
+	register int l;
+
+	p = intercode.i_opr;
+	v = expr();
+	v *= bu;
+	if (v < 0)  {
+		synerr("negative ds");
+		return;
+		}
+
+	locn[lcntr].l_value += v;
+	return;
+}
+
+
+/*
+ *   end:   Set eof flag, and check symbol table.
+ *	    (not ref, undefined etc)
+ */
+prend()
+{
+	register struct	st *q;
+	register int n;
+
+	eof = TRUE;			/* set end-of-source flag */
+
+	n = 0;
+	q = symtab;
+	while (q != NULL) {
+		if (q->s_mode & LITR)  {		/* skip literals */
+			q = nextsym(q);
+			continue;
+			}
+
+		switch(q->s_mode & (DEFN | GLOB)) {
+
+		case DEFN:
+			break;
+
+		case GLOB:
+			q->s_value = globno++;
+			break;
+
+		case DEFN | GLOB:
+			globno++;
+			break;
+
+		case 0:
+			n++;
+			printf("label %-8s is undefined\n", q->s_u.s_name);
+			break;
+		}
+
+		q = nextsym(q);				/* next symbol */
+		}
+
+	if (n) {
+		synerr("Undefined labels");
+		return;
+	}
+
+	p = intercode.i_opr;
+	startad = (*p) ? expr() : 0;
+
+	return;
+}
+
+
+/*
+ *   Structure offset definition.
+ */
+prstruc()
+{
+	register struct st *q;
+
+	p = intercode.i_opr;		/* operand field */
+	q = intercode.i_label;
+
+	if (q != NULL)  {
+		/* Equate label to struct offset now */
+		q->s_value = nstruc;
+		}
+
+	nstruc += expr();
+
+	return;
+}
+
+
+
+/*
+ *   End structure offset counter.
+ */
+prends()
+{
+	register struct st *q;
+
+	q = intercode.i_label;
+	if (q != NULL)  {
+		q->s_value = nstruc;
+		}
+
+	/* Reset structure counter */
+	nstruc = 0;
+	return;
+}
+
+/*
+ *	Include file
+ */
+princl() {
+	register char *q, *r, *s;
+	register int len;
+	char *filenm;
+	FILE *f;
+
+	p = intercode.i_opr;
+	if (*p == '"')  {
+		p++;
+		len = 0;
+		q = r = p;
+		while (*r++ != '"')
+			len++;
+		p = r;
+
+	} else {
+		synerr("string required");
+		return;
+	}
+	filenm = s = getmem(len + 1);
+	r--;	/* reverse over '"' */
+	while ( q < r )
+		*s++ = *q++;
+	*s = '\0';
+
+	if ((f = fopen(filenm, "r")) == NULL) {
+		synerr("Can't open include file");
+		return;
+	}
+
+	if(inclevel >= MAXINCL) {
+		synerr("Includes nested too deep");
+		return;
+	}
+
+	inclstk[inclevel].inc_fil = src;
+	inclstk[inclevel].inc_name = currfile;
+	inclstk[inclevel].inc_list = liston;
+	inclstk[inclevel++].inc_line = nline;
+
+	src = f;
+	currfile = filenm;
+	nline = 0;
+	return;
+}
+
+prlsb() {
+	symhash[SYMHASH] = NUL;
+}
+mac20.c         360814940   99    31    100644  1858      `
+#include	"mac.h"
+#include	"mac.x"
+
+
+pass2()
+{
+	register int fl;		/* opcode flags */
+	register int op;
+	register int lc;
+	register int i;
+	register int ll;
+	register int pd;
+	int	itlen;
+
+	eof = FALSE;
+	litnxt = NUL;
+
+	while (!eof)  {
+
+		/*
+		 *   Get record from temp file
+		 */
+		if(fread(&itlen, INT, 1, intercd) != 1)
+			return(0);
+
+		if(fread(&intercode, itlen, 1, intercd) != 1) {
+			synerr("temp file corrupted");
+			exit(1);
+		}
+
+		if ( OPTION('l') ) {	/* if listing, get a line from src */
+			listchs = getlin();
+		}
+
+		nline++;
+		/*
+		 *   Get flags (opcode or pseudo)
+		 *	 op value, current location counter
+		 *	 (for listings) and current assembled
+		 *	 code pointer (for listings).
+		 */
+		fl = intercode.i_flags;
+		op = intercode.i_op;
+		ll = locn[lcntr].l_value;
+
+
+		/*
+		 *	pad code or data automatically to allow
+		 *	for instruction alignment  requirements
+		 */
+
+		lc = intercode.i_locn;
+		pd = lc - ll;
+
+		if (pd > 0 && ll && op != ERR) {
+			pad(pd);
+			pdlist(lc);
+			lc = locn[lcntr].l_value = intercode.i_locn;
+			}
+
+
+
+		if (fl & OP)  {
+
+			/*
+			 *   Process opcode assembly
+			 */
+			gocode((struct os *)op);
+			olist(lc);
+			locn[lcntr].l_lop = 1;
+			continue;
+			}
+
+
+		if (fl & PS)  {
+
+			/*
+			 *   Process pseudo op.
+			 */
+			gpcode(op);
+			plist(lc);
+			continue;
+			}
+
+
+		/*
+		 *   May be a null line, just a comment line,
+		 *   a label equate, (to pc) or a dud.
+		 */
+
+		tlist(lc);
+		continue;
+
+
+		}
+
+	return;
+}
+pad(len)
+register int len;
+{
+	register struct fd *fmt;
+	register char *r;
+	register int l;
+
+	switch (locn[lcntr].l_lop) {
+		case 0:
+			/* pad data with specified byte */
+			l = 0;
+			break;
+
+		case 1:
+			/* pad code with no-op of length selectable format */
+			l = len/ib;
+			break;
+
+		case 2:
+			/* no pading following an org */
+			return;
+
+		}
+	/* pad code or data with 0's */
+	assemble(0,len*bl);
+	return;
+}
+mac21.c         360815005   99    31    100644  1383      `
+#include	"mac.h"
+#include	"mac.x"
+
+gocode(op)
+register struct os *op;
+{
+	register struct fd *fmt;
+	register int nargs;
+	register int i;
+	register char *r;
+
+
+	nargs = 0;
+	p = intercode.i_opr;
+
+	/*
+	 *   Decode each argument expression and
+	 *   evaluate it. Stack it's value for the
+	 *   instruction formatter. Check the 
+	 *   number of args is correct for the selected
+	 *   format descriptor.
+	 */
+	for (;;)  {
+		while (*p == ',')
+			p++;
+		if (!*p)
+			break;
+		oprstac[++nargs] = expr();
+		relstac[  nargs] = reloc;
+		}
+
+
+
+	if (intercode.i_selc[0] & SELFMT)
+		/* select new format */
+		fmt = &memory[intercode.i_selc[3]];
+	else
+		if(op != NULL)
+			fmt = &memory[op->os_fmt];
+		else
+			fmt = &memory[0];
+
+	if (nargs != fmt->f_class)  {
+		synerr("wrong # of args");
+		return;
+		}
+
+
+	/*
+	 *   Set instruction length into 'length'
+	 *   so that listing rtns can do their job.
+	 */
+
+	length = fmt->f_len;
+
+						/* pre incr pc */
+	if (!head.h_pc_post)
+		locn[lcntr].l_value += length;
+
+	format(fmt, op);	/* format code into core */
+
+	if (head.h_pc_post)			/* post incr pc */
+		locn[lcntr].l_value += length;
+
+	return;
+}
+
+gpcode(op)
+register int op;
+{
+	/*
+	 *   Look up pseudo routine addr in the address vector
+	 *   and call it to actually process the pseudo.
+	 *
+	 *   Pseudo routines will fudge the location
+	 *   counters if they wish.
+	 */
+	fn = peadr[op];
+	(*fn)();
+
+	return;
+}
+
+mac22.c         360815164   99    31    100644  3950      `
+#include	"mac.h"
+#include	"mac.x"
+
+
+/*
+ *   Define constant handlers.
+ */
+pedc1()
+{
+	pedc(0);
+	return;
+}
+
+pedc2()
+{
+	pedc(1);
+	return;
+}
+
+pedc3()
+{
+	pedc(2);
+	return;
+}
+
+pedc4()
+{
+	pedc(3);
+	return;
+}
+
+pedc(n)
+register int n;
+{
+	/*
+	 *   Evaluate the expression (argument)
+	 *   and stack it as arg 'a' for the
+	 *   code formatter format().
+	 */
+	p = intercode.i_opr;
+	oprstac[1] = expr();
+	relstac[1] = reloc;
+
+	format(&head.dctype[n], ERR);		/* format value in core */
+
+						/* incr pc */
+	locn[lcntr].l_value += (length = head.dctype[n].f_len);
+	locn[lcntr].l_lop = 0;
+	return;
+}
+
+
+
+
+/*
+ *   Special dc.
+ */
+pedcs()
+{
+	register struct fd *form;
+	register char *f;
+	register int len;
+
+	/*
+	 *   Special dc format descr.
+	 */
+	form = &head.dctype[4];
+	len  = head.dctype[4].f_len;
+
+	f = intercode.i_opr;
+	if (*f == '"')  {
+		f++;
+		length = 0;
+		while (*f != '"')  {
+			oprstac[1] = *f++;
+			relstac[1] = ABS;
+			format(form, ERR);
+			length += len;
+			}
+
+		locn[lcntr].l_value += length;
+		locn[lcntr].l_lop = 0;
+		return;
+		}
+
+	p = intercode.i_opr;
+	oprstac[1] = expr();
+	relstac[1] = reloc;
+	format(form, ERR);
+	locn[lcntr].l_value += len;
+	locn[lcntr].l_lop =  0;
+	length = len;
+	return;
+}
+
+
+/*
+ *   Null routine - just return.
+ */
+penull()
+{
+	return;
+}
+
+
+/*
+ *   Align location counter to an even multiple
+ *   of the argument expression.
+ */
+pealign()
+{
+	register int v;
+	register int l;
+
+	p = intercode.i_opr;
+	v = expr();
+	v *= bu;
+	if (v < 1)
+		return;
+
+	l = locn[lcntr].l_value;
+	v = (l + v) % v;
+	if (!v)				/* no align needed */
+		return;
+
+	/*
+	 *   Increment pc and code assembly pointer
+	 */
+	locn[lcntr].l_value += v;
+	locn[lcntr].l_next  += v;
+
+	return;
+}
+
+
+/*
+ *   Set location counter origin.
+ */
+peorg()
+{
+	register int offset;
+	register int v;
+
+	p = intercode.i_opr;
+	v = expr();
+	v *= bu;
+
+	/*
+	 * move down the origin chain
+	 */
+
+	if((locn[lcntr].l_currorg = (locn[lcntr].l_currorg)->ol_next)
+		== NUL) {
+		fprintf(stderr, "Origin chain is crap\n");
+		abort();
+	}
+
+	locn[lcntr].l_next = (locn[lcntr].l_currorg)->ol_start;
+	locn[lcntr].l_value = (locn[lcntr].l_currorg)->ol_lcstart;
+	if(locn[lcntr].l_value != v) {
+		fprintf(stderr, "Origin chain loc. cntr. mismatch\n");
+		abort();
+	}
+
+	offset = ((locn[lcntr].l_currorg)->ol_lcend - (locn[lcntr].l_currorg)->ol_lcstart) * bu;
+
+
+	locn[lcntr].l_lop = 2;
+	return;
+}
+
+
+/*
+ *   Set segment indicator.
+ *   (already checked for validity)
+ */
+peseg()
+{
+	p = intercode.i_opr;
+	lcntr = expr();
+
+	return;
+}
+
+
+/*
+ *   Define (n) basic addr. units of storage.
+ */
+peds()
+{
+	register int v;
+
+	p = intercode.i_opr;
+	v = expr();
+	v *= bu;
+
+	locn[lcntr].l_value += v;
+
+	for(; v > 0; v--)
+		*locn[lcntr].l_next++ = 0;
+
+	locn[lcntr].l_lop = 0;
+
+	return;
+}
+
+
+/*
+ *   end:  Set eof flag
+ */
+peend()
+{
+	eof = TRUE;
+	return;
+}
+
+
+/*
+ *   Set title info.
+ */
+petitle()
+{
+	register char *r;
+	register char *s;
+	register int i;
+
+	r = intercode.i_opr;
+	if (*r != '"')  {
+		synerr("title not a string");
+		return;
+		}
+
+	/*
+	 *   Copy string into title buffer
+	 */
+	r++;
+	s = ctitle;
+	while (*r != '"')
+		*s++ = *r++;
+	*s = '\0';
+
+	return;
+}
+
+pelist() {
+	liston = TRUE;
+}
+
+penlist() {
+	liston = FALSE;
+}
+
+peincl() {
+	register char *q, *r, *s;
+	register int len;
+	char *filenm;
+	FILE *f;
+
+	p = intercode.i_opr;
+	if (*p == '"')  {
+		p++;
+		len = 0;
+		q = r = p;
+		while (*r++ != '"')
+			len++;
+		p = r;
+
+	} else {
+		synerr("string required");
+		return;
+	}
+	filenm = s = getmem(len + 1);
+	r--;	/* reverse over '"' */
+	while ( q < r )
+		*s++ = *q++;
+	*s = '\0';
+
+	if(OPTION('l'))
+		if ((f = fopen(filenm, "r")) == NULL) {
+			synerr("Can't open include file");
+			return;
+		}
+
+	if(inclevel >= MAXINCL) {
+		synerr("Includes nested too deep");
+		return;
+	}
+
+	inclstk[inclevel].inc_fil = src;
+	inclstk[inclevel].inc_name = currfile;
+	inclstk[inclevel].inc_list = liston;
+	inclstk[inclevel++].inc_line = nline;
+
+	src = f;
+	currfile = filenm;
+	/* nline cannot be reset until the line has been listed */
+	return;
+}
+mac23.c         360815498   99    31    100644  8706      `
+#include	"mac.h"
+#include	"mac.x"
+
+
+/*
+ *   Pseudo opcode line listing.
+ */
+plist(lc)
+register int lc;
+{
+	register struct st *q;
+	register int i;
+	register int p;
+	register int ps;
+	int resetlin;
+
+	ps = intercode.i_op;
+	p = 0;
+
+	/*
+	 *	Dont list listing directives
+	 */
+
+	if(ps == 16 || ps == 17) {
+		return;
+	}
+
+	resetlin = (ps == 18);   /* reset nline if the op is 'include' */
+
+	if(!(OPTION('l') && liston)) {
+		/* listing not required */
+		if (resetlin) {
+			nline = 0;
+		}
+		return;
+	}
+
+	/*
+	 *   Call header() if at top of page, and instruction
+	 *   to be listed is not 'title' or 'eject'.
+	 */
+	newpage();
+
+	switch (ps)  {
+
+		case 0:		/* dc's */
+		case 1:
+		case 2:
+		case 3:
+		case 13:
+			printlc(lc);
+			if (OPTION('i')) p += iprint();
+			if (OPTION('w')) p += wprint();
+			if (OPTION('f')) p += fprint();
+			break;
+
+		case 6:		/* align */
+		case 7:		/* org */
+		case 9:		/* ds */
+		case 10:	/* end */
+			printlc(lc);
+			for (i=0; i < pt.c_dw; i++) putchar(' ');
+			break;
+
+		case 4:		/* equ */
+		case 14:	/* struc */
+		case 15:	/* ends  */
+			q = intercode.i_label;
+			if (q != NULL)  {
+				printl(pt.l_dw, q->s_value);
+				}
+			for (i=0; i < pt.c_dw; i++)
+				putchar(' ');
+			break;
+
+		case 5:		/* global */
+		case 18:	/* include */
+		case 19:	/* lsb */
+			for (i=0; i < pt.l_dw + pt.c_dw; i++)
+				putchar(' ');
+			break;
+
+		case 8:		/* seg */
+			printf("  %3d", lcntr);
+			for (i=0; i < pt.l_dw + pt.c_dw - 4; i++)
+				putchar(' ');
+			break;
+
+		case 11:	/* title */
+		case 12:	/* eject */
+/*
+			getlin();
+*/
+			header();
+			return;
+
+		}
+
+	source();			/* print line of source */
+
+	/* print wrap-around code */
+
+	while (p) {
+		p = 0;
+		lc += pt.l_ai;
+		printlc(lc);
+
+		if (OPTION('i')) p += iprint();
+		if (OPTION('w')) p += wprint();
+		if (OPTION('f')) p += fprint();
+		putchar('\n');
+		}
+
+	if(resetlin) /* reset line counter after an 'include' */
+		nline = 0;
+
+	return;
+}
+
+/*
+ *   Dud line listing - just print source.
+ */
+tlist(lc)
+{
+	register int i;
+	register int l;
+
+	if(!(OPTION('l') && liston))
+		/* listing not required */
+		return;
+
+	newpage();
+
+	if ((l = (int)intercode.i_label) != ERR)
+		printlc(lc);
+	else
+		for (i=0; i < pt.l_dw; i++) putchar(' ');
+
+	for (i=0; i < pt.c_dw; i++)
+		putchar(' ');
+
+	source();
+
+	return;
+}
+
+/*
+ *   Opcode listing.
+ */
+olist(lc)
+{
+	register int i;
+	register int p;
+
+	p = 0;
+
+	if(!(OPTION('l') && liston))
+		/* listing not required */
+		return;
+
+	newpage();
+
+	/*  location counter  */
+
+	printlc(lc);
+
+	/* 'word' and/or formatted code */
+
+	if (OPTION('i')) p += iprint();
+	if (OPTION('w')) p += wprint();
+	if (OPTION('f')) p += fprint();
+
+	/* remainder of line */
+	source();
+
+	/* print wrap-around code */
+
+	while (p) {
+		p = 0;
+		lc += pt.l_ai;
+		printlc(lc);
+
+		if (OPTION('i')) p += iprint();
+		if (OPTION('w')) p += wprint();
+		if (OPTION('f')) p += fprint();
+		putchar('\n');
+		}
+
+	return;
+}
+/*
+ *	initialize print constants
+ */
+setprint()
+{
+	register struct fd *fmt;
+	register int i;
+	register int j;
+	register int d;
+	register int max;
+
+	if (OPTION('w')) {
+		wf = TRUE;
+		} else {
+		wf = FALSE;
+		}
+
+	if (OPTION('f')) {
+		ff = TRUE;
+		} else {
+		ff = FALSE;
+		}
+
+	/* no. of bits per digit */
+
+	pt.c_bw = 4;
+	if (OPTION('o')) pt.c_bw = 3;
+	if (OPTION('b')) pt.c_bw = 1;
+
+	/* location counter print field */
+
+	if (head.h_i_len > head.h_w_len)
+		pt.l_ai = head.h_i_len;
+	else
+		pt.l_ai = head.h_w_len;
+
+	pt.l_dw = (head.h_addr + pt.c_bw -1)/pt.c_bw;
+	if (pt.l_ai == 1) {
+		pt.l_iw = 1;
+
+		} else {
+		j = pt.l_ai - 1;
+		for (i=1; j >>= pt.c_bw; i++);
+		pt.l_iw = i;
+		}
+
+	/* 'word' format print field */
+
+	pt.w_bw = pt.l_ai * head.h_bu_len;
+
+	pt.w_dw = (pt.w_bw + pt.c_bw -1)/pt.c_bw;
+	pt.w_rw = pt.w_bw - (pt.w_bw/pt.c_bw)*pt.c_bw;
+
+	/* formatted code print field */
+
+	pt.f_bw = pt.w_bw;
+	/* find longest formatted field */
+	max = 0;
+	fmt = &memory[0];
+	for (i=0; i < head.h_formats; i++) {
+		d = -1;
+		pt.f_bt = 0;
+
+		if (fmt->f_len < pt.f_bw/bl)
+			d += (pt.f_bw + fmt->f_len*bl + pt.c_bw - 1)/pt.c_bw + 1;
+		for (j=0; fmt->f_desc[j]; j++) {
+			d += (fmt->f_width[j] + pt.c_bw-1)/pt.c_bw + 1;
+			pt.f_bt += fmt->f_width[j];
+			if (pt.f_bt >= pt.f_bw) {
+				if (d > max) max = d;
+				d = -1;
+				pt.f_bt = 0;
+				}
+			}
+		if (d > max) max = d;
+		fmt ++;
+		}
+	pt.f_dw = max;
+	pt.f_bt = 0;
+
+	if (OPTION('i')) pt.i_dw = 20;
+
+	/* width of word & formatted print */
+
+	pt.c_dw = 0;
+	if (OPTION('w')) pt.c_dw += pt.w_dw+4;
+	if (OPTION('f')) pt.c_dw += pt.f_dw+4;
+	if (OPTION('i')) pt.c_dw += pt.i_dw+2;
+
+	return;
+}
+/*
+ *	print location counter field
+ */
+printlc(lc)
+register int lc;
+{
+	static int lastad;
+	register int i;
+	register int addr;
+
+	addr = lc/bu;
+	if (addr == lastad) {
+		for(i=0; i < pt.l_dw; i++) putchar(' ');
+		return;
+		}
+	lastad = addr;
+
+	if ((pt.l_ai != 1) && (lc % pt.l_ai)) {
+		for (i=0; i < pt.l_dw - pt.l_iw; i++)
+			putchar(' ');
+		printl(pt.l_iw,addr);
+		return;
+		}
+	printl(pt.l_dw,addr);
+	return;
+}
+/*
+ *	print 'word's of code
+ */
+wprint()
+{
+	register int i;
+	register int j;
+	register int *cp;
+	register int b;
+	register char *r;
+
+	if (pt.w_bt < pt.w_bw)  {
+		for (i=0; i < pt.w_dw+4; i++) putchar(' ');
+		return(0);
+		}
+
+	cp = locn[lcntr].l_next;
+	i = pt.w_bt/bl;
+	j = pt.w_bw/bl;
+	if (i > j) cp -= (i-j);
+
+	r = fbuf;
+	j = bl;
+	b = *(--cp);
+
+	for (i=0; i < pt.w_dw; i++) {
+		if (!j) {
+			b = *(--cp);
+			j = bl;
+			}
+
+		if (j < pt.c_bw) {
+			bp = b & BITMASK(j);
+			b = *(--cp);
+			bp |= ((b & BITMASK(pt.c_bw-j)) << j);
+			b >>= pt.c_bw-j;
+			j += (bl - pt.c_bw);
+
+		} else {
+			bp = b & BITMASK(pt.c_bw);
+			j -= pt.c_bw;
+			b >>= pt.c_bw;
+			}
+
+		convert(r++);
+		}
+
+	/* correct Most-Significant-Digit if necessary */
+
+	if (pt.w_rw) {
+		r--;
+		bp &= BITMASK(pt.w_rw);
+		convert(r++);
+		}
+
+	printf("    ");
+	for (i=0; i < pt.w_dw; i++) putchar(*(--r));
+
+	pt.w_bt -= pt.w_bw;
+	if (pt.w_bt < pt.w_bw) return(0);
+	return(1);
+}
+/*
+ *	generate formated code print string
+ */
+storef(value,width)
+char value;
+register int width;
+{
+	register char v;
+	register int d;
+	register int s;
+	char *savefp;
+
+	if(!liston)
+		return;
+
+	v = value;
+	if (pt.f_bt) {
+		if (pt.f_bt == (pt.f_bt / pt.f_bw) * pt.f_bw) {
+
+			*fp++ = '.';
+
+			} else {
+
+			*fp++ = ' ';
+			}
+		}
+
+	pt.f_bt += width;
+
+	d = width/pt.c_bw;
+	s = width - d * pt.c_bw;
+
+	fp += d;
+	if (s) fp++;
+	savefp = fp;
+
+	while (d-- > 0) {
+		bp = v & BITMASK(pt.c_bw);
+		convert(--fp);
+		v >>= pt.c_bw;
+		}
+
+	if (s) {
+		bp = v & BITMASK(s);
+		convert(--fp);
+		}
+
+	fp = savefp;
+	return;
+}
+/*
+ *	print formatted code string
+ */
+fprint()
+{
+	register int dend;
+	register int dbgn;
+	register char *i;
+	register int j;
+
+	/* find last column */
+	dend = pt.f_dw;
+	if ((pt.f_bt < pt.f_bw) && pt.w_bt)
+		dend -= (pt.f_bw - pt.w_bt + pt.c_bw - 1)/pt.c_bw + 1;
+
+	/* decrement bits-to-print counter */
+	pt.f_bt -= pt.f_bw;
+
+	/* find first column */
+	if (pt.f_bt <= 0) {
+		pt.f_bt = 0;
+		dbgn = dend - (fp-1 - fst);
+
+	} else {
+		for (i=fst; i <= fp; i++) if (*i == '.') break;
+		dbgn = dend - (i-1 - fst);
+		}
+
+	/* now go to it */
+	for (j=0; j < dbgn+3; j++) putchar(' ');
+	for (j=dbgn; j <= dend; j++) putchar(*fst++);
+	for (j=dend; j < pt.f_dw; j++) putchar(' ');
+
+	/* is there more to print */
+	if (pt.f_bt) {
+		fst++;
+		return(1);
+
+		} else {
+		fp = fst = fbuf;
+		return(0);
+		}
+}
+/*
+ *	convert a bit pattern to a character
+ */
+convert(cp)
+register char *cp;
+{
+	if (OPTION('h')) {
+		*cp = hextab[bp];
+
+		} else {
+		*cp = bp + '0';
+		}
+	return;
+}
+/*
+ *   Auto-generated pading listing.
+ */
+pdlist(lc)
+{
+	register int i;
+	register int p;
+
+	p = 0;
+
+	if(!(OPTION('l') && liston))
+		/* listing not required */
+		return;
+
+	newpage();
+
+	/*  location counter  */
+
+	printlc(lc);
+
+	/* 'word' and/or formatted code */
+
+	if (OPTION('i')) p += iprint();
+	if (OPTION('w')) p += wprint();
+	if (OPTION('f')) p += fprint();
+	putchar('\n');
+
+	/* print wrap-around code */
+
+	while (p) {
+		p = 0;
+		lc += pt.l_ai;
+		printlc(lc);
+
+		if (OPTION('i')) p += iprint();
+		if (OPTION('w')) p += wprint();
+		if (OPTION('f')) p += fprint();
+		putchar('\n');
+		}
+
+	return;
+}
+
+iprint()
+{
+	register int i;
+	register int l;
+	register int len;
+	register int *cp;
+	int done;
+
+	/*  instruction  */
+	cp = locn[lcntr].l_next - length;
+	len = prwidth(head.h_bu_len);
+
+	printf("  ");
+
+	for (i=0; i<length && i*len < pt.i_dw; i++)
+		printl(len, *cp++);
+	done = i;
+
+	/*  padding  */
+	l = pt.i_dw - (length * len);
+	for (i=0; i<l; i++)
+		putchar(' ');
+
+	length -= done;
+	return(length > 0);
+}
+
+ipad() {
+	register int i;
+
+	for(i = pt.i_dw + 2; i > 0; i--)
+		putchar(' ');
+}
+
+
+/*
+ *   determine # of characters needed to print data.
+ */
+prwidth(w)
+register int w;
+{
+	register int l;
+
+	if (OPTION('h'))  {
+		l = w / 4;
+		if (w % 4)
+			l++;
+		}
+	if (OPTION('o'))  {
+		l = w / 3;
+		if (w % 3)
+			l++;
+		}
+	if (OPTION('b'))
+		l = w;
+
+	return(l);
+}
+mac24.c         360815669   99    31    100644  4237      `
+#include	"mac.h"
+#include	"m.out.h"
+#include	"mac.x"
+
+
+
+/*
+ *   Symbol table dump.
+ */
+sdump()
+{
+	register struct st *q, **s;
+	register int n;
+	register int obj;			/* object dump flag */
+	register int dump;			/* code dump */
+
+	dump = FALSE;
+	obj = FALSE;
+	if (OPTION('s'))
+		dump = TRUE;			/* dump */
+	if (OPTION('a'))  {
+		obj = TRUE;
+		out.ou_nseg = SYMBOLS;
+		out.ou_start = 0;
+		out.ou_length = globno * (8 + 3*INT);
+		fwrite(&out, OUT, 1, mout);
+		}
+
+	q = symtab;
+	if (q == NULL)
+		return;
+
+	if (dump)  {
+		header();
+		printf("NAME          VALUE\n\n");
+		}
+
+	while (q != NULL) {
+
+		if (dump)  {
+			if (!(q->s_mode & LITR))  {
+				printf("%-8s      ", q->s_u.s_name);
+				printl(pt.l_dw, q->s_value);
+				printf("  \t");
+
+				if (!(q->s_mode & REFR))
+					if(q->s_mode & CLAS)
+						printf("CLAS\t");
+					else
+						printf("NREF\t");
+				else
+					putchar('\t');
+				if (q->s_mode & GLOB)
+					printf("GLOB\t");
+				else
+					putchar('\t');
+				if(q->s_mode & ABS)
+					printf("ABS\t");
+				else
+					putchar('\t');
+				if(q->s_mode & REL)
+					printf("REL\t");
+				else
+					putchar('\t');
+				putchar('\n');
+				newpage();
+				}
+
+			}
+		if (obj &&  q->s_mode & GLOB)
+			/* write symbol table entry */
+			fwrite(q, 8+3*INT, 1, mout);
+
+		q = nextsym(q);
+		}
+
+	return;
+}
+
+
+/*
+ *   Code dump to std. output
+ *   and a.out generation.
+ */
+cdump()
+{
+	register int *len;
+	register int *r;
+	register int i;
+	register int j;
+	register int wdump;			/* page width */
+	register int width;
+	register struct ol *o;
+	register struct rl *rp;
+
+
+	/*
+	 *   Decide upon dump format.
+	 *   hexadecimal defaults.
+	 */
+	width = (head.h_bu_len + 3) / 4;
+
+	if (OPTION('o'))
+		width = (head.h_bu_len + 2) / 3;
+	if (OPTION('b'))
+		width = head.h_bu_len;
+
+	wdump = 64 / (width + 1);
+
+
+	if (OPTION('d'))
+		header();
+
+	/*
+	 *   Search each location counter in turn
+	 *   for code of any sort to generate.
+	 */
+	for (i=0; i<LCOUNT; i++)  {
+
+		o = (locn[i].l_orgs);
+
+		while( o != NUL) {
+
+			if(o->ol_lcend <= o->ol_lcstart) {
+				o = o->ol_next;
+				continue;
+			}
+
+			r = o->ol_start;
+			j = o->ol_lcend - o->ol_lcstart;
+
+			if (OPTION('d'))  {
+				len = r + j;			/* end of seg. pointer */
+				printf("\n\nSEGMENT %2d  ", i);
+				printf("LENGTH %5d  ", j);
+				printf("START   0x%x\n\n", o->ol_lcstart);
+
+				j = 0;
+				while (r < len)  {
+					if (j > wdump)  {
+						putchar('\n');
+						newpage();
+						j = 0;
+						}
+
+					printl(width, *r);
+					putchar(' ');		/* spacer */
+					r++;
+					j++;
+					}
+
+				putchar('\n');
+				newpage();
+				}
+
+			/*
+			 *   Check for a.out
+			 */
+			if (OPTION('a'))  {
+				out.ou_nseg = i;
+				out.ou_start = o->ol_lcstart;
+				out.ou_length = o->ol_lcend - o->ol_lcstart;
+				fwrite(&out, OUT, 1, mout);
+				fwrite(o->ol_start, out.ou_length*INT, 1, mout);
+
+			}
+			o = o->ol_next;
+			if(OPTION('r')) {
+				out.ou_nseg = RELOCATION;
+				out.ou_length = locn[i].l_rsize * (RL - INT);
+
+				fwrite(&out, OUT, 1, mout);
+
+				rp = locn[i].l_rlsts;
+				while(rp != NUL) {
+					/* change pointer to undef global
+					   to its global no. */
+					if((rp->rl_type & RLBL) == RLBL)
+						rp->rl_u.rl_gln = (rp->rl_u.rl_glp)->s_value;
+					fwrite(rp, RL - INT, 1, mout);
+					rp = rp->rl_next;
+				}
+			}
+		}
+	}
+	return;
+}
+
+
+/*
+ *   Generate header lines for listing.
+ */
+header()
+{
+	register char *r;
+	register int i;
+
+	if (lpage || OPTION('c')) putchar('\f');
+
+	putchar('\n');
+	printf("\t\t\t\t\t\t\t\t\t\t\t\tPage %d\n", ++lpage);
+	printf("MAC CROSS-ASSEMBLER   (%s)\n\n", head.h_mac);
+
+	printf("\t\t\t%s\n\n\n", ctitle);
+
+	lline = 7;
+
+	return;
+}
+
+
+/*
+ *   Check to see whether a new page is needed or not.
+ */
+newpage()
+{
+	register int title;
+	register int i;
+
+	if (intercode.i_flags & PS)  {
+		i = intercode.i_op;
+		if (i == 11 || i == 12)
+			title = TRUE;
+		}
+	else
+		title = FALSE;
+
+
+	if (!lline && !title)
+		header();
+
+	lline = (lline + 1) % head.h_page;
+
+	return;
+}
+
+
+/*
+ *   Print source line.
+ */
+source()
+{
+
+	/* line number */
+	printf("  %3d\t", nline);
+
+	buf[listchs] = '\0';
+	printf("%s", buf);
+
+	return;
+}
+
+mouthdr() {
+
+	if (OPTION('a'))  {
+		/*
+		 *   Write a.out header
+		 */
+		aout.ao_mword = head.h_macmword;
+		aout.ao_bu_len = head.h_bu_len;
+		aout.ao_startad = startad;
+		fwrite(&aout, AOUT, 1, mout);
+		}
+
+}
+
+mac30.c         363218694   99    31    100644  4954      `
+#include	"mac.h"
+#include	"m.out.h"
+#include	"mac.x"
+
+
+/*
+ *   Evaluate the expression pointed to by 'p'.
+ *
+ *   Set the relocatability of the expression
+ *   into global variable 'reloc'.  Lvalue()
+ *   returns the relocatability of each lvalue
+ *   in global variable 'mreloc'. REL has precedence
+ *   over ABS.
+ */
+
+expr()
+{
+	register struct	st *q;
+	register int l, r;		/* left & right of expr */
+	register char op;		/* operator */
+
+	reloc = NUL;
+	class = -1;
+
+	/*
+	 *   Get left side of expression.
+	 */
+	if (*p == '=')  {		/* literal */
+		reloc |= LITR;
+		p++;
+		}
+
+	if (!*p)  {
+		synerr("missing argument");
+		return(0);
+		}
+
+	l = lvalue();
+	reloc |= mreloc;
+
+
+	/*
+	 *   Process remainder of expression.
+	 *
+	 *	if end-of-expr instead of operator,
+	 *	terminate legally.
+	 */
+
+	for (;;)  {
+
+		/*
+		 *   Get operator.
+		 */
+		op = *p;
+		if (op == ',' || op == '\0') {
+			if (reloc & LITR) {
+				/* if expr was literal
+				   store value in symbol table */
+				linkl(DEF,l);
+				return(0);
+				}
+
+			return(l);
+			}
+
+		p++;			/* bump past operator */
+		/*
+		 *   Get right hand side of expr.
+		 */
+		r = lvalue();
+		/* determine relocatability of expression */
+
+		if(reloc == RLBL && mreloc == RLBL) {
+			synerr("Expression relative to 2 undefined globals");
+			return(0);
+		}
+
+		reloc = combine(reloc, op, mreloc);
+
+		/*
+		 *	Process   <left> := <left> <op> <right>.
+		 */
+		switch (op)  {
+
+			case '+':
+				l += r;
+				break;
+
+			case '-':
+				l -= r;
+				break;
+
+			case '*':
+				l *= r;
+				break;
+
+			case '/':
+				if (!r)  {
+					synerr("div by zero");
+					return(l);
+					}
+				l /= r;
+				break;
+
+			case '%':
+				if (!r)  {
+					synerr("mod by zero");
+					return(l);
+					}
+				l %= r;
+				break;
+
+			case '>':
+				l >>= r;
+				break;
+
+			case '<':
+				l <<= r;
+				break;
+
+			case '~':
+				l ^= r;
+				break;
+
+			case '&':
+				l &= r;
+				break;
+
+			case '|':
+				l |= r;
+				break;
+
+			}
+
+		/*
+		 *   Consider next op/field
+		 */
+		}
+
+	/*
+	 *   End of expr
+	 */
+}
+
+
+/*
+ *   Lvalue:  decode a term and return it's value.
+ */
+lvalue()
+{
+	register struct st *q;
+	register int v;
+	register int cl;
+
+
+	switch (*p++)  {
+		case '{':
+			cl = argnum();
+			if(*p++ != '$') {
+				synerr("class with no label - aborting");
+				abort();
+			}
+
+			q = (struct st *)argnum();
+
+			printf("%s: Expected class: %08x label class: %08x\n",
+				q, cl, q->s_class);
+			if((q->s_class & cl) == 0) {
+				synerr("illegal label class");
+				return(0);
+			}
+
+			goto chklabel;
+
+
+		case '#':
+			class = 0;
+			v = argnum();		/* constant */
+			mreloc = RABS;
+			break;
+
+
+		case '$':
+			q = (struct st *)argnum();		/* label */
+		chklabel:
+			if (!(q->s_mode & DEFN) && !(q->s_mode & GLOB))  {
+				synerr("label undefined");
+				return(0);
+				}
+			v = q->s_value;
+			if (q->s_mode & REL)
+				mreloc = RREL;
+			else
+				mreloc = RABS;
+
+			/* attempt to force ABS , Mike Nielsen 5 July 81 */
+			if (!OPTION('r')) mreloc = RABS;
+
+			if (q->s_mode & GLOB  &&  !(q->s_mode & DEFN)) {
+				globptr = q;
+				v = 0;
+				mreloc |= RLBL;
+			}
+			if(class == -1)
+				class = q->s_class;
+			break;
+
+
+		case '!':
+			class = 0;
+			v = locn[lcntr].l_value;
+			mreloc = (locn[lcntr].l_currorg)->ol_reloc;
+			break;
+
+
+		case '+':
+			class = 0;
+			if(mreloc != RABS) {
+				synerr("Bad expression relocatability");
+				return(0);
+			}
+			v = lvalue();
+			break;
+
+
+		case '-':
+			class = 0;
+			if(mreloc != RABS) {
+				synerr("Bad expression relocatability");
+				return(0);
+			}
+			v = -lvalue();
+			break;
+
+
+		case '~':
+			class = 0;
+			if(mreloc != RABS) {
+				synerr("Bad expression relocatability");
+				return(0);
+			}
+			v = ~lvalue();
+			break;
+
+
+		case ',':
+			synerr("delimiter unexpected");
+			v = 0;
+			mreloc = NUL;
+			break;
+
+
+		default:
+			synerr("bad argument");
+			v = 0;
+			mreloc = NUL;
+			break;
+
+		}
+
+	return(v);
+}
+
+/*
+ *
+ *	combine() modified from as6.c  (AS(I))
+ *		Copyright (C) Richard Miller, University of W'gong
+ *
+ *
+ * Determine relocatability of result of operation op performed on
+ *	operands with relocatability rel1 and rel2
+ *
+ * Permitted combinations are:
+ *	undefined with anything		->	undefined
+ *	absolute with absolute		->	absolute
+ *	relocatable + absolute		->	relocatable
+ *	relocatable - absolute		->	relocatable
+ *	absolute + relocatable		->	relocatable
+ *	relocatable - relocatable	->	absolute (provided both are in
+ *					same segment or in same common block)
+ *
+ * Note that external references are permitted to take part in expressions
+ */
+combine(rel1, op, rel2)
+register rel1, rel2;
+{
+	register ret;
+
+	if (rel1 == RLBL || rel2 == RLBL)
+		ret = RLBL;
+
+	else if (rel2 == RABS)
+		if (rel1 == RABS)
+			ret = RABS;
+		else if (op == '-' || op == '+')
+			ret = rel1;
+		else
+			synerr("Bad expression relocatability");
+
+	else if (rel1 == RABS)
+		if (op == '+')
+			ret = rel2;
+		else
+			synerr("Bad expression relocatability");
+
+	else if (rel1 == rel2 && op == '-')
+		ret = RABS;
+
+	else
+		synerr("Bad expression relocatability");
+
+	return(ret);
+}
+mac31.c         360815973   99    31    100644  2636      `
+#include	"mac.h"
+#include	"mac.x"
+
+/*
+ *   Auxilliary routines 1.
+ */
+
+
+/*
+ *   compar:	Compare two strings - return
+ *		TRUE if equal, FALSE if not.
+ *		terminate with FALSE if > 8 chars.
+ */
+compar(r, s)
+register char *r;
+register char *s;
+{
+	register int n;
+
+	n = 1;
+	while (*r == *s)  {
+		if (*r == '\0')
+			return(1);
+		if (n > 8)
+			return(0);
+		r++;
+		s++;
+		n++;
+		}
+	return(0);
+}
+
+/*
+ *   Get roughly 32 symbol table slots.
+ *	set endcore = current break.
+ */
+struct symt {
+	struct st symt_s;
+	struct symt *symt_l;
+};
+
+struct symt *
+cpget() {
+	struct symt *p;
+
+	if((p = (struct symt *)malloc(sizeof(struct symt)*32)) == NULL) {
+		synerr("Symbol table overflow\n");
+		exit(1);
+	}
+
+	endcore = (char *)p+32;
+	return((struct symt *)(coreptr = (char *)p));
+}
+
+struct st *
+nextsym(q) {
+	register struct st *q;
+
+	if(q == NULL) {
+		return(NULL);
+	} else {
+		return((struct st *)(((struct symt *)q) -> symt_l));
+	}
+}
+
+
+/*
+ *   Define a symbol table entry.
+ *
+ *   Get next available slot and return a pointer to it.
+ */
+struct st *
+dslot(name, value, mode)
+char	*name;
+int	value;
+int	mode;
+{
+	register struct	symt *q;
+	register char	*r;
+	register char	*s;
+	register int	ind;
+
+	q = (struct symt *)coreptr;
+	if ((char *)(q+1) > endcore)
+		q = cpget();
+
+	ind = 0;
+	r = q->symt_s.s_u.s_name;
+	s = name;
+	while (ind < 8)  {
+		*r++ = *s++;
+		ind++;
+		}
+
+	q->symt_s.s_value = value;
+	q->symt_s.s_mode  = mode;
+	q->symt_s.s_lcntr = lcntr;
+	q->symt_s.s_next  = NUL;
+	q->symt_l = (struct symt *)symtab;
+	symtab = (struct st *)q;
+
+	nsyms++;
+	coreptr += sizeof(struct symt);
+	return((struct st *)q);
+}
+
+/*
+ *   Convert an integer to ascii characters and
+ *   push chars to core pointed to by 'r'.
+ */
+char *
+num(n, r)
+register int n;
+register char *r;
+{
+	register int mask;
+	register int neg;
+	register int i;
+	char	 ch[16];
+
+	i = 0;
+	neg = n;
+	mask = BITMASK((WORDSIZ - 1));
+	if (!n)  {
+		*r++ = '0';
+		return(r);
+		}
+
+	if (neg < 0)  {
+		*r++ = '0';
+		*r++ = 'x';
+		}
+
+	while (n)  {
+		if (neg < 0)  {
+			ch[i] = hextab[n&0xf];
+			n = (n >> 4) & mask;
+			}
+
+		else  {
+			ch[i] = (n % 10) + '0';
+			n /= 10;
+			}
+		i++;
+		}
+
+	while (--i >= 0)  {
+		*r++ = ch[i];
+		}
+
+	return(r);
+}
+
+/*
+ *   Search string 'str' for character 'c' and return its
+ *   index in 'str' if found. return ERR otherwise.
+ */
+any(c, str)
+register char c;
+char	 str[ ];
+{
+	register i;
+
+	i = 0;
+	while (str[i])  {
+		if (c == str[i])
+			return(i);
+		i++;
+		}
+	return(ERR);
+}
+
+/*
+ *	Symbol hash function
+ */
+hash(p)
+char *p;
+{
+	register int i = 8, j = 0;
+
+	if(*p == '`')		/* local symbol */
+		return(SYMHASH);
+	while(*p && i-- > 0)
+		j = (j << 1) + *p++;
+
+	return(j % SYMHASH);
+}
+mac32.c         360816064   99    31    100644  2091      `
+#include	"mac.h"
+#include	"mac.x"
+
+/*
+ *   Auxilliary routines #2
+ */
+
+
+/*
+ *   Convert ascii number to binary pointed to by 'p'.
+ */
+argnum()
+{
+	register int n;
+	register int j;
+	register int k;
+
+	n = 0;
+
+	if (*p == '0')  {
+		p++;
+
+		if (*p == 'x')  {
+			p++;
+			while ((j = ccode(*p)) == 1  ||  j == 2)  {
+				k = chtab[*p] & 0xf;
+				if (j == 1 && !k)
+					break;
+				n = (n << 4) | k;
+				p++;
+				}
+			return(n);
+			}
+
+		if (*p == 'b')  {
+			p++;
+			while (*p == '0' || *p == '1')
+				n = (n<<1) | (*p++ - '0');
+			return(n);
+			}
+
+		while (ccode(*p) == 2)  {
+			k = chtab[*p] & 0xf;
+			if (k > 7)
+				break;
+			n = (n << 3) | k;
+			p++;
+			}
+		return(n);
+		}
+
+	while (ccode(*p) == 2)  {
+		j = chtab[*p] & 0xf;
+		n = n * 10 + j;
+		p++;
+		}
+
+	return(n);
+}
+
+/*
+ *   Comparison for searching.
+ *
+ *	return  1:  *r > *s,
+ *		0:  *r = *s,
+ *	       -1:  *r < *s.
+ */
+cmp(r, s)
+register char *r;
+register char *s;
+{
+	register int i;
+
+
+	/*
+	 *   fast compare
+	 */
+	if (*r < *s)
+		return(-1);
+	if (*s < *r)
+		return(1);
+
+	i = 0;
+	while (i < 8)  {
+		r++;
+		s++;
+
+		if (*r < *s)
+			return(-1);
+		if (*s < *r)
+			return(1);
+		if (!*r)
+			return(0);		/* equal on nul */
+		i++;
+		}
+	return(0);
+}
+
+
+/*
+ *   printl:  like prf1 but with leading zero's.
+ */
+printl(width, data)
+register int width;
+register int data;
+{
+	register char *r;
+	register int i;
+	register int fmt;
+	register int mask;
+
+	if (!data)  {
+		for (i=0; i<width; i++)
+			putchar('0');
+		return;
+		}
+
+	r = fbuf;
+	if (OPTION('h'))  {
+		fmt = 'h';		/* hex */
+		mask = BITMASK(WORDSIZ - 4);
+		}
+	if (OPTION('o'))  {
+		fmt = 'o';		/* oct */
+		mask = BITMASK(WORDSIZ - 3);
+		}
+	if (OPTION('b'))  {
+		fmt = 'b';		/* bin */
+		mask = BITMASK(WORDSIZ - 1);
+		}
+
+	i = width;
+	while (i--)  switch (fmt)  {
+
+		case 'd':
+		case 'h':
+			*r++ = hextab[data & 0x0f];
+			data = (data >> 4) & mask;
+			break;
+
+		case 'o':
+			*r++ = (data & 07) + '0';
+			data = (data >> 3) & mask;
+			break;
+
+		case 'b':
+			*r++ = (data & 01) + '0';
+			data = (data >> 1) & mask;
+			break;
+
+		}
+
+	r = &fbuf[width-1];
+	for (i=0; i<width; i++)
+		putchar(*r--);
+
+	return;
+}
+
+mac33.c         360816263   99    31    100644  5006      `
+#include	"mac.h"
+#include	"m.out.h"
+#include	"mac.x"
+
+static int lc_offset; /* offset telling how far along an instruction
+				you are (in basic units) */
+
+/*
+ *   Auxilliary routines 3 (for pass 2)
+ */
+
+
+/*
+ *   Assemble binary object in a field 'width' bits,
+ *   having a value of 'value'.
+ *
+ *   The value is checked to fit into the space and
+ *   truncation errors will result if it overflows.
+ *   If the host machine has generated a negative
+ *   number as the result of an expression -
+ *   check this also by complementing the number,
+ *   and then checking it.
+ */
+assemble(value, width)
+register int value;
+register int width;
+{
+	register int mask;
+	register int free;
+	register int r;
+	register int rel;
+	static	 int	used;
+	static	 int	buf;
+	static   int	relbuf;
+	static   int	reltype = NUL;
+
+
+
+	if(reloc & RREL) {
+		rel = BITMASK(width);
+		reltype = reloc;
+	} else {
+		rel = 0;
+	}
+
+	/*
+	 *   Check for overflow errors.
+	 *   (a value too large to fit in
+	 *   the desired space.)
+	 */
+	if (value >= 0)  {
+		mask = (-1) << width;
+		if (value & mask)
+			warning("assemble overflow");
+		}
+	else  {
+		mask = (-1) << (width - 1);
+		if (value < mask)
+			warning("assemble overflow");
+		}
+
+	/* generate formatted string for printing */
+	if (ff) storef(value,width);
+	if (wf) pt.w_bt += width;
+
+
+	free = head.h_bu_len - used;			/* free bits in buf */
+	while (width && width >= free)  {
+		r = width - free;			/* remainder can't use yet */
+		mask = BITMASK(free);
+		buf = (buf << free) | ((value >> r) & mask);
+		relbuf = (relbuf << free) | ((rel >> r) & mask);
+		mask = BITMASK(r);
+		value &= mask;
+		width -= free;
+		rel &= mask;
+		if(reltype & RREL && relbuf)
+			putrel(relbuf, reltype);
+		*locn[lcntr].l_next++ = buf;		/* push out to core */
+		lc_offset++;
+		buf  = 0;
+		used = 0;				/* none of buf used */
+		relbuf = 0;
+		free = head.h_bu_len;
+		}
+
+	if (!width)
+		return;
+
+	/*
+	 *   Take care of remainder.
+	 */
+	used += width;
+	mask = BITMASK(width);
+	buf = (buf << width) | (value & mask);
+
+	relbuf = (relbuf << width) | (rel & mask);
+
+	reltype = NUL;
+	return;
+}
+
+/*
+ *   Code formatter.
+ *
+ *   Decode and assemble binary data in memory
+ *   according to the selected format descriptor.
+ */
+format(fmt, os)
+register struct fd *fmt;
+struct os *os;
+{
+	register int pr;
+	register int rf;
+	register int n;
+	register int mask;
+	register int i;
+	register int ilen;
+	static	int val;
+	register int op;
+
+	/* offset within instruction for relocation info */
+	lc_offset = 0;
+
+	if (os == NUL)  {
+		synerr("illegal instruction");
+		return;
+		}
+
+	if ((int)os == ERR)
+		op = ERR;
+	else
+		op = os->os_opc;
+	if (intercode.i_selc[0] & SELVAL)
+		val = intercode.i_selc[1];
+	else
+		val = 0;
+
+
+	/*
+	 *   Format descriptor loop.
+	 *
+	 *   Get each sub-section, decode it,
+	 *   and assemble it's value into the instruction.
+	 */
+
+	ilen = 0;
+
+	for (i=0; fmt->f_desc[i] != 0; i++)  {
+
+		ilen += fmt->f_width[i];
+		pr = fmt->f_desc[i] & (RMODE | PMODE);
+		n  = fmt->f_desc[i] & 0xff;
+
+						/* opcode field */
+		if (n == 'o')  {
+			reloc = RABS;
+			rf = fmt->f_width[i];
+			mask = BITMASK(rf);
+			assemble(op & mask, rf);
+			continue;
+			}
+
+							/* pc field */
+		if (n == '!')  {
+			reloc = RREL;
+			assemble(locn[lcntr].l_value/bu, fmt->f_width[i]);
+			continue;
+			}
+
+							/* arg field */
+		if (n >= 'a' && n <= 'm')  {
+			n = n - 'a' + 1;
+			reloc = relstac[n];
+			n = oprstac[n];
+			if (pr & PMODE)  {
+				/* pc relative */
+				reloc = (reloc == RLBL) ? RLBL|RPMOD : RABS;
+				n -= locn[lcntr].l_value/bu;
+				}
+
+			if (pr & RMODE)  {
+				/* byte relocation */
+				rf = fmt->f_value[i];
+				mask = BITMASK(rf);
+				n = ((n & mask) << rf) | ((n >> rf) & mask);
+				}
+
+			assemble(n, fmt->f_width[i]);
+			continue;
+			}
+
+							/* constant field */
+		if (n == '#')  {
+			reloc = RABS;
+			assemble(fmt->f_value[i], fmt->f_width[i]);
+			continue;
+			}
+
+							/* value field */
+		if (n == 'v')  {
+			reloc = RABS;
+			rf = fmt->f_width[i];
+			mask = BITMASK(rf);
+			assemble(val & mask, rf);
+			val >>= rf;
+			continue;
+			}
+
+							/* next n bits of opcode */
+		if (n == 'n')  {
+			reloc = RABS;
+			rf = fmt->f_width[i];
+			mask = BITMASK(rf);
+			assemble(op & mask, rf);
+			op >>= rf;
+			continue;
+			}
+
+
+
+		/*  should never happen - but ... */
+
+		fprintf(stderr, "corrupted format descriptor <%c>\n", n);
+		exit(1);
+
+		}
+
+	return;
+}
+
+putrel(relmask, reltype)
+register int relmask, reltype;
+{
+	register struct lt *lc = &locn[lcntr];
+	register struct rl *r;
+
+	r = getrel();
+	r->rl_next = NUL;
+
+	if(lc->l_rlsts == NUL)
+		lc->l_rlsts = r;
+
+	if(lc->l_rlste != NUL)
+		(lc->l_rlste)->rl_next = r;
+
+	lc->l_rlste = r;
+
+	r->rl_type = reltype;
+	r->rl_mask = relmask;
+	r->rl_addr = lc->l_value + lc_offset -
+		((head.h_pc_post) ? 0 : length);
+
+	if((reltype & RLBL) == RLBL)
+		r->rl_u.rl_glp = globptr;
+	else
+		r->rl_u.rl_lcntr = lcntr;
+	lc->l_rsize++;
+}
+
+struct rl *
+getrel() {
+	static struct rl *block = NUL, *end = NUL;
+
+	if(block >= end) {
+		block = (struct rl *)getmem(RL*32);
+		end = block + 32;
+	}
+
+	return(block++);
+}
+mac34.c         360816426   99    31    100644  4042      `
+#include	"mac.h"
+#include	"mac.x"
+
+/*
+ *   Standard linear search for pseudo op.
+ */
+pscan()
+{
+	register int i;
+	register char *t;
+
+	t = clabel;
+	if (*t == 'd' && *(t+1) == 'c' && *(t+2) && !*(t+3))  {
+
+		/*
+		 *   Special define constant (dc?)
+		 */
+		for (i=0; i<4; i++)
+			if (*(t+2) == head.dctype[i].f_class)
+				return(i);
+		return(ERR);
+		}
+
+	/*
+	 *   Scan remaining pseudo ops.
+	 */
+	for (i=4; plabel[i]; i++)  {
+		if (compar(clabel, plabel[i]))
+			return(i);
+		}
+
+	return(ERR);
+}
+
+
+/*
+ *   Binary search of opcode table.
+ */
+oscan()
+{
+	register struct oc *r;			/* pointer to opcodes */
+	register int i;
+	register int j;
+	register int k;
+
+	i = 0;
+	j = head.h_ops - 1;
+	while (i <= j)  {
+		k = (i + j) >> 1;
+		r = &opcode[k];
+		switch (cmp(clabel, r))  {
+
+			case  1:
+				i = k + 1;
+				break;
+
+			case  0:
+				/*
+				 *   found symbolic.
+				 */
+				return(k);
+
+			case -1:
+				j = k - 1;
+				break;
+
+			}
+		}
+	/*
+	 *   Not found.
+	 */
+	return(ERR);
+}
+
+/*
+ *   Hashed list search for a label in the symbol
+ *   table. options exist to define a label, look
+ *   up a label (referenced) or check for label in
+ *   the table currently.
+ */
+struct st *
+lscan(name, mode, hashx, value, type)
+register char	*name;
+int	 mode;
+register int	hashx;
+register int	value;
+register int	type;
+{
+	register struct st *q;
+
+	switch (mode)  {
+
+		default:
+			fprintf(stderr, "internal error mode %d\n", mode);
+			return(NULL);
+
+		/*
+		 *   Scan symbol table:
+		 *	if label is present, return index,
+		 *	if not - define a slot in the table,
+		 *	mark the symbol as referenced but
+		 *	undefined, and return the index.
+		 */
+		case LKP:
+			q = symhash[hashx];
+			if (!q)  {
+				q = dslot(name, value, REFR);
+				symhash[hashx] = q;
+				return(q);
+				}
+
+			/*
+			 *   Search list.
+			 */
+			while (q)  {
+				if (compar(name, q->s_u.s_name))  {
+					q->s_mode |= REFR;
+					return(q);
+					}
+				q = q->s_next;
+				}
+
+			/*
+			 *   Not in list.
+			 */
+			q = dslot(name, value, REFR);
+			q->s_next = symhash[hashx];
+			symhash[hashx] = q;
+			return(q);
+
+		/*
+		 *   Scan symbol table:
+		 *	if symbol is not in table, define
+		 *	an entry for it, and return the index.
+		 *	if it is present, mark it defined,
+		 *	and enter its value (error if previously
+		 *	defined) and return its index.
+		 */
+		case DEF:
+			q = symhash[hashx];
+			if (!q)  {
+				q = dslot(name, value, type|DEFN);
+				symhash[hashx] = q;
+				return(q);
+				}
+			/*
+			 *   Search list - error if dup. found.
+			 */
+			while (q)  {
+				if (compar(name, q->s_u.s_name))  {
+					if (q->s_mode & DEFN)  {
+						synerr("multi def. label");
+						return(NULL);
+						}
+					q->s_mode |= type|DEFN;
+					q->s_value = value;
+					q->s_lcntr = lcntr;
+					return(q);
+					}
+				q = q->s_next;
+				}
+			/*
+			 *   Add label definition.
+			 */
+			q = dslot(name, value, type|DEFN);
+			q->s_next = symhash[hashx];
+			symhash[hashx] = q;
+			return(q);
+
+		}
+
+
+	/*
+	 *   End of scanner.
+	 */
+}
+/*
+ *	Literal pool linked list.
+ *	entries are interleaved with symbol table entries.
+ *	each entry contains information identifying the code segment,
+ *	current location count and the no. of the argument to the
+ *	current instruction. the data is useful to an "intelligent" loader
+ *	for machines with segmented memory.
+ */
+linkl(mode,value)
+int	mode;
+int	value;
+{
+	register struct st *q;
+	static union s_ut b;	/* build identifier */
+
+	switch (mode)	{
+
+		default:
+			fprintf(stderr, "internal error - mode %d\n",mode);
+			return(NULL);
+
+		/*
+		 *	pass 1:
+		 *	allocate new list element and
+		 *	store ident data and mode
+		 */
+		case LKP:
+			b.L_PCVAL = locn[lcntr].l_value;
+			b.L_LCNTR = lcntr;
+
+			q = dslot(b.s_name, value, LITR);
+			if (lithd)  {
+				lithd = litnxt = q;
+				}
+			else  {
+				litnxt->s_next = q;
+				litnxt = q;
+				}
+			nlit++;
+			return;
+
+		/*
+		 *	pass 2:
+		 *	insert value field
+		 *	litnxt is reset to indicate start of pass 2
+		 */
+		case DEF:
+			if (litnxt)  {
+				q = lithd;
+				}
+			else  {
+				q = litnxt;
+				}
+			q->s_value = value;
+			litnxt = q->s_next;
+			return;
+
+		}
+}
+mac35.c         360816475   99    31    100644  931       `
+#include "mac.h"
+#include "mac.x"
+
+/*
+ * Scan opcode selector list
+ * for selector match & return pointer if found
+ * else return NUL
+ */
+
+struct os *
+scanop(list, selector)
+struct oc *list;
+register int selector;
+{
+	register struct os *p;
+
+	p = list->oc_list;
+	while(p != NUL) {
+		if(p->os_sel == selector)
+			break;
+		p = p->os_next;
+	}
+
+	return(p);
+}
+
+/*
+ *	relocate opcode table pointers
+ *	to conform with the location
+ *	in which they are loaded in mac
+ */
+
+relopcodes(op)
+struct oc *op;
+{
+	register char *p;
+	register struct os *q, *r;
+	register int offset, i;
+
+	offset = (char *)op - (char *)head.h_opstart;
+
+	for(i = 0; i < head.h_ops; i++) {
+		if(op->oc_list == NULL)
+			break;
+		p = ((char *)(op->oc_list)) + offset;
+		q = op->oc_list = (struct os *)p;
+		while(q != NULL) {
+			r = q->os_next;
+			if(r == NULL)
+				break;
+
+			p = ((char *) r) + offset;
+			q->os_next = (struct os *)p;
+			q = q->os_next;
+		}
+		op++;
+	}
+}
+
+mac40.c         360816701   99    31    100644  5814      `
+#include	"mac.h"
+
+extern	int	prdc1();
+extern	int	prdc2();
+extern	int	prdc3();
+extern	int	prdc4();
+extern	int	prnull();
+extern	int	prequ();
+extern	int	prglobal();
+extern	int	pralign();
+extern	int	prorg();
+extern	int	prseg();
+extern	int	prds();
+extern	int	prend();
+extern	int	prdcs();
+extern	int	prstruc();
+extern	int	prends();
+extern	int	princl();
+extern	int	prlsb();
+
+extern	int	pedc1();
+extern	int	pedc2();
+extern	int	pedc3();
+extern	int	pedc4();
+extern	int	pealign();
+extern	int	peorg();
+extern	int	peseg();
+extern	int	peds();
+extern	int	peend();
+extern	int	petitle();
+extern	int	penull();
+extern	int	pedcs();
+extern	int	pelist();
+extern	int	penlist();
+extern	int	peincl();
+
+
+
+int	nline	=	0;		/* nth input line */
+int	liston	=	TRUE;		/* list-nlist switch */
+int	lline	=	0;		/* nth listing line */
+int	lpage	=	0;		/* page number */
+int	nsyms	=	0;		/* # of symbols */
+int	nlit	=	0;		/* # of literals in  pool */
+int	errcount=	0;		/* # errors */
+char	flags[26];			/* start up options */
+/* gone with stdio
+int	afd;
+*/
+FILE	*mout;				/* m.out fd */
+int	wf;				/* word listing flag */
+int	ff;				/* format listing flag */
+int	bp;				/* bit pattern */
+struct st *globptr;			/* pointer for global refs */
+int	globno;				/* globals counter */
+
+char	fbuf[256];			/* format string buffer */
+char	*p;				/* char line pointer */
+char	*fp = fbuf;			/* format string next char */
+char	*fst = fbuf;			/* format string first "  */
+char	buf[MAXBUF];			/* line buffer */
+char	clabel[64];			/* identifiers & strings */
+char	ctitle[32];			/* title buffer */
+char	*literals;			/* literal labels */
+
+struct	fd	*memory;		/* start of brk'd core & fmt tab */
+struct	st	*symtab;		/* pointer to symbol table */
+struct	st	*lithd;			/* pointer to literal list */
+struct	st	*litnxt;		/* pointer to next literal */
+char		*opcode;		/* pointer to opcode table */
+struct	tbl	*parse;			/* start of parser table */
+char		*endcore;		/* end of core pointer */
+char		*coreptr;		/* pointer to next free byte */
+int		*code;			/* pointer to assembled code */
+
+int	sym;				/* next symbol */
+int	mem;				/* member of symbol */
+int	oprstac[16];			/* general opr. stack */
+int	relstac[16];			/* relocatability word */
+int	nstruc	=		0;		/* structure offset counter */
+
+char	(*fn)();
+
+int	eof;				/* eof indicator flag */
+/* gone with stdio
+int	unit;
+*/
+FILE	*intercd;			/* intercode file ptr */
+int	bl;				/* byte length in bits */
+int	bu;				/* bytes in addr. */
+int	ib;				/* bytes in instr. */
+int	ibx;				/* bounded instr's flag */
+short	lcntr;				/* curr. locn counter */
+int	length;				/* length of cur. instr. */
+
+int	reloc;				/* current reloc factor */
+int	mreloc;				/* internal reloc word */
+int	class;				/* label class of expression */
+
+char	*plabel[ ] =	{		/* pseudo op labels */
+	0,
+	0,
+	0,
+	0,
+	"equ",
+	"global",
+	"align",
+	"org",
+	"seg",
+	"ds",
+	"end",
+	"title",
+	"eject",
+	"dc",
+	"struc",
+	"ends",
+	"list",
+	"nlist",
+	"include",
+	"lsb",
+	0
+	};
+
+int	(*pradr[ ])() =	{
+	prdc1,
+	prdc2,
+	prdc3,
+	prdc4,
+	prequ,
+	prglobal,
+	pralign,
+	prorg,
+	prseg,
+	prds,
+	prend,
+	prlsb,		/* title - start new local sym block */
+	prnull,		/* eject */
+	prdcs,			/* special dc */
+	prstruc,
+	prends,
+	prnull,
+	prnull,
+	princl,
+	prlsb,
+	0
+	};
+
+int	(*peadr[ ])() =	{
+	pedc1,
+	pedc2,
+	pedc3,
+	pedc4,
+	penull,		/* equ */
+	penull,		/* global */
+	pealign,
+	peorg,
+	peseg,
+	peds,
+	peend,
+	petitle,
+	penull,		/* eject */
+	pedcs,
+	penull,		/* struc 14 */
+	penull,		/* ends */
+	pelist,
+	penlist,
+	peincl,		/* include source */
+	penull,		/* local symbol block */
+	0
+	};
+
+char	hextab[ ] =	"0123456789abcdef";
+char	octtab[ ] =	"01234567";
+char	dectab[ ] =	"0123456789";
+char	alptab[ ] =	"abcdefghijklmnopqrstuvwxyz._";
+char	xalptab[ ] =	"._";			/* extra alpha's */
+char	oprtab[ ] =	"+-*/%><~&|";
+
+char	chtab[ ] =	{
+
+	0x50, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+	0xf0, 0x31, 0x60, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+	0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+	0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+	0x30, 0x00, 0x90, 0x00, 0x00, 0x84, 0x88, 0xa0,
+	0x00, 0x00, 0x82, 0x80, 0x40, 0x81, 0x10, 0x83,
+	0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+	0x28, 0x29, 0x00, 0x70, 0x86, 0xb0, 0x85, 0x00,
+	0x00, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x10,
+	0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+	0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+	0x10, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00, 0x10,
+	0xc0, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x10,
+	0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+	0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+	0x10, 0x10, 0x10, 0x00, 0x89, 0x00, 0x87, 0xf0
+
+	};
+
+struct	st	*symhash[SYMHASH+1];		/* symbol hash indices */
+struct	ht	head;				/* header record */
+
+struct	lt	locn[LCOUNT];
+/*	gone with stdio
+struct	bt	ibuf;
+*/
+FILE		*src = stdin;
+char		outbuf[BUFSIZ];
+struct	it	intercode;
+struct	pt	pt;
+
+
+#ifdef		PDP11
+
+int	bitmask[ ] =	{
+
+	0x0000,	0x0001,	0x0003,	0x0007,	0x000f,
+		0x001f,	0x003f,	0x007f,	0x00ff,
+		0x01ff,	0x03ff,	0x07ff,	0x0fff,
+		0x1fff,	0x3fff,	0x7fff,	0xffff
+
+	};
+
+#endif
+
+
+#ifdef		INTERDATA
+
+int	bitmask[ ] =	{
+
+	0x00000000,  0x00000001,  0x00000003,  0x00000007,  0x0000000f,
+		     0x0000001f,  0x0000003f,  0x0000007f,  0x000000ff,
+		     0x000001ff,  0x000003ff,  0x000007ff,  0x00000fff,
+		     0x00001fff,  0x00003fff,  0x00007fff,  0x0000ffff,
+		     0x0001ffff,  0x0003ffff,  0x0007ffff,  0x000fffff,
+		     0x001fffff,  0x003fffff,  0x007fffff,  0x00ffffff,
+		     0x01ffffff,  0x03ffffff,  0x07ffffff,  0x0fffffff,
+		     0x1fffffff,  0x3fffffff,  0x7fffffff,  0xffffffff
+
+	};
+
+#endif
+
+int	startad	=	0;		/* start address */
+struct inclstk 	inclstk[MAXINCL];	/* include stack */
+int	inclevel;			/* include level */
+char	*currfile;			/* name of current source */
+int	listchs;			/* no of chars in listing line */
+
+struct	lsb	*lsb_head;		/* head of lsb chain */
+struct	lsb	*lsb_last;		/* tail of lsb chain */
+mac41.c         360816769   99    31    100644  1469      `
+#include	"mac.h"
+#include	"mac.x"
+
+
+getlin()
+{
+	register int nchar;
+	register int cc;
+	register int instring;
+
+	p = buf;
+	instring = FALSE;
+	nchar = 0;
+	for(;;) {
+		if (( cc = getc(src)) == EOF) {
+			if ( inclevel <= 0 )
+				break;
+
+			fclose(src);
+
+			src = inclstk[--inclevel].inc_fil;
+			currfile = inclstk[inclevel].inc_name;
+			liston = inclstk[inclevel].inc_list;
+			nline = inclstk[inclevel].inc_line;
+			continue;
+		}
+
+		if (cc == '"'  ||  cc == '\'')
+			instring = !instring;
+
+		if (nchar > MAXBUF)  {
+			fprintf(stderr, "buffer overflow\n");
+			exit(1);
+			}
+
+#ifdef	MAPCH		/* map UC -> lc when not in strings */
+		if (cc >= 'A'  &&  cc <= 'Z'  &&  !instring)
+			cc += ('a' - 'A');
+#endif
+
+		buf[nchar++] = cc;
+		if (cc == '\n')  {
+			return(nchar);
+			}
+		}
+
+	buf[0] = '\0';
+	return(0);
+}
+
+
+getch()
+{
+	register cc1;
+	register cc2;
+
+	cc1 = *p++;
+	if (cc1 != '\\')
+		return(cc1);
+
+	cc2 = *p++;
+	switch (cc2)  {
+
+		case 'r':
+			return('\r');
+
+		case 'f':
+			return('\f');
+
+		case 't':
+			return('\t');
+
+		case '\\':
+			return('\\');
+
+		case '0':
+			return('\0');
+
+		case 'n':
+			return('\n');
+
+		case 'b':
+			return('\b');
+
+		default:
+			p--;
+			return(cc1);
+
+		}
+}
+
+char *getmem(i) {
+
+	register char *j;
+
+	if((j = (char *)malloc(i)) == NULL) {
+		synerr("No more core!!!!!");
+		exit(1);
+	}
+	return(j);
+}
+
+struct ol *getol() {
+
+	register struct ol *o;
+
+	if((o = (struct ol *)calloc(1, OL)) == NULL) {
+		synerr("No more core!!!!!!");
+		exit(1);
+	}
+
+	return(o);
+}
+
+mac42.c         360816850   99    31    100644  1838      `
+#include	"mac.h"
+#include	"mac.x"
+
+
+getsym()
+{
+	register int i;
+	register int j;
+	register char *s;
+	register char cc;
+
+
+	switch (j = ccode(cc = *p++))  {
+
+			/* space/tab field */
+		case 0x03:
+			i=1;
+			while (*p  == ' ' || *p == '\t')  {
+				i++;
+				p++;
+				}
+			sym = SPA;
+			mem = i;
+			return;
+
+			/* delimiter */
+		case 0x04:
+			sym = DEL;
+			mem = ',';
+			return;
+
+			/* end-of-line */
+		case 0x06:
+			sym = EOL;
+			mem = NUL;
+			return;
+
+			/* character constant */
+		case 0x0a:
+			sym = CON;
+			i = 0;
+			while ((cc = getch()) != '\'')  {
+				/* machine dependant !! */
+				i = (i<<8) | cc;
+				}
+
+			mem = i;
+			return;
+
+			/* literal */
+		case 0x0b:
+			sym = LPL;
+			mem = '=';
+			return;
+
+			/* string "----" */
+		case 0x09:
+			s = clabel;
+			i = 0;
+			while ((cc = getch()) != '"')  {
+				if (i++ > MAXOPR-2)
+					break;
+				*s++ = cc;
+				}
+			*s = '\0';
+			sym = STR;
+			mem = i;
+			return;
+
+			/* comment */
+		case 0x07:
+			while (*p != '\n')
+				p++;
+			sym = COM;
+			mem = NUL;
+			return;
+
+			/* end-of-file */
+		case 0x05:
+			sym = EoF;
+			mem = NUL;
+			return;
+
+			/* label */
+		case 0x0c:		/* local label */
+		case 0x01:
+			s = clabel;
+			*s++ = cc;
+			i = 1;
+			while ((j = ccode(cc = *p)) == 1  ||  j == 2)  {
+				*s++ = cc;
+				p++;
+				i++;
+				if (i > 8)
+					break;
+				}
+			*s++ = '\0';
+
+			/* check literal table */
+			for (i=0; i<head.h_literals; i++)
+				if (compar(literals+i*8, clabel))  {
+					sym = LIT;
+					mem = i;
+					return;
+					}
+
+			sym = LBL;
+			mem = hash(clabel);
+			return;
+
+			/* numeric */
+		case 0x02:
+			p--;
+			sym = CON;
+			mem = argnum();
+			return;
+
+			/* operator */
+		case 0x08:
+			sym = OPR;
+			mem = chtab[cc] & 0xf;
+			return;
+
+			/* any other char */
+		default:
+			sym = CHR;
+			mem = cc;
+			return;
+
+		}
+}
+
+
+ccode(cc)
+register int cc;
+{
+	return((chtab[cc] >> 4) & 0xf);
+}
+mac43.c         360816883   99    31    100644  494       `
+#include	"mac.h"
+#include	"mac.x"
+
+
+warning(str)
+register char *str;
+{
+	if (OPTION('e'))
+		return;
+
+	if (OPTION('l') && liston)
+		newpage();
+	if (OPTION('d'))
+		putchar('\n');
+
+	printf("\"%s\", %4d: warning: %s\n", nline, str);
+	return;
+}
+
+synerr(ptr)
+register char *ptr;
+{
+	errcount++;
+	length = 0;				/* no instruction */
+
+	if (OPTION('e'))
+		return;
+
+	if (OPTION('l') && liston)
+		newpage();
+	if (OPTION('d'))
+		putchar('\n');
+
+	printf("\"%s\", %4d: %s\n", currfile, nline, ptr);
+	return;
+}

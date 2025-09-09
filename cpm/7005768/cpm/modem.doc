@@ -1,0 +1,216 @@
+
+DOCUMENTATION ON THE MODEM PROGRAM AS OF 05/09/79
+		----------------
+
+MODEM.ASM is a multi-function communications program
+for use with the CP/M operating system.  Its primary
+function is the transfer of files between CP/M systems.
+The transfer is accomplished via a block mode, with
+headers and checksums to ensure data validity.  Automatic
+retry, up to 10 times, is attempted for every sector
+transmitted.  The user is given an option to quit, or
+retry after 10 consecutive errors occur.
+
+Also supported is a terminal mode which allows the computer
+to function as a terminal to a time sharing system, CBBS,
+etc, and a similar program, but which echos all received
+characters, such that two people running MODEM can com-
+municate keyboard-to-keyboard, one running in terminal
+mode, and one running in echo mode.  This is frequently
+done to "test the line" or to see how high a baud rate
+can be supported before beginning file transfers.
+
+Planned future enhancements include the ability to place
+data received (while in terminal mode) into memory, and
+write it out to a disk file.
+
+As "delivered" the program supports a PMMI S-100 modem
+at primary address 0C0H, and will run unmodified.
+
+A "PMMI" equate can be changed to false, and appropriate
+changes made to the various control, status, and data ports
+and bits, allowing the program to be used with virtually
+any modem or acoustic coupler.  Anyone modifying the
+program for the IDS, HAYES, or other popular modems is
+advised to do so such that the original program functions
+are preserved, i.e. add in a HAYES EQU 1 and then in the
+code, say IF HAYES or IF PMMI, etc.  This will allow
+other users to use the program by just changing the
+equates.
+			---
+
+The program is named MODEM2.ASM (or COM) on the disk,
+to indicate that it is an extension of the MODEM.ASM which
+was distributed on the CP/M user's group disk 25.  It is
+expected that the user will rename it back to MODEM once
+any earlier versions of this program are erased.
+
+COMMAND FORMAT:
+
+	MODEM option
+ or	MODEM option.baudrate
+ or	MODEM option fn.ft
+ or	MODEM option.baudrate fn.ft
+
+"option" consists of a single character PRIMARY OPTION,
+and 0, 1, or more characters of SECONDARY OPTIONS.
+
+fn.ft is the filename to be received or sent
+
+		PRIMARY OPTIONS:
+
+S:	To send a file
+R:	To receive a file
+T:	Terminal - i.e. the system being communicated with
+	must echo
+E:	Terminal mode but with echo - this would be used when 2
+	people using the MODEM program are talking keyboard to
+	keyboard - one uses MODEM T, the other, MODEM E.
+D:	Disconnect the phone (if your MODEM supports this)
+H:	Help (prints usage documentation)
+X:	Prints usage examples
+
+
+		SUB-OPTIONS:
+
+Q:	A 'Q' may be appended to either 'S' or 'R' to
+	transfer 'quietly' i.e. w/ no console I/O.
+
+	This is for several purposes:  1) if you
+	have a slow terminal (such as a tty),
+	you must use the Q option;  2) if you are
+	using this program on a "remote" CP/M system,
+	in which the "remote console" is the same as
+	the line for sending a file, then you must use
+	MODEM SQ or RQ to suppress the console msgs.
+
+
+S, R, T, C, (or Q) may be followed by the following
+	if your MODEM is capable of supporting these:
+	(the program currently supports the PMMI).
+	If anyone adds the IDS or HAYES, please
+	send me a list of equates and changes.
+	(address in MODEM.asm file)
+
+O:	go to originate mode
+A:	go to answer mode
+D:	disconnect (otherwise, keeps the line)
+
+note 'O' and 'A' are n-o-t defaulted (i.e. send
+	to originate), etc.  This is because when
+	sending or receiving multiple files with
+	the same mode stays in effect (no action
+	taken to the MODEM) unless you disconnected
+	with a 'D' option, in which case you must
+	'O' or 'A'
+
+R:	Show characters as received
+S:	Show characters as sent
+V:	View the file (suppresses non-error
+		status messages)
+
+T:	Go to terminal mode after file transfer
+E:	Go to echo mode after file transfer
+D:	Disconnect after program execution
+
+		EXAMPLES:
+
+send 'test.fil' in originate mode, 'quietly',
+disconnect after transfer
+
+	MODEM SOQD test.fil
+
+receive 'test.fil' in answer mode at 450 baud,
+and don't disconnect after.
+
+	MODEM RA.450 test.fil
+
+Suppose you have sent 1 or more files already,
+did not 'D' (disconnect) and want to send
+or receive another, just:
+
+	MODEM S test.fil
+
+(note this defaults to 300, so s.450 or whatever
+if that is the rate you were going at)
+
+After transferring the last file, use the D sub-option
+(MODEM SOD.450 name) or re-type the MODEM command with
+the D primary option (MODEM D) to disconnect the phone.
+
+------------------------------------------------
+
+In the process of re-writing the MODEM program
+for the variable-baud-rate PMMI (and adding the
+functions for answer, orig, disconnect, view, etc),
+the following "historical" prolog was deleted.
+(..and the file was > 32K).  It is reproduced here
+to give credit where credit due: 
+
+
+	09/23/77
+First written by Ward Christensen
+
+	09/26/77
+Add error$limit equ (WLC)
+
+	10/01/77
+Change exit$char from ctl-c to ctl-e for use
+w/timesharing computers (WLC)
+
+	10/10/77
+Correct to send any length file (WLC)
+
+	11/20/78
+Change send wait for ack time to 8 sec. for
+slower disk systems.  Add control-X abort so
+receiving station can stop send.  Add abort
+test to send and receive for local cancel.
+By Keith Petersen, W8SDZ
+
+	12/03/78
+Add 16-sector buffer for less disk activity.  This
+version typed by Keith Petersen, from information
+supplied by Jim Bell, K4FUP
+
+	01/05/79
+Correct error in receive file routine which did
+'ACK' when sector number was wrong.  Add wait
+routine to hold sending of file until receive end
+is ready.  by Keith Petersen, W8SDZ
+
+	02/19/79
+Change receive wait time to 8 seconds to allow for
+slower disk systems.  Eliminate multiple cancel on
+aborting.  Add conditional assembly for clock
+frequency > 2.0 mhz. by Keith Petersen
+
+	04/11/79
+Change send, receive, and eof ack wait times to
+10 seconds to allow for slower disk systems.
+Change send wait time to 80 seconds to allow
+receiving end more time to come up.  By
+Keith Petersen, W8SDZ.
+
+	04/23/79
+By Ward Christensen:  put in PMMI variable baud
+rate select, originate, answer, quiet, disconnect;
+delete sense sw codes;  add view, help, examples,
+etc.  Change garbage char collection to "in" instr.
+not "recv".  Add quit/retry from 12/78 vers which
+Keith didn't have.  Un-do the 1/5/79 correction,
+allowing the receiver to ack if a duplicate
+block is sent, such as might happen if the
+receiver's original ack was garbaged.
+
+	04/25/79
+From Keith Petersen W8SDZ: add technique of de-
+leting garbage characters to avoid problems with
+line glitches.
+
+	04/28/79
+By Ward Christensen: re-write program, making it more
+structured, and better commented.
+
+END
+

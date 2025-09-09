@@ -1,0 +1,189 @@
+;
+;	USERPW.ASM  version 2.1   7/12/81
+;	  By Dave Hardy
+;
+;   Based on Ron Fowler's USER-8/8.ASM program
+;
+;   USERPW is used to replace the 'USER' command in a remote
+;    CP/M system, which is usually removed to restrict users
+;    to the lower user areas. Like USER-8/8, USERPW will allow
+;    public access to all user areas with values less than
+;    MAXUSER (set below), but USERPW will also allow password
+;    access to the 'restricted' user areas.  If the caller
+;    types only the filename, with no user number on the command
+;    tail, the program will tell the caller what user number he
+;    is in and give instructions.
+;
+;  Modification history:
+;07/12/81 Added TELUSR routines to inform caller of current user
+;	  number and how to use program.  Changed version number
+;	  to 2.1 instead of 3.0, because I'm still working on a
+;	  major revision of USERPW to be released as version 3.0.
+;	  By Dave Hardy
+;
+;05/23/81 Added LOGONCE option so that program will not ask for PW
+;	  if user is already in password-accessible user area.
+;	  By Dave Hardy
+;
+;  Define miscellaneous values:
+DFCB	EQU	5CH	;Default File Control Block address
+SETUSR	EQU	32	;BDOS Set User function
+PRNSTR	EQU	9	;BDOS Print String function
+CONOUT	EQU	2	;BDOS Print Character function
+CBUFF	EQU	10	;BDOS Read Console Buffer function
+DRIVE	EQU	4	;CP/M's user/drive storage byte
+BDOS	EQU	5	;CP/M's BDOS jump
+USERDR	EQU	4	;CP/M's USER/DRIVE select byte
+CR	EQU	0DH	;ASCII carriage-return
+LF	EQU	0AH	;ASCII line-feed
+;
+;  Define TRUE and FALSE:
+FALSE	EQU	0
+TRUE	EQU	NOT FALSE
+;
+;  Set the following equates as desired:
+MAXUSER EQU	0	;Set to highest PUBLIC remote user area desired
+ABSUSER	EQU	4	;Set to highest PW ACCESS remote user area desired
+LOGONCE	EQU	TRUE	;True, if desire log-in only from user 0
+;
+	ORG	100H
+;
+	LXI	H,DFCB+1 ;Point to specified USER # in command line
+	MVI	E,0	;Initialize user number accumulator
+	MOV	A,M	;Check that there is something in command line
+	CPI	20H
+	JZ	TELUSR	;Nothing there?  then tell user number and give help
+NUMLUP	MOV	A,M	;Get first character
+	INX	H	;Point to next location in command line
+	SUI	'0'	;Remove ASCII bias
+	JC	NUMDONE	;Exit with specified user number in A
+	CPI	10	;Check for illegal number (>9)
+	JNC	NUMDONE ;Stop if illegal character found
+	MOV	D,A	;Get specified user number
+	MOV	A,E	; into A register
+	ADD	A
+	ADD	A
+	ADD	E
+	ADD	A
+	ADD	D
+	MOV	E,A	;Save accumulation
+	JMP	NUMLUP	;Loop back for next character
+;
+TELUSR	LXI	D,TUMSG	;Tell the user what user number he's in
+	MVI	C,PRNSTR
+	CALL	BDOS
+	LDA	USERDR	;Get current USER number
+	RRC
+	RRC
+	RRC
+	RRC
+	ANI	0FH
+	CPI	0AH
+	JC	LT10
+	PUSH	PSW	;Save user number
+	MVI	E,'1'	;If user number is 10-16, then print leading '1'
+	MVI	C,CONOUT; (This routine will screw up if your CCP allows
+	CALL	BDOS	;  more then 19 user areas)
+	POP	PSW	;Restore user number
+	SUI	0AH
+LT10	ADI	30H	;Print user number
+	MOV	E,A
+	MVI	C,CONOUT
+	CALL	BDOS
+	LXI	D,TUMSG2;Print second part of message
+	MVI	C,PRNSTR
+	JMP	BDOS	;then return to CP/M
+;
+NUMDONE	MOV	A,E	;Get user number
+	STA	TMPUSR	;Save for later, if needed
+	ORA	A
+	RM		;Exit if illegal user number
+	CPI	ABSUSER+1
+	JNC	NOBODY	;Illegal user area request
+	CPI	MAXUSER+1
+	JNC	SOME	;Password user area request
+CHANGE	RLC		;Move to upper nibble
+ 	RLC
+ 	RLC
+ 	RLC
+	MOV	B,A	;Save requested user number
+	LDA	DRIVE	;Get current user/drive number
+	ANI	0FH	;Trim off old user number
+	ORA	B	;Add new user number
+	STA	DRIVE	;Set new user number
+	LDA	TMPUSR
+	MOV	E,A
+	MVI	C,SETUSR ;Set user number with BDOS call, too.
+	JMP	BDOS	 ;  then exit
+;
+;
+;  REQUEST FOR RESTRICTED USER AREA, SO ASK FOR PASSWORD
+;
+SOME	STA	TMPUSR	;Save user number for later
+;
+	IF	LOGONCE	;then see if user has already logged in
+	LDA	USERDR	;Get USER NUMBER/DRIVE
+	ANI	0F0H
+	RLC
+	RLC
+	RLC
+	RLC
+	MVI	B,MAXUSER+1
+	CMP	B
+	JNC	GOTPW	;If in non-public user area, PW was already given
+	ENDIF		; so don't ask again
+;
+	LXI	D,MSG	;Ask for password
+	MVI	C,PRNSTR 
+	CALL	BDOS 
+	MVI	C,CBUFF	;Get a line of console input (up to 16 characters)
+	LXI	D,CONBUF
+	CALL	BDOS
+	LXI	H,CONBUF+2	;Check for match with password
+	LXI	D,PASSWD	;Point DE and HL to buffers
+NEXT	LDAX	D
+	CPI	'$'		;When '$' found, then passwords match,
+	JZ	GOTPW		;  so jump
+	CMP	M		;Else check for character match
+	JNZ	BADPW		;Jump if wrong password given
+	INX	H		;Check next character for match
+	INX	D
+	JMP	NEXT
+;
+GOTPW	LDA	TMPUSR		;Get back requested user number
+	JMP	CHANGE		;Change user number and exit
+;
+BADPW	MVI	C,PRNSTR	;Print 'BAD PASSWORD' message
+	LXI	D,BADMSG
+	JMP	BDOS		;  and then exit to CP/M
+;
+NOBODY	MVI	C,PRNSTR	;Print 'NO ACCESS' message
+	LXI	D,NOMSG
+	JMP	BDOS		;  and then exit to CP/M
+;
+BADMSG	DB	'++INCORRECT++','$'	;'BAD PASSWORD' Message
+;
+NOMSG	DB	'Only USER 0-'	; *** NOTE: This only works for 0-9 ***
+	DB	ABSUSER+30H
+	DB	' available','$'	;'NO ACCESS' Message
+;
+MSG	DB	'PW=$'	;Message printed when asking for user password
+;
+TUMSG	DB	'You are in USER area $'
+;
+TUMSG2	DB	CR,LF,'To change user areas, type user number on command line$'
+;
+TMPUSR	DB	00H	;Temporary storage area for user area number
+;
+;  PASSWORD TO ALLOW 'RESTRICTED USER AREA' ACCESS GOES HERE
+;
+PASSWD	DB	'PASSWORD','$'	;Must be followed by '$'
+;
+;  CONSOLE INPUT BUFFER, USED FOR PASSWORD INPUT
+;
+CONBUF	DB	10H	;Set maximum buffer length to 16
+	DB	00H	;CP/M will put number of characters in buffer here
+	DS	16H	;Space for up to 16 characters in buffer
+;
+	END
+

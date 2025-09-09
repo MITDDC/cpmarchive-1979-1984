@@ -1,0 +1,377 @@
+	TITLE	ERAQ
+	SUBTTL	PROGRAM TO PROVIDE QUERY DRIVEN ERASE FUNCTION
+
+
+; AUTHOR: Thomas N. Hill
+;	  Alaska Micro Systems
+;	  200 Oklahoma
+;	  Anchorage, Ak.   99504
+;	  Phone (907) 337-1984  [0900 - 1700 (AST)]
+;
+; Modification & Update List:
+;
+; Original program written, 11/08/81
+; Added default to '*.*' if no input parameters. 11/20/81
+; Added checks for $SYS and $RO attributes. 12/10/81.
+; Mask bit 7 for console output for memory-mapped video boards
+; which use the high bit for attribute info. 04/16/82.
+
+
+.COMMENT \ This program is patterned after the ERAQ function 
+provided with Digital Research's MP/M system.
+It provides the user with a query driven erase function which
+accepts an ambiguos file reference from the command line and
+scans the specified disk for matches to the file reference.
+All matches are displayed to the console and the operator is
+queried as to whether or not the file is to be erased.  Those
+files requested for eraseure are then erased from the disk
+directory.  Files tagged as 'system' or 'read/only' are marked
+as such when queried for erasure. \
+
+; SYSTEM EQUATES
+
+CPM     EQU     0
+TPA	EQU	CPM+100H
+BDOS    EQU     0005H   ; BDOS ENTRY POINT
+FCB1    EQU     005CH   ; CP/M FILE CONTROL BLOCK
+FCB2    EQU     006CH   ; SECOND FILE CONTROL BLOCK
+CBUF    EQU     0080H   ; DEFAULT COMMAND BUFFER
+
+; NON-DISK I/O FUNCTIONS
+
+CONIN   EQU     1       ; CONSOLE INPUT
+CONOUT  EQU     2       ; CONSOLE OUTPUT
+LSTOUT  EQU     5       ; LIST DEVICE OUTPUT
+PRTBUF  EQU     9       ; SEND A STRING TO THE CONSOLE
+RDBUF   EQU     10      ; GET A STRING FROM THE CONSOLE
+CONSTAT EQU     11      ; CONSOLE STATUS
+VERS    EQU     12      ; RETURN CP/M (MP/M) VERSION NUMBER
+
+; DISK I/O FUNCTIONS
+
+SELDSK  EQU     14      ; SELECT DISK
+OPENF   EQU     15      ; OPEN FILE
+CLOSEF  EQU     16      ; CLOSE A FILE
+DELETF  EQU     19      ; DELETE A FILE
+READF   EQU     20      ; READ A RECORD
+WRITEF  EQU     21      ; WRITE A RECORD
+MAKEF   EQU     22      ; CREATE A FILE
+SETDMA  EQU     26      ; SET DISK DMA ADDRESS
+SIZEF   EQU     35      ; COMPUTE FILE SIZE
+SRCHF	EQU	17	; search for first ambiguous file
+SRCHN	EQU	18	; serach for next ambiguous file
+
+; THOSE FUNCTIONS REQUIRING A BYTE ARGUMENT WILL EXPECT THAT BYTE
+; TO BE IN THE E REGISTER.  ADDRESS ARGUMENTS ARE PASSED IN THE
+; DE REGISTER.  RETURN CODES ARE PASSED IN THE ACC.  IN GENERAL,
+; A RETURN OF ZERO INDICATES SUCCESS, WHILE A OFFH INDICATES FAILURE.
+
+; character equates
+
+CR      EQU     0DH     ; carriage return
+LF      EQU     0AH     ; line feed
+ESC     EQU     1BH     ; escape code
+EOF     EQU     1AH     ; end-of-file, control-z
+BELL    EQU     07H     ; terminal bell
+BS      EQU     08H     ; backspace
+TAB	EQU	09H	; tab char
+;
+FALSE	EQU	00H
+TRUE	EQU	0FFH
+;
+
+
+; additional equates
+
+SETATR	EQU	1EH	; change file attribute bits
+
+; program commences
+
+	CSEG
+
+ERAQ:	LDA	FCB1+1
+	CPI	' '		; no file reference on command line?
+	CZ	ALLFILE		; no file reference, default to *.*
+	LXI	D,DMABUF
+	MVI	C,SETDMA
+	CALL	BDOS
+	LXI	D,FCB1
+	MVI	C,SRCHF		; find first occurance of the requested file
+	CALL	BDOS
+	INR	A		; return 0ffh if no match
+	JZ	FIN
+ERAQ0:	DCR	A
+	ADD	A		; offset to buffer address
+	ADD	A
+	ADD	A
+	ADD	A
+	ADD	A
+	LXI	H,DMABUF
+	MVI	D,0
+	MOV	E,A
+	DAD	D		; calculate offset
+	XCHG
+	LHLD	DIRPTR		; get current table pointer
+	MVI	C,32		; move 32 bytes of directory entry
+LP1:	LDAX	D		; get a byte
+	MOV	M,A
+	INX	H
+	INX	D
+	DCR	C
+	JNZ	LP1
+	SHLD	DIRPTR		; save updated table pointer
+	LDA	DIRCNT		; count entries found
+	INR	A
+	STA	DIRCNT
+	LXI	D,FCB1		; find the next entry
+	MVI	C,SRCHN
+	CALL	BDOS
+	INR	A		; done yet?
+	JNZ	ERAQ0
+
+;table now contains all selected directory entries.
+;display them and request erase permission.
+
+	LXI	H,BUFFER
+	SHLD	DIRPTR		; reset pointer to start of table
+DISP0:	MVI	A,8		; eight chars in name
+	PUSH	H		; save pointer to start of name
+DISP1:	INX	H		; over user byte
+	CALL	SENDSTRG	; print the string at (HL) for (A) bytes
+	PUSH	H
+	MVI	E,'.'		; print a period
+	CALL	OUTPUT
+	POP	H
+	MVI	A,3		; three chars in type
+LP2:	CALL	SENDSTRG
+
+;now check attribute bytes
+
+	MVI	E,' '
+	CALL	OUTPUT		; print 2 spaces
+	MVI	E,' '
+	CALL	OUTPUT
+	POP	H		; start of name
+	LXI	D,9
+	DAD	D		; first attribute byte
+	MOV	A,M		; get char
+	RLC			; put attribute bit in carry
+	JNC	DISP2
+	MVI	A,TRUE		; flag R/O file
+	STA	ROFLG
+DISP2:	INX	H		; system attribute
+	MOV	A,M
+	RLC
+	JNC	DISP3
+	MVI	A,TRUE
+	STA	SYSFLG		; set system file flag
+DISP3:	LDA	ROFLG		; now see if any attributes are set
+	MOV	B,A
+	LDA	SYSFLG
+	ORA	B
+	JNZ	DISP7
+	MVI	E,TAB
+	CALL	OUTPUT
+	JMP	DISP6
+
+DISP7:	MVI	E,'('
+	CALL	OUTPUT
+	LDA	ROFLG		; print R/O symbol?
+	ORA	A
+	JZ	DISP4		; nope.
+	LXI	D,RO
+	CALL	STROUT		; print read/only symbol after file name
+DISP4:	LDA	ROFLG		; if printed R/O, then print comma
+	ORA	A
+	JZ	DISP8
+	MVI	E,','
+	CALL	OUTPUT
+DISP8:	LDA	SYSFLG
+	ORA	A
+	JZ	DISP5		; print system symbol?
+	LXI	D,SYS
+	CALL	STROUT		; yes, print it after file name
+DISP5:	MVI	E,')'		; close symbol string
+	CALL	OUTPUT
+DISP6:	LXI	D,MSG1		; ask about erasing file
+	CALL	STROUT
+	MVI	C,CONIN		; get answer
+	CALL	BDOS
+	PUSH	PSW		; save answer
+	CALL	CRLF		; print a crlf
+	POP	PSW
+	ANI	5FH		; make upper case
+	CPI	03		; check for control-c abort
+	JZ	FIN
+	CPI	'Y'		; if answer is yes, then erase
+	CZ	ERASE
+	MVI	A,FALSE
+	STA	ROFLG		; else clear flags and look for next match
+	STA	SYSFLG
+	LDA	DIRCNT		; finished yet?
+	DCR	A
+	STA	DIRCNT
+	JZ	FIN
+	LHLD	DIRPTR		; adjust table pointer
+	LXI	D,32
+	DAD	D
+	SHLD	DIRPTR
+	JMP	DISP0
+
+;erase the file pointed to by the address stored in DIRPTR
+
+ERASE:	LHLD	DIRPTR
+	LDA	FCB1
+	MOV	M,A
+	LDA	ROFLG		; check for R/O status
+	ORA	A
+	JZ	ERAS1
+	PUSH	H		; save file pointer
+	LXI	D,9
+	DAD	D
+	MOV	A,M		; change R/O attribute bit
+	ANI	7FH
+	MOV	M,A
+	POP	H
+	PUSH	H		; recover, resave pointer
+	XCHG
+	MVI	C,SETATR	; alter file attributes
+	CALL	BDOS
+	POP	H		; recover saved pointer
+ERAS1:	XCHG
+	MVI	C,DELETF	; erase the specified file
+	CALL	BDOS
+	LDA	ERACNT		; count files erased
+	INR	A
+	STA	ERACNT
+	RET
+
+FIN:	CPI	03		; was it an abort?
+	CZ	FIN9
+FIN0:	LDA	ERACNT		; how many did we erase?
+	MVI	H,0
+	MOV	L,A		; convert to decimal value
+	LXI	B,-100
+	CALL	CNVRT
+	MOV	A,E
+	CPI	0		; check for leading zeros
+	JZ	FIN1
+	CALL	PRTDIG		; print the digit
+FIN1:	LXI	B,-10
+	CALL	CNVRT
+	MOV	A,E		; check for leading zeros
+	CPI	0
+	JZ	FIN2
+	CALL	PRTDIG
+FIN2:	MOV	A,L		; one digit
+	CALL	PRTDIG		; print it, even if it is zero
+	LXI	D,MSG2
+	MVI	C,PRTBUF
+	CALL	BDOS		; print the message after the value
+	JMP	CPM		; return to operating system
+
+FIN9:	LXI	D,MSG3
+	MVI	C,PRTBUF
+	CALL	BDOS		; indicate an abort
+	RET
+
+;print the string at (HL) for (A) bytes to the console
+
+SENDSTRG:
+	PUSH	PSW
+	PUSH	H
+	MOV	E,M		; pick up char
+	CALL	OUTPUT		; print it
+	POP	H
+	POP	PSW
+	INX	H
+	DCR	A		; done yet?
+	JNZ	SENDSTRG
+	RET
+
+
+CNVRT:	MVI	E,-1
+CNVRT1:	INR	E
+	DAD	B		; subtract power of ten from binary value
+	JC	CNVRT1		; do it until we go negative
+	MOV	A,B
+	CMA			; now add back last value subtracted
+	MOV	B,A
+	MOV	A,C
+	CMA
+	MOV	C,A
+	INX	B		; make sure we two's complement it
+	DAD	B		; add it back in
+	RET
+
+PRTDIG:	ADI	'0'		; convert to ASCII
+	PUSH	H
+	MOV	E,A
+	CALL	OUTPUT		; print it
+	POP	H
+	RET
+
+ALLFILE:
+	LXI	D,MSG4
+	MVI	C,PRTBUF
+	CALL	BDOS		; check for go-ahead
+	MVI	C,CONIN
+	CALL	BDOS
+	PUSH	PSW
+	CALL	CRLF
+	POP	PSW
+	ANI	5FH		; make upper case
+	CPI	'Y'		; if Y then proceed, else abort
+	JNZ	FIN9
+	LXI	H,FCB1+1	; leave disk number intact
+	MVI	B,11
+ALL1:	MVI	M,'?'		; make FCB all qmarks
+	INX	H
+	DCR	B
+	JNZ	ALL1
+	MVI	B,24
+ALL2:	MVI	M,0		; and rest with zeros
+	INX	H
+	DCR	B
+	JNZ	ALL2
+	RET
+
+CRLF:	MVI	E,CR
+	CALL	OUTPUT
+	MVI	E,LF
+	CALL	OUTPUT
+	RET
+
+OUTPUT:	MVI	C,CONOUT
+	CALL	BDOS		; print file name
+	RET
+
+STROUT:	PUSH	H
+	PUSH	D
+	MVI	C,PRTBUF
+	CALL	BDOS
+	POP	D
+	POP	H
+	RET
+
+;messages
+
+MSG1:	DB	TAB,'Erase this file? $'
+MSG2:	DB	' files erased.',CR,LF,'$'
+MSG3:	DB	'Program aborted.',CR,LF,'$'
+MSG4:	DB	'Use *.* as file match? $'
+RO:	DB	'R/O$'
+SYS:	DB	'SYS$'
+
+;data
+
+DIRPTR:	DW	BUFFER
+DIRCNT:	DB	0		; count of selected directory entries
+ERACNT:	DB	0		; count of erased files
+ROFLG:	DB	0		; set initial false
+SYSFLG:	DB	0
+DMABUF:	DS	130
+BUFFER: DB	0
+
+	END
+

@@ -1,0 +1,17 @@
+   Date: 3/22/81
+   From: LEWIS MOSELEY
+Subject: CP/M 2.2 patch for backspace
+
+New patch to CP/M V2.2 BDOS.  Causes both <DEL> and
+<BS> to be treated like a <BS>, i.e, to echo a
+<BS> instead of the character.  Patch this into your
+BIOS source code:
+ 
+        ORG     CCP+0A1BH
+        JMP     CCP+0A07H
+        DB      0,0,0,0,0,0,0,0         
+
+NOPs to keep it pretty.
+
+Thats all there is to it!
+

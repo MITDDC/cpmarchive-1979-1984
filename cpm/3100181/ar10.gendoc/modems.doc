@@ -1,0 +1,192 @@
+
+      MODEMS - AN OVERVIEW FOR BULLETIN	BOARD IMPLEMENTORS
+
+			     -----
+
+			by David Boruff
+		      Maryville, Tennessee
+			8 September 1981
+
+
+     For  the  past  several  months,  I've been researching the
+market in an attempt to	find the all-time  hot	set-up	modem to
+use with my own	CBBS-RCP/M system.  I've finally made my choice,
+and  perhaps some of my	thoughts and observations will help  you
+make yours.  
+
+     To	 get  a	bulletin board or remote file transfer system on
+the air, you need  more	than just a simple acoustic coupler such
+as the widely-used Novation CAT.  As a minimum,	you need a modem
+which can automatically	 answer	 the  telephone,  run  in either
+answer	 or   originate	  mode,	 and  offer  a	high  degree  of
+sensitivity, selectivity, and  immunity	 to  both electrical and
+acoustic  noise.    Although  auto-originate is	nice,  it  isn't
+necessary for a	bulletin board system since its	primary	function
+is to answer calls, not	originate  them.   But since most people
+who implement a	bulletin board or RCP/M	system	also  use  other
+systems,  the  added  flexibility  offered  by an auto-originate
+modem is worth paying a	little more for.  
+
+     The requirement that the modem should be capable of running
+in either answer or originate mode may not be obvious, but it is
+important.    Normally,	 a caller dials	up a bulletin  board  in
+originate mode,	and the	bulletin  board	 answers in answer mode.
+For the	unitiated, the originate/answer	terms refer primarily to
+the various tones that are used	to transmit and	receive	data.  A
+binary	1  (or "mark") is transmitted at one  frequency,  and  a
+binary 0 (or  "space")	is  transmitted	 at  another  frequency,
+(usually lower in pitch	then the mark tone).  The difference  in
+frequency  between  the	mark tone and the space	tone is	referred
+to  as	the  frequency	shift,	or  just  "shift".    Ham  radio
+enthusiasts will recognize  the	 mark, space, and shift	terms as
+being hang-overs from teletype terminology.  
+
+     In	 addition to having a difference  in  frequency	 between
+mark and space,	 there is also a difference in frequency between
+answer and originate.	 Typically,  an	 answer	modem's	mark and
+space  tones  are  about  1  KHz  higher  in frequency	than  an
+originate  modem's  tones, but both still use  a  common  shift.
+With Bell 103 type modems, the answer modem marks at 2225 Hz and
+spaces at 2025 Hz (a  shift  of	 200  Hz).   The originate modem
+marks at 1270 Hz and spaces at 1070 Hz (again,	a  shift  of 200
+Hz).  In practice, the answer modem transmits at 2225/2025,  and
+listens	 at  1270/1070 Hz, with	the originate modem transmitting
+at 1270/1070,  and  listening  at 2225/2025 Hz.	 In this manner,
+both modems can	talk at	the same  time	since  each  ignores the
+tones  its  transmits,	and  only  recognizes  the  tones  being
+transmitted  by	 the  other  end.    This  is  referred	 to as a
+full-duplex  system  because  communication  is	possible in both
+directions simultaneously.  There is nothing particularly  magic
+about  the  Bell  103 tones, although they were	chosen with some
+thought	as to the characteristics of the telephone network.  But
+other frequencies and  shifts  can and are used	by other modems,
+Other frequency	and shift combinations are possible, and in fact
+are used on non-Bell 103 type modems, particularly those capable
+of running at 1200 baud.  But remember	that  a	 modem using the
+Bell  103  type	 tones	can only communicate with another  modem
+using  the  same tones.	 A  Bell  103  modem  can't  talk  to  a
+Racal-Vadic 1200 baud job, at any baud rate.  
+
+     Okay, enough  terminology.	   What	 difference does it make
+whether	my modem transmits in originate	or  answer  mode as long
+as  the	 guy  on the other end is using	the complementary  mode?
+Assuming that you  have	 a  good  connection,  it really doesn't
+matter.	   But	on  a  noisy telephone line, the frequencies  do
+matter,	since certain types of spikes and garbage may affect one
+tone pair more than the	other.	There are those	who contend that
+the high tones are more	 immune	to noise than the low tones, and
+there are those	who contend  the  opposite.    I contend that it
+depends	on the type of noise being encountered,	but it is a fact
+that  you  can	sometimes  salvage  a bad connection  by  simply
+swapping tones.	 That is, let the answer  modem	go to originate,
+and let	the originate modem go to answer.   If the data	is being
+transferred primarily in one direction only, such as when XMODEM
+is sending a file, and infrequently listening  for  a  handshake
+character, "flipping" tones may	make all the difference	 in  the
+world.	However, if data is being transferred in both directions
+equally	 often,	 flipping tones	probably won't help since you're
+just transferring the hits from	one end	to the other.  
+
+     So	we see that  the ability to change tones in midstream is
+important.  It should  be  obvious  as	well that if you have an
+answer-only modem, you can't use it to dial-up	another	bulletin
+board or time-sharing system, since the	other end  will	be using
+the answer tones when it picks up the phone.  
+
+     What other	desirables are there to	consider before	buying a
+modem?	 Well selectivity and sensitivity are very important  in
+that they  allow  you're  modem	 to  communicate  on  a	marginal
+telephone  line.    In	this respect, all modems are not created
+equal.	A modem	featuring high selectivity usually has some sort
+of crystal-controlled filtering	system to allow	it to zero in on
+the precise mark and space  tones  its	listening  for,	 and  to
+ignore	other  garbage	on  the	 line.	High selectivity is very
+important in an	acoustically-coupled modem because the modem may
+pick up	ambient	room noise along with the tones.  With a popular
+low-priced modem I've played with,  I  can  raise  all	kinds of
+havoc  by having my stereo going at the	same time I'm trying  to
+transfer  data.	   The	reason	is  that if the	music contains a
+frequency close	to the frequency of the	mark or	space tones, the
+modem will get confused	unless it really  notches out everything
+except the tones its looking for.  With	a direct-connect  modem,
+you  avoid  the	 problem  of room noise, but noise, ringing, and
+echoes on the line still make high-selectivity very desirable in
+either type of modem.  
+
+     Sensitivity is also a big deal, since it determines how low
+a signal level you're modem  can work.	A highly-sensitive modem
+can pull a signal out of the mud  where	 a  less-sensitive modem
+would  either fail to hear anything at all, or	at  least  would
+plague you  with  drop-outs  everytime a little	pop ambled by on
+the line.  As with selectivity,	 sensitivity  is  more important
+with  an  acoustically-coupled	modem than with	a direct-connect
+modem  simply because the direct-connect  modem	 won't	have  to
+listen for the tones through any room noise it might pick up.  
+
+     Both sensitivity and selectivity have to do with how well a
+modem will  receive  data.    But  when	 transmitting  data, the
+frequency  stability  of the tones being generated is important.
+You  don't want	a tone oscillator  that	 drifts	 off  frequency,
+especially  if	the  other  guy	is using a modem with very sharp
+filtering  ("high selectivity").    The	 best  modems  currently
+available  at  hobbyists  prices  all  use  crystal-  controlled
+oscillators  to	 generate  the	tones,	and  since  this type of
+circuitry  is  cheap to	design and manufacture,	stability  isn't
+much of	a problem with all but the cheapest of modems.	However,
+an acoustically-  coupled  modem can get fouled	by the telephone
+microphone element.  The tones	could  be generated by the modem
+right on frequency, but	if the carbon microphone element used in
+most  handsets has packed down,	the tone  could	 be  transmitted
+down  the   telephone	line  either  distorted	 or  shifted  in
+frequency.  Replacement	microphone  elements are available, such
+as the Novation	Super Mike, which are  superior	 to the	elements
+used  by  Ma Bell.  I can testify from personal	experience  that
+the Novation  element  does work and has frequently made all the
+difference in the world	 on some connections.  If you go with an
+acoustic modem,	no matter  how	good  it  is, I	would definitely
+recommend that you install a Super Mike	as standard equipment on
+your modem telephone.  Its a ten buck miracle.	
+
+     From the previous discussion, you may  get	 the  impression
+that  a	 direct-  connect  modem  is  definitely superior to  an
+acoustically-coupled job.  Theoretically, this line of reasoning
+is correct.  In	actual practice	however,  change "definitely" to
+"maybe".  My arsenal of	computer equipment  presently includes a
+Datec  32  originate/answer acoustic modem, and	 I  can't  speak
+highly enough  of  it.	 Its ugly as sin and bulky as bulldozer.
+When the handset is inserted  in the coupler, you have to strain
+your neck to see the receive-data and carrier-detect lights, and
+it takes too long to acquire carrier-detect.  But when the going
+gets tough and a lot of	other highly-touted  modems are	ready to
+throw in the towel, Datec just hums right along.    With a Super
+Mike-equipped  handset,	 the  Datec  is	 a  damn  fine piece  of
+equipment.   Hobbyists seldom use them,	but professionals  swear
+by  the	 entire	  line	 of   Datecs.	 If  you  want	a  basic
+originate/answer modem with performance	 second-to-none, and you
+don't need all the fancy auto this and auto  that,  the	Datec 32
+and a Novation Super Mike is what you want.  
+
+     Why this testimonial about	a bare-bones acoustic modem when
+we're  talking	about  super-modems?	Simply	this:  the Datec
+acoustic  can outperform some of the best direct-connect  modems
+on the market  today  including	 the  CATs, U.S. Robotics, D. C.
+Hayes  Micromodem  100,	 Microconnection,  and	several	 of  the
+high-priced  Racal-Vadics (all	Bell  103-compatible).	  In  my
+opinion, you're	 going to have to spend	a big (as in BIG) wad of
+money	to  get	 a  Penril   or	  some	 other	 top-of-the-line
+"professional-quality"	modem  that  will work any better at the
+basic level than my Datec.  So don't let anybody tell you that a
+direct-connect	  modem	   will	   "always"    outperform     an
+acoustically-coupled  modem.	If  all	 other factors and basic
+specifications are the same, a direct- connect	modem  WILL do a
+better	job.	But  a	well-designed  acoustic	coupler	will run
+circles	 around	 a  poorly-designed direct-connect  modem  every
+time.  
+
+     A	companion  article  may	 be  available	on  this  system
+reviewing a newcomer  to  the direct-connect super modem market,
+the D. C. Hayes	Smartmodem.    Anyone thinking of using	this new
+product	on a CBBS or RCP/M type	 system	 should	read this review
+before making your purchase.  
+
+

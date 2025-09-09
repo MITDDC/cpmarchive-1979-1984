@@ -1,0 +1,19 @@
+Date: 9 Dec 1982 0900-EST
+From: WOHL at Cmu-Cs-C
+To:   info-cpm, info-micro
+Re:   new cpmutl, ver 7,utility to read/write cpm floppy on vax
+
+CPMUTL is a program you run under vax unix on a vax-780.  It uses the floppy
+drive (that every 780 has) to read and write cpm format floppies.  If someone
+has tried to run CPMUTL under VMS please drop me a note saying what the
+problems if any where encountered.
+
+There is a new release of cpmutl that has a bug mz@cmu-cs-vlsi found fixed.
+When files where read from the floppy the unix file wasn't closed so a
+multiple get with more than 16 files failed.  It is available from:
+ MIT-MC      CPM;AR43:CPMUTL 7C
+ CMU-CS-C    PS:<WOHL.BAR>CPMUTL.C.7
+ CMU-CS-VLSI (a uucp and ip-tcp vax at CMU) /usr/avw/cpmutl/cpmutl7.c
+
+	Aaron
+

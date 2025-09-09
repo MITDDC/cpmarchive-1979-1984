@@ -1,0 +1,46 @@
+--------------------------------
+          MBASIC NOTES
+--------------------------------
+  A question asked quite frequently regarding MBASIC has to do 
+with "garbage collection"; or "Why does my MBASIC program 
+suddenly lock up in the middle of execution?".  
+  Many of our users are unfamiliar with the way MBASIC stores and 
+manipulates strings.  Perhaps the best way to explain how MBASIC 
+works with strings would be to use a short example program, and 
+show what the string space looks like after each instruction.
+
+PROGRAM        STRING SPACE
+-------        ------------
+A$="TEST"      TEST
+B$="NEW"       TESTNEW
+A$="OLD"       TESTNEWOLD
+SWAP A$,B$     TESTNEWOLD
+A$=B$          TESTNEWOLDOLD
+PRINT FRE("")  OLD
+         VARIABLES
+         ---------
+         A$>TEST
+         A$>TEST B$>NEW
+         A$>OLD B$>NEW
+         A$>NEW B$>OLD
+         A$>OLD B$>OLD
+         A$>OLD B$>OLD
+
+  As you can see, MBASIC stores each new string it comes upon by 
+APPENDING it to the end of the string space, NOT by overwriting 
+what is already there.  Notice that the unused strings are not 
+deleted until the FRE function is encountered.  The FRE function 
+forces MBASIC to reclaim the unassigned string space, by a 
+"garbage collection" process.  MBASIC will also perform this 
+garbage collection when string space is exhausted.
+  Thus, the larger the string space, the longer this process will 
+take.  This is why a large MBASIC program will sometimes "hang 
+up" for a few minutes when you least expect it.
+  There is no way to prevent this process from taking place; but 
+you CAN force it to take place when you want it to.  The FRE 
+function will return the number of bytes remaining in the string 
+space.  In order to do this, it must first force garbage 
+collection.  Given this, the line A=FRE("") may be used to force 
+garbage collection when YOU want it to happen.
+
+

@@ -1,0 +1,114 @@
+
++++ Remote CP/M Software Exchange Systems Data, RCPMDATA.17 +++
+
+===============================================================
+
+      Last revision and update: June 20,1981 by CP/M-Net
+
+Note: This data, formerly at the end of RCPMLIST, has been made 
+      into  a  separate file.   Extended comments  relevant  to      
+      updates of the list should be placed here. 
+
+===============================================================
+
+
+                 General Notes and Comments
+                 --------------------------
+
+         Revised Items 7,8,9, and 10: June 20, 1981 
+
+1.  The  systems listed here only carry programs that will  run 
+   under the CP/M operating system,  most of them public domain 
+   software  distributed by CPMUG or SIG/M,  the two main  CP/M 
+   users'  groups.   Some of the programs involved  (especially 
+   those in  BASIC, PASCAL and C but also a few in Z-80 or 8080 
+   assembly language) can be converted to run on other machines 
+   quite easily.      Systems dedicated to downloading programs 
+   for the PET, APPLE, TRS-80 and NORTHSTAR do exist,  however.
+   Ask experienced users in your area, or check through  "other 
+   systems" listings on local CBBS's, ABBS's, FORUM-80's, etc.
+
+2.  XMODEM  is  a modification of Ward  Christensen's  original 
+   MODEM  program  designed  to allow  the  transfer  of  files 
+   between the exchange system and yours.   The exchange system 
+   needs the program,  not you;  you will probably be using one 
+   of  the  many  versions  of  MODEM  itself:   e.g.,  MODEM2, 
+   MODEM527,  MODEM 926,  MODEM7,  MODEM71,  TRSMODEM, APMODEM, 
+   CMODEM, MBOOT3, etc.  BSTAM and most of the other commercial
+   terminal programs will not work properly with XMODEM.
+
+3.  Non-XMODEM program transfer systems are starting to appear: 
+   e.g., LICA's BBS on Long Island [at (516) 561-6590; 110-600+ 
+   baud; 24 hrs;no callback] has a few downloadable ASCII files 
+   but at present  these must be  captured  like CBBS  messages
+   and then saved to disk  without any error-checking protocol.
+   John Wood, the sysop of Santa Clara CBBS [at (408) 241-1956;
+   110-600+ baud; 24 hrs, no callback] has  announced  plans to
+   implement  late-night  exchanges;  whether  these  will  use
+   XMODEM is not yet clear.  
+
+4.  Some XMODEM systems also operate as real CBBS's,  including 
+   those operated by Dick Mead and Steve Vinokouroff.   Others, 
+   like Keith Petersen's &  CCCC's  use a  skeletal  subprogram
+   for handling messages called "MINICBBS".   Their emphasis is 
+   on exchanging software, not bulletin board-type information.
+   Most RBBS systems focus on software, but even here there are
+   variations...
+
+5.  "CBBS", "MINICBBS", "RBBS" (and a variant, "MINIRBBS")  are
+   the user-logging/message-taking programs  used by almost all
+   of the  systems on RCPMLIST.  You  will  need one of them if
+   you are interested in starting your own  RCPM/XMODEM system.
+   CBBS & MINICBBS are assembly-language programs and cost $60.
+   RBBS & related programs are in MBASIC and free but not quite
+   as good as CBBS.  Ask the sysop of this system for  details,
+   or read RBBS-USE.DOC or RBBSNSTL.DOC.
+
+6.  A few CBBSs and RBBSs have software exchange functions that
+   require the use of a password. Such systems are not included
+   in RCPMLIST.
+
+7.  At  present  (06/81)  the  systems with  the  largest  disk 
+   capacity and the most programs up at once are Kelly Smith's, 
+   Keith  Petersen's,  Calamity Cliffs,  Jud Newell,  and  Dick 
+   Mead,   all  running  9-10 Mb hard  disks.   Bill  Earnest's  
+   system  has  a 4.25 Mb hard disk,  all for RCPM  use.   Dave 
+   Hardy's sys, with 3 DS drives giving @ 3 Mb is in 5th place. 
+   Kelly's CP/M-Net system will add an additional 10 Mb of disk 
+   in July, possible running 2 remote users in an MP/M set-up.
+
+8.  Look  for  "Currie's Software Emporium" to appear  soon  in 
+   Manhatten  NY,  with 10 Mb hard disk and 110-600+ Baud  PMMI 
+   modem...but just a rumor so far.
+
+9.  Hank  Sryszka,  Bearsville  Town SJBBS,  is expected to  be 
+   running  under MP/M very soon now...Looks as if Ben  Miller, 
+   Columbus CBBS,  is running MP/M.  Tim Nicholas is  currently 
+   working on a two-modem system and  expects to be up  with it 
+   shortly.John  Wood  (Santa Clara) is doing the same for  his 
+   non-XMODEM CBBS system. He may already have it working.
+
+10. The fastest systems are Tim Nicholas', with a Bell 212-type 
+   modem,  and  SUPERBRAIN RBBS,  with a  Racal-Vadic 3451, and 
+   Tim Cannon,  Palatine RCPM,  with a Bell 212A. All three are 
+   capable of 1200 baud,  full duplex, at different frequencies 
+   than other micro modems use.  Any of the systems using PMMIs 
+   can sometimes reach 710 baud but usually are not trustworthy 
+   beyond 600 baud.    Systems based on  Racal-Vadic 3451s have  
+   600 baud  capablities  (at  ordinary micro modem freqs)  but 
+   may not make use of this.   Chuck Witbeck has just put a R-V 
+   telephone   modem  (not  a 3451--one of the $400  kind  that 
+   looks like an ordinary telephone) on line that  runs at  600 
+   and 300 baud.  
+
+   Two other brands of modem will run at 600: the  IDS on-board
+   S-100 modem and Novation's newly announced RV 3451-lookalike
+   "triple modem".  Neither are yet used by an RCPM system. The
+   other systems on RCPMLIST all run either D.C.Hayes or assor-
+   ted  brands of external modem.  They do not  send or receive
+   faster than 300 baud.
+
+11. And please, most of these systems operate from private home
+   telephones...   be courteous and call only during the posted
+   operating hours.
+

@@ -1,0 +1,133 @@
+
+                          BDS C User's Guide Addenda
+                         v1.44 Edition --  April, 1981
+ 
+                                  Leor Zolman
+                                  BD Software
+                                33 Lothrop st.
+                        Brighton, Massachussetts 02135
+ 
+ 
+ 
+     Actually,  I  managed  to  wipe out my only copy of the v1.44 update sheet
+when my hard disk crashed a little  while  ago,  but  I'm re-typing it from the
+hard copy just for placement into ar25:cpm;. Thus, the  entries  may  be  a bit
+more terse than the originals, but I think the info will still get across.  
+ 
+     Here are the bug fixes/enhancements for version 1.44:  
+
+ 
+1.   (v1.43a  only):  the  character  sequence \\ at the END of a quoted string
+     caused the preprocessor to screw up comment handling. For example, 
+     
+     	printf("This backslash would cause bit trouble: \\");
+ 
+     would have done it.  
+ 
+2.   The "qsort" function didn't work when  the  total  size  of the data array
+     being  sorted  exceeded  32K  bytes.  This has been fixed by changing  the
+     declarations  of  certain  variables  in  the   function   from  "int"  to
+     "unsigned".  
+ 
+3.   CC1,  CC2  and  CLINK  may  now  be  aborted  in  mid-execution  by typing
+     control-C.  
+ 
+4.   A new CLINK option, "-f", may be placed before a CRL filename to FORCE all
+     functions in that CRL file to be loaded immediately, regardless of whether
+     they have been referenced yet or not. The "-f" only affects one CRL  file,
+     and  the  next  file  mentioned is again only scanned for needed functions
+     (unless "-f" is used again.) 
+ 
+5.   The "rename" library function  had  a  rather  serious  problem:  whenever
+     executed, it would zero out the three bytes immediately following the  end
+     of  the  "rename" function in memory, thus wiping out the first jump table
+     vector of  the  next  function!  This  was  fixed  by  increasing the "ds"
+     statement at the end of the rename function (in deff2.asm)  from 49 to 53.
+ 
+6.   The  "setfcb"  function  requires  that  the buffer allocated to hold  the
+     resulting fcb is at least 36 bytes long (not  just  32  or  33.)...this is
+     because "setfcb" zeros out the random-record fields for CP/M  2.x, whether
+     or not they are needed.  
+ 
+7.   A character constant consisting of the double-quote character enclosed  in
+     single  quotes  ('"'),  caused CC1 to go haywire in the comment- stripping
+     phase.  
+ 
+8.   Whenever the "type" information  for a function definition was placed on a
+     line separate from the actual name  of  the  function,  the compiler would
+     "lose" one line number for error reporting, and all errors found past that
+     point in the file would be reported with an incorrect line  number.    For
+     example, the following text would have caused that problem:  
+     
+     	char *
+     	foo()
+     	{
+     		...
+     	}
+ 
+ 
+9.   A  new library function, "execv", has been added to the package (source is
+     in DEFF2.ASM).  This  function  is  like  "execl",  except that a variable
+     number of parameters is passed by placing them into an array and passing a
+     pointer to the array instead of the actual parameters.  The  format of the
+     "execv" function is:  
+     
+     	execv(prog,argvp)
+     	char *prog, **argvp;
+ 
+     where  `prog'  points  to  the  name  of the COM file to be executed,  and
+     `argvp'  is  an  `argv'-like  pointer to an  array  of  pointers  to  text
+     parameters. The final entry in  the  list  must  be  a null pointer. As an
+     example, note that the "execl" call 
+     
+     	execl("stat","badspots","$r/o",0);
+ 
+     may be written in terms of "execv" as follows:  
+     
+     	char *args[3];
+     	...
+     	args[0] = "badspots";
+     	args[1] = "$r/o";
+     	args[2] = NULL;
+     	execv("stat",args);
+ 
+     Pre-v1.45  version of the package contained an "execv"  that  printed  the
+     message "broken  pipe"  on the console and re-booted CP/M whenever "execv"
+     couldn't find the program  is  was  supposed to execute; v1.45 contains an
+     "execv" that simply returns -1 (ERROR)  when  the program cannot be found.
+ 
+10.  Directed I/O and pipes, of sorts, are now available  to BDS C programmers.
+     The  files  DIO.C  and DIO.H make up a cute little directed  I/O  package,
+     allowing for directed  input, directed output and pipes (a la Unix) on the
+     command line to programs  compiled  with this special I/O package. See the
+     comments in DIO.C for complete details.  Note  that  the  presence of this
+     package  does  NOT  contradict certain comments made in the BDS  C  User's
+     Guide about kludging  advanced  Unix  features  under CP/M; those comments
+     were directed toward systems in which the I/O redirected/generalization is
+     forced  upon  the user, along with all the entailing  overhead,  when  the
+     redirection isn't needed or wanted for many applications. The DIO package,
+     being written in  C and separately compiled, lets YOU decide when you want
+     it and when you do  not.  If you don't want it, it takes up zero space; if
+     you do, it takes up a  little  room and yanks in all the buffered I/O, but
+     it DOES give you redirection and pipes!  
+ 
+11.  a "standard error" buffered I/O  stream  number has been added to the list
+     of special devices recognized by the "putc"  buffered output function (and
+     thus all the buffered output functions that use  "putc"). An `iobuf' value
+     of 4 causes the character given to be written to the  CP/M console output,
+     always, while an `iobuf' value of 1 causes the character  to be written to
+     the standard output (which might be a file if the DIO package  is in use.)
+     Note  that  the  value  of  4  was chosed instead of 2 (the Unix standard)
+     because 2 was already taken to mean the CP/M lst: device.  
+ 
+12.  String constants may now contain zero bytes within them. Previous versions
+     have flagged lines such as 
+     
+     	foo = "Jan\0Feb\0Mar\0Apr\0May\0Jun\0Jul\0Aug\0Sep\0Oct\0Nov\0Dec\0";
+ 
+     with the error message:  
+     
+     	Zero bytes are not allowed within strings; to print nulls, use \200
+
+[END V144.DOC]
+

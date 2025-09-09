@@ -1,0 +1,147 @@
+Date: 23 May 1981 19:43-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Minor Bug in List Buffer/File
+To: INFO-MTN at MIT-MC
+cc: FJW at MIT-MC, BUG-MTN at MIT-MC
+
+In trying to be clever and using Kelley Smith's trick to record ^Z's
+(1AH) in the buffer by changing them to 9AH (in TEXT MODE), I left
+code in the List Buffer/File routine which strips the parity bit
+before checking to see if it is 1AH, the CP/M text EOF mark.  This
+turns out to be redundant anyway, as it is checked at another point
+(without the masking) before it is returned to this routine.
+
+Since my terminal sees ^Z as the cursor up command from EMACS, a List
+Buffer or File will display a premature and false End of File message
+when that character has been recorded as 9AH.  However, the buffer is
+actually much longer as is still recording, and, more importantly, the
+entire buffer WILL be written to disk past the false ^Z.
+
+Here are the patches for MTN 2.1:
+
+	11E2  FE => 00   (11E4 for 2.2)
+	11E3  1A => 00   (11E5 for 2.2)
+	11E4  28 => 00   (11E6 for 2.2)
+	11E5  3F => 00   (11E7 for 2.2)
+
+Sorry for any inconvenience this may have caused you.
+
+--Frank
+
+Date: 4 March 1981 22:16-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  New MTN (version 2.1) now available
+To: INFO-CPM at MIT-MC, INFO-MTN at MIT-MC
+
+A new MicroTELNET (MTN) Version 2.1 is now available.  The HEX files
+are rather large and have been broken into three HEXn files each.
+(They are also available in the original form as one HEX file each.)
+They may be reconstructed using the technique described below.
+
+Also available, upon request, is a 4300H-based version for those of
+you using systems requiring that as the starting address of their
+TPA...
+
+The files are:
+
+MC:CPM;MTN21 HEX  321 recs, 41053 bytes, CRC= 76E1.  MTN21.COM file CRC= D958
+
+MC:CPM;MTN21 HEX1 107 recs, 13680 bytes, CRC= 9D68.
+MC:CPM;MTN21 HEX2 107 recs, 13680 bytes, CRC= E0AD.
+MC:CPM;MTN21 HEX3 107 recs, 13693 bytes, CRC= 325F.
+
+
+MC:CPM;MTNMSG HEX  394 recs, 50413 bytes, CRC= 4B47. MTNMSGS.OVR file CRC= BBC1
+
+MC:CPM;MTNMSG HEX1 132 recs, 16830 bytes, CRC= 15D4.
+MC:CPM;MTNMSG HEX2 132 recs, 16830 bytes, CRC= 219C.
+MC:CPM;MTNMSG HEX3 131 recs, 16753 bytes, CRC= FEE6.
+
+
+The doc file is MC:CPM;MTN21 DOC which is mainly a "what's new"
+document.
+
+To merge the HEXn files into the required files:
+
+DDT MTN21-1.HEX
+IMTN21-2.HEX
+R
+IMTN21-3.HEX
+R
+^C
+SAVE 57 MTN21.COM
+
+Similarly for MTNMSGS.OVR.  (SAVE 70 MTNMSGS.OVR)
+
+Again, bug reports and/or feature requests to BUG-MTN@MIT-MC.
+
+--Frank
+
+Date: 28 February 1981 04:23-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  MicroTELNET (MTN) Version 1.3
+To: INFO-CPM at MIT-MC, INFO-MTN at MIT-MC
+
+(Please excuse any duplicate of this message that some of you may
+receive.)
+
+Dear MTN Users,
+
+I am removing the MTN files from MC:CPM; and will "shortly" (whatever
+*that* means) upload a significantly newer version with MANY new
+features and ALOT of bugs fixed.  Release of this new version will be
+what I consider premature, but only in the sense that I haven't been
+able to install and check out ALL the features that everybody has
+asked to be included.  Since some of you have received a pre-release
+version of MTN 2.0 in various stages of development, the new release
+will be called MTN 2.1 to bring you back in sync.
+
+I must add that the reason for doing this was prompted by a rather
+embarrassing discovery of a piece of code that has been in the program
+from its beginnings which was lifted from another modem program and
+seemed to work.  In tracking down a bug near that code, I found that
+what I had assumed to be correct was not.  THIS ONLY APPLIES TO USERS
+OF MTN 2.0 AND BELOW WHO HAVE A D.C. HAYES MODEM.  THE PMMI CODE IS
+CORRECT, EXCEPT THAT IT DOES NOT HANG UP THE PHONE WITH THE TERMINATE
+COMMAND.
+
+So, rather than leave this faulty code around for even more
+unsuspecting people to pick up and not let me know they have it (so as
+to be on the mailing list for upgrade announcements), I am removing it
+from further circulation.
+
+My sincere apologies for any inconvenience this may have caused you.
+
+--Frank
+
+
+[For those of you interested in what the bug was that got me upset:
+
+For some reason, the original author of this section of code decided
+to turn on the transmit enable signal BEFORE dialing the number,
+rather than AFTER receiving the carrier detect signal from the remote
+modem.  What lead me to check this out was that I was trying to speed
+up the dialing back to specs and could not find out why another
+auto-dialing modem program I had was successful in completing calls,
+while my version, using the same timing was not.  I also discovered,
+in the same section of code, that the modem setup was not correct
+either.  Thus the withdrawal announcement.
+
+--fjw
+
+Date: 20 November 1980 01:24-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  You're on this list!
+To: INFO-MTN at MIT-MC
+
+If you get this msg, you're on this list.  If you do not wish to be on
+this list, send me a msg (and NOT this list).
+
+Patch locations for MTN 1.3 are available in MC:CPM;MTN13 PATCH to
+change ports addresses, etc.
+
+MTN 1.4 is actively in the works - more info on that soon.
+
+--Frank
+
+

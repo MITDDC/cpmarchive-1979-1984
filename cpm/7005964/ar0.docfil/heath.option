@@ -1,0 +1,71 @@
+BABYL OPTIONS:
+Version:5
+Append
+
+1, recent,,
+*** EOOH ***
+Date: 25 August 1981 03:59-EDT
+From: Keith B. Petersen <W8SDZ>
+To:   INFO-CPM
+Re:   Saving money on software for CP/M
+
+Andy Bender passed along a tip on how to save money by buying
+the Heath versions of F80 and M80.  I just received info on
+two more programs that can be patched:
+
+--------
+IN VERSION 5.1 OF THE HEATH MICROSOFT COMPILER TO MAKE IT
+RUN ON OTHER COMPUTERS ALL YOU HAVE TO DO IS CHANGE ADDRESS
+40F9 TO JMP 4151. THIS WILL BYPASS THE SAME CODE AS EXPLAINED
+IN F80-M80.SAV.
+--------
+TO MAKE THE HEATH VERSION OF MBASIC 5.2 RUN ON OTHER MACHINES
+CHANGE ADDRESS 5F08 TO JMP 5F5C.  THIS BYPASSES THE SAME CODE
+THAT IS EXPLAINED IN F80-M80.SAV.
+--------
+
+...and the original message is reproduced here for those who
+didn't see it or forgot what it said:
+
+Date: 5/30/81
+From: ANDY BENDER
+To:   INFO-CPM
+Re:   CHEAP FORTRAN AND MACRO 80 PROGRAMS
+
+If you want a copy of the Microsoft F80 and M80 programs
+as well as their support software and you want to get them
+with free updates for a year and be a legal user read on.
+While not free, Heathkit sells these programs, doctored up
+so they only run on Heath systems, at a discount.  The
+discount is quite steep and the free updates are attractive.
+You will need to know about DDT and SAVE to fix them so you
+can use them:
+
+FOR FORTRAN: >DDT F80.COM
+then alter the LXI d,barf at 2C38 to jmp 2C90.
+Exit from DDT and do a SAVE 107 F80.COM
+
+FOR MACRO80: >DDT M80.COM
+then alter the LXI d,barf at 4392 to jmp 43EA.
+Exit from DDT and do a SAVE 75 M80.COM
+
+You now own legal copies of both programs suitable for use
+on your CP/M 1.4 or 2.2 system.
+
+This patch bypasses the vendor code check in the CP/M
+serial number and also bypasses some I/O twitching that
+must be important for Heath systems.  The other system
+programs distibuted on the disk do not need patching
+these programs (LIB, L80 XREF etc) assume if you got to
+use them you must be ok.
+
+The same patch is probably possible in other Heath
+software such as BASIC Compiler or COBOL Compiler.  I
+have not researched these programs however.
+
+My advice to fix other software would be to look at the
+area in which the vendor code check is being carried out
+and follow the same bypass as I did in M80.
+
+Lots of Luck - Happy Computing from us at NSI.
+

@@ -1,0 +1,101 @@
+   SQ/USQ/FLS/TYPESQ file update notice - 7/22/81
+	 by Keith Petersen, W8SDZ
+
+This is a list of CRCs for the latest SQ/USQ/FLS files,
+obtained from Richard Greenlaw (the author) on 7/22/81.
+Also included are the new versions of TYPESQ from Bob
+Mathias (the author) on 7/22/81.
+
+Some of the programs have been updated. This will require
+replacement of some of the previously-released files,
+including USQ.COM, USQ.C, CHANGES.DOC, README.DOC, and
+TYPESQ.COM.
+
+A new user's manual, SQUEEZER.DOC, is now included
+(this replaces BUILDSQ.DOC and gives complete operating
+instructions and theory).
+
+Check your copies with CRCK.  The files with a "Q" as the
+middle letter of the filetype are squeezed versions of the
+originals.  You don't need these to compile - you need the
+un-squeezed versions.  To save disk space and modeming time,
+some systems may offer only the squeezed versions.  You can
+restore those by running USQ on them.
+
+Please note that SQDIO and USQDIO are not supplied because
+they are identical to DIO2 and can be created with PIP.
+
+--> FILE:  BDSCIO  .H  		CRC = 7D 77
+--> FILE:  BDSCIO  .HQ 		CRC = 03 92
+--> FILE:  BUILDSQ .DOC		-----------	[deleted]
+--> FILE:  CHANGES .DOC		CRC = 6C 96	<--new
+--> FILE:  CHANGES .DQC		CRC = 0A 84	<--new
+--> FILE:  DIO     .H  		CRC = 26 B7
+--> FILE:  DIO     .HQ 		CRC = FE 92
+--> FILE:  DIO2    .C  		CRC = 7B 7D
+--> FILE:  DIO2    .CQ 		CRC = 52 7A
+--> FILE:  FLS     .C  		CRC = D8 35
+--> FILE:  FLS     .COM		CRC = 0C 99
+--> FILE:  FLS     .CQ 		CRC = DB DA
+--> FILE:  HISTORY .DOC		CRC = 8A 70
+--> FILE:  HISTORY .DQC		CRC = 7F 83
+--> FILE:  IO      .C  		CRC = CF 59
+--> FILE:  IO      .CQ 		CRC = 40 6A
+--> FILE:  README  .DOC		CRC = E6 80	<--new
+--> FILE:  SQ      .C  		CRC = FF 93
+--> FILE:  SQ      .COM		CRC = 47 15
+--> FILE:  SQ      .CQ 		CRC = C6 6E
+--> FILE:  SQ      .H  		CRC = 63 02
+--> FILE:  SQ      .HQ 		CRC = ED 9A
+--> FILE:  SQCOM   .H  		CRC = 4F 7F
+--> FILE:  SQCOM   .HQ 		CRC = 26 11
+--> FILE:  SQDIO   .C  		CRC = 7B 7D
+--> FILE:  SQUEEZER.DOC		CRC = A0 4D	<--new
+--> FILE:  SQUEEZER.DQC		CRC = 06 24	<--new
+--> FILE:  TYPESQ2 .COM		CRC = 84 AB	<--new
+--> FILE:  TYPESQ40.COM		CRC = CC 13	<--new (limit 40 lines)
+--> FILE:  TYPESQ80.COM		CRC = B2 6F	<--new (limit 80 lines)
+--> FILE:  TR1     .C  		CRC = 0B EE
+--> FILE:  TR1     .CQ 		CRC = 76 F2
+--> FILE:  TR2     .C  		CRC = 12 DE
+--> FILE:  TR2     .CQ 		CRC = 7E 58
+--> FILE:  USQ     .C  		CRC = 0D 14	<--new
+--> FILE:  USQ     .COM		CRC = 39 37	<--new
+--> FILE:  USQ     .CQ 		CRC = 66 B4	<--new
+--> FILE:  USQ     .H  		CRC = 93 0A
+--> FILE:  USQ     .HQ 		CRC = 48 68
+--> FILE:  USQDIO  .C  		CRC = 7B 7D
+--> FILE:  UTR     .C  		CRC = A7 39
+--> FILE:  UTR     .CQ 		CRC = 56 3A
+
+The above files are available on MC as:
+
+Directory for AR3:CPM
+
+File name	  creation date
+BDSCIO H       -     6/28/81
+CHNGES DOC     -     7/23/81	<--new (hi bits removed CRC = 85 4F)
+DIO    H       -     6/28/81
+DIO2   C       -     6/28/81
+FLS    C       -     6/28/81
+FLS    COM     -     6/28/81
+HISTRY DOC     -     6/28/81
+IO     C       -     6/28/81
+README DOC     -     7/23/81	<--new (hi bits removed CRC = 11 F4)
+SQ     C       -     6/28/81
+SQ     COM     -     6/28/81
+SQ     H       -     6/28/81
+SQCOM  H       -     6/28/81
+SQEZER DOC     -     7/23/81	<--new (hi bits removed CRC = 94 9A)
+TR1    C       -     6/28/81
+TR2    C       -     6/28/81
+TYPESQ 40COM   -     7/22/81	<--new
+TYPESQ 80COM   -     7/22/81	<--new
+TYPESQ ALLCOM  -     7/22/81	<--new
+TYPESQ DOC     -     7/8/81
+UPDATE DOC     -     7/23/81	<--new (this is the file you are reading now)
+USQ    H       -     6/28/81
+USQ-14 C       -     7/23/81	<--new
+USQ-14 COM     -     7/23/81	<--new
+UTR    C       -     6/28/81
+

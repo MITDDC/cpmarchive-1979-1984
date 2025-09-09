@@ -1,0 +1,696 @@
+1,16c 0
+		TITLE	'ZCPR Compromise 1.4B OF 06/20/82'
+;
+;  CP/M Z80 Command Processor Replacement (CPR) Version 1.1
+;	CCPZ CREATED AND CUSTOMIZED FOR ARIES-II BY RLC
+.
+14,16c 62983
+;	The following individuals also provided a contribution:
+;		SBB - Steve Bogolub
+;		PST - Paul Traina
+;		HLB - Howard Booker
+;		CAF - Chuck Forsberg
+;		RAF - Bob Fischer
+;		BB  - Ben Bronson
+;		PRG - Paul Grupp
+;		ESR - Eliot Ramey
+;		ADP - Al Plehn
+;
+;	The following is a list of modifications that have been included
+; in this difference file.  I must stress that the modifications in this
+; file are by no means sanctioned by the CCPZ group,  but on the most part
+; have been thoroughly debugged.  (In other words, don't yell at them if
+; you have problems,  yell at us.)
+;
+;Changes made to ZCPR version 1.0 (in reverse order).
+;
+;06/20/82 ADP's 1.4B:   Offset calculations added for CP/M vended by/for:
+;			Northstar/for Horizon (CCP at 1500H in sysgen image)
+;			Lifeboat/for N* Horizon (CCP at 0A00H in sysgen image)
+;		WARNING: Some combinations of options will exceed the 2K size
+;  			limit and overwrite part of the BDOS.  Check the PRN
+;			file after assembly to make sure NZCPR is not so large
+;			that it is clobbering the BDOS.  You may have to set
+;			both INTYPE and INDIR false if SECURE is true.
+;
+;04/09/82 ESR's 1.4A: Changed TYPEDIR to INTYPE and INDIR to allow one
+;		or both of these commands to be used
+;		Made an equate to enable one or both RAF's
+;		hack and the CCP USER command
+;
+;03/20/82 Compromise: Being that there are two schools of thought as to
+;		some of the commands should be set up,  I have simply
+;		put in all options,  it is up to you (the user) to decide
+;		what you want.
+;		DFU now works with SECURE, it selects the wheel area to check.
+;		(Normally this is user area 15).
+;		Fixed bugs in TYPE command.
+;		(Combined ZCPR-V11 by SBB with NZCPR-13). -- PST
+;
+;02/24/82 SBB's 1.1:  Added MEMLOAD changes. Cleaned up some of the coding
+;		from NZCPR-13.
+;
+;02/17/82 PST's 1.3:  Apple 40 column equate added.  RAF's drive/user
+;		hack added.  Fixed several bugs in HLB's ZCPR-V12.
+;		Added TYPEDIR and DRUSER equates to allow easy removal
+;		of these commands if you don't want them.
+;		Bug in GET routine of ZCPR-V11 fixed.
+;
+;01/03/82 HLB's 1.2:  Revised and improved password code to accept password
+;		on the same line of the PASS command (it's a JCL now).
+;		An incorrect entry now aborts with PASS? printed as query.
+;		Added several comments to aid in the selection of SECURE
+;		vs RAS vs NORMAL mode.
+;
+;12/25/82 PST's 1.1:  SECURE mode added for RCP/M's and applications needing
+;		a good method of security.
+.
+91c 32174
+;			PRNNF	CMDTBL
+.
+99c 57512
+;			RESETUSR GETUSR	SETUSR	PAGER	UCASE
+;			NOECHO
+.
+103c 37880
+;			SETUD	SETU0D	REDBUF	CNVBUF	CMDSER
+.
+107d 23817
+112c 16669
+;     5D		TYPE
+.
+120a 45379
+;     5M		PASS	NORM
+.
+134a 25873
+;    SECURE -  TRUE disable any nasty commands (ERA, REN, etc).
+;	       If WHEEL does not contain RESTRICT, run programs from
+;	       user 15, then user 0.  Also, ERA, REN, DFU, GO, GET, JUMP
+;	       and other commands suddenly pop into existance again.
+;	       Note: Here is an example of a use of secure mode...
+;	       As many of you know,  the OxGate 001 is on a computer at my
+;	       office, but I still like to do work when at home.  So, I
+;	       put MAC, MBASIC, DCON, and whatever I want on A15.  Then,
+;	       when I login, I type PASS <password> and all the CCP commands
+;	       are usable.  Presto.  Instant devolpmant system.
+;	       (Note: WHEEL must point to a safe place in memory that
+;		won't be overlayed)
+;
+;	If you have chosen a SECURE system,  all resident commands may be
+; activated by entering:  PASS <password> <cr>  Where <password> is a sequence
+; of characters placed at PASSID (if INPASS is true, otherwise, see
+; documentation in PST's PASS.ASM).  If the password is incorrect. the system
+; will come back with PASS? as if it was looking for a COM file.
+;	NORM is the reverse of PASS, it will disable the WHEEL mode.
+;
+;    INPASS -  If in the SECURE mode, you wish to use a program similar
+;	       to PST's PASS.ASM, set this false, otherwise, ZCPR will
+;	       handle the PASSword coding with a built in command.
+;
+;    INTYPE-   Set this EQU false if you don't want to use the CCP commands
+;	       for TYPE. (Eg: Use MLIST50).
+;
+;    DRUSER -  Set this EQU false if you wish to disable RAF's neat hack
+;	       that allows you the type B: 7 to move to drive B: user area
+;	       seven.
+;    INUSER -  Set this EQU false if you wish to disable the CCP USER
+;	       command and use another user program like USERPW.
+;
+;    RAS    -  Remote-Access System; setting this equate to TRUE disables
+;	       certain CPR commands that are considered harmful in a Remote-
+;	       Access environment; use under Remote-Access Systems (RBBS) for
+;	       security purposes.  Note: SECURE is the direct enemy of RAS,
+;	       DON'T define both equates or you will be VERY sorry.
+;	       The advantage SECURE has over RAS is that by saying a magic
+;	       word, all of the normal commands pop into existance.
+;
+;    MAXDRIV - Maximum legal drive number stored in this location.
+;	       (0 means only A:, etc.)  0000H disables this feature.
+;	       (This code is in addition to BIOS checks. It's needed here
+;	       because X: can hang if X: is off line in some BIOS
+;	       implementations. Personally, I think CAF and others should fix
+;	       their BIOS instead. Mine works right...SBB).
+;
+.
+194,197c 3170
+***************************************************************************
+** Be careful when playing with different combinations of these equates. **
+** You might not have enough memory to some combinations.  Check this    **
+** if you have problems, if they still persist, gripe to me (PST).       **
+***************************************************************************
+.
+212c 12790
+;MSIZE	EQU	62	;SIZE OF MEM IN K-BYTES
+.
+218,220c 42870
+; to that value as in the following line:
+;
+CPRLOC	EQU	0D500H	;FILL IN WITH BDOSLOC SUPPLIED VALUE
+.
+229,230c 62441
+; CCP in YOUR CP/M system; several systems (Morrow Designs, P&T, Heath
+; Org-0 to name a few) have the CCP located at a non-standard address in
+.
+233,234c 7118
+;CPRR	EQU	0E00H-CPRLOC	;DDT LOAD OFFSET FOR APPLE SOFTCARD 56K
+;CPRR	EQU	0980H-CPRLOC	;DDT LOAD OFFSET
+;CPRR	EQU	0A00H-CPRLOC	;OFFSET FOR LIFEBOAT'S CP/M
+;				 (FOR N* DQ CONTROLLER)
+CPRR	EQU	1500H-CPRLOC	;OFFSET FOR NORTHSTAR'S CP/M
+;CPRR	EQU	1600H-CPRLOC	;DDT LOAD OFFSET FOR COMPUPRO DISK-1
+;CPRR	EQU	1100H-CPRLOC	;DDT LOAD OFFSET FOR MORROW DESIGNS
+.
+242a 58083
+			;AND YOU DON'T WANT TO RUN SECURE (FOO...)
+;
+MAXDRIV	EQU	0000H	;LOCATION THAT HAS MAX LEGAL DRIVE #
+			;SET IT TO ZERO TO DISABLE THIS CROCK.
+;
+SECURE	EQU	TRUE	;SET TRUE FOR SECURE ENVIRONMENT...
+;
+	IF	SECURE
+WHEEL	EQU	0FFFFH	;SET TO "RESTRICT" FOR LIMITED ACCESS
+RESTRCT EQU	0	;WHEN (WHEEL)==RESTRCT, LIMIT COMMANDS
+DEFUSR	EQU	15	;CHECK HERE FOR "NAUGHTY" COM FILES (LIKE PIP)
+	ENDIF	;SECURE
+;
+INPASS	EQU	TRUE	;SET TRUE IF RUNNING SECURE AND NOT PASS.COM
+;
+DRUSER	EQU	TRUE	;TRUE TO ALLOW USER COMMAND AND RAF'S HACK.
+INUSER	EQU	TRUE	;TRUE TO ALLOW CCP USER COMMAND.
+;
+INTYPE	EQU	FALSE 	;TRUE TO USE ZCPR TYPE FALSE= USE TYPE.COM
+INDIR	EQU	FALSE	;TRUE TO USE ZCPR DIR FALSE=USER DIR.COM
+;
+;  ***  Note to Apple Softcard Users  ***
+;
+;  In their infinite (?) wisdom (???), Microsoft decided that the way to
+; get a two-column directory display instead of four-column (narrow 40-col
+; screen, remember) was to have their BIOS poke CCP every time it was
+; loaded, if there was no terminal interface card in I/O slot 3.
+; Naturally, that will turn into a random poke on any non-standard
+; CCP, like this one.  The best way to get this CPR up on the Apple is to
+; load it into CPM56.COM, at location 0E00H in the image.  The BIOS code
+; that pokes the CPR can also be modified at that time.  The poke is done
+; by "STA 0C8B2H", found at 24FEH in the CPM56 image.  To eliminate the
+; poke forever, change the "STA" to "LDA" by changing the contents of
+; location 24FEH from 32H to 3AH.  If you want a two-column display, set
+; the TWOCOL switch below to a value of TRUE.  Note that this defeats
+; the "feature" of the Apple CP/M that can select the two-column format
+; for an Apple with a standard 40-col display, and display four columns
+; on 80-col video boards or external terminals.  Since a user will either
+; have a card or not, customizing thru TWOCOL does not seem too terrible.
+; If you MUST have this "feature", change the 0C8B2H address mentioned
+; above to the value of the symbol TWOPOK.
+;
+TWOCOL	EQU	FALSE		;TRUE IF TWO COL DIR INSTEAD OF FOUR
+.
+294a 18462
+;
+.
+301a 48823
+;
+.
+304a 46045
+;
+.
+312a 8046
+;
+.
+316a 9423
+;
+.
+320a 11085
+;
+.
+329c 36043
+SUBA	EQU	TRUE 	; Set to TRUE to have $$$.SUB always on A:
+.
+333,334c 33357
+; command lines.  This is for Command Level 3 of ZCPR.  Under the current
+; ZCPR philosophy, three command levels exist:
+;
+.
+339c 56579
+;	    CIBUFF and setting the character count in CBUFF
+;
+.
+349c 49831
+CLEVEL3	EQU	TRUE		;ENABLE COMMAND LEVEL 3 PROCESSING
+.
+358c 51256
+PGDFLT	EQU	FALSE  		;SET TO FALSE TO DISABLE PAGING BY DEFAULT
+.
+361a 51602
+	IF	NOT SECURE	;SEE ALSO STUFF DEFINED UNDER SECURE EQU ABOVE.
+DEFUSR	EQU	0		;DEFAULT USER FOR COM FILES
+	ENDIF	;NOT SECURE
+;
+.
+374,375d 5348
+488a 41051
+;
+.
+494c 52762
+;
+;    NOTE:  Entry into ZCPR in this way is permitted under this version,
+.
+500,508c 24920
+;
+;    Some user programs (such as SYNONYM3) attempt to use the default
+; command facility.  Under the original CCP, it was necessary to initialize
+; the pointer after the reserved space for the command buffer to point to
+; the first byte of the command buffer.  Under current versions, this is
+; no longer the case.  The CIBPTR (Command Input Buffer PoinTeR) is located
+; to be compatible with such programs (provided they determine the buffer
+; length from the byte at MBUFF [CPRLOC + 6]), but under ZCPR this is
+; no longer necessary, since this buffer pointer is automatically
+; initialized in all cases.
+.
+518a 42937
+;
+.
+522,527c 23867
+;
+;	(1) by the user entering it through the BDOS READLN function at
+;	    the du> prompt [user input from keyboard]
+;	(2) by the SUBMIT File Facility placing it there from a $$$.SUB
+;	    file
+;	(3) by an external program or user placing the required command
+;	    into this buffer
+;
+.
+540c 15985
+; to have the command processed.  Again, under the current ZCPR, it is not
+.
+542a 7170
+;
+.
+556a 8357
+	DB	'  ZCPR V 1.4B of 06/20/82  '	;ID FOR DISK DUMP
+.
+563c 56136
+	DW	CIBUF		;POINTER TO CURR COMMAND FOR
+				; ERROR REPORTING
+.
+623,658d 60820
+625c 17740
+; CPR STARTING POINTS.  NOTE THAT SOME CP/M IMPLEMENTATIONS
+; REQUIRE THE COLD START ADDRESS TO BE IN THE STARTING PAGE
+; OF THE CPR, FOR DYNAMIC CCP LOADING.  CMDTBL WAS MOVED FOR
+; THIS REASON.
+.
+764a 60648
+; CPR BUILT-IN COMMAND TABLE
+;
+NCHARS	EQU	4		;NUMBER OF CHARS/COMMAND
+;
+; CPR COMMAND NAME TABLE
+;   EACH TABLE ENTRY IS COMPOSED OF THE 4-BYTE COMMAND AND 2-BYTE ADDRESS
+;
+CMDTBL:
+;
+	IF	INPASS AND SECURE
+	DB	'PASS'			;ENABLE WHEEL (SYSOP) MODE
+	DW	PASS
+	ENDIF	;INPASS AND SECURE
+;
+
+NRCMDS	EQU	($-CMDTBL)/(NCHARS+2)	;PUT ANY COMMANDS THAT ARE OK TO
+					;RUN WHEN NOT UNDER WHEEL MODE
+					;IN FRONT OF THIS LABEL
+;
+	IF	INUSER
+	DB	'USER'
+	DW	USER
+	ENDIF	;INUSER
+;
+	IF	INTYPE
+	DB	'TYPE'
+	DW	TYPE
+	DB	'LIST'			;LIST FILE TO PRINTER
+	DW	LIST
+	ENDIF	;INTYPE
+;
+	IF	INDIR
+	DB	'DIR '
+	DW	DIR
+	ENDIF	;INDIR
+;
+	IF	INPASS AND SECURE
+	DB	'NORM'			;DISABLE WHEEL MODE
+	DW	NORM
+	ENDIF	;INPASS AND SECURE
+;
+	IF	NOT RAS		;FOR NON-RAS
+	DB	'GO  '			;JUMP TO 100H
+	DW	GO
+	DB	'ERA '			;ERASE FILE
+	DW	ERA
+	DB	'SAVE'			;SAVE MEMORY IMAGE TO DISK
+	DW	SAVE
+	DB	'REN '			;RENAME FILE
+	DW	REN
+	DB	'DFU '			;SET DEFAULT USER
+	DW	DFU
+	DB	'GET '			;LOAD FILE INTO MEMORY
+	DW	GET
+	DB	'JUMP'			;JUMP TO LOCATION IN MEMORY
+	DW	JUMP
+	ENDIF
+;
+NCMNDS	EQU	($-CMDTBL)/(NCHARS+2)
+;
+.
+852c 31830
+;
+; CONVERT CHAR IN A TO UPPER CASE
+;
+UCASE:
+	CPI	61H		;LOWER-CASE A
+	RC
+	CPI	7BH		;GREATER THAN LOWER-CASE Z?
+	RNC
+	ANI	5FH		;CAPITALIZE
+	RET
+;
+NOECHO:
+	PUSH	D	;SAVE D
+	MVI	C,6	;DIRECT CONSOLE I/O
+	MVI	E,0FFH	;INPUT
+	CALL	BDOSB
+	POP	D
+	CPI	0	;CHAR WAITING
+	JRZ	NOECHO	;LOOP
+	RET
+.
+888a 19652
+;
+.
+894c 18095
+	RNZ			;DONE IF NOT EOL YET
+;
+;  COUNT DOWN LINES AND PAUSE FOR INPUT (DIRECT) IF COUNT EXPIRES
+;
+	PUSH	H
+	LXI	H,PAGCNT	;COUNT DOWN
+	DCR	M
+	JRNZ	PGBAK		;JUMP IF NOT END OF PAGE
+	MVI	M,NLINES-2	;REFILL COUNTER
+;
+PGFLG	EQU	$+1		;POINTER TO IN-THE-CODE BUFFER PGFLG
+	MVI	A,0		;0 MAY BE CHANGED BY PGFLG EQUATE
+	CPI	PGDFLG		;PAGE DEFAULT OVERRIDE OPTION WANTED?
+;
+	IF	PGDFLT		;IF PAGING IS DEFAULT
+	JRZ	PGBAK		;  PGDFLG MEANS NO PAGING, PLEASE
+	ELSE			;IF PAGING NOT DEFAULT
+	JRNZ	PGBAK		;  PGDFLG MEANS PLEASE PAGINATE
+	ENDIF
+;
+	CALL	NOECHO		;GET CHAR BUT DON'T ECHO TO SCREEN
+	CPI	'C'-'@' 	;^C
+	JZ	RSTCPR		;RESTART CPR
+PGBAK:
+	POP	H		;RESTORE HL
+.
+985c 32488
+	MOV	E,A		;MOVE DESIRED # TO BDOS REG
+;
+	IF	MAXDRIV
+	LDA	MAXDRIV		;CHECK FOR LEGAL DRIVE #
+	CMP	E
+	JC	ERROR		;DON'T DO IT IF TOO HIGH
+	ENDIF	;MAXDRIV
+;
+.
+1077,1086d 17200
+1527a 4620
+;
+	IF	SECURE
+	MVI	C,NRCMDS
+	LDA	WHEEL		;SEE IF NON-RESTRCTED
+	CPI	RESTRCT
+	JRZ	CMS1		;PASS IF RESTRCTED
+	ENDIF	;SECURE
+;
+.
+1572a 52701
+	IF	INDIR		;SOME OF THIS CODE IS UNWANTED
+.
+1607a 27171
+	ENDIF	;DIRPR	THE FOLLOWING CODE IS NEEDED BY ERA
+.
+1640c 17523
+;
+	IF	TWOCOL
+	ANI	01H		;OUTPUT <CRLF> IF 2 ENTRIES PRINTED IN LINE
+	ENDIF	;TWOCOL
+;
+	IF	NOT TWOCOL
+TWOPOK	EQU	$+1		;FOR APPLE PATCHING
+	ANI	03H		;OUTPUT <CRLF> IF 4 ENTRIES PRINTED IN LINE
+	ENDIF	;NOT TWOCOL
+;
+.
+1744,1745c 35946
+	JMP	DELETE		;RESTART CPR AFTER DELETE
+.
+1753a 36052
+	IF	INTYPE
+.
+1757a 20627
+	ENDIF	;INTYPE
+.
+1766a 59075
+	IF	INTYPE		;IF INTYPE IS TRUE...
+.
+1774a 30664
+;
+.
+1816,1827c 31449
+	CPI	CR		;IS CHAR A CR?
+	JRNZ	NOCR		;NO
+	MVI	B,0		;YES, RESET TAB COUNT
+NOCR:	CPI	' '		;CONTROL CODE?
+	JRC	NOPRT		;DON'T BUMP CHARACTER COUNT
+	INR	B		;INCREMENT CHAR COUNT
+NOPRT:	CPI	TAB		;TAB?
+	JRZ	LTAB		;YES, EXPAND IT
+	CALL	LCOUT		;PRINT IT
+.
+1835a 45672
+;
+.
+1848,1875c 10411
+	ENDIF	;INTYPE
+.
+1900,1901c 52748
+	JRZ	SAVE1		;CONTINUE IF NO WRITE ERROR
+	JR	PRNLE		;GO PRINT ERROR AND RESET DMA
+.
+1906,1911c 51729
+	JRNZ	SAVE3		;PASS IF OK
+;
+;  PRNLE IS ALSO USED BY MEMLOAD FOR TPA FULL ERROR
+;
+PRNLE:	CALL	PRINTC		;DISK OR MEM FULL
+	DB	'Ful','l'+80H
+;
+SAVE3:	JMP	DEFDMA		;SET DMA TO 0080 AND RESTART CPR
+				; OR RETURN TO MLERR
+.
+1932c 60412
+	JNZ	RSTCPR		;RESTART IF NO, SP RESET EVENTUALLY
+.
+1996a 11970
+	IF	INUSER		;IF DRIVE/USER CODE OK...
+.
+2001c 42018
+SUSER:	CALL	SETUSR		;SET SPECIFIED USER
+	ENDIF	;INUSER
+.
+2009a 27615
+;	    Note: When under SECURE mode, this will select the second
+;	          user area to check for programs (normally user 15).
+;
+.
+2015a 28630
+	IF	NOT RAS		;NOT FOR REMOTE-ACCESS SYSTEM
+.
+2020a 13495
+	ENDIF	;NOT RAS
+.
+2072a 34450
+;
+	IF	DRUSER		;DRIVE/USER HACKERY OK?
+	CALL	USRNUM		;GET USER #, IF ANY
+	MOV	E,A		;GET IT READY FOR BDOS
+	LDA	FCBFN		;SEE IF # SPECIFIED
+	CPI	' '
+	JRNZ	SUSER		;SELECT IF WANTED
+	ENDIF	;DRUSER
+;
+.
+2094,2095c 19248
+				; (NO RETURN IF ERROR OR TOO BIG)
+	POP	H		;GET EXECUTION ADDRESS
+.
+2098c 50788
+;   PROGRAM. ON ENTRY TO THIS ROUTINE, HL MUST CONTAIN THE EXECUTION
+.
+2120,2121c 49273
+	LXI	H,CIBUFF-1
+COM4:
+	INX	H
+.
+2127,2129c 53990
+	JRNZ	COM4
+.
+2132,2134c 63907
+	MVI	B,-1		;SET CHAR COUNT
+	LXI	D,TBUFF		;PT TO CHAR POS
+	DCX	H
+COM6:
+	INR	B		;INCR CHAR COUNT
+	INX	H		;PT TO NEXT
+	INX	D
+.
+2142,2146c 43320
+	JRNZ	COM6
+.
+2163,2173d 63116
+2177c 7750
+	JNZ	ERROR		;MUST BE UNAMBIGUOUS
+.
+2186,2199c 64249
+;  EXIT BACK TO CALLER IF NO ERROR.  IF COM FILE TOO BIG OR
+; OTHER ERROR, EXIT DIRECTLY TO MLERR.
+;
+MEMLOAD:
+.
+2204,2205c 61862
+	IF	SECURE
+;
+;  IF SECURE ENABLED, SEARCH CURRENT DRIVE, CURRENT USER, THEN
+; CURRENT DRIVE, USER 15 IF A WHEEL ONLY, THEN CURRENT DRIVE,
+; USER ZERO. IF STILL NOT FOUND, REPEAT ON DRIVE A:.
+;
+DFLAG	EQU	$+1		;MARK IN-THE-CODE VARIABLE
+	MVI	A,0		;HAVE WE CHECKED THIS DRIVE ALREADY?
+	ORA	A
+	JRNZ	MLA0		;PASS IF SO TO GO TO DRIVE A:
+	LDA	WHEEL		;USER 15 PROGS ALLOWED?
+	CPI	RESTRCT
+	JRZ	MLA00		;PASS IF NOT
+	PUSH	B		;PUSH BC
+	LDA	DFUSR		;LOAD DEFAULT USER (NORMALLY 15)
+	MOV	B,A		;PUT IT IN B
+	LDA	TSELUSR		;CHECK CURR USER
+DFUSR	EQU	$+1		;DEFAULT USER LOCATION
+	CPI	DEFUSR		;USER 15? (OR OTHER DEFAULT USER AREA)
+	MOV	A,B		;ASSUME NOT
+	POP	B		;RESTORE BC
+	JRNZ	SETTSE		;GO TRY IF NOT
+MLA00:				;SS IF NOT
+TSELUSR	EQU	$+1		;MARK IN-THE-CODE VARIABLE
+	MVI	A,0		;GET CURR USER
+	ORA	A		;IS IT 0?
+	JRZ	MLA0		;NO MORE CHOICES IF SO
+	STA	DFLAG		;MAKE DFLAG NON-ZERO IF NOT
+	XRA	A		; AND TRY USER 0
+SETTSE:
+	ENDIF	;SECURE
+;
+	IF	NOT SECURE
+.
+2240,2242c 53211
+	CPI	DEFUSR		;CHECK FOR THE USER AREA..
+	JRZ	MLA0		;..EQUAL DEFAULT, AND JUMP IF SO
+	ENDIF	;NOT SECURE
+;
+	STA	TSELUSR		;PUT DOWN NEW ONE
+.
+2254,2257c 61158
+;
+	IF	SECURE
+	STA	DFLAG		;ALLOW A: SEARCH
+	ENDIF	;SECURE
+;
+	ORA	M
+	JNZ	MLERR		;ERROR IF ALREADY DISK A:
+	MVI	M,1		;SELECT DRIVE A:
+;
+	IF	NOT SECURE
+	JR	MLA
+	ENDIF	;NOT SECURE
+;
+	IF	SECURE
+	LDA	TMPUSR		;GO TO 'CURRENT' USER CODE
+	JR	SETTSE
+	ENDIF	;SECURE
+.
+2275,2276c 59559
+LOADADR	EQU	$+1
+	LXI	H,TPA
+.
+2280c 65279
+	JRC	ML4		;ERROR IF SO
+.
+2294,2303c 51072
+	JZ	RESETUSR	;IF ZERO, OK, GO RESET CORRECT USER #
+				; ON WAY OUT, ELSE FALL THRU TO PRNLE
+;
+;  TPA FULL
+;
+ML4:	CALL	PRNLE		;PRINT MSG AND RESET DEF DMA
+;
+; TRANSIENT LOAD ERROR
+;
+MLERR:
+		;NOTE THAT THERE IS AN EXTRA RETURN ADDRESS ON
+		; THE STACK.  IT WILL BE TOSSED WHEN ERROR EXITS
+		; TO RESTRT, WHICH RELOADS SP.
+	CALL	RESETUSR	;RESET CURRENT USER NUMBER
+				;  RESET MUST BE DONE BEFORE LOGIN
+ERRLOG:
+	CALL	DLOGIN		;LOG IN DEFAULT DISK
+	JMP	ERROR		;FLAG ERROR
+;
+;
+;Section: 5M
+;PASS:  Enable wheel mode.
+;NORM:	Disable wheel mode.
+;
+;  Type PASS <password> <cr> to CP/M prompt to enter wheel mode.
+; This code can be replaced with PST's PASS.ASM which gives many
+; nice little options like no keyboard echo, etc.
+;
+	IF	INPASS		;WE WANT TO USE THIS CODE, NOT PASS.COM
+PASS:
+	LXI	H,PASSWD		;SET UP POINTERS
+	LXI	D,CIBUFF+NCHARS+1
+	MVI	B,PRGEND-PASSWD		;B= LENGTH
+CKPASS:	LDAX	D		;TRIAL PW TO A
+	CMP	M		;CHECK FOR MATCH
+	JNZ	COM		;NOPE.. LOOK FOR PASS.COM
+	INX	H		;INCREMENT COUNTER
+	INX	D
+	DJNZ	CKPASS		;CONTINUE IF MORE
+	MVI	A,TRUE		;WHEEL=TRUE
+PWOUT:	STA	WHEEL
+	JMP	RESTRT
+;
+NORM:
+	MVI	A,RESTRCT
+	JR	PWOUT
+;
+PASSWD:
+	DB	'PASSWD'		;YOUR PASSWORD
+PRGEND:	EQU	$			;END OF PASSWORD
+;
+	ENDIF	;INPASS
+.
+$a 51842
+.
+

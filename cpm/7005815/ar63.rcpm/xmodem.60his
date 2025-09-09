@@ -1,0 +1,332 @@
+
+;	     XMODEM.ASM v6.0, by Keith Petersen, W8SDZ
+;		        (revised 12/02/82)
+;
+;	     REMOTE CP/M - CP/M FILE TRANSFER PROGRAM
+;
+; Based on MODEM.ASM V2.0, by Ward Christensen.  This program is in-
+; tended for use on remote CP/M systems where it is important that the
+; initialization of the modem not be changed, such as when using the
+; PMMIBYE program.  The baud rate and number of bits remains the same as
+; whatever was set previously.  There is no disconnect, terminal or echo
+; option.
+;
+;*   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *
+;
+;       (HISTORY OF THE CYCLIC-REDUNDANCY-CHECK FOLLOWS THE
+;       RESUME OF THE VARIOUS MODIFICATIONS AND IMPROVEMENTS.)
+;
+;*   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *
+;
+; 12/02/82  Format changes.  Version 5.4 changed the original error for-
+;	    mat from:  ++ ERROR ++  to:  << Error >>.  Version 5.7 again
+;	    changed it, to: [Error].  After consulting with several RCPM
+;	    SYSOPs including the author (Keith Petersen), error messages
+;	    now use the original Christensen "++" notation.  Fixed a bug
+;	    from v5.7 which prohibited reception of checksum uploads.
+;						- Irv Hoff
+;
+; 11/15/82  Added capability of handling all serial port cards that re-
+;	    quire a leading port address (like CompuPro's new stuff).
+;	    Also added a MHZ equate for those running at 8 or 12 Mhz.
+;	    (Just set MHZ to the proper speed (1,2,4,5,6,8,...?)  Fixed
+;	    RECU to display correctly if greater than User-9.
+;						- Paul Traina
+;
+; 11/11/82  Fixed the glitch in the timing tables for file transfer time
+;	    and revised them to empirical values instead of theoretical.
+;	    Simplified the transfer time system.  Added SPEED label at
+;	    0103H for easily changing the transfer rate if not using
+;	    auto-MSPEED.  Added the commentary on how to fill the CONOUT
+;	    address to display the record count during program transfer.
+;	    Standardized appearance.  Added colons to all labels to help
+;	    during search/trouble shooting.  Streamlined some CRT dis-
+;	    play comments.  Commenced this separate XMODEMxx.HIS file.
+;						- Irv Hoff
+;
+; 10/23/82  Applied patches as found in XMODEM53.BUG.  Reworked console
+;	    display routines to be a bit more verbose.  Made a few cos-
+;	    metic changes to the error statements.
+;						- Mark J. Pulver
+;
+; 08/04/82  Added code to delete file name if carrier lost.  I have in-
+;	    cluded the label "IEE696" for assembly for 80-103A with the
+;	    IEEE-696 Z-80 board.  This option only controls output.  For
+;	    laziness' sake, I have left all DCH-related INputs as needed
+;	    for operation with the old 80-103A.  This adds two bytes per
+;	    IN instruction, but should be of no consequence.  (Sure is
+;	    easier than rewriting the IF structure).  After reading some
+;	    comments on XMODEM version numbers, I decided to call it
+;	    "XMODEM53".  Anybody disagreeing with this number may change
+;	    it to 51, or whatever....		- Sigi Kluger
+;
+; 07/13/82  Added code to set drive number on receive to the default
+;	    drive (DEFDRV), so even "XMODEM R B:xxx" will write the
+;	    file to DEFDRV.			- Sigi Kluger
+;
+; 06/25/82  Cleaned up some old tags and also the messages (don't you
+;	    HATE all that upper-case only crap... ugh.)  Also fixed the
+;	    LOGCAL code so that it ends on <CR> and translates "," to
+;	    <space> so that the LOG.SYS name entry looks like 'Paul
+;	    Traina' instead of 'Paul,Traina<crlf>334,242,5,,4,50' or
+;	    whatever (for us creatins that pass stuff inside the
+;	    LASTCALR file)			- Paul Traina
+;
+; 06/15/82  Added mods for file length printout to give times for
+;	    110-300-450-600-710-1200 bauds.  (Believe it or not - there
+;	    are port boards out there that can do dynamic baud rate sel-
+;	    ection besides the PMMI.).  Changed the default location for
+;	    MSPEED to 3DH as 3EH conflicts with the WHEEL function of
+;	    ZCPR.  The variable baud rate printout is activated with
+;	    setting the LSPEED option TRUE.  This implies that you have
+;	    a BYE program which loads the MSPEED location with the pro-
+;	    per baud rate code. (0=110,1=300,2=450,3=600,4=710,5=1200)
+;						- Sandy Smith
+;
+; 06/08/82  Added file transfer logging feature.  Enabled with the
+;	    equate variable LOGCAL, it uses caller info provided by the
+;	    RCPM file LASTCALR together with transferred file name, size
+;	    and direction of transfer to append each successful transfer
+;	    to new special file LOG.SYS.  The user area designation for
+;	    LASTCALR must be specified by the variable LASTUSR and file
+;	    is expected to reside on the DEFDRV drive. The support li-
+;	    rary SEQIO22.LIB and the MAC assembler are needed ONLY if
+;	    LOGCAL is true.  If logging is not desired, or you don't
+;	    have MAC then LOGCAL may be set false and the ASM assembler
+;	    will work.  See  SEQIO.LIB for documentation on the support
+;	    code.  Also made mods to file length of printout to give the
+;	    time for 600  baud (PMMI only).  This is optional with the
+;	    LSPEED equate.  If used, the baud rate of the caller must be
+;	    made available thru location MSPEED (by the BYE program).
+;						- Jack Riley
+;
+; 04/18/82  Corrected transfer time calculations.  Added optional equate
+;	    VOUT for record count display to console output. (Must be
+;	    CRT type device) Changed modem data port equates into two
+;	    distinct booleans to accomodate a wider variety of custom-
+;	    ized EXTMOD equated modems. Changed NOCOMR option on receive
+;	    to automatic renaming of .COM extents to .OBJ.
+;						- Howard Booker
+;
+; 04/01/82  Added routine to ERASE any file not properly received gets
+;	    rid of all those damn 0K files) - thanks to Skip Hansen for
+;	    this one. 				- BHK
+;
+; 03/28/82  Added cancel facility - if first char received when waiting
+;	    for initial nak is control-X it will cancel sending (useful
+;	    for when the time estimate is longer than you want to hang
+;	    around).				- BHK
+;
+; 03/22/82  Added calculation of estimated transmission time when send-
+;	    ing a file - divide # records by ~ 8 records per minute
+;	    transmission speed (at 300 baud)	- BHK
+;
+; 03/08/82  Added Bruce Wood's designated user and drive area routines
+;	    to the original v4.6 which contained the DCH modem updates
+;	    which were first included on 10/19/81.  Then renamed to
+;	    v4.8A to distinguish from the first v4.8.
+;						- Bill Aten
+;
+; 01/06/82  Added code to implement designated user and drive area to
+;	    receive files on.  This was put in to make it easier to lo-
+;	    cate new programs and for drives that are write protected.
+;	    This change will put the file being sent into the designat-
+;	    ed area and when done return to the orginal area.  See
+;	    SETAREA lable in the conditional section.
+;						- Bruce Wood
+;
+; 10/19/81  Corrected numerous 'IN MODCTL2' errors for the DC Hayes mo-
+;	    dem.  Added DC Hayes detection of framing errors, overrun
+;	    errors, and parity errors (if parity is used) for the re-
+;	    ceive file routine.			- Bill Aten
+;
+; 10/12/81  Added code to implement Cyclic Redundancy Checking for both
+;	    receiving and sending files.  The CRC can only be specified
+;	    by the operator on the receive file option as a secondary
+;	    option of 'C' (XMODEM RC FN.FT).  When CRC is in effect, an
+;	    initial 'C' instead of a NAK will be sent to the sender to
+;	    start things off.  The 'C' will be the signal to the sender
+;	    (hopefully a version of MODEM that implements this CRC con-
+;	    vention) that CRC is in effect.  CRC will then take the
+;	    place of the checksum checking for data validity.  The CRC
+;	    should make file transfers as far as data integrity is con-
+;	    cerned better than 99.99% error free.  The CRC macro CRC120,
+;	    was used to implement CRC in this program and its equivalent
+;	    version of MODEM.  Acknowledgements and thanks to Paul Han-
+;	    sknecht who designed and wrote CRC120.
+;						-Keith Petersen
+;
+; 07/01/81  Re-did H8/H89 equates, tested program using both systems and
+;	    changed version to 4.4		- Al Olander
+;
+; 06/28/81  Installed H8/H89 equates and changed external modem equates
+;	    to "EXTMOD".			- L.Shipinski
+;
+; 05/30/81  Added "IF PMMI/ENDIF" to RCVERR routine to eliminate 'unde-
+;	    fined symbol' error when set for DCH modem.
+;						- Dave Hardy
+;
+; 05/07/81  Changed signon revision number.  Cleaned up file.
+;						- Keith Petersen
+;
+; 05/01/81  Added detection of framing errors, overrun errors, and pari-
+;	    ty errors (if parity is used) for the receive file routine.
+;	    This feature is only active for the PMMI modem, since I do
+;	    not know what the modem status bits are for IDS and D.C.
+;	    Hayes modems.  If there is one of the above errors, the line
+;	    will be purged for that block and a NAK will be sent to the
+;	    sender for that block.  This was added to help catch those
+;	    transmission errors that are not always caught by the check-
+;	    sum.  This error checking is in addition to the checksum
+;	    routine.				- John Mahr
+;
+; 02/17/81  Added test for "F2" tagged files in OPENOK for MP/M v1.1
+;	    compatiblity, which doesn't allow CTL-C or CTL-S in "F1"
+;	    tagged files.			- Tim Nicholas
+;
+; 02/16/81  Added hex to file size display. Now reports size in both
+;	    decimal and (xxxxH) hex.  Thanks to Ben Bronson for the
+;	    idea.				-Tim Nicholas
+;
+; 02/15/81  Added a software timer to the carrier test added in SEND
+;	    and RECV routines. This will now abort only if carrier is
+;	    lost for a period of 15 seconds.  This is only essential for
+;	    those using external modems with certain SIO's, but will
+;	    provide the PMMI/DCH user faster recovery in a lost carrier
+;	    situation as well.  Approx 15 seconds plus 15 seconds in
+;	    BYE.COM, compared to 3 minutes at 300 baud with earlier re-
+;	    visions. Thanks to Ben Bronson for his aid in developing
+;	    this revision.			- Tim Nicholas
+;
+; 02/14/81  Corrected error in last update which read the incorrect port
+;	    for PMMI in the added carrier test. - Tim Nicholas
+;	
+; 01/31/81  Added equates and code for a carrier test.  Test performed
+;	    in modem I/O routines.  This is required since loss of car-
+;	    rier will go undetected by BYE.COM, if the loss occurs after
+;	    a sucessful XMODEM signon, when using an external modem and
+;	    SIO.				- Tim Nicholas
+;
+; 01/17/81  Rewrote routine to calculate file size so that it works
+;	    correctly on CP/M v2.x systems with extent folding (non-
+;	    zero extent mask). 			- BRR
+;
+; 12/06/80  Rewrote routine to calculate file size, added decimal print
+;	    of file size.			- Keith Petersen
+;
+; 12/05/80  Corrected error in use of external byte that prevented
+;	    files greater than one extent from being sent.
+;						- Ron Fowler
+;
+; 12/03/80  Corrected file extent length display.  Now reports correct
+;	    number of records for files longer than one extent.  Display
+;	    is now double precision (xxxxH).  Also made some cosmetic
+;	    changes by rearranging the equates.	-  Tim Nicholas
+;
+; 10/28/80  Cleaned up file.			- Keith Petersen
+;
+; 10/23/80  Expanded conditional assembly of NOCOM routines into NOCOMS,
+;	    NOLBS, and NOCOMR equates, to allow separate conditional
+;	    assembly of tests for sending .COM files, sending .??#
+;	    files, and receiving .COM files, respectively.
+;						- Dave Hardy
+;
+; 10/15/80  Added traps for ambiguous file name or none at all.
+;						- Keith Petersen
+;
+; 09/09/80  Added conditional assembly to prevent filetypes '.COM' or
+;	    '.??#' from being sent to distant end and added conditional
+;	    assembly of test for '.COM' filetype on receive as well.
+;	    See 'NOCOM' below.  Any filetype ending in '#' will not be
+;	    sent by this program if 'NOCOM' is set to TRUE.
+;						- J. Seymour
+;
+;
+;***********************************************************************
+;
+;	HISTORY AND APPLICATION OF THE 'CRC' SUBROUTINE
+;
+;***********************************************************************
+;
+; CRCSUBS (Cyclic Redundancy Code Subroutines) version 1.20
+; 8080 Mnemonics
+;
+; These subroutines will compute and check a true 16-bit Cyclic Redun-
+; dancy Code for a message of arbitrary length.
+;
+; The use of this scheme will guarantee detection of all single and
+; double bit errors, all errors with an odd number of error bits, all
+; burst errors of length 16 or less, 99.9969% of all 17-bit error
+; bursts, and 99.9984% of all possible longer error bursts.
+;
+;   (Ref: Computer Networks, Andrew S.  Tanenbaum, Prentiss-Hall, 1981)
+;
+;*     *     *     *     *     *     *     *     *     *     *     *
+;
+; There are four entry points, which are used as follows:
+;
+;  1)  CLRCRC - A call to this entry resets the CRC accumulator.
+;		It must be called at the start of each message.
+;
+;		Entry Parameters: None.
+;
+;		Exit Conditions:  CRC accumulator cleared.
+;				  All registers preserved.
+;
+;
+;  2)  UPDCRC - A call to this entry updates the CRC accumulator.  It
+;		must be called once for each byte in the message for
+;		which the CRC is being calculated.
+;
+;		Entry Parameters: (A) = a byte to be included in the CRC
+;					calculation.
+;
+;		Exit Conditions:  CRC accumulator updated.  All regi-
+;				  sters preserved.
+;
+;
+;  3)  FINCRC - A call to this entry finishes the CRC calculation for a
+;		message which is to be TRANSMITTED.  It must be called
+;		after the last byte of the message has been passed thru
+;		UPDCRC. It returns the calculated CRC bytes, which must
+;		be transmitted as the final two bytes of the message
+;		(first D, then E).
+;
+;		Entry Parameters:  None.
+;
+;		Exit Conditions :  (DE) = calculated CRC bytes.
+;				   All other registers preserved.
+;
+;
+;  4)  CHKCRC - A call to this routine checks the CRC bytes of a
+;		RECEIVED message and returns a code to indicate whether
+;		the message was received correctly. It must be called
+;		after the message AND the two CRC bytes have been re-
+;		ceived AND passed thru UPDCRC.
+;
+;		Entry Parameters: None.
+;
+;		Exit Conditions:  (A) =  0 if message ok.
+;				  (A) = -1 if message garbled.
+;				  All other registers preserved.
+;
+;***********************************************************************
+;
+;	Designed & coded by Paul Hansknecht, June 13, 1981
+;
+;
+;	Copyright (c) 1981, Carpenter Associates
+;			    Box 451
+;			    Bloomfield Hills, MI 48013
+;			    313/855-3074
+;
+;
+;	This program may be freely reproduced for non-profit use.
+;
+;
+;***********************************************************************
+
+
+
+
+

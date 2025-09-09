@@ -1,0 +1,199 @@
+
+     Here  is a	tip for	users of 8080 macro assemblers which
+I've never seen	in print, but which I've found to be useful.
+It  pertains  to the use of the	standard condition codes (Z,
+NZ,  C,	 NC,  M,  P,  PO,  PE)	as  parameters	of  a  macro
+instruction.
+     Let's say you've written a	useful macro to	do something
+or  other.  As an example most CP/M programmers	are familiar
+with,	let's  consider	 the  CPM  macro.  It  usually	goes
+something like this:
+
+CPM	MACRO	FUNC,VALUE
+	 IF	 NOT NUL VALUE
+	 LXI	 D,VALUE	 ;;Load	D&E with value.
+	 ENDIF
+	 IF	 NOT NUL FUNC
+	 MVI	 C,FUNC		 ;;Load	C reg with Function.
+	 ENDIF
+	 CALL	 BDOS
+	 ENDM
+
+     The  examples  are	written	for the	Digital	Research MAC
+assembler,  but	would probably be similar for others. To use
+the macro, one might say:
+
+	 CPM	 CON,CR	 ;Send carriage	return to console
+
+Assuming  that	CON had	been EQUated to	2, the CP/M function
+for  console  output,  and  CR	had been EQUated to 0DH, the
+macro would expand to:
+
+	 LXI	 D,0DH
+	 MVI	 C,02H
+	 CALL	 0005H
+
+which	would	send  a	 carriage  return  to  the  console.
+Similarly,  if	KEY had	been EQUated to	1, the console input
+function, the macro call
+
+	 CPM	 KEY
+
+would expand to:
+
+	 MVI	 C,01H
+	 CALL	 0005H
+
+which  would  get a keyboard character into register A.	This
+macro  is  in fact used	quite frequently by many programmers
+who work with CP/M. Note that the IF's prevent unneeded	code
+from being assembled where the parameter is not	supplied.
+     Now  consider  a  case  where we want to read a console
+character only when the	carry flag is set. Perhaps the carry
+flag  indicates	 an error condition, and we want the program
+to pause. The usual way	of doing this is:
+
+	 ...		 ;Code to set carry on error
+	 JNC	 OK	 ;Jump around input routine
+	 CPM	 KEY	 ;Get a	character from console.
+OK:
+	 ...		 ;Continue with	operation.
+
+     To	save programmer	time, we can modify the	CPM macro to
+allow a	condition code to be specified as a third parameter.
+Then we	could write lines like:
+
+	 CPM	 KEY,,C		 ;Get char if Carry set
+	 ...or...
+	 PUSH	 PSW		 ;Save output char.
+	 MOV	 E,A		 ;Move to E for	output
+	 CPM	 CON		 ;Output it
+	 POP	 PSW		 ;Get back character
+	 CPI	 CR		 ;Was it a carriage return?
+	 CPM	 CON,LF,Z	 ;If so, follow	with Line Feed.
+	 ...
+
+without	 having	 to  code  the	jump  instructions which are
+necessary  to  avoid executing the macro code. We do this by
+coding	the  jump instruction into the macro itself. This is
+made  easier  by  the  fact  that most macro assemblers	will
+allow  us  to  use  the	 value	of  an	opcode	as data. For
+compatability  with  Intel  standards,	it  should  be coded
+within	parentheses  (required	by  some  assemblers) and if
+we're  using  MAC,  should  have spaces	around the opcode to
+avoid a	little-known glitch in MAC.
+     Let's  work  with an even simpler macro to	see how	this
+might  operate.	 We'll	invent	the JUMPIF macro, which	does
+nothing	but cause a conditional	jump.
+
+JUMPIF	MACRO	COND,ADDR
+	 DB	 ( J&COND )
+	 DW	 ADDR
+	 ENDM
+
+     In	this simple example, coding the	line:
+	 JUMPIF	 NC,EOJ
+would expand to:
+	 DB	 ( JNC )
+	 DW	 EOJ
+     "Big deal!", you say. Why not just	code:
+	 JNC	 EOJ
+     Well,  we want to work the	condition code into a larger
+macro,	and  generate  a  jump around the inline code if the
+condition  is  false.  Ah, but there's the rub.	In order for
+the macro to work properly, the	jump instruction has to	jump
+if  the	condition given	is NOT true, and fall through to the
+inline	code  if it IS true. To	illustrate, let's invent the
+opposite  of  the  JUMPIF  macro, the JMPUNLES (Jump Unless)
+macro. We could	do something like this:
+
+JMPUNLES MACRO	COND,ADDR
+	 J&COND	 LABL1	 ;Jump around the next instr.
+	 JMP	 ADDR	 ;Do the real jump.
+LABL1:
+	 ENDM
+
+But  this requires the use of two jump instructions where we
+know  only  one	 is  required. In practice, of course, LABL1
+would be declared LOCAL	or we could only use this macro	once
+per program without getting duplicate label errors. There is
+a  way	out.  In  all  8080 instructions involving condition
+codes,	there  is  a  one bit difference between a condition
+code  and  it's	opposite, and it is always the same bit. The
+bit  used  is  the  bit	 with  a  value	of 8. Compare the JZ
+instruction with the JNZ instruction:
+
+     1	 1   0	 0   1	 0   1	 0     Jump If Zero
+     1	 1   0	 0   0	 0   1	 0     Jump If Not Zero
+   --- --- --- --- --- --- --- ---
+   128	64  32	16  *8*	 4   2	 1     Bit Values
+
+Changing  this	one bit	changes	a JC to	a JNC, a JP to a JM,
+and  a	JPO  to	 a JPE.	The bit	has the	same function in the
+conditional call and return instructions as well.
+     Combining	all  these facts, we can write our CPM macro
+with the condition code	parameter. It comes out	looking	like
+this:
+
+CPM	MACRO	FUNC,VALUE,COND
+	 LOCAL	 LABLX		 ;Generate one-time label
+	 IF	 NOT NUL COND	 ;Generate jump	only when needed
+	 DB	 ( J&COND ) XOR	8 ;Change condition code to its
+				 ;    opposite.
+	 DW	 LABLX		 ;Address field	of jump	instr.
+	 ENDIF
+	 IF	 NOT NUL VALUE
+	 LXI	 D,VALUE
+	 ENDIF
+	 IF	 NOT NUL FUNC
+	 MVI	 C,FUNC
+	 ENDIF
+	 CALL	 BDOS
+LABLX:	;Jump here if COND wasn't true.	 Continue...
+	 ENDM
+
+     Coding  CPM     CON,LF,NZ	would cause the	opcode to be
+expanded as:
+	 DB	 ( JNZ ) XOR 8
+which is the same as:
+	 DB	 ( JZ )
+Note  that  the	 COND  parameter  could	have been any of the
+valid 8080 condition codes: Z, NZ, C, NC, P, M,	PO, PE.
+     Also,  we	could  use  conditional	 calls ( C&COND	) or
+conditional  returns  (	R&COND)	and changed the	sense of the
+condition  by  XORing  the  opcode  with  8  to	 change	 the
+necessary  bit.	This technique can be quite useful in macros
+of all types to	allow the use of condition codes on the	same
+line   as  the	macro  call,  saving  programmer  time,	 and
+lessening  the	chances	of error. For your information,	here
+is  a  list  of	 8080  opcodes	which are changed into their
+opposites by XORing with 8. Although the ones with condition
+codes  will  probably be the most useful, some of the others
+may  come in handy some	day. The instruction on	the left has
+the "8's" bit as a 0, on the right as a	1.
+	 STAX	 LDAX
+	 RLC	 RRC
+	 RAL	 RAR
+	 INX	 DCX
+	 SHLD	 LHLD
+	 JNC	 JC
+	 JNZ	 JZ
+	 JP	 JM
+	 JPO	 JPE
+	 CNC	 CC
+	 CNZ	 CZ
+	 CP	 CM
+	 CPO	 CPE
+	 RNC	 RC
+	 RNZ	 RZ
+	 RP	 RM
+	 RPO	 RPE
+	 DI	 EI
+	 OUT	 IN
+
+Do yourself a favor and	use this trick only where it will
+genuinely improve efficiency, not just to make simple code hard
+to read.  Happy	Hacking!
+
+		    Gary P. Novosielski
+		   (201) 935-4087 Eve's.

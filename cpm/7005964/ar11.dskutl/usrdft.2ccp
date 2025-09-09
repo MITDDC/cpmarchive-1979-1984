@@ -1,0 +1,416 @@
+;**********************************************************
+;
+;		USRDFLT2.CCP by R. L. Plouffe
+;		       (703) 527-3215
+;			June 4, 1981
+;
+;		For CP/M 2.x systems only.
+;
+;	Changed the code that restricts access to
+;	USER areas in order to take advantage of
+;	routines already in the CCP. Reduces the
+;	code that must be placed in your customiz-
+;	ed bios considerably...........RLP 6/4/81
+;
+;  	Originally written 5/26/81. This has been
+;	re-written to clean it up and to add labels
+;	and comments so it can be easily read.
+;	...............................RLP 5/31/81
+;
+;These routines are based on ideas and code found on the
+;CALAMITY CLIFFS machine.  Authors are apparently Ron Fowler
+;and Keith Peterson. What is done here is to integrate these
+;ideas and to add two important new features.  First a new
+;kind of CCP command is added that is a pseudo CCP transient.
+;These commands reside on disk as a transient, but may be called
+;from any user area and any logged drive as long as they reside
+;on drive A and in a pre-designated USER area. Second, the newly
+;defined pseudo CCP/transients as well as existing (or additional)
+;CCP commands may be defined as either public or private with
+;private commands being accessible only after becoming password
+;privileged. It should be apparent that among other things, these
+;integrated routines avoid the necessity of placing copies of
+;transient routines that are included in the pseudo definition
+;in multiple USER areas. Certainly a must for PIP at least.
+
+;Add this code to your customized user or BIOS file and the
+;CCP patches will be automatically overlayed when you put it
+;in with DDT provided that your file contains an equate for
+;the CCP beginning address for your system size. NOTE that the
+;command address table and the command strings have been taken
+;out of the CCP.  However, the code space that they occupied has
+;been well stuffed with other patch code. An 18 byte spare area
+;at the end of the BDOS is also used. Make sure that your version
+;has this spare area still available and has not been used by some-
+;ones customization.  If it has, then place the code at the label
+;BRIDGE into your customized BIOS.
+
+;Donated for the benefit of hobby computing.  This creation
+;may not be sold.
+;
+;
+CCP	EQU	YOUR CCP ADDRESS	;BASE OF CCP
+;
+BDOS	EQU	CCP+800H		;BASE OF BDOS
+BIOS	EQU	CCP+1600H		;BASE OF BIOS
+DFCB	EQU	5CH		;ADDR OF DEFAULT FILE CNTRL BLK
+DRIVE	EQU	04H		;LOC OF CURRENT DRIVE BYTE
+CR	EQU	0DH
+LF	EQU	0AH
+;
+LENCMD	EQU	5		;LENGTH OF CCP CMD STRINGS
+MAXUSER	EQU	4		;FOR EXAMPLE
+BUFSIZE	EQU	CCP+6H		;LOC OF SIZE BYTE FOR CCP BUF
+BDOSFNC	EQU	BDOS+6H		;BDOS FUNCTION
+GETUSR	EQU	CCP+113H	;GET USER #
+SETUSR	EQU	CCP+115H	;SET USER #
+TSTUSR	EQU	CCP+692H	;TEST USER #
+USRSAV	EQU	CCP+118H
+CCPPASS	EQU	CCP+7EH		;LOCATION OF CCP PASSWORD
+UPATCH0	EQU	CCP+390H
+UPATCH1	EQU	CCP+393H
+HUH	EQU	CCP+209H	;CCP HUH RESPONSE
+CRLF	EQU	CCP+98H		;CCP CR/LF FUNCTION
+RETCCP	EQU	CCP+382H	;RE-ENTRY TO CCP
+CMDPTR	EQU	CCP+3B5H	;POINTER TO COMMAND ADDR TBL
+STRPTR	EQU	CCP+32FH	;POINTER TO CCP CMD STRINGS
+CMDCNT	EQU	CCP+335H	;BYTE VALUE = # OF COMMANDS
+CMDLEN	EQU	CCP+33BH	;BYTE VALUE = LENGTH OF EACH
+				;COMMAND STRING.
+TSTOPN	EQU	CCP+6DCH	;TEST FILE OPEN FUNCTION
+CMDDRV	EQU	CCP+7F0H	;BYTE INDICATES DRV IN CMD
+CMDERR	EQU	CCP+76BH	;HUH RESPONSE IF DR #
+XTNSN	EQU	CCP+7D6H	;STORAGE LOC FOR FILE TYPE,
+				;EXT #, AND RECORD COUNT
+RELOOK	EQU	CCP+6CDH	;RELOOK W/INDICATED DRIVE
+TPASUB	EQU	CCP+75DH	;LOC TO SUSTITUTE BEFORE
+				;CALLING THE TPA
+CONTINUE EQU	CCP+75FH	;TO CONTINUE AFTER CALL TO TPA
+GETRANS	EQU	CCP+6A5H	;GET TRANS OR CCP COMMAND
+ERA	EQU	CCP+51FH	;ADDR OF ERA ROUTINE
+REN	EQU	CCP+610H	;ADDR OF REN ROUTINE
+SAVE	EQU	CCP+5ADH	;ADDR OF SAVE ROUTINE
+DIR	EQU	CCP+477H	;ADDR OF DIR ROUTINE
+TYPE	EQU	CCP+55DH	;ADDR OF TYPE ROUTINE
+USER	EQU	CCP+68EH	;ADDR OF USER ROUTINE
+TPA	EQU	100H		;OR YOUR TPA ADDRESS
+CCPSPARE EQU	CCP+7F2H	;14 SPARE BYTES AT END OF CCP
+BDOSPARE EQU	BDOS+0DEEH	;18 SPARE BYTES AT END OF BDOS
+	;Addresses of holes left in CCP that are filled in
+	;with patches for transient user defaults
+HOLE1	EQU	CCP+310H	;EXACTLY 24 BYTES HERE
+HOLE2	EQU	CCP+3C1H	;   "     6   "     "
+HOLE3	EQU	CCP+3C7H	;   "     8   "     "
+;
+;**********************************************************
+;	BEGINNING OF CODE THAT IS PATCHED INTO THE CCP
+;**********************************************************
+;This is the CCP password to obtain privilege to higher USER
+;areas and privileged CCP or transient commands.  The password
+;itself is ORGed at the very end of the CCP command buffer.
+;The buffer is resized to permit this location. The advantage
+;to this ORG is that any attempt to find it with DDT will be
+;unsuccessful since DDT overlays the CCP, so this is an added
+;measure of security. If you lengthen the password, reduce the
+;value of the CCPPASS equate for each additional character in the
+;password.  Password may be mixed upper and lower case characters.
+;
+	ORG	CCPPASS
+PASSWD:	DB	'URPASSWRD',CR
+	ORG	BUFSIZE
+	DB	75H		;10 bytes less than original
+;
+;The CCP-included command 'PASS' routine is at CKCCPAS which
+;is located in your customized BIOS.
+;**********************************************************
+; This patch is used to restrict access to the higher user
+; areas while leaving the lower user areas public. The high-
+; est available public user area is defined by MAXUSER.
+;
+	ORG	USRSAV
+	DW	SAVUSR		;ADDR TO JMP TO SO THAT
+				;CALLING USER NUMBER IS RE-
+				;TURNED TO AFTER EXECUTING
+				;A TRANSIENT
+;The routines are located in your customized BIOS.
+;**********************************************************
+; This patch causes user number to be reported at the cp/m
+; prompt.....i.e. - A2>.  User 0 report is suppressed.
+;
+	ORG	UPATCH0
+	MVI	C,USRFNC	;VALUE FOR USER FNC CALL
+	ORG	UPATCH1
+	DW	UPATCH		;ADDR OF PATCH TO CALL
+;the routine UPATCH is located in the USER area of your
+;customized BIOS
+;**********************************************************
+; This patch causes the CCP of a cp/m 2.x system to look on
+; drive A when you are logged into a drive other than A and
+; call for a .COM file that does not exist on that drive.
+; Giving an explicit drive reference overrides this feature,
+; so that you can always force the file to be loaded from a
+; specific drive.
+;
+	ORG	TSTOPN
+	DW	APATCH		;REPLACES 'CMDERR'
+;
+	ORG	CCPSPARE
+APATCH:	LXI	H,CMDDRV	;GET DRIVE FROM CURRENT CMD.
+	ORA	M		;FETCHES DRIVE
+	JNZ	CMDERR		;GIVE ERROR IF CMD HAS DRIVE #
+	INR	M		;FORCE TO DRIVE A
+	LXI	D,XTNSN		;UNDO WHEN...
+	JMP	RELOOK		;REENTERING CCP
+;
+;**********************************************************
+;This patch extends the CCP to include up to N additional
+;commands that are user defined. The commands may be either
+;CCP-included or transient, and may be either private or
+;public depending on password privilege.
+;
+	ORG	CMDPTR
+CMDPTR:	DW	CMDTBL2		;COMMAND TABLE ADDRESS (PUBLIC)
+	;
+	ORG	STRPTR
+STRPTR:	DW	CMDSTR2		;COMMAND STRING ADDRESS (PUBLIC)
+	;
+	ORG	CMDCNT
+CMDCNT:	DB	(GETRAN0-CMDTBL2)/2 ;TO LIMIT PUBLIC ACCESS TO CCP
+				   ;COMMANDS. RESET TO ALL WHEN 
+				   ;PASSWORD IS ENTERED FOR USER
+				   ;AREAS ABOVE MAXUSER.
+	ORG	CMDLEN
+CMDLEN:	DB	LENCMD		;LENGTH OF CCP COMMAND STRINGS
+
+;The rest of this patch is in the USER area of your customized
+;BIOS.
+;
+;**********************************************************
+;This is the routine that cause those utilities which are in
+;the CCP command table to be available from all user areas.
+;They must be resident in USER 0 or 15 and named the same as in 
+;command string....i.e, 'EDIT' for 'WORDSTAR',  'STAT' for 'STAT',
+;etc.. The names and addresses can be in either the public or
+;private areas. Don't expand this code except to use indicated
+;spare bytes because you will wipe out other good code if you
+;do.
+;
+	ORG	HOLE2
+TRDFLT0:
+	MVI	E,0		;VALUE FOR PUBLIC TRANSIENTS
+	PUSH	D		;SAVE IT ON THE STACK
+	JMP	DFLT		;TO DEFAULT TO USER VALUE
+	ORG	HOLE1
+TRDFLT15:
+	MVI	E,15		;VALUE FOR PRIVATE TRANSIENTS
+	PUSH	D		;SAVE IT ON THE STACK
+DFLT:	
+	CALL	GETUSR		;GET CALLING USER #
+	STA	HOLDUSER	;SAVE IT
+	POP	D		;GET DEFAULT USER VALUE IN E
+	CALL	SETUSR		;SET THE USER # IN BDOS
+	LXI	H,RSTUSR	;PUT ADDR OF RTNE IN HL
+	SHLD	TPASUB		;SET TO CALL IT INSTEAD OF TPA
+	JMP	GETRANS		;GET THE FILE TO THE TPA
+	DB	0,0		;SPARE BYTES
+;
+	ORG	HOLE3
+RSTUSR:	LDA	HOLDUSER	;GET THE SAVED USER #
+	MOV	E,A		;PUT IT IN E
+	JMP	BRIDGE
+HOLDUSER:
+	DB	0
+	ORG	BDOSPARE	;SPARE BYTES HERE IN BDOS
+BRIDGE:	CALL	SETUSR		;SET USER #
+	LXI	H,TPA		;PUT ADDR OF TPA IN HL
+	SHLD	TPASUB		;SET TO CALL TPA NEXT TIME
+	CALL	TPA		;DO IT NOW
+	JMP	CONTINUE	;BACK TO CCP IN-LINE CODE
+	DB	0,0,0		;SPARES
+;
+;	END OF CODE THAT IS PATCHED INTO THE CCP (AND BDOS)
+;			*****
+;
+;**********************************************************
+;	BEGINNING OF CODE THAT IS PUT IN YOUR BIOS.
+;	SEE GENESYS AND GENEUSER FOR A TECHNIQUE TO
+;	EXPAND YOUR USER AREA.
+;**********************************************************
+
+	ORG	BIOS+WHATEVER
+
+;This is the command string which is divided into private
+;and public sections. Do not use more than five letters for
+;the name of any command or transient and fill out each string
+;to exactly five characters by using spaces below. Each string
+;must occur at 5 character intervals.  If you wish to use some
+;other string length such as 4 as in the original CCP, just
+;change the string lengths below and change the LENCMD equate
+;from 5 to 4.  I use 5 below so that MODEM can fit.
+;
+CMDSTR1:
+	DB	'ERA  REN  SAVE STAT PIP  DDT  ASM  LOAD COPY EDIT '
+CMDSTR2:
+	DB	'SRD  DIR  TYPE USER PASS MODEMBYE  CRCK '
+;
+;**********************************************************
+;This is the command address table which is divided into
+;private and public areas. The address of the routine to be
+;jumped to must be here for any CCP-included code as well as
+;any that you add and put in your customized BIOS. For private
+;and public transients, use TRDFLT15 AND TRDFLT0 respectively
+;and put private transients in USER 15 on your system disk (A).
+;Similarly, put public transients in USER 0 on 'A'. These trans-
+;ients will now be available from any drive and from any USER #
+;depending on password privilege.  You can expand the table to
+;any extent that you have space and the command string above
+;must be expanded in synchronism.
+;
+;Put the private transients in USER 15
+CMDTBL1:
+	DW	ERA		;ERA....PRIVATE COMMANDS
+	DW	REN		;REN
+	DW	SAVE		;SAVE
+	DW	TRDFLT15	;STAT...THE FOLLOWING UTILITIES
+	DW	TRDFLT15	;PIP....WILL BE TREATED AS CCP
+	DW	TRDFLT15	;DDT....COMMANDS. THEY MUST BE ON
+	DW	TRDFLT15	;ASM....DISK AS TRANSIENTS AT USER 15
+	DW	TRDFLT15	;LOAD...AND WILL NOW BE AVAILABLE AT
+	DW	TRDFLT15	;COPY...ALL USER #'S
+	DW	TRDFLT15	;EDIT (RENAME WORDSTAR TO EDIT),
+				;or whatever your favorite editor is.
+;Put the public transients below in USER 0
+CMDTBL2:
+	DW	TRDFLT0		;SRD ....PUBLIC COMMANDS
+	DW	DIR		;DIR
+	DW	TYPE		;TYPE
+	DW	USER0		;USER
+	DW	CKCCPAS		;PASS(WORD)
+	DW	TRDFLT0		;MODEM for Ward's MODEM program.
+				;I use this command for either
+				;XMODEM or MODEM7 depending on
+				;which one I have on drive A.
+	DW	TRDFLT0		;BYE  for Ward's BYE program
+	DW	TRDFLT0		;CRCK does a CRC 16 check on file
+GETRAN0:			;This must be last entry in table.
+	DW	GETRANS		;Get the transient and execute or
+				;return to CCP w/HUH message if not
+				;on disk.
+;
+;**********************************************************
+;This patch which is called from the CCP provides for a
+;report of USER number at the prompt....i.e. A2> for USER 2,
+;'A' drive.
+;
+UPATCH:	LDA	PASSFLG		;GET PASSWORD FLAG
+	INR	A		;SEE IF SET
+	JNZ	UPATCH2		;SKIP IF NOT
+	LXI	H,CMDSTR1	;SET CMDSTRING POINTER TO
+				;BEGINNING OF ALL COMMANDS
+	SHLD	STRPTR		;STORE IT IN STRING POINTER
+	LXI	H,CMDTBL1	;SET CMDTABLE POINTER TO
+				;BEGINNING OF ALL CMD ADDRESSES
+	SHLD	CMDPTR		;STORE IT IN COMMAND TABLE POINTER
+	MVI	A,(GETRAN0-CMDTBL1)/2 ;CALC # OF COMMANDS
+	STA	CMDCNT		;STORE VAL IN SCAN ROUTINE IN CCP
+UPATCH2:
+	CALL	GETUSR		;GET USER NUMBER
+	ANI	0FH		;KILL UNWANTED BITS
+	JZ	UPA2		;IF USER 0, DON'T REPORT
+	CPI	10
+	JC	UPA1		;JIF USER NUM = 0 THRU 9
+	SUI	10		;USER NUM = 10 THRU 15
+	PUSH	PSW
+	MVI	E,'1'
+	MVI	C,CONSOUT	;VAL FOR CONSOLE OUT FNC
+	CALL	BDOSFNC		;PRINT A '1'
+	POP	PSW
+;
+UPA1:	ADI	'0'
+	MOV	E,A
+	MVI	C,CONSOUT	;VAL FOR CONSOLE OUT FNC
+	CALL	BDOSFNC		;PRINT DIGIT
+;
+UPA2:	MVI	E,'>'
+	MVI	C,CONSOUT	;VAL FOR CONSOLE OUT FUNCTION
+	JMP	BDOSFNC		;PRINT '>', EXIT
+;
+;**********************************************************
+;These are the routines which provide for limited USER area
+;access.  USER0 is jumped to before jumping from the CCP com-
+;and parser to the CCP-included USER routine.  SAVUSR is jumped
+;to whenever resetting the user code and guarantees that the
+;same user area will be returned to as was in effect before
+;executing a transient command.
+;
+USER0:	LDA	PASSFLG		;SEE IF PRIVILEGED
+	INR	A		;YES?
+	JZ	USER		;TO USER CODE IF SO
+	MVI	A,MAXUSER+1	;RESTRICT ACCESS
+	STA	TSTUSR		;DO IT HERE
+	JMP	USER		;GOTO CCP USER CODE
+;
+SAVUSR:	MOV	A,E		;SEE IF GET OR SET USER
+	CPI	0FFH		;IS IT GET USER?
+	JZ	BDOSFNC
+	MOV	A,E		;GET USER #
+	RLC
+	RLC
+	RLC
+	RLC			;MOVE TO UPPER NIBBLE
+	MOV	B,A		;SAVE REQUESTED USER #
+	LDA	DRIVE		;GET CURRENT USER/DRIVE
+	ANI	0FH		;STRIP OFF OLD USER #
+	ORA	B		;GET NEW USER #
+	STA 	DRIVE		;SET NEW USER #
+	JMP	BDOSFNC		;SET IT AND EXIT
+;
+PASSFLG:
+	DB	0		;STORE FOR PASSWORD FLAG
+CKCCPAS:
+	LXI	H,PASSWD	;POINT TO PASSWORD	
+CKPASS:	LDA	PASSFLG		;GET PASSWORD FLAG
+	INR	A		;SEE IF SET
+	JZ	RETCCP		;IF SO, RET TO CCP
+	CALL	CRLF		;DO A CR/LF
+	MVI	D,0		;NO MISSED LETTERS
+PWMLP:	PUSH	D
+	PUSH	H
+PWMLP1:	MVI	C,DIRCONIO	;GET A CHAR
+	MVI	E,0FFH		;SET TO CONSOLE IN
+	CALL	BDOSFNC		;DO IT
+	ORA	A		;SEE IF CHAR ENTERED
+	JZ	PWMLP1		 ;LOOP IF NOT
+	POP	H	
+	POP	D
+	CMP	M		;MATCH PASSWORD?
+	JZ	PWMAT		;..YES
+	MVI	D,1		;..NO, SHOW MISS
+	CPI	CR
+	JNZ	PWMLP		;..NO, WAIT FOR C/R
+	JMP	HUH		;RETURN TO CCP WITH A HUH
+;
+PWMAT:
+	INX	H
+	CPI	CR		;SEE IF END OF PASSWORD
+	JNZ	PWMLP		;GET ANOTHER CHAR IF NOT
+	MOV	A,D		;ERROR INDICATOR TO A
+	ORA	A		;ERROR?
+	JNZ	HUH		;IF SO, SAY HUH
+	MVI	A,0FFH		;VAL FOR PASSWORD FLAG
+	STA	PASSFLG		;SET IT
+	MVI	A,16		;RESTORE
+	STA	TSTUSR		;ALL USER AREAS
+	JMP	RETCCP		;AND RETURN TO CCP
+;
+;
+;BDOS FUNCTION CALL EQUATES
+;
+CONSOUT	EQU	2		;CONSOLE OUTPUT
+DIRCONIO EQU	6		;DIRECT CONSOLE INPUT OUTPUT
+USRFNC	EQU	32		;USER FUNCTION CODE
+;
+;	the
+	END
+;	for now
+  

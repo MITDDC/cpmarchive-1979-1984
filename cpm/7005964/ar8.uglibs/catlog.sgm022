@@ -1,0 +1,44 @@
+Sig/M volume 22		miscellaneous Pascal Z utilities
+
+	(original materials from Pascal Z User Group volume 4)
+
+	-CATALOG.022		contents of Sig/M volume 22
+	ABSTRACT.022		comments
+	CRCKFILE.022		CRC of volume 22
+     
+22.1    CFIO.LIB         2K     program to open files   
+22.2    CONCORD.COM     10K     program that builds an alphabetical
+22.3    CONCORD.PAS     11K       listing of distinct words 
+22.4    COSINE.PAS       2K     Cosine program
+22.5    COSINE.REL       2K	 /
+22.6    COSINE.SRC       6K	/
+22.7    GEN5.COM         8K     demo on accessing CP/M files 
+22.8    GEN5.PAS         5K	/
+22.9    GRAPH1.COM      10K     demo on creating a graphic representation
+22.10   GRAPH1.PAS       1K     /   of a function.
+22.11   ISORTV1.COM      6K     insertion sort with linked list
+22.12   ISORTV1.PAS      4K	/
+22.13   LINENOS.COM      8K     keep track of text lines
+22.14   LINENOS.PAS      4K	/
+22.15   POINT.COM        6K     demo on the use of pointers 
+22.16   POINT.PAS      	 2K	/
+22.17   RANDOM.MAC       4K     "professional" random number generator
+22.18   RANDOM.PAS       1K     simple random number generator
+22.19   SINCOS.SRC       5K     sine/cosine utility
+22.20   SINCOS.REL	 1K	/
+22.21   STRLIB.DOC       5K     Ray Penley's latest updated string lib.
+22.22   STRLIB.LIB	13K	/
+22.23   TRIG4.COM        9K     simple Demo program that builds a
+22.24   TRIG4.PAS        2K     /    short Trig chart
+22.25   XREFG2.COM      13K     a binary tree type cross-ref generator
+22.26   XREFG2.PAS      18K	/
+22.27   ZPTEX.COM        8K     very simple text formatter 
+22.28   ZPTEX.PAS        8K	 /
+22.29   LESSON4.	 5K	/
+22.30   RECIPE.COM      12K	recipe program
+22.31   RECIPE.PAS      17K	  /
+22.32   RECIPE.MST       1K	 /					
+22.33   RCPDAT.YYY    	 1K	/
+22.34   FCLOSE.COM       8K    three different ways to close a file
+22.35   FCLOSE.PAS	 4K	/    in Pascal Z.
+

@@ -1,0 +1,60 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; AMETHYST-USERS  ;; People who use Amethyst, a software package of
+;; programs: MINCE (an ersatz EMACS) and SCRIBBLE (an ersatz SCRIBE).
+;;
+;; This list is provided for the sole purpose of promoting the
+;; exchange of information concerning the use of these programs.
+;;
+;; Commercial use of this list is expressly forbidden and may result
+;; in the permanent dismemberment of this list.
+;;
+;; Do NOT add yourself to this list.
+;; Send a request to AMETHYST-USERS-REQUEST@MIT-MC
+;; for any additions/deletions/changes.
+;;
+(FILE [MC:JCAF;AUG ARCH])	;; The archives
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(BLUE MC)
+(DEVON MC)
+(FJW MC)
+(LEOR MC)
+(PLK MC)
+(SK MC)
+;;
+(BADOB AI)
+(CSTACY AI)
+(EPZ AI)
+(GAVAN AI)
+(GEOFFM AI)
+(GUMBY AI)
+(GYRO AI)
+(MITCHW AI)
+;;
+(BNH ML)
+(LEO ML)
+(PGA ML)
+;;
+(Planchon.Datanet MIT-MULTICS)
+(Pool.Datanet MIT-MULTICS)
+(Schauble.Multics MIT-MULTICS)
+;;
+(CLEMENTS BBNA)
+(MBARNES BBNA)
+(MALIS BBNE)		;;interested non-user
+(TAPPAN BBNG)
+(DWS LLL-MFE)
+(KENNER NYU)
+(mclure sri-unix)
+(JP SU-AI)
+(MMD SU-AI)
+(WHITE SUMEX-AIM)
+(Lauren UCLA-SECURITY)
+(MOORE USC-ISIB)
+(BHUBER USC-ECL)
+(NMAX USC-ECL)
+(david UTEXAS-11)
+;;
+;; End of list
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

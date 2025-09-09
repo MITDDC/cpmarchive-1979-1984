@@ -1,0 +1,327 @@
+RBBS-RTN.001 --	ROUTINES THAT CAN BE ADDED TO RBBS22, RBBS24, 
+		RBBS25, ENTBBS24, MINBBS24 & MINBBS25
+
+      * I put the following together because a couple of
+	friends asked to look at the 'versions' of ENTERBBS 
+	and MINIRBBS I am currently using, and because it
+	seemed wasteful to modem the messy programs over
+	in their entirety.
+
+      * After thinking about it, though, it occurred to me that
+	the notion of sending around insertable/substitutable
+	modules rather than complete programs has attractions  
+	beyond economy when the programs involved are as fast-
+	changing and intrinsically customizable as the RBBS
+	series.  Everybody is going to make changes.  Nobody is
+	going to want to adopt all of someone else's changes.
+	We will all go mad if each personalized RBBS program
+	receives a new version number.
+
+      * So maybe it would be worth our trying to do it this
+	way for a while.  Got a new subroutine or addition to an
+	old routine that works well on your system?  If so,
+	why not send it around for other sysops to play with?
+	Just call it "RBBS-RTN.x+1" and put it out on the
+	network.
+
+      * For distribution purposes, try to stay as close as is
+	feasible to the	standard RBBS22 line numbering.  All
+	except one of the current RBBS series programs (RBBS24, 
+	MINBBS24, MINBBS25, ENTBBS24) use this.  While the one
+	exception, RBBS25, is not difficult to convert (and it
+	contains routines that are well worth converting), it
+	is clearly undesirable to have too many versions with 
+	radically different line numbers floating around.
+
+----------------------------------------------------------------------
+
+Present or future sysops using RBBS24, ENTBBS24, and MINBBS24 or
+MINBBS25 will find that the routines given below will slot right into
+their programs without alteration.  Those using RBBS22 had better check
+out RBBS24 if some of them seem not to make sense.  Those using RBBS25
+will have a harder job of conversion but will find that several of
+these routines have just been lifted from RBBS25 anyway.
+
+			Ben Bronson, HP/RCPM, 312-955-4492
+
+-----------------------------------------------------------------------	
+
+A. [For ENTERBBS24 or RBBS24: the first of several "shadow sysop"
+ routines, to keep the word SYSOP for message-retrieval purposes
+ but to strip it of power to kill messages or enable reserved
+ functions.  The power is held by the codeword "xxxxx", which is 
+ the first of the sysop's sign-in codes and the name held in
+ LASTCALR.  The message-leaving and -finding routines convert
+ this to "SYSOP", but the kill routine insists that your name be
+ "xxxxx" or whatever you choose to call it.  So much trickiness
+ is more of a game than a real protection against talented long-
+ distance vandals, but you may find the idea entertaining.]
+
+579 XX=0
+580 A1$="What is your LAST name ?":GOSUB 13020:C=1:GOSUB 13260:C=0:O$=B$:IF O$="" THEN 550
+590 IF O$<"A" OR LEN(O$)=1 THEN 550
+595 IF N$<>"xxxxx" THEN 610
+600 IF N$="xxxxx" AND O$<>P2$ THEN XX=XX+1:IF XX=3 THEN 18100 ELSE 550
+605 IF N$="xxxxx" AND O$=P2$ THEN O$="":A1$="2nd codeword?":GOSUB 13020:C=1:GOSUB 13260:C=0:X$=B$:IF X$=P4$ THEN 730 ELSE 550
+610 IF N$="SYSOP" THEN PRINT:PRINT "You know you're not the SYSOP!!!":PRINT:XX=XX+1:IF XX=3 THEN 18100 ELSE 550
+
+
+B.  [For RBBS22, RBBS24 & ENTBBS24.  The first part of line 730 (from
+ RBBS25) makes LASTCALR a $SYS file.  The second part is for ENTBBS24
+ only.  It drops xxxxx (or SYSOP, if you don't want to use the shadow-
+ sysop idea) directly to CP/M without incrementing COUNTERS.]  
+
+730 OPEN "O",1,"A:LASTCALR. "+CHR$(&HA0):PRINT #1,N$;",";O$:IF N$="xxxxx" THEN 2239
+739 CLOSE
+
+
+C. [For copies of ENTBBS24 that do not already have it: the caller-
+ counting routine is placed here rather than in MINIRBBS.  If it
+ is left in MINIRBBS as well, then COUNTERS gets incremented again
+ each time the caller decides to leave a message.]
+
+740 BK=0:GOSUB 13020:OPEN "R",1,"A:COUNTERS",5:FIELD#1,5 AS RR$
+750 PRINT
+760 A$="You are caller # : ":N=1:GOSUB 13020:GET#1,CALLS
+770 CN=VAL(RR$)+INC:A$=STR$(CN):LSET RR$=A$:GOSUB 13020:PUT#1,CALLS
+
+
+D. [For ENTERBBS: a slightly changed routine lifted from RBBS24.  The
+ RBBS24-style routine can be left in MINIRBBS or taken out, according
+ to taste.]
+
+810 REM LOOK FOR MSGS FOR THIS CALLER
+820 REM AND BUILD MESSAGE INDEX
+830 REM
+835 PRINT "Wait a second while I check to see if you have messages waiting ..."
+836 PRINT
+838 L=0
+840 FT=1:MX=0:MZ=0:IU=0:'FLAG FIRST TIME FOR PRINTING HEADING
+850 OPEN "R",1,"A:SUMMARY",30:RE=1:FIELD#1,28 AS RR$
+860 BK=0:GET#1,RE:IF EOF(1) THEN 960
+870 G=VAL(RR$):MZ=MZ+1:M(MZ,1)=G:IF G=0 THEN 950
+880 IF IU=0 THEN IU=G
+890 IF G>9998 THEN MZ=MZ-1:GOTO 960
+900 GET#1,RE+3:GOSUB 16500:IF INSTR(S$,N$)>0 AND INSTR(S$,O$)>0 THEN 930
+910 IF N$<>"xxxxx" THEN 950
+920 IF INSTR(S$,"BEN")=0 THEN 950
+930 IF FT THEN L=L+1
+931 IF FT THEN A$="The following messages for "+N$+" "+O$+" are waiting in MINIRBBS: ":GOSUB 13020:FT=0
+940 A$=STR$(G):N=1:GOSUB 13020:GOSUB 13020
+950 GET#1,RE+5:M(MZ,2)=VAL(RR$):MX=MX+M(MZ,2)+6:RE=RE+6:GOTO 860
+960 IF L=0 THEN PRINT "Nope.  No message addressed to you, "+N$+".":PRINT "But check MINIRBBS anyway for public messages.":GOSUB 13020
+965 CLOSE:GOSUB 13020
+
+
+E. [For MINIRBBS and RBBS:  Even slighter alterations to the same
+ routine.  Lines 905 & 970 should be left out if you do not want
+ a shadow sysop.]
+
+900 GET#1,RE+3:GOSUB 16500:IF INSTR(S$,N$)>0 AND INSTR(S$,O$)>0 THEN 930
+905 IF N$="xxxxx" THEN N$="SYSOP"
+910 IF N$<>"SYSOP" THEN 950
+920 IF INSTR(S$,"BEN")=0 THEN 950
+930 IF FT THEN A$="The following message(s) was/were left for you.":GOSUB 13020
+935 IF FT THEN A$="Please kill the ones that would not interest other callers.":FT=0:GOSUB 13020:GOSUB 13020
+940 A$=STR$(G):N=1:GOSUB 13020
+950 GET#1,RE+5:M(MZ,2)=VAL(RR$):MX=MX+M(MZ,2)+6:RE=RE+6:GOTO 860
+960 CLOSE:GOSUB 13020:GOSUB 13020
+970 IF N$="SYSOP" THEN N$="xxxxx"
+
+
+F. [For MINIRBBS and RBBS:  To improve compatiblity with MINICBBS
+ and the program-downloading versions of CBBS, the "G" command
+ is here changed to drop the user to CP/M rather than signing him
+ off the system.  The C command also drops him to CP/M but gives
+ him a chance to leave a COMMENT first.
+ 
+   [Line 1190 is the dispatcher for a new reserved function that
+ enables xxxxx (e.g., the real SYSOP) to read the COMMENTS file--
+ Routine "N" below also must be included if you want this function. 
+
+   [The reading-the-USERS file function has been omitted here
+ because some users do not feel that the fact they use the system is
+ anyone's business except the sysop's.  It can be taken if desired
+ from RBBS24 or (with incompatible line numbers) from RBBS25.
+
+   [Routines G and H below should both also be inserted if this routine
+ is used.]
+
+999 REM  --- G & C commands changed so that both drop to CP/M ---
+1000 REM
+1020 REM *** MAIN COMMAND ACCEPTOR/DISPATCHER ***
+1040 REM
+1060 A1$="Function":IF NOT XPR THEN A1$=A1$+" (E,R,S,K,C,G,P,X,Q (or '?' if not known)"
+1080 A1$=A1$+"?":GOSUB 13020:C=1:GOSUB 13260:C=0
+1100 IF B$="" THEN 1000
+1120 FF=INSTR("ER?SKCGPXQ",B$):GOSUB 1140:GOTO 1000
+1140 IF FF=0 THEN 1180
+1160 ON FF GOTO 6000,8000,5000,18060,11000,10000,2000,î     17040,17000,18080
+1180 IF N$+O$="xxxxx" THEN IF B$="%" THEN GOSUB 19000:GOTO 1000
+1190 IF N$+O$="xxxxx" THEN IF B$="9" THEN GOSUB 22000:GOTO 1000
+1200 A$="I don't understand '"+B$+"', "+N$+".":GOSUB 13020:GOSUB 13020:î     SAV$="":RETURN
+
+
+G. [For RBBS and MINIRBBS if routine "F" is used.  The GOTO in 2230
+ jumps the user to the character count routine before passing him
+ back to CP/M]
+
+2020 REM ***EXIT TO CP/M***
+2220 REM --give char count when go G as well as C--
+2230 GOSUB 13020:GOTO 10265
+2240 GOSUB 13020:POKE 4,0:A$="Now, back to CP/M...":GOSUB 13020:POKE 0,&HC3:SYSTEM
+
+
+H. [The menu that goes with routine "F".  Line 5210 should be inserted
+ in all versions of RBBS & MINIRBBS.  It is from RBBS25.]
+
+5020 REM *** DISPLAY MENU OF FUNCTIONS ***
+5040 REM
+5060 GOSUB 13020:A$="Functions supported:":GOSUB 13020:IF BK THEN RETURN
+5080 A$="S--> Scan messages     R--> Retrieve message":GOSUB 13020:î     IF BK THEN RETURN
+5100 A$="E--> Enter message     K--> Kill message":GOSUB 13020:IF BK THEN RETURN
+5160 A$="P--> Prompt (bel) togl X--> eXpert user mode":GOSUB 13020:IF BK THEN RETURN
+5180 A$="Q--> Quick summary     C--> Comment before exit to CP/M":GOSUB 13020:IF BK THEN RETURN
+5190 A$="G--> Goodbye--direct exit to C/PM":
+5195 GOSUB 13020:IF BK THEN RETURN
+5200 GOSUB 13020:A$="Commands may be strung together, separated by semicolons.":GOSUB 13020:
+5205 A$="For example, 'R;123' retrieves message # 123.":GOSUB 13020:IF BK THEN RETURN
+5210 A$="For forward sequential retrieval, use  '+' after Msg #.":GOSUB 13020:GOSUB 13020
+5280 GOSUB 13020:RETURN
+
+
+I. [Two very small changes in the message entry module of RBBS24 and 
+ MINIRBBS which are self-explanatory.  Using A instead of Q was Bill 
+ Earnest's suggestion.]
+
+6130 REM --- RBBS25 message substituted here ---
+6140 A1$="Subject (26 chars. max.):":GOSUB 13020:C=1:GOSUB 13260:C=0:K$=B$
+6150 IF LEN(K$)>30 THEN GOTO 6140
+6160 A1$="Password?":GOSUB 13020:C=1:GOSUB 13260:C=0:PW$=B$:GOSUB 13020
+6170 A1$="Type in up to 16 lines.  A bell sounds at the end of each.":  GOSUB 13020
+6180 A1$="To edit or end, hit 2 C/Rs.  Don't use semicolons.":GOSUB 13020:GOSUB 13020:F=0
+
+[continue as in RBBS24 & MINBBS24 until...]
+
+6240 GOSUB 13020:A1$="Choose: (L)ist, (E)dit, (A)bort, (C)ontinue, or (S)ave -- ":IF XPR THEN A1$="L,E,A,C,S: ?"
+6260 GOSUB 13020:C=1:GOSUB 13260:C=0
+6280 IF B$<>"L" THEN 6360 ELSE GOSUB 12220
+6300 GOSUB 13020:FOR L=1 TO F:A$=STR$(L)+" "+A$(L)
+6320 IF BK THEN 6240 ELSE GOSUB 13020:NEXT L
+6340 GOSUB 13020:GOTO 6240
+6360 IF B$="A" THEN A$="Aborted":GOSUB 13020:RETURN
+6380 IF B$="C" THEN 6190
+6400 IF B$="E" THEN 6460
+6420 IF B$="S" THEN 6560
+6440 GOTO 6240
+
+[etc...the remainder of the message entry module is the same as in MINBBS25
+ unless you're using the shadow-sysop idea.  If so, also insert these
+ routines at the indicated places.]
+
+6668 IF N$="xxxxx" THEN N$="SYSOP"
+6680 RE=RE+1:S$=N$+" "+O$:GOSUB 16000:PUT#1,RE
+6682 IF N$="SYSOP" THEN N$="xxxxx"
+
+6978 IF N$="xxxxx" THEN N$="SYSOP"
+6980 RE=RE+1:S$=N$+" "+O$:GOSUB 16000:PUT#1,RE
+6982 IF N$="SYSOP" THEN N$="xxxxx"
+
+
+J. [For MINIRBBS and RBBS:  Substitute these lines in the summary 
+ module to change the format of what is printed by the S comand.]
+
+9500 REM full summary
+9501 REM Routine changed to print info on 2 instead of 4 lines --BB
+9520 RE=RE+1:GET#1,RE:GOSUB 16500:D$=S$
+9540 RE=RE+1:GET#1,RE:GOSUB 16500:NO$=S$
+9560 RE=RE+1:GET#1,RE:GOSUB 16500:T$=S$
+9580 RE=RE+1:GET#1,RE:GOSUB 16500:GOSUB 19200:K$=S$
+9600 RE=RE+1:GET#1,RE:GOSUB 16500:SZ$=S$
+9610 ZS$=SZ$
+9620 A$="#"+STR$(G)+" ="+ZS$+" lines, dated "+D$+"  From: "+NO$:GOSUB 13020
+9630 A$="To: "+T$+"   Re: "+K$:GOSUB 13020
+9640 GOSUB 13020:IF U=G OR BK THEN 9660 ELSE RE=RE+1:GOTO 9300
+9660 GOSUB 13020:A$="***** End of summary *****":GOSUB 13020:GOSUB 13020:GOSUB 13020:CLOSE:RETURN
+
+
+K. [For RBBS & MINIRBBS:  several slight changes in the comment-leaving
+ module so that it (a) only thanks users for their comments when they
+ have really left one, (b) gives characters-typed data to people who 
+ chose either the C or G command, and (c)--note the GOTO in 10280--
+ returns both groups to CP/M.  The log-out code in lines 10295 & 10296,
+ here deleted with REMs, should be restored and a couple of other
+ changes made if do you want G or C to log the user off without returning
+ himto to CP/M first.  Look at RBBS24 to see how.]
+
+10000 REM
+10020 REM ***GOODBYE***
+10040 REM
+10055 GOSUB 13020:GOSUB 13020
+10060 A$="'Comments' are not readable to anyone except the SYSOP...":GOSUB 13020
+10065 A1$=" Want to leave any?":GOSUB 13020:C=1:GOSUB 13260:C=0
+10070 IF LEFT$(B$,1)="N" THEN 10260
+10080 IF LEFT$(B$,1)<>"Y" THEN 10060
+10100 OPEN "R",1,"A:COMMENTS",65:FIELD#1,65 AS RR$:GET#1,1:RE=VAL(RR$)+1:RL=65
+10120 IF RE=1 THEN RE=2
+10140 S$="From: "+N$+" "+O$:GOSUB 16000
+10160 PUT#1,RE
+10180 A$=" Enter comments, C/R to end:  (16 lines max)":GOSUB 13020
+10200 A$="-->":N=1:GOSUB 13020:GOSUB 13260
+10220 IF B$="" THEN 10240 ELSE RE=RE+1:S$=B$:RL=65:GOSUB 16000:PUT#1,RE:GOTO 10200
+10240 S$=STR$(RE):RL=65:GOSUB 16000:PUT#1,1:CLOSE
+10250 GOSUB 13020
+10251 A$="Many thanks for the comment, "+N$+".":GOSUB 13020:GOTO 10265
+10260 GOSUB 13020:A$=" No comment, then.":GOSUB 13020
+10265 GOSUB 13020:A$=" Character count:  "+STR$(A)+" typed by system - "+STR$(D)+ " typed by you.":GOSUB 13020
+10280 GOSUB 13020:GOSUB 13020:GOTO 2240
+10285 REM  -------------------------------------------------
+10290 REM  To disconnect - reset modem DTR line.
+10295 REM [delete unless ext. modem] OUT 53,37  '<-- Turn off DTR bit in modem control port.
+10296 REM [delete unless G signs user out] POKE &H0,&HC3:SYSTEM 'Restore jump at BASE, RET to OS.
+
+
+
+L. [Substitute this into MINBBS24 or RBBS24 if you want to use the
+ line-end bell routine.  It's already in MINBBS25 & RBBS25]
+
+13360 IF SAV$="" THEN GOSUB 26000
+
+
+M. [Remember to use "xxxxx" and not "SYSOP" here in the PRINT CALLERS module]
+
+19020 IF N$+O$<>"xxxxx" THEN 1200' IF NOT SYSOP, SAY "I DON'T UNDERSTAND".
+
+
+N. [This is called by the sysop-only Z option in the command acceptor]
+
+22000 REM ** Routine for reading comments if xxxxx (=sysop)
+22010 REM SUBROUTINE TO PRINT COMMENTS FILE
+22020 REM
+22030 OPEN "I",1,"A:COMMENTS":BK=0
+22040 IF EOF(1) OR BK THEN 22050 ELSE LINE INPUT #1,A$:GOSUB 13020:GOTO 18040
+22050 CLOSE #1:A$="End of comments.":GOSUB 13020:GOSUB 13020:RETURN
+
+
+O. [Put this into RBBS22, RBBS24, or MINBBS24 if you want the l-e bell;
+ MINBBS25 already has it.  It is called by "L" above.  It comes from
+ RBBS25 originally but here has RBBS22/24-compatible line numbers]
+
+25999 REM  Subroutine to replace LPRINT & make line-end bell
+26000 CHC=0: SAV$=""
+26010 NCH=ASC(INPUT$(1))
+26020 IF NCH=127 THEN 26080
+26030 IF NCH<32 THEN 26110
+26040 IF CHC>=63 THEN 26010
+26050 SAV$=SAV$+CHR$(NCH): CHC=CHC+1: PRINT CHR$(NCH);
+26060 IF CHC=55 THEN PRINT CHR$(7);
+26070 GOTO 26010
+26080 IF CHC=0 THEN 26010 ELSE PRINT RIGHT$(SAV$,1);: GOTO 26100
+26090 IF CHC=0 THEN 26010 ELSE PRINT ERS$;
+26100 CHC=CHC-1: SAV$=LEFT$(SAV$,CHC): GOTO 26010
+26110 IF NCH=8 THEN 26090
+26120 IF NCH=13 THEN PRINT: RETURN
+26130 IF NCH=21 THEN PRINT " #": GOTO 26000
+26140 IF NCH<>24 OR CHC=0 THEN 26010
+26150 FOR BCC=1 TO CHC: PRINT ERS$;: NEXT BCC: GOTO 26000
+   

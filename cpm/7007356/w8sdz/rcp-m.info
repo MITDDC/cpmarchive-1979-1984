@@ -1,0 +1,247 @@
+
+
+
+==============================================================
+
+                         RCPMDATA.17A
+
+   (This file is meant to accompany RCPMLIST.xxx, and is    
+   separate from it because it does not require frequent 
+   updates.)
+
+===============================================================
+
+   These  are the rules and etiquette for using  RCPM  systems.  
+   Please  read  this file carefully to get the most from  your 
+   long  distance charges,  and to respect the privacy  of  the 
+   SYSOPS who are giving generously of their time and effort to 
+   provide this service.
+
+===============================================================
+
+
+		 General Notes and Comments
+		 --------------------------
+
+1.     The   systems listed here only carry programs that  will  
+   run  under the CP/M operating system,   most of them  public 
+   domain  software   distributed by CPMUG or SIG/M,   the  two 
+   main  CP/M users'  groups.    Some of the programs  involved  
+   (especially those in  BASIC,  PASCAL and C but also a few in 
+   Z-80  or 8080 assembly language) can be converted to run  on 
+   other  machines  quite  easily.       Systems  dedicated  to 
+   downloading  programs  for  the  PET,   APPLE,   TRS-80  and 
+   NORTHSTAR do exist,  however.  Ask experienced users in your 
+   area,  or  check through  "other systems" listings on  local 
+   CBBS's,  ABBS's,  FORUM-80's,  etc.   Such systems are often 
+   listed in files named OTHERSYS.xxx.
+
+2.     XMODEM  is a modification of Ward Christensen's original 
+   MODEM  program  designed  to allow  the  transfer  of  files 
+   between the exchange system and yours.   The exchange system 
+   needs the program,  not you;  you will probably be using one 
+   of   the  many  versions  of MODEM   itself:   e.g.  MODEM2, 
+   MODEM221,  MODEM 926,  MODEM7,  MODEM75,  TRSMODEM, APMODEM, 
+   CMODEM, MBOOT3, etc.  BSTAM and most of the other commercial 
+   terminal programs will not work properly with XMODEM's S  or 
+   R  file  transfer modes which use the Christensen  protocol.  
+   BSTAM  is also available on many remote  systems,  to  allow 
+   multiple file transfers,  but it is a licensed program (i.e. 
+   NOT  public domain),  so it is only available to you if  you 
+   buy it.
+       Certain  programs,  such  as PLINK and some versions  of 
+   MODEM, can allow files to be "captured" without the benefits 
+   of handshaking or error checking.   However, if you use such 
+   methods, you should bear in mind the following:
+     1. Errors occurring during the transfer will go undetected 
+   unless  you  catch them (no handshaking/error  checking)  by 
+   visual  means,  or by transmitting 2 or more copies  of  the 
+   same  file.   You  can then run COMPARE or DF  against  them 
+   until you get a pair that "agree".
+     2.  You may not transfer .COM files. You may, however, use 
+   UNLOAD  to create .HEX files from .COM files,  and the  .HEX 
+   files can be sent as in #1.,  above.   The receiving end can 
+   then  run Digital Research's LOAD to recreate the .COM  file 
+   from the .HEX file received.
+     3.  You  may  not be able to transmit some files  if  they 
+   contain certain values,  such as hex 1A, which indicates end 
+   of file.
+
+3.     Non-XMODEM  program  transfer  systems are  starting  to 
+   appear:  e.g., LICC's BBS on Long Island [at (516) 561-6590; 
+   110-600+  baud;  24 hrs;no callback] has a few  downloadable 
+   ASCII  files but at present  these must be   captured   like 
+   CBBS   messages  and then saved to disk  without any  error-
+   checking protocol.  John Wood, the sysop of Santa Clara CBBS 
+   [at (408) 241-1956;  110-600+ baud; 24 hrs, no callback] has  
+   announced    plans  to  implement   late-night    exchanges;  
+   whether   these  will  use XMODEM is not yet  clear.   Chuck 
+   Forsberg's  YAM  (Yet Another Modem) program is  written  in 
+   BDS-C,  and  the source is available on several  systems  in 
+   RCPMLIST.
+
+4.     Some   XMODEM  systems  also  operate  as  real  CBBS's, 
+   including those operated by Dick Mead and Steve Vinokouroff.  
+   Others,  like  Keith Petersen's &  CCCC's  use  a   skeletal  
+   subprogram for handling messages called "MINICBBS".    Their 
+   emphasis is on exchanging software,  not bulletin board type 
+   information.  Most RBBS systems focus on software, but there 
+   are variations.
+       Note  that  you  cannot transfer a .COM file to  any  of 
+   these systems;  the xmodem program will not allow  it.  Some 
+   systems will automatically rename any incoming .COM files to 
+   .OBJ.   In addition, some systems will not let you take .COM 
+   files  from them.   Most systems will also prevent you  from 
+   taking   any  files  which  the  SYSOP  does  not  want   to 
+   distribute.   Many  systems  contain .OBJ files;  these  are 
+   really  .COM  files which you are allowed  to  download.  By 
+   calling them .OBJ, the SYSOP can prevent them from being run 
+   on his system,  but still make them available to you via the 
+   XMODEM program.
+
+5.     "CBBS",  "MINICBBS",  "RBBS" (and a variant, "MINIRBBS")  
+   are the user-logging/message-taking programs  used by almost 
+   all  of the  systems on RCPMLIST.   You  will  need  one  of 
+   them if you are interested in starting your own  RCPM/XMODEM 
+   system.   CBBS & MINICBBS are assembly-language programs and 
+   cost  $50.   RBBS & related programs are in MBASIC and  free 
+   but not quite as good as CBBS,  and,  of course, you'll need 
+   the  MicroSoft BASIC compiler to use them ($250).   Ask  the 
+   sysop  of  this system for  details,  or read  RBBS-USE.DOC, 
+   RBBSNSTL.DOC, or CBBSFORM.DOC.
+
+6.     A  few CBBS' and RBBS' have software exchange  functions 
+   that  require the use of a password.  Some such systems  are 
+   included  in RCPMLIST.  If you wish to be given a  password, 
+   you  can  usually  leave  a message  to  the  SYSOP  (System 
+   Operator) on the Bulletin Board of that system.
+
+7.     Presently,  (05/82),  many of these systems are  running 
+   with  hard  disks.  Several are running  MP/M.   You  should 
+   become  familiar  with  the USER command to move  around  on 
+   these  large capacity disks effectively.   You  should  also 
+   become familiar with the SQ and USQ programs. These compress 
+   files to 50-85% of their original size. Many such "squeezed" 
+   files  will be seen on these RCPM systems because  squeezing 
+   files  allows  more  files to be  placed  online,  and  they 
+   transfer  faster.   See  the  file  named  SQ-BRIEF.DOC,  or 
+   SQUEEZER.DOC.   Squeezed  files are identified by the letter  
+   Q  in  the  2nd  position  of  the  filetype;  for  example, 
+   MODEM7.DQC  must be run through USQ to produce the  readable 
+   MODEM7.DOC file.  Be sure you download USQ-15.OBJ and rename 
+   it  at your end to USQ.COM so that you can  "unsqueeze"  the 
+   files you get.
+
+8.     All  of  the  RCPM's will accept 300  baud.   Many  will 
+   accept 450 or 600 baud if you can push your "300" baud modem 
+   that  fast.   You can change baud rates during a session  by 
+   running NEWBAUD on the host system, resetting your rate, and 
+   then  re-entering terminal mode and pressing a  few  returns 
+   until the host senses what your new baud rate is.   Weekends 
+   or  holidays seem to give better luck with pushing to higher 
+   speeds, but the quality of your modem is the biggest factor.  
+   Several systems now accept 1200 baud also.
+    
+9.     You  should set your modem into ORIGINATE mode,  and run 
+   it  at  FULL  DUPLEX while accessing  these  and  most  host 
+   systems.  The normal characteristics are: 8 bits, no parity, 
+   1 stop bit, 300 baud for initial log-in.
+
+10.    Some "300 baud" modems capable of greater than 300 baud:
+   The  Racal-Vadic 3451s (and the manual MODEMPHONES) have 600 
+   baud  capabilities (at ordinary 103 modem frequencies).  The 
+   PMMI  (Potomac  Micro Magic Inc.) modem widely used  on  the 
+   S100  RCPM's  is often run at 600 and even  710  baud.   Two 
+   other brands of modem will run at 600:  the  IDS on-board S-
+   100  modem and Novation's newly announced RV  3451-lookalike 
+   "triple modem".  Neither are yet used by an RCPM system. The 
+   other  systems  on  RCPMLIST all  run  either  D.C.Hayes  or 
+   assorted brands of external modem.  They usually do not send 
+   or receive faster than 300 baud.
+
+11.    Do  not despise things that are free.   It is a  curious 
+   fact  in  the  computer  world that value  bears  almost  no 
+   relation to price.   Some of the best programs for  personal 
+   computers are in the public domain.   They often work better 
+   and  are better supported than software costing hundreds  of 
+   dollars. And, in terms of documentation, commercial programs 
+   do not even come close.  
+
+12.    And  please,  most of these systems operate from private 
+   home telephones...    be courteous and call only during  the 
+   posted  operating hours.   Note that system operating  times 
+   are posted in LOCAL time, not necessarily in your time zone.  
+   Be  sure to translate these times to your own before  trying 
+   to call a remote system.
+
+       NOTE:  If  the system says a "call back" is needed,  you 
+   must call the number,  let the phone ring EXACTLY once only, 
+   hang  up and redial.   On your second call,  the modem  will 
+   answer  on the first to third ring.   If you get  no  answer 
+   after 3 rings, hang up and try again later.
+       The  purpose of all this is that the "call back" systems 
+   are  using telephones that are also used for personal  voice 
+   matters.   Be sure to respect the generosity and the request 
+   of the SYSOPS.
+
+13.    Many  systems have time limits (usually 1 hour in  prime 
+   time).   You  can  make more effective use of your  time  by 
+   downloading    the   directory    menus,...usually    called 
+   DISKMENU.DOC.  You can then hang up,  print it off, mark the 
+   files you want,  and then call back.   Another effective way 
+   to  use these systems is to run WHATSNEW on each disk as you 
+   log  into it;  this will list files newly added and  deleted 
+   since a specified date.  A separate copy of WHATSNEW is kept 
+   on  EACH of the system's drives,  so you'll have to  execute 
+   WHATSNEW on each drive in order to see all of the new files.  
+   This can be easily done by just prefixing the drive name  to 
+   the  command.   For example,  to see what's new on a 3 drive 
+   system, type:
+   A:WHATSNEW
+   B:WHATSNEW
+   C:WHATSNEW
+
+14.    It  would be a good idea to practice  file  transferring 
+   with someone in the local calling area of yours before going 
+   to a distant RCPM. If you do not have a local RCPM, practice 
+   with another CP/M user.
+
+15.    Be  sure  to look at the .DOC file or the first part  of 
+   the  .ASM  file to learn the purpose or  restrictions  of  a 
+   program  before you bother to download it.   If the filetype 
+   is AQM or DQC indicating the file is "squeezed",  use TYPESQ 
+   to view it.
+
+16.    Be  sure  to type BYE before you log off  to  reset  the 
+   system  for the next caller.   If you are hopelessly hung up 
+   in a loop, then just hang up and call back in thirty seconds 
+   or so; the systems will automatically reset after they sense 
+   that the remote caller has hung up the phone.
+
+17.    If you discover a problem with the host  system,  report 
+   it  by  leaving  a message on that  bulletin  board,  or  by 
+   contacting the SYSOP.  He may never know if someone does not 
+   tell  him.  This is an easy way to repay for the use of that 
+   system, and it will be appreciated by the SYSOP.
+
+18.    Do NOT use these systems for commercial messages, ethnic 
+   jokes,  political commentary,  heavy-breathing messages, and 
+   the  like.  Users  are  of all  ages  and  persuasions,  and 
+   restraint (or maturity) will be appreciated by all.   If you 
+   know of anyone abusing a system,  please discourage  it,  or 
+   report it to the SYSOP.   This sort of abuse has resulted in 
+   the  loss  of  several  good  RCPM  systems,  wider  use  of 
+   passworded systems, and other restrictive curtailments.
+
+19.    Most  remote systems have far more files than are online 
+   at any one time. Most will accept requests on their bulletin 
+   boards to leave certain files online for you for a specified 
+   interval of time,  and on a certain disk and user #.  If you 
+   don't see it, look for a .DOC file indicating that the SYSOP 
+   offers such help.
+
+20.    Speaking of help, be sure to enter HELP at the A> prompt 
+   to learn more about CP/M and what the host system offers.
+
+=================================================================
+

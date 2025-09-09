@@ -1,0 +1,8 @@
+xsub
+casm $1
+asm $1 $$pzsz
+sid $1.hex
+g0
+; now say "SAVE nnnn $1.crl", where nnnn is the decimal equivalent of the
+; hex value printed out next to the "S" error in the above assembly...
+

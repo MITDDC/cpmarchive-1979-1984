@@ -1,0 +1,71 @@
+
+
+
+  Things have been going so fast that the disks have been rolling 
+out before any feed-back has been received.  So as of now I don't 
+know if anyone likes what we got or not.  But as long as you 
+folks will send me stuff I will edit it and publish it.   It 
+looks like volume #4 should be a little slower.  But I have some 
+people I haven't asked yet for donations so who knows what I'll 
+be able to drag out of the woodwork.
+     I  was going to have a Read.Me file on each disk but I found 
+that unless I had a lot to say it was just not needed.  So unless 
+something special comes along I'll just stick to this format.
+
+
+1.   AUTHOR.PAS/COM--A general purpose "keyword in context"
+                     program. Includes samples.
+
+2.   CALC.PAS--Here is your built in calculator adapted to 
+               Pascal/Z.  The number crunchers among us should
+               take this and expand it to its limit.  But its
+               got good potential as is, now just patch it so
+               the results go to either the printer or the
+               disk and then you'll have a permenent record.
+
+3.   CPLOT.PAS/COM--A simple banner idea but useful for simple
+                    designs, just to be different.
+
+4.   DELAY.PAS/REL/SRC--Ray Penley tells me I goofed by not
+     INPORT.REL/SRC     including these in with the volume #1.
+     OUTPORT.REL/SRC    So here they are and let me know of any
+     KEYIN.REL/SRC      other goofs.
+
+5.   NAD.PAS/COM--A general purpose "Permuted keyword index"
+                  program. A good start but needs to be up
+                  gradeds to become classy.
+
+6.   TDIABLO.MAC/COM--Driver for Diablo which works for the
+                      Teletek FDC-1 board.
+
+7.   DIABLO.Z80/COM--Driver for Diablo which works for the
+                     SD System S-100.
+
+8.   RANDOM.PAS/COM--This random generator implements the
+                     Fibonacci series approach.
+
+9.   REBOOT.COM--In volume #1 I included a Autoboot program.
+                 This is an example of ideas breeding ideas.
+                 Tim Oleseo saw it and said there is a
+                 better way. In this one you type----
+                    REBOOT yourfilesdesire cr
+                 and that's it. To remove an entry---
+                    REBOOT cr
+                 Simple huh!
+    
+10.  STRLIB.LIB--The begining of a library, some good stuff.
+
+11.  WUMPUS.PAS/COM/DOC--Nothing need to be said about this
+     CAVES               game but it is Pascal 3.0 and also
+                         it has Caves that can be added to,
+                         so for you game freaks, get hot and
+                         put your ideas in some strange
+                         caves.
+12.  ENTRY.PAS/COM/DOC--Tutorial on how to make external
+                         SRC files with examples. Needed by
+                         all of us beginners.
+13.  PEEK.PAS--A peek and poke in Pascal/Z yet.  Who knows
+               you might need it.
+14.  POWERI.PAS/REL/COM--A demo, but useful program for 
+                         powers of numbers.
+15.  RDR.PAS--A Alpha-numeric numbers conversion program.

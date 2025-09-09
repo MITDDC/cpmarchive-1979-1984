@@ -1,0 +1,460 @@
+
+		   THE D. C. HAYES SMARTMODEM
+		   Convenience at What Price?
+
+			     -----
+
+		    Reviewed by	David Boruff
+		      Maryville, Tennessee
+			8 September 1981
+
+			     -----
+
+
+     The folks at D. C.	Hayes have been	splashing a lot	of color
+in  the	computer hobbyist magazines lately about their new super
+modem,	the  Smartmodem.   Designed as part of their new line of
+external computer components  including	 an  outboard  real-time
+clock,	 the   Smartmodem  is  a  compact,  attractively  styled
+direct-connect modem  that interfaces to your computer through a
+standard serial	port.  For this	reason,	the Smartmodem is highly
+portable -- you	can easily hook	it up to ANY computer that has a
+serial port in no more	time  than  it	takes to plug in a DB-25
+connector,  plug  in  the  power and flip the  switch.	  Easily
+programmed for auto-answer,  auto-originate, and a host	of other
+features, the Smartmodem touts brains and convenience over basic
+performance,  an  item	I shall	dwell  on  extensively	in  this
+review.	 
+
+     What sets the Smartmodem apart from all other modems on the
+market today is	that it	has  a	built-in  microprocessor and the
+ability	  to   accept	ASCII	strings	  as  commands.	     The
+microprocessor,	 a Zilog Z-8, takes care of  all  the  intricate
+programming  that users	 of  other  auto-answer,  auto-originate
+modems might be	used to.  With Smartmodem, you just tell it what
+you want to do,	 and sit back while it does it.	 No more worries
+with timing loops,  delay  constants,  baud  rates, pulse rates,
+counting  rings,  etc.;	 the  Smartmodem's  Z-8	and  onboard  2K
+control	 program  in ROM does it all for you.	Programming  the
+Smartmodem is so simple	 that all you need is a	bare-bones modem
+program	that can transmit and receive data to it.  Then	you just
+send it	commands to execute and	wait for it to tell you	that its
+done.	 No  special software  is  needed  to  run  it,	 but  to
+bastardize Shaw, what price convenience?  
+
+     The Smartmodem  is	 a  Bell  103-compatible  direct connect
+modem that is capable of running 0-300 baud in either  originate
+or  answer  mode.  It has auto-originate/dialing and auto-answer
+capabilities.	  It  can  dial	 using	either	Touch-Tones,  or
+conventional pulse-dialing, or any combination of the two, along
+with such niceities  as	 pausing for a second dial-tone	(such as
+with a PBX system), dialing  in	either answer or originate mode,
+and a built-in loudspeaker to allow you	to monitor the telephone
+line  aurally.	 The modem can be  programmed  to  automatically
+answer the phone  on  any number of rings from 1 to 255, and you
+can also program how long  the	modem  will  wait  for a carrier
+before	hanging	 up.  Seven LEDs on the	front panel display  the
+modem's	 status	 including  auto-answer	 mode,	carrier	 detect,
+off-hook, receive  data, transmit data,	terminal/computer ready,
+and modem ready.  When	powered-up and on-line,	the Smartmodem's
+low-profile  silhouette	 and   blinking	 lights	 make  a  flashy
+appearance sitting on your terminal.  
+
+     Smartmodem	 is  tall on features,	some  of  which	 can  be
+programmed in as power-up  default  values  by	the  use  of dip
+switches  located  behind  its front panel.  Almost all	defaults
+can be overridden by explicit  commands	 when on-line.	Briefly,
+lets take a look at some of Smartmodem's smarts.  
+
+     Each command is sent to Smartmodem's  data	 port just as if
+you  were transmitting data to the remote modem.  If  Smartmodem
+is in  "command"  mode,	then all data sent to its data port will
+be intercepted and  interpreted	 as commands to	the modem.  When
+Smartmodem is in the "on-line" mode,  then all data will be sent
+on down	the line as with a conventional	 modem.	   So  in actual
+practice,  you really have only	to worry with one port for  both
+data communication  and	 modem control.	 Your own modem	program,
+primitive or intelligent only  has  to	watch the modem's serial
+status port to determine when data is available	 to be input, or
+when the modem can accept more data.  In this respect,	you talk
+to  Smartmodem just as you would any other dumb	modem, with  the
+difference  being  that	 the  modem  can  either  be  on-line or
+off-line.  In practice,	I found	this to	be convenient but at the
+same  time annoying since I was	often sending commands when  the
+modem was  on-line  (and  so the remote	computer got a string of
+garbage), and at other times  I	 thought I was transmitting data
+when all I was doing was filling Smartmodem's  off-line	 command
+buffer	with  meaningless instructions.	 Hayes stresses	in their
+manual that any	 terminal  software  must keep up with what mode
+the modem is in, since there are no status flags to interrogate.
+
+     When in the off-line or command mode,  commands are sent to
+Smartmodem as a	string of upper-case ASCII characters terminated
+with a carriage	return.	 A minor annoyance is  that Smartmodem's
+control	program	doesn't	convert	lower-case to upper-case  before
+interpreting  the  command  line.    So	 if  you're  programming
+Smartmodem  from  the keyboard,	you have to make sure everything
+is in upper-case.   Smartmodem's command buffer	is 40 characters
+long, and if you overflow  its	buffer	with  commands or a long
+telephone number to dial, it forgets everything	 and  makes  you
+start  over.	When  Smartmodem has executed a	command, it will
+return a result	code to	 let  you  know	what it	did.  The result
+code can either	be a string of ASCII  characters  (preceded with
+and followed by	a carriage return-line feed pair),  or	a single
+ASCII  digit followed with a carriage return.  In addition,  you
+can also  instruct  Smartmodem	to go into a quiet mode	where it
+will  not return result	codes at all.	 All  result  codes  are
+returned  to  the  host	 computer or terminal via the data port,
+just  as  if  it  were	data from  a  distant  terminal.    Very
+convenient.  The result	codes that Smartmodem can return are:  
+
+
+   VERBOSE    NON-VERBOSE    MEANING
+   -------    --- -------    -------
+   OK		   0	     Command line executed
+   CONNECT	   1	     Carrier has been detected
+   RING		   2	     Phone is ringing
+   NO CARRIER	   3	     Carrier lost or never detected
+   ERROR	   4	     Command line error
+
+
+     Remember that each	of  the	verbose	strings	are preceded and
+tagged with a CR/LF pair, and  that  the  non-verbose  codes are
+returned  as  ASCII (i.e., VERBOSE would return	0DH 0AH	4FH  4BH
+0DH 0AH	and NON-VERBOSE	would return 30H 0DH).	Hayes recommends
+that  verbose  mode  be	 programmed  when  the	modem  is  being
+controlled from	 the keyboard, and that	non-verbose be specified
+when the modem is  being controlled by a terminal program.  Even
+so, I didn't like having  to  read two characters in non-verbose
+mode.	 If  you  choose  to just grab	the  first  ASCII  digit
+Smartmodem returns and don't  input  the  carriage  return, your
+UART will flag an overrun error	the next time Smartmodem sends a
+result	code or	some serial data to your computer.  Again,  what
+price convenience.  
+
+     Assuming  that  Smartmodem	is in the off-line/command mode,
+here's a thumbnail sketch  of  just  what you can tell it to do.
+Each  command  line must be preceded with  the	characters  "AT"
+which instructs	 Smartmodem  to	pay attention -	commands follow.
+Then  each  command  consists of  strings  of  upper-case  ASCII
+characters which can tell  Smartmodem  to  (optional  parameters
+omitted	for brevity):  
+
+
+   A  -	Answer telephone and wait for carrier detect
+   A/ -	Execute	last command buffer again
+   C  -	Turn transmitter carrier on or off
+   D  -	Dial telephone in originate mode and go	on-line
+   E  -	Toggle command line character echo
+   F  -	Set full or half-duplex
+   H  -	Go off-hook or on-hook
+   M  -	Turn built-in monitor speaker on or off
+   O  -	Return to on-line state
+   P  -	Use pulse dialing
+   Q  -	Enable/disable result codes ("quiet" mode)
+   R  -	Use answer mode	to dial	a telephone number
+   S  -	Read or	set any	of the 17 parameter registers
+   T  -	Use Touch-Tone dialing
+   V  -	Set verbose/non-verbose	mode for result	codes
+   Z  -	Reset Smartmodem to power-up default state
+   ;  -	Terminate dialing and return to	command	mode
+   ,  -	Command	line pause character
+   _  -	Morse code dah symbol
+   .  -	Morse code dit symbol
+   /  -	Morse code character pause symbol
+
+
+     The "S" command extends preceding instruction set	allowing
+you  to	interrogate or set the contents	of 17 registers	used  by
+Smartmodem  to	control	what its doing.	 These 17 registers are:
+
+
+   S0  - Set ring # to auto-answer on
+   S1  - Number	of rings which have occurred
+   S2  - Character used	to escape back to command mode
+   S3  - Character used	as carriage return in command mode
+   S4  - Character used	as line	feed in	command	mode
+   S5  - Character used	as backspace in	command	mode
+   S6  - # of seconds to wait for dial tone before dialing
+   S7  - # of seconds to wait for carrier detect
+   S8  - # of seconds of to pause for command line comma
+   S9  - # of 10ths/sec	carrier	must be	present	to be valid
+   S10 - # of 10ths/sec	between	loss of	carrier	and hangup
+   S11 - Touch-Tone dialing speed
+   S12 - Escape	code guard time	in 50ths of a second
+   S13 - Bit map of Smartmodem's UART status register
+   S14 - Bit map of Smartmodem's option	register
+   S15 - Bit map of Smartmodem's flag register
+   S16 - Enable	or disable loop	back for modem testing
+
+
+     The 3 bit-mapped  registers  allow	 you  to interrogate the
+following:  
+
+
+   S13 - Parity	enabled	or disabled, parity odd	or even, word
+	 length	(7 or 8	data bits), command buffer status
+	 (full or overflow), state of data bit 8).
+
+   S14 - Auto-answer default mode on power-up, quiet mode
+	 enabled or disabled, verbose or non-verbose mode,
+	 baud rate has or has not been acquired, monitor
+	 speaker mode ("off", "on" until carrier detect,
+	 or "on" at all	times).
+
+   S15 - Originate/answer mode,	full or	half-duplex mode,
+	 Touch-Tone or pulse dialing mode.
+
+
+     In	 addition to the 17 registers, recall that  I  mentioned
+the dip	switches that can be set to control the	modes Smartmodem
+will default  to on power-up.  To gain access to these switches,
+you have to pry	 off  Smartmodem's front panel,	and the	switches
+control	the following conditions and modes:  
+
+
+   Switch 1 - Enable computer control of data terminal ready
+	      (DTR) line or force Smartmodem to	always hold
+	      DTR high.
+
+   Switch 2 - Verbose/non-verbose mode
+
+   Switch 3 - Quiet/non-quiet mode
+
+   Switch 4 - Command line echo	on or off
+
+   Switch 5 - Auto-answer on 1st ring on or off
+
+   Switch 6 - Enable/disable computer detection	of remote
+	      carrier detect
+
+   Switch 7 - Single/Multi-line	phone installation (controls
+	      phone lights)
+
+
+     All of the	dip switch  defaults  except  2, 6, and	7 can be
+overridden  after  power-up  by	 simply	 issuing  countermanding
+instructions  to  Smartmodem.	 Switches  2,  6  and  7 control
+hardware-dependant  features  and  thus	cannot be overridden  in
+command	mode.  
+
+     Although most of the commands,  and  mode toggles described
+above  are  self-  explanatory,	 some  of them aren't,	so  I'll
+elaborate  on some of them now.	 First off,  how  do  you  issue
+commands to  Smartmodem	 once  we're  in  on-line  mode?   Quite
+simply,	 you  can't!	What you have to do is get back	into the
+off-line/command mode and then start issuing commands.	While in
+the on-line mode, Smartmodem  checks  all  data	 transmitted  or
+received  for an "escape code" character.  If Smartmodem detects
+three consecutive  escape codes	preceded and followed by a delay
+time during which no  data is being transferred, then Smartmodem
+will abort back	to command  mode.   You	will note that registers
+S2 and S12 allow you to	set the	escape	code  (default is a plus
+sign "+"), and the delay or "guard" time (default  is 1	second).
+In  other words, assuming that S2 and S12 have not been	 changed
+by the	user  and  Smartmodem  is  on-line,  the modem will STAY
+on-line	 until	it  detects  at	least 1	second of  no  activity,
+followed by 3 consecutive plus	signs,	followed  by  at least 1
+more  second of	no activity.  Theoretically, the only time  this
+condition  would  be met would be if the user specifically typed
+these three characters,	 but  it  is  not inconceivable	that the
+remote	computer  could	 coincidentally	send  this  sequence  of
+characters, with the appropriate  guard	 times,	and thereby take
+your  Smartmodem  off-line!    (Also,  the  remote   user  could
+deliberately  take  your  modem	 off-line  by sending the escape
+sequence.  Smartmodem doesn't care whether the	escape	sequence
+is entered locally or from the remote computer -- it will  abort
+to  command  mode  regardless).	  In this instance, the	only way
+that  your computer would know that  Smartmodem	 was  no  longer
+on-line	 would	be  for	it monitor the remote carrier detect (an
+option	controlled  by	dip  switch  6).    Although  Smartmodem
+continually monitors the remote	carrier	regardless of whether it
+is on or off-line, and	displays  remote carrier status	with the
+front-panel LED, the carrier detect  line  it makes available to
+your  computer is only held high IF remote carrier  is	detected
+AND Smartmodem	is on-line.  However, when using Smartmodem on a
+remote	bulletin  board	 system,  the  escape  sequence	 can  be
+disabled entirely.   If	you have done this, the	only way to take
+Smartmodem off-line (short  of	pulling	 its  plug) is to either
+lose  remote carrier detect, or	for your computer  to  pull  the
+data  terminal	ready  line  low.    Either  one  of  these  two
+conditions  will  then force Smartmodem	to disconnect and revert
+to command mode.  
+
+     A drawback	to  Smartmodem's escape	routine	is that	you will
+miss any incoming data	while the modem	is in command mode.  For
+example, if want to change  from half-duplex to	full-duplex, you
+first have to get the remote  computer	to  wait  by  using XOFF
+(assuming  it  can  or	will  respond  to  XOFF),  then	get into
+Smartmodem's command mode, issue the duplex mode change	command,
+then get back into on-line mode	and tell the remote  computer to
+carry  on.   If	you can't get the remote computer to halt  while
+you do your thing,  then  you  only  have  two	options: stay in
+half-duplex,  or  change  to full-duplex and lose whatever  data
+comes in while you're changing	modes.	 Here again, convenience
+at what	cost?  Personally, I would prefer  being  able	to issue
+commands  to  the  modem  independently	 of  data  transfer  and
+sacrifice   convenience	  for	flexibility.	Naturally,  such
+flexibility  would  eliminate  the  possibility	 of  controlling
+Smartmodem   from  a  dumb  terminal  without	an   interfacing
+communications program.	 You can't have	both.  
+
+     You may have  noted  the  Morse code dit and dah symbols in
+the command table.  Yes	friends,  Smartmodem can send Morse code
+(up to the limit of a single command buffer) using either answer
+or originate tones at a	fixed speed  of	 20  words  per	 minute.
+Couple	this  capability  with	Smartmodem's  ability  to turn a
+transmitter on or off (or lots of other	things as well),  and we
+amateur	 radio	operators have a neat little package for sending
+ASCII over our radios at up to 300 baud.  The Morse code feature
+allows the computer  to	 identify  each	station	at the 10 minute
+intervals demanded by the FCC without  the  operators  having to
+intervene.    However, those of	you with other super modems  can
+have the same capability  if  you're willing to	do a little more
+work.  Smartmodem just makes it	more convenient.  
+
+     Those other special command  mode characters also deserve a
+little	more  explanation.  Normally,  when  you  issue	 a  dial
+command, Smartmodem goes off-hook (picks up the	phone),	waits at
+least  2  seconds   for	  the  dial  tone  (the	 delay	time  is
+programmable of	course), and  then  proceeds to	dial.  If you're
+dialing	from a PBX system where	you have  to  dial one number to
+get  an	 outside  line,	 Smartmodem  can handle	that  by  giving
+Smartmodem the outside line access number  (say	 9),a comma, and
+then the number	to dial.  Smartmodem will then dial  9,	wait for
+the  number  of	seconds	programmed for the comma, and then  dial
+the rest of the	 number.    As	mentioned  earlier, you	can also
+switch between pulse dialing and Touch-Tone  dialing in	the same
+dialing	operation.  For	example, if your PBX system doesn't have
+Touch-Tone capability but your outside lines do,  you  can  have
+Smartmodem  dial  9  with pulses, wait 2 seconds for the outside
+line dial tone,	then dial  the outside number using Touch-Tones.
+The advantage of this setup  is	 that  Smartmodem can Touch-Tone
+dial a number incredibly fast (I mean, REAL fast), and if you're
+in  a hurry, dialing an	11 digit number	with  Touch-Tones  is  a
+hell  of  a  lot-faster	 than  using  pulses, even at the 20 pps
+accepted by some exchanges.  Smartmodem's  Touch-Tone capability
+also  allows  you  to  use  your  computer with	the  new-fangled
+computerized banking systems where you call your bank's	computer
+and   then  use	 your  telephone's  Touch-Tone	 pad   to   give
+instructions to	the bank computer.  Smartmodem can automate this
+process	 by  using  the	 semi-colon  at	 the  end  of  the  bank
+computer's  phone number.  Normally, Smartmodem	goes on-line and
+waits for a carrier  after dialing a number.  But the semi-colon
+forces it to revert to	command	 mode  after  dialing so you can
+give it	further	commands.  Switch the speaker on so you	can hear
+the bank computer talk to you, and have	Smartmodem  talk  to the
+computer with Touch-Tones!  Incredible!	 
+
+     The astute	reader has probably concluded that I really like
+this little gadget, and	I do.  But I don't want	one to have  and
+to  hold  for  my  very	own forever and	ever, because Smartmodem
+does have some limitations  that  I  don't  particularly want to
+live with.  Before I go	into the negatives, please remember that
+I  am speaking from my own experience, and with	 an  eye  toward
+what  I	 personally  want  to  do  with	a super	modem.	For you,
+Smartmodem might be just the ticket  --	 but  not  for	me,  and
+here's why.  
+
+     Let  me  say right	off that for folks who don't plan to use
+Smartmodem for any kind	of bulletin board or RCP/M applications,
+either as a user or as a SYSOP,	Smartmodem is a	good buy for the
+money.	It has	all  kinds  of	bells  and  whistles  that don't
+require	 an intimate knowledge of assembly language and	 digital
+electronics  to	implement.  In a word, Smartmodem is CONVENIENT,
+and even at the	 retail	 price of $279.95, its a steal.	 But for
+people like myself who aren't  afraid  of  getting  their  hands
+dirty  at the machine language level, who don't	enjoy paying  Ma
+Bell more  than	 she deserves, and who want maximum flexibility,
+Smartmodem's convenience becomes an insufferable burden	to bear.
+First and foremost,Smartmodem can only go up to	300 baud.  While
+the vast majority  of  bulletin	 boards	 and  timeshare	services
+can't  go  any	faster either (not with	Bell 103-compatibility),
+the majority of	the  RCP/M  systems that I regularly do	business
+with can and do	run at 450 baud	 and  higher.	 When you figure
+that  a	 file can be transferred in half the time at  600  baud,
+you're talking about a considerable savings on phone bills.  For
+heavy dialers, that savings could well pay for the extra cost of
+a high-speed  modem  and  then	some.  From the	SYSOP's	point of
+view, even with	alternative long-distance  services available, a
+lot of RCP/M users are going to	higher baud  rates  and	an RCP/M
+system	worthy	of  the	name should be able to accomodate  those
+people.	 
+
+     Secondly, even though  Smartmodem	can  run from 0-300 bps,
+you can't change the baud rate on the fly.  Smartmodem gets your
+baud rate, word	length,	and parity mode	the first time you issue
+it a command, and that's where she stays.  If  you  power-up  at
+300  baud,  and	 a user	calls in at 110	baud, tough nookies.  So
+the 0-300 bps capability is there, but with a big "gotcha".  
+
+     Thirdly,  Smartmodem   is	 timing-oriented   rather   than
+logic-oriented.	   For	example, after dialing another computer,
+Smartmodem can't tell when  the	 other	phone is ringing or when
+its busy.  It simply waits a certain amount  of	time (default of
+30 seconds) for	a carrier.  If it doesn't get one in that length
+of time, it disconnects.  This limitation means	 that Smartmodem
+can't  be  used	to dial	a ring-back system without the	operator
+sitting	there  riding  shotgun and manually issuing a command to
+disconnect on the first	 ring,	and  then  dial	again.	In other
+words,	you  can  do it	under operator control,	 but  not  under
+software control.   However,  giving credit where credit is due,
+Smartmodem can handle ring-back	 ANSWERING,  as	a bulletin board
+modem driver can simply	monitor	the rings register  just as with
+any other auto-answer modem -- only with Smartmodem its	 quite a
+bit more awkward.  
+
+     From  the	programmer's  standpoint, Smartmodem is	slow  to
+program	and slow to respond to	programming.   It takes	at least
+1/4 of a second	for the	modem program to accept	 a  command  and
+issue  a response code.	 Plus, the speed with which commands and
+result codes  can  be  transferred  is limited by the baud rate.
+Aside  from being slow,	Smartmodem is  awkward.	   ASCII  string
+programming  is	 convenient  for  BASIC,  but  at  the	assembly
+language  level,  its  very  inefficient  to have to run through
+lookup	tables and look	for 2 result codes instead  of	1.    It
+seems the  folks at Hayes were going primarily after the turnkey
+user in	designing  Smartmodem, and the end product is emminently
+suited for them.  To  an  end  user conversant with a high-level
+language such as BASIC,	with only  limited knowledge of	assembly
+language (and no desire	to learn more),	 Smartmodem  is	a little
+jewel.	But to someone such as myself who prefers to program  in
+assembly  language, Smartmodem is like a black hassle box that I
+can't get into	deep enough to have it singing and dancing to MY
+tune, instead of  to  the  tune	 D.  C.	Hayes wrote for	it.  For
+example,  I  don't  like the way you have  to  escape  from  the
+on-line	mode.  If you  send  Smartmodem	the escape sequence, the
+other end gets it too.	If you disable the escape sequence, then
+the only way you can get back  to  command  mode  is by	fiddling
+with the DTR line -- and that will disconnect you from the phone
+line.  My basic	gripe then is that I want more control	over the
+modem than what	the law	allows.	 
+
+     Although	Hayes	doesn't	 publish  much	in  the	 way  of
+meaningful specifications  for Smartmodem, my experience with it
+on-line	leads me to believe it leaves a	bit to be desired as far
+as sensitivity and selectivity	are concerned.	Connections that
+never  gave my acoustically- coupled  Datec  any  problems  have
+kicked Smartmodem  off the track.  In all honesty however, those
+same marginal lines  also  gave	 a lot of other	modems I've used
+trouble	 as  well.  I would say	that  Smartmodem's  performance,
+although less than ideal, is par for the course.  And finally, I
+don't like having  yet	another	 serial	 port  tied  down to yet
+another	modem.	I would	much prefer to have a modem board that I
+can  plug  into	 my S-100 buss.	 Motherboard slots are free  and
+available - serial  ports cost money (and what with the	price of
+gold these days, DB-25s	ain't cheap either).  
+
+     So	there you have it, the D. C. Hayes Smartmodem.	Now that
+I have completed my evaluation	of  the	 little	 booger,  I have
+reluctantly  decided not to give him a home in my computer room.
+To the question	 I posed quite a few words back	about what price
+convenience, my	answer	is  flexibility.    Smartmodem	has more
+bells  and  whistles  than a merry-go-round, but I frankly don't
+need them.  If I could summarize Smartmodem in a phrase, I would
+have to	say that its TOO  SMART!   For me, and for most	CBBS and
+RCP/M operators, the Potomac Micro-Magic  MM-103  is  still  the
+best  show  on	the  road  .. but Smartmodem sure puts on a good
+warmup act.  
+
+

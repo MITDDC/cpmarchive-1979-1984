@@ -1,0 +1,2365 @@
+MADLER@MIT-ML 08/30/81 16:24:37 Re: locating sectors with the BIOS on a H/Z89
+To: INFO-CPM at MIT-ML
+Having just completed an interrupt driven MODEM program for use in normal
+communications and file transfer (for computers without special dumping
+software) I have come across a problem with interrupt driven character
+input while performing disk operations on a Heathkit H89 using Heath's
+CP/M.  In the BIOS, subroutine LPS (locate proper sector) disables interrupts,
+thus causing dropped characters.  Does anybody know whether or not interrupts
+are disabled simply to eliminate interference by the 2ms clock or is timing
+critical and interference by any process would cause problems.  If
+only the former is true, I could modify this subroutine to turn off the
+2ms clock and maintain other interrupts.  If it is the latter, I may have
+to suffer from dropped characters!
+
+Also, has anybody modified Heathkit's CP/M BIOS successfully?  I tried once
+but their instructions were sparse and seemed not to apply.  If anybody could
+describe exactly how the BIOS is modified and then how a new system disk
+is created I would really appreciate it!!!
+
+Thanks,
+-Michael Adler
+
+
+Date: 30 August 1981 09:42-EDT
+From: gai@ai (Glenn Iba)
+Sender: GAI at MIT-AI
+Subject:  Call for advice and info on the Apple/CPM/Amethyst connection
+To: INFO-APPLE at MIT-AI, AMETHYST-USERS at MIT-AI, INFO-CPM at MIT-AI,
+    INFO-MICRO at MIT-AI
+
+Dear Apple users, Amethyst users, and CPM people,
+   I am a new owner of an Apple II plus, and would appreciate help and
+advice from more experienced users. My questions break down into 2 
+groups: (1) questions concerning the system I hope to build
+around my Apple, and (2) general questions about things I don't 
+understand yet. 
+
+My sincere apologies for both the length of this inquiry, and the
+redundancy to many of you who are on more than one of the mailing lists.
+My thanks for your patience and your help.
+
+BACKGROUND:
+	Things I would like to do with my Apple:
+		Text editing (writing papers, reports, and student evaluations)
+		Programming (my previous experience is with LISP and LOGO)
+		Teach my wife programming in LOGO
+		Games and Puzzles (Sargon chess, backgammon, various "arcade games")
+		Graphics hacking / art work
+		Terminal dial up to larger systems (Cyber and Vax in Amherst
+			area, and MIT-AI if I can obtain an inexpensive connection
+			from Northampton-- this latter would be especially 
+			helpful to me)
+		LISP programming and perhaps even some of my thesis research (AI)
+	    (i am unsure as to the feasibility of some of these things and would
+		appreciate your disabusing me of any unrealistic fantasies)
+
+	My current system consists of:
+		48k Apple II plus
+		Apple disk drive (5.25 in.) with DOS 3.3
+		Epson MX-80 printer
+		Home color TV (19" with SupRMod modulator)
+
+FANTASY SYSTEM:
+    The following is the tentative plan I have for expanding my system.
+It is driven largely by my desire to run the AMETHYST software (MINCE 
+and SCRIBBLE).
+	SOFTCARD Z80 with CPM (so as to be able to run MINCE, etc.)
+	80 column, upper/lower case display
+	2nd disk drive (5.25 in.)
+	16k RAMCARD (to extend to 64k)
+	modem
+	(color monitor?)
+	
+QUESTIONS ON SYSTEM EXPANSION:
+
+0. Is my "fantasy system" feasible? That is, WILL IT WORK??
+   I am especially anxious to learn of any interaction effects
+   or incompatibilities of pieces of the system I am considering.
+   Are there components or angles I've overlooked? 
+
+1. Will there be enough slots to put it all together (i count 6)? 
+   Will some of them be wanting to go in the same slot?
+   Will the Apple heat up and/or explode with all those boards plugged in??
+   If so, is it a solution to remove the power supply to outside the Apple
+   casing? Would a good fan be adequate to do the job?
+
+2. Is it worth the bother (and expense). I think I can scrounge up
+   the money, but will I be reasonably satisfied with the final result
+   or will I have only an expensive kludge?
+
+3. Has anyone already tried a similar system? I would be EXTREMELY
+   INTERESTED in corresponding with you to learn how it worked out!!
+
+4. Are people happy with the Amethyst package? What are peoples' experiences
+   with MINCE and SCRIBBLE on the Apple? How does SCRIBBLE fare when
+   combined with the Epson MX-80?
+
+5. Are there radical alternatives I should consider before committing
+   myself further to this project? (eg. selling the Apple and building
+   or acquiring an alternative system?) How serious a constraint is the
+   8 bit processor and 64k address space?? 
+
+6. Any specific recommendations or warnings regarding alternative hardware
+   (such as 80 column boards, 16k ram cards, and modems)? In particular
+   I am curious as to which (if any) of the 80 column boards would impose the
+   least drain on the power supply? 
+
+7. Will a home tv provide adequate resolution for 80 column upper/lower
+   case display? How much additional resolution would I get from a color
+   monitor (for both text and graphics)?
+
+8. Do ALL the 80 column boards automatically provide upper/lower case display?
+   (I'm currently inclined toward the Videx Videoterm)
+
+9. Is the Videx Keyboard Enhancer redundant with the Videoterm board?
+   (if not, is it a reasonable way to upgrade the keyboard?)
+   What is the best way for me to obtain keyboard entry of upper/lower case
+   and other ascii characters (preferably using the shift key)??
+
+10. What should I look for in a modem? Is the Hayes Micromodem II everything
+   its cracked up to be? Are there reasonable 1200 baud modems for the
+   Apple?
+
+11. Will Apple Pascal software run on the alternative 16k ram boards (Andromeda,
+	Microsoft RAMCARD, etc.)? Would I really want Apple Pascal anyway?
+
+12. Does anyone have experience with any of the "friction feed" add-ons for
+   the MX-80 (such as Orange Micro's, or the one advertised for $15)? 
+   What about the dot graphics updrade (do I correctly recall they claimed
+   this will also provide italic fonts?)?
+
+13. How can I get the best prices on equipment I purchase? Are mail order
+   houses generally reliable, or are some of them fly-by-nighters that may
+   take my money and run? Are there ways I can get wholesale prices on
+   single quantity (I expect I'm dreaming, but it can't hurt to ask).
+
+14. Is service a big issue with micro-computer ownership? (I've only had my
+   system for 3 weeks now). Should I be wary of Mail Order houses on this
+   account?
+
+GENERAL INFORMATIONAL QUESTIONS:
+
+1. Could some kind and patient soul please explain to me what is involved
+   in Up and Down Loading? I understand (i think) that they have to do
+   with shipping files (or is it just programs? -- please clarify) back
+   and forth between micros and mainframes. Are the problems primarily due
+   to differences in word size? or are there other more subtle issues that
+   I can't imagine?
+
+2. Has anyone developed a central catalog of software purchased or written
+   by various people who would be willing to share their resources?
+
+3. Any suggestions as to my best means for hooking into MIT-AI from the
+   Northampton/Amherst area? Can I do network hopping through any commercial
+   networks at reasonable prices? Are long distance phone lines reliable
+   for transmitting information, or are they too noisy? Any and all suggestions
+   will be gratefully accepted (and shared with our own Dave McDonald (DDM) who
+   is also located in Amherst).
+
+4. Can one get away with "turning over" diskettes and using the other side?
+   One can cut out a second "write enable" hole, and store things on both
+   sides of a diskette. Is there any danger of information bleed-through
+   from using both sides simultaneously for storage?? Does the risk become
+   greater as the disk surfaces wear away??
+
+Thank you again for your patience and help. My apologies for this inordinately
+long message. I'm very anxious to get on as quickly as possible to expanding
+my system, but I'd like to benefit from all your prior experiences.
+Apologies also for the redundancy entailed in my sending this to the several
+"micro" mailing lists.
+
+
+
+Date: 30 August 1981 03:35-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: Diskette library control
+To: INFO-CPM at MIT-MC
+
+
+The following was left on my RCPM system.  I don't normally
+forward long messages to a mailing list like this one, but
+felt this one was of such universal interest it was worth
+making an exception.
+
+LIBRARY.CTL   Microcomputer Diskette Library Control.
+
+04/25/81.     T. McCormick.
+
+
+	Control  of computer libraries is well developed in large 
+computer  operations.  Only  tiny operations can get  by  without 
+specific  rules for naming programs and data  files,  segregating 
+test files from production, indicating as-of dates, etc.
+
+	With the rapid growth of microcomputer use,  and with the 
+continual improvement in disk storage capacity per  dollar,  many 
+business  and  hobby users are discovering that with  no  library 
+plan,  too  much time and effort are wasted looking for the right 
+version, starting to run the wrong version...again, etc.
+
+	It  is  possible  to acquire and  store  more  files  and 
+programs than you can manage without some library system.
+
+	Micro operating systems,  editors, and utilities offer an 
+occasional  assist  in one way or another such as  creating  .BAK 
+backup  file copies automatically.   But the user is left to  put 
+his  library control scheme together by himself.  He often  lacks 
+the  experience  which comes from years of grappling  with  these 
+problems,  and  is  forced to discover solutions one at  a  time.  
+This results in a weak start, and continual change.
+
+	I have made many mistakes related to computer  libraries, 
+and  have  seen many others.   As computer center manager  for  a 
+nationwide accounting firm, we daily were working with files from 
+all kinds of outside program libraries.   I would like to pass on 
+a  few suggestions based on my experience with about 300 computer 
+libraries over an eleven year period.
+
+	The following is not intended as a exact prescription for 
+you,  you will have to decide what fits,  and what doesn't.  I'll 
+use  my library control methods as an example,  knowing that  you 
+will have to adapt it to your circumstances.
+
+	Here is a summary of important rules:
+
+	1.  Never alter a "distribution" diskette in any  way.  A 
+distribution  diskette is one you receive from someone else,  and 
+for which you usually have paid money.   You may have to send  it 
+back  to get a new release at the "update" price rather than  buy 
+another  license!   You may not be able to read it next year  and 
+you  want a fresh copy at nominal charge.  You may want to get  a 
+bug fixed at no charge.  Do NOT change anything on this diskette. 
+N O T H I N G . 
+
+	2.  A program that is one bit, one byte, or one statement 
+different  from another MUST have a different name.   There is no 
+such thing as	"same as....,  except".  Resist the temptation to 
+leave the names the same when they are "only slightly" different.  
+Subtle differences are hard to sort out six months later!  Subtle 
+differences may be much harder to find than large differences  or 
+gross errors.
+
+	3. Follow your system rigidly.
+
+	4. Label things immediately, while they are fresh in your 
+mind.  Little peel-off dots and labels are inexpensive,  and easy 
+to use.  Office supply stores have a rainbow assortment (Avery is 
+one  of the brand names) and they are cheap.   Color  coding  can 
+segregate  test from permanent files,  release 2 from release  3, 
+etc. without any writing.
+
+	5.   Begin  library  control  at  once:  it  gets  harder 
+geometrically as you acquire more stuff.
+
+	6.  When you initialize/format a diskette,  place a small 
+peel-off  label  (I  use  one-inch  dots  on  it  indicating  the 
+operating system version you used, date, and density or format if 
+you have more than one. Eventually, you will have more than one.
+
+	7.  Specifically  label backup copies,  and write-protect 
+them.  Store them separately from daily-use diskettes. Store them 
+inside,  where the humidity and temperature are fairly  constant. 
+Exchange  backup storage with another user,  if you can.  Do  not 
+store diskettes or cassettes in your car trunk!
+
+	Why bother with backup?   Have you ever entered 
+
+	A>ERA *.*     instead of    A>ERA B:*.*    or
+
+	A>PIP A:=B:*.*[V]  instead of
+	      B:=A:*.*[V]
+
+	HUMMMM?
+
+	You say you're not that stupid??   OK.
+
+
+	8.   Establish  categories,   and  label  your  diskettes 
+accordingly.	For example, Proprietary software such as MBASIC, 
+CP/M, etc could be replaced by a dealer.  Your modifications, and 
+custom programs could not.  They should be protected to a greater 
+degree.
+
+	9. Never keep all your backup in one place. Two suitcases 
+ten  miles  apart  is  more secure  than  one  bomb-proof  vault.  
+Remember, with all the electrical equipment in one computer room, 
+a  small  fire could destroy alot of diskettes in a  hurry.   Bet 
+you've got 'em stored close by so they'll be nice and handy too!
+
+       10.  Data-file diskettes change periodically.  Use a peel-
+off label to indicate clearly the filenames,  and as-of date.  Do 
+not  store  backup  of  data files on  the  same  diskette  under 
+different filenames.  Diskettes can become unusable no matter how 
+careful you are.
+
+       11. I recognize three flavors of diskettes:
+		a. never used.
+		b. initialized/formatted, not used.
+		c. in use, contains one or more files.
+
+Come  up with a scheme to indicate each of these.  I do not put a 
+peel-off file label on never-used diskettes.  If I see a diskette 
+with  no  peel-off  label  at  all,   I  know  it  has  not  been 
+initialized/formatted.   When I initialize/format a  diskette,  I 
+place  a  one-inch  colored dot on it  indicating  the  operating 
+system  version,  today's date,  and the recording format/density 
+with  which it was initialized/formatted.  Such diskettes have  a 
+directory,  but  do not have any files.  Every diskette  of  mine 
+which  contains a file has a large peel-off label indicating  the 
+name(s),  or something else indicative such as "SYSTEM",  "WORK", 
+"MBASIC", etc.
+
+	Never  write  on a distribution copy,...the diskette  you 
+received from someone else.  If you alter such a diskette in  any 
+way, you usually void any warranty. Do not add to it, delete from 
+it,  or rename anything.  Do not even write a .DOC file, a volume 
+serial  number,  or  anything else on it.   You should  label  it 
+"DISTRIB", and make a complete fresh copy from which to work.  If 
+you have to send it back for an update to the next release, or to 
+get a bug fixed,  or because you can't read it anymore,  etc. you 
+can not expect the people you got it from to listen to your story 
+of how "..it's exactly like when you sent it to me,  except....". 
+It  is  bound  to  cost you money sooner or later  if  you  alter 
+distribution diskettes.
+
+Since you will not be altering them,  you must count on  peel-off 
+labels to identify your distribution diskette contents, etc. 
+
+		A. Apply a peel-off label saying
+		   "DISTRIB".
+
+		B. Write the date received on that
+		   label.
+
+		C. Write protect the diskette.
+
+		D. Make your working copy from which
+		   you will begin tailoring.
+		   Clearly label this copy.
+		   I call mine "DISTCOPY".
+
+		E. Make a 2nd copy of valuable stuff
+		   for an off-site location. This
+		   might be your office, or another
+		   user. It should NOT be your car
+		   trunk, or other outside storage.
+		   Humidity will ruin your diskettes.
+
+		F. Store the "DISTRIB" diskette with
+		   other "DISTRIB" diskettes, not with
+		   the working copies of that system.
+		   Physically separate backup copies
+		   from those you use daily.
+
+
+	Now that we have secured your distribution diskette,  and 
+made  a working copy,  we are ready to tackle one of the cruelest 
+problems in using a computer.  Give some thought to the NAMES you 
+apply to programs in the process of being changed.
+
+	One  scheme is to add a "suffix" to the filename,  or  to 
+change the filetype to .001  .002  etc.
+
+	You  want to keep some consistency so that the names  are 
+meaningful,  and wildcards can be used with utilities   (example:  
+PIP  B:=C:PROGM???.BAS[V]).   But  you  must  name  your  changes 
+differently  from the distribution filename,  and from your other 
+changes. How will you know which is your latest version? How will 
+you know which is your latest version which works?
+
+	It  is a mistake to count on keeping the  same  filename, 
+and using different diskettes.  The trend is rapidly toward large 
+capacity,  non-removeable hard disks.   In a few years,  everyone 
+will  have  5 or 10 MB disks!  Anyway,  it is easier to  learn  a 
+disciplined approach,  and follow it,  than to spend alot of time 
+making  gobs  of  filecopies and then trying to  remember  what's 
+what.
+
+	If  you begin changing a program called  BUDGET.BAS,  you 
+might  call your first  modification  BUDGET01.BAS,  BUDGET1.BAS, 
+BUDGET.001, BUD1.BAS, B1.BAS etc. It is a matter of taste, and of 
+how large your library is.   The larger it is,  the more specific 
+you have to be...you might have more than one budget program.  If 
+you  have an editor,  and you save the basic program as an  ASCII 
+file  (ie.  SAVE "B:BUDGET01.ASC",A),  you may want to adopt  the 
+.ASC  filetype naming convention to clearly identify it as  ready 
+for your editor, or to be modemed to another user.  Be aware that 
+some operating systems have a limit of six character names.
+
+	As  you  modify  programs,  add remarks in the  front  to 
+indicate  the as-of date,  version,  etc.  Professional  programs 
+display this information as they are read in to be executed:  for 
+example,  note  how MBASIC clearly identifies it's  version/date.  
+In  that  way,  the  user knows from looking at the  CRT  if  the 
+correct version of the program has been loaded. Many programs are 
+dependant  on  the  release/version  of  the  operating   system. 
+Unfortunately,  the  program names often do not change,  but  the 
+programs  are  different.  Some will not run with  new  releases. 
+Peel-off  labels  will help with this  problem  also:  ie.   "1.4 
+depen", etc.
+
+	After  you have migrated to a new release/version of your 
+operating system,  a new set of problems appear.  Programs  which 
+used to work,  now do not. You may have to rename some of them if 
+you  are  going  to  retain old  versions  (everyone  does).  For 
+example, you may want to rename CLIST to CLIST15 or CLIST16 if it 
+runs  on ver 1.5 or 1.6.  Then you can use CLIST for  the  latest 
+version.  This  approach  requires  you to rename a  lot  of  OLD 
+programs  that do not run on new releases.   I prefer this to the 
+next  method because I do not mix much among different  versions. 
+If I did, I would do as below.
+
+	Another approach (please do not mix this with the  above) 
+is  to  identify  the release in the name  (CL15  or  CL16),  and 
+perhaps shorten the names at the same time.   But this starts you 
+talking a "different language" than the documentation,  and other 
+users.  You  have to translate their conversations to your naming 
+scheme.  If  you  are bright and independent,  or  shorten  names 
+anyway,  then this has the advantage of avoiding a lot of  donkey 
+work  at  conversion time.....you rename on your working copy  of 
+the DISTRIB diskette,  and then PIP them as you go along.  You do 
+not have to go back and rename a dozen copies of every program.
+
+	There  is no right or wrong way;  it is a matter of  your 
+style.   Remember though,  you can't avoid the work.  It's just a 
+matter of when and how you prefer to do it.   I prefer NOT to mix 
+different  releases if I have a choice.   I would rather generate 
+entire new diskettes for the new release.   In this way,  I  have 
+complete diskettes to go back to if I want (or need) to.  No half 
+this,  and  half  that.   I avoid having to flip something  on  a 
+diskette  to tell it which flavor I want to run.  If you get very 
+many of these "switches" on a diskette, it is a long process just 
+to  find out where your beginning from!   I make specific  copies 
+and  label  them  as  to options in  effect  on  that  particular 
+diskette.  Saves me time and nerves.
+
+	I hope one or two of these ideas are helpful.  Good luck.
+
+	*********************************************************
+
+From: sdcsvax!bob@NPRDC
+To: info-cpm@MIT-MC
+
+Subject: TeleVideo terminal
+
+Does anyone have experience with the TeleVideo 910 or 950?
+I'd especially like to know about the keyboard feel, and
+the noisiness of these terminals.
+
+
+--bob hofkin
+
+
+
+Date:      28 Aug 81 1:21:43-EDT (Fri)
+From:      Rick Conn <rconn@brl>
+To:        info-cpm at Mit-Mc
+cc:        jswain at Bbn-Tenexa, lauren at Ucla-Security
+Subject:   UMODEM Version 2.8
+
+Hi --
+
+        UMODEM Version 2.8 is now at MC under CPM;UMODEM C.  This
+version  corrects  a  reference  to  a  system-dependent variable
+TIOCSSCR for Version 7 users -- this reference is for those  sys-
+tems  which  have  page  mode  installed,  and by default this is
+flagged out.  By setting the PAGEMODE flag to TRUE the  user  can
+flag this ioctl call back in.
+
+        Version 2.8 also supports TERM II FTP 4 now  ...  looking
+good!   This  is invoked by the 4 option; FTP 4 is not present in
+TERM II, Version 4.7, but it  will  be  in  Version  4.8  (to  be
+released  in the near future).  No problems have been reported to
+me yet concerning TERM II, and  Version  4.8  is  an  enhancement
+only.
+
+        Enjoy!
+
+                                        Rick
+
+
+Date: 27 Aug 1981 2147-PDT
+From: STERNLIGHT at USC-ECL
+Subject: HP-125 cp/m disk compatability
+To:   info-micro at AI
+cc:   info-cpm at MC
+
+Conversation today with Hewlett-Packard revealed that disk incompatibility
+problem for cp/m with HP-125 is due to very rapid reading of HP disk drive.
+Result is that disks written by HP-125 in "IBM format" can be read by
+other cp/m systems capable of reading standard single-density cp/m disks, but
+disks written by these other systems not readable by HP-125.  HP's
+position on this is that they advertised the machine as cp/m compatable,
+and it will be.  The HP division making the disk drives has been working
+on the problem for a couple of weeks and have two solutions that work
+so far.  They will pick the best one and then retrofit it to existing
+units and correct new ones.  No dates given, but impression is that
+fix will be available within next couple of weeks.
+-------
+
+Date: 26 Aug 1981 10:20:08-EDT
+From: bucky at CCA-UNIX (Bennett Marks)
+To: rconn at brl
+Subject: Re: UMODEM Version 2.7
+Cc: info-cpm at Mit-Mc, mike at Brl, rsm at Brl
+
+In response to your message of Wed Aug 26 02:59:08 1981:
+
+Just a hint, the '-7' is not required in v7 Unix on the
+'cc', I don't know what would happen if you included it.
+
+Date:      26 Aug 81 2:53:41-EDT (Wed)
+From:      Rick Conn <rconn@brl>
+To:        info-cpm at Mit-Mc
+cc:        bucky at Cca-Unix, mike at Brl, rsm at Brl, rconn at Brl
+cc:        stef at Darcom-Ka
+Subject:   UMODEM Version 2.7
+
+Hi, Everyone,
+
+        The latest version of UMODEM is now available  on  MIT-MC
+under  CPM.  Its name is CPM;UMODEM C [I decided to keep only the
+current version at MIT-MC].
+
+        Thanks TONS to Bennett  Marks  for  his  transportability
+conversion to UNIX Version 7 (his release is UMODEM Version 2.6).
+I think he did a superior job!  This new UMODEM (Version 2.7)  is
+an  enhancement of his upgrade.  To compile it for your UNIX sys-
+tem, the following command lines are recommended:
+
+cc -7 umodem.c -o umodem -DJHU  <-- for JHU UNIX
+cc -7 umodem.c -o umodem -DVER7 <-- for Version 7 UNIX (I'm not sure -7 is
+                                        required)
+
+        Version 2.7 includes the Version 7 UNIX transportability,
+a  status  option  (y)  which  gives  the user file size and CP/M
+record count information for his up/down loading  time  estimate,
+and  a  7-bit  transmission option (7) which masks out the MSB of
+either protocol (TERM II FTP 1 or FTP 3 [CP/M  UG  Protocol])  so
+that  a  modified MODEM2 or TERM II can transceive text files via
+UMODEM on the ARPA Net.  The ARPA Net problems (bah, humbug!) are
+still not resolved, but I'm working on them.
+
+        Enjoy, and thanks for all the interest!
+
+                                        Rick
+
+
+Date: 25 August 1981 03:59-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: Saving money on software for CP/M
+To: INFO-CPM at MIT-MC
+
+Andy Bender passed along a tip on how to save money by buying
+the Heath versions of F80 and M80.  I just received info on
+two more programs that can be patched:
+
+--------
+IN VERSION 5.1 OF THE HEATH MICROSOFT COMPILER TO MAKE IT
+RUN ON OTHER COMPUTERS ALL YOU HAVE TO DO IS CHANGE ADDRESS
+40F9 TO JMP 4151. THIS WILL BYPASS THE SAME CODE AS EXPLAINED
+IN F80-M80.SAV.
+--------
+TO MAKE THE HEATH VERSION OF MBASIC 5.2 RUN ON OTHER MACHINES
+CHANGE ADDRESS 5F08 TO JMP 5F5C.  THIS BYPASSES THE SAME CODE
+THAT IS EXPLAINED IN F80-M80.SAV.
+--------
+
+...and the original message is reproduced here for those who
+didn't see it or forgot what it said:
+
+Date: 5/30/81
+From: ANDY BENDER
+To:   INFO-CPM
+Re:   CHEAP FORTRAN AND MACRO 80 PROGRAMS
+
+If you want a copy of the Microsoft F80 and M80 programs
+as well as their support software and you want to get them
+with free updates for a year and be a legal user read on.
+While not free, Heathkit sells these programs, doctored up
+so they only run on Heath systems, at a discount.  The
+discount is quite steep and the free updates are attractive.
+You will need to know about DDT and SAVE to fix them so you
+can use them:
+
+FOR FORTRAN: >DDT F80.COM
+then alter the LXI d,barf at 2C38 to jmp 2C90.
+Exit from DDT and do a SAVE 107 F80.COM
+
+FOR MACRO80: >DDT M80.COM
+then alter the LXI d,barf at 4392 to jmp 43EA.
+Exit from DDT and do a SAVE 75 M80.COM
+
+You now own legal copies of both programs suitable for use
+on your CP/M 1.4 or 2.2 system.
+
+This patch bypasses the vendor code check in the CP/M
+serial number and also bypasses some I/O twitching that
+must be important for Heath systems.  The other system
+programs distibuted on the disk do not need patching
+these programs (LIB, L80 XREF etc) assume if you got to
+use them you must be ok.
+
+The same patch is probably possible in other Heath
+software such as BASIC Compiler or COBOL Compiler.  I
+have not researched these programs however.
+
+My advice to fix other software would be to look at the
+area in which the vendor code check is being carried out
+and follow the same bypass as I did in M80.
+
+Lots of Luck - Happy Computing from us at NSI.
+
+Date: 24 August 1981 1226-EDT (Monday)
+From: Bill Sholar <William.Sholar at CMU-10A> 
+To: Info-CPM at MIT-MC
+Subject:  Spoolers
+Sender: William.Sholar at CMU-10A
+Message-Id: <24Aug81 122628 WS70@CMU-10A>
+
+
+I would appreciate pointers to and comments about printer
+spoolers which can be used with CP/M . . .
+	Thanks,
+		Bill Sholar	(SHOLAR@CMUA)
+
+Date: 24 August 1981 05:19-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+To: INFO-CPM at MIT-MC
+
+Date: 24 August 1981 03:22-EDT
+From: Keith B. Petersen, W8SDZ
+To:   All
+Re:   TYPESQ version 1.3 now available
+
+TYPESQ version 1.2 (previously called TYPESQ2), the program for typing
+"squeezed" ASCII files, has been updated as of today (thanks to Bob
+Mathias).  TYPESQ2 was printing CR-CR-LF when it came to a CR-LF in
+the file.  This has been corrected, and a message has been added to
+the 40 and 80 character limited versions to tell when the limit has
+been exceeded.  The previous versions simply stopped printing.
+
+New version 1.3 .COM files:
+
+--> FILE:  TYPSQ40A.COM		CRC = 5B A9	<--limit 40 lines
+
+--> FILE:  TYPSQ80A.COM		CRC = 3B 10	<--limit 80 lines
+
+--> FILE:  TYPESQ13.COM		CRC = 52 C5
+
+
+Source code for new version 1.3:
+
+--> FILE:  TYPESQ13.C  		CRC = D1 9C
+
+--> FILE:  SPCLDIO .C  		CRC = C5 DC
+
+
+
+	  TYPESQ.DOC as of 7/6/81
+   by Bob Mathias and Keith Petersen, W8SDZ
+
+TYPESQ.COM is a program primarily for use on remote
+CP/M systems to allow typing "squeezed" files.  It
+does not accept wild cards, but will accept multiple
+file names on the command line, separated by spaces.
+The output to the console is "filtered" (like MLIST)
+to eliminate control characters other than CR, LF,
+TAB, or FORMFEED.
+
+TYPESQ is based on USQ by Richard Greenlaw, and was
+written by Bob Mathias, with suggestions from Keith
+Petersen.
+
+
+DAN@MIT-ML 08/23/81 16:20:34 Re: California Computer Systems 2720A Parallel I/O board
+To: INFO-CPM at MIT-MC
+Does anyone have any experience or comments about this board?  I am
+epecially interesting in the flexibility of the handshake lines
+for the parallel I/O ports:
+
+1.  Number of handshake lines per I/O port
+2.  Extent of software control
+3.  Strobe lines:  is strobe pulse under complete software control,
+    as far as pulse width, or does the board just generate a short
+    pulse internally every time a strobe is requested, etc.
+4.  Attention line:  selectable polarity, choice of detecting
+    transition of line (i.e. edge sensing) or simply a the level
+    of the line (i.e. level sensing).  Hopefully, both are available.
+5.  Auxillary Sensing lines, etc.
+
+If this board is not flexible, does onyone have other suggestions
+as to an I/O board which is?
+
+Thanks,
+Dan
+
+
+DAN@MIT-ML 08/23/81 16:20:34 Re: California Computer Systems 2720A Parallel I/O board
+To: INFO-CPM at MIT-MC
+Does anyone have any experience or comments about this board?  I am
+epecially interesting in the flexibility of the handshake lines
+for the parallel I/O ports:
+
+1.  Number of handshake lines per I/O port
+2.  Extent of software control
+3.  Strobe lines:  is strobe pulse under complete software control,
+    as far as pulse width, or does the board just generate a short
+    pulse internally every time a strobe is requested, etc.
+4.  Attention line:  selectable polarity, choice of detecting
+    transition of line (i.e. edge sensing) or simply a the level
+    of the line (i.e. level sensing).  Hopefully, both are available.
+5.  Auxillary Sensing lines, etc.
+
+If this board is not flexible, does onyone have other suggestions
+as to an I/O board which is?
+
+Thanks,
+Dan
+
+
+Date: 22 August 1981 04:52-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  New FMAP
+To: INFO-CPM at MIT-MC
+
+The latest, and significantly improved version of FMAP.COM is now
+available in MC:AR1:CPM;FMAP COM .
+
+Several new options are now available with this FMAP, in particular,
+M, D, P, and the S sub-option.  All create a NAMES.SUB file as with
+the old version.  The S sub-option, combined with any of the others,
+offers each file for consideration.  The other three create entries
+for each file with various forms and placement of $n args: M suitable
+for use with MODEM, D for general purpose, and P for PIP... The Unnn
+option creates -CATALOG.nnn instead of NAMES.SUB .
+
+FMAP is directly courtesy of its author, Ward Christensen.
+
+--Frank
+
+Date: 21 Aug 1981 1742-PDT (Friday)
+From: Lauren at UCLA-SECURITY (Lauren Weinstein)
+Subject: umodem
+To: info-cpm at ai
+
+For those of you running standard V7 Unix (not the modified V6 that BRL
+uses), my original UMODEM program is still available.  This is the same
+code that BRL started from to create their version.  It does not have
+log files but it fully supports the "xmodem" (or modem2 or whatever it's
+called) protocol, and works fine over hardwired or dialup lines (no
+guarantees about the network virtual ttys...
+
+Contact me for info.
+
+--Lauren--
+-------
+
+
+
+Date: 21 Aug 1981 (Friday) 1226-EDT
+From: PLATTS at WHARTON-10 (Steve Platt)
+Subject: H19 kit building
+To:   tjm at MIT-XX
+cc:   info-cpm at MIT-AI
+
+what's the UIC again?
+uh, sorry, make that PPN...
+  -S
+
+
+
+
+Date:      21 Aug 81 8:04:52-EDT (Fri)
+From:      Rick Conn <rconn@brl>
+To:        info-cpm at Mit-Mc
+cc:        Rconn at BRL
+Subject:   UMODEM Version 2.5
+
+Hi, Everyone,
+
+        The version of UMODEM on MIT-MC is 2.5 --  two  things  I
+should clarify about it:
+
+        1.  It is written to run under UNIX Version  6.12x  (JHU-
+UNIX, specifically).  To convert to some other UNIX (say, Version
+7), the system-dependent features  are  referenced  in  comments.
+JHU-UNIX-specific  references are made, and system-dependent con-
+stants are noted by SD in a comment with  them.   Also,  UMODEM.C
+was compiled with the Version 7 option on the UNIX C compiler.
+
+        2.  The ARPA Net interface isn't sound yet.  This is  en-
+gaged with the 'a' option (see the internal documentation).  Some
+TIPs don't configure themselves correctly and I believe there  is
+still  some problem with the commands I issue to SERVER TELNET in
+general.  Any help from an ARPA Net hacker on these matters would
+be  greatly  appreciated.   I  am  using the WILL, WONT, IAC, DO,
+DONT, etc, stuff, but I  don't  think  I'm  using  it  completely
+correctly; also, the 'a' option traps out IAC references (FF Hex)
+by doubling them, so I caught that problem.  Thanks  specifically
+to GZ for her help in such matters.
+
+        Any help with the ARPA Net interface would be greatly ap-
+preciated.
+
+                                        Rick
+
+
+Date: 21 Aug 1981 (Friday) 1112-EDT
+From: PLATTS at WHARTON-10 (Steve Platt)
+Subject: power switches on the front panel...
+To:   LUCAS at USC-ISIB
+cc:   info-cpm at MIT-MC
+
+ On the old Imsai mainframes, the power switch was placed on the front
+panel.  In many systems, the noise from having 110vac running alongside
+logic levels was too much (randomly); I know of several systems in which
+the user moved the switch *off* of the front panel for this reason.
+ I'm not sure of the N* setup, this is just a possible cause of trouble
+if the power lines run too close to other signal wires.
+  -Steve
+
+
+Date: 21 August 1981 01:43-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: New remote CP/M list
+To: INFO-CPM at MIT-MC
+
+The list of remote CP/M systems has been updated as of today.  It is
+now RCPMLIST.19.  The file name on MC is CPM;RCP/M NOS
+
+Date: 20 Aug 1981 1650-PDT
+From: LUCAS at USC-ISIB
+Subject: N* switches
+To:   info-cpm at MIT-MC
+cc:   lucas
+
+I purchased a N* Horizon with dual drives and quad disks in December
+80.  Has anyone tried paralleling the Pwr and Reset switches to the
+front panel or even moving them physically from the rear panel to the
+front.  They are heck to get to in standard computer furniture.
+
+Also, I made an extension cable for the baud rate header with an
+8-positon DIP switch wired direct to cable which works just fine.
+This gives me 4 baud rates for each of the 2 serial ports.  Then I
+made another cable with the switch pluggable to the cable via two
+wire-wrap sockets.  I cannot get it to work altho it checks out
+perfectly with a continuity checker.  Has anyone had any experience
+with such an animal.  I've tried both a short (10") and a long (24")
+cable, and neither work -- my original cable was about 18".  I've
+swapped switches and cables -- I've done everything but rewire the
+sockets, which is my last resort.  Any ideas?
+
+This cable is extremely handy if one is switching rt. & left ports,
+devices, modems, or whatever -- saves pulling off the case and
+inserting a new header each time.
+
+	Lucas@usc-isib
+
+-------
+
+Date:      19 Aug 81 23:32:58-EDT (Wed)
+From:      Rick Conn <rconn@brl>
+To:        info-cpm at Mit-Mc
+Subject:   UMODEM
+
+Hi --
+
+        For anyone interested, I've FTP'd UMODEM.C  into  MIT-MC.
+It is stored as CPM;UMODEM C.  Enjoy!
+
+                                        Rick
+
+
+Date:      19 Aug 81 23:16:28-EDT (Wed)
+From:      Rick Conn <rconn@brl>
+To:        Geoffrey C Mulligan (at The Pentagon) <GeoffM@rand-rcc>
+cc:        info-cpm at Mit-Mc
+Subject:   Re:  Modem and Xmodem
+
+Hi, Geoff,
+
+        I have a version of Modem/Xmodem  (called  Umodem)  which
+runs  under  the  UNIX  Version  6.12? at BRL.  It was originally
+written by Lauren at UCLA-Security, and I modified it to  support
+a  log file and several other features.  I consider it to be pub-
+lic domain, and anyone who wants it is welcome to it.  It is  ap-
+prox 22,000 bytes long, written in C.
+
+                                        Rick
+
+
+Date: 19 Aug 1981 1936-PDT
+From: Geoffrey C Mulligan (at The Pentagon) <GeoffM at RAND-AI>
+Subject: Modem and Xmodem
+To: info-cpm at MIT-MC
+
+Does anyone have a version of Modem or Xmodem written for UNIX V6.
+Before I start writing my own I wanted to check.
+
+	geoff
+-------
+
+Date: 19 Aug 1981 (Wednesday) 1421-EDT
+From: PLATTS at WHARTON-10 (Steve Platt)
+Subject: FORMAT for SDS Versafloppy-1
+To:   info-cpm at MIT-AI
+
+  Does anyone out there have a formatter for SD Sales Versafloppy 1
+(preferrably in source)? I just need to format SSSD, CPM 1.4, nothing
+fancy.  FTP'ing preffered, but if you can't, I can mail a disk.
+  Reply to PLATTS@WHARTON, not the entire list, please...
+    ...thanks
+       Steve
+
+
+
+Date: 17 Aug 1981 0757-PDT
+From: Geoffrey C Mulligan (at The Pentagon) <GeoffM at RAND-AI>
+Subject: Intertec Super-Brain
+To: info-cpm at MIT-AI
+
+I am now in possession of an Intertec Superbrain QD.  Does anyone have a MODEM
+program for this beast.  Any hints on using this would be greatly appreciated.
+
+	geoff
+-------
+
+
+BELLS@MIT-AI 08/15/81 22:46:25
+To: INFO-CPM at MIT-AI
+Please add me to your mailing list.  Thank you.
+
+Date: 15 August 1981 06:44-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: Static RAM info
+To: INFO-CPM at MIT-MC
+
+The following is forwarded from my RCPM system:
+
+STAT-RAM.DOC:  Prices and Capabilities of Recent S-100 Static RAM Boards
+
+                              Ben Bronson, HP/RCPM
+                              312-955-4493, 8/5/81
+
+---------------------------------------------------------------------------
+Talking  with one of the people at a local computer store the  other  day 
+made me realize that many, including professionals, have not been keeping 
+track of the recent dramatic increases in static RAM capabilities and the 
+equally dramatic drops in prices.  
+
+Most  of us are used to paying about $300 for an assembled and tested  S-
+100  l6k static board.   While traditional prices for dynamic RAM  boards 
+have not been a lot less in 16K configurations, we are also accustomed to 
+a 2:1 price advantage of dynamic over static in 32K and larger configura
+tions.
+
+Now,  no  one disputes that static RAMs are a lot less temperamental when 
+it comes time to put a new board into a computer and boot the machine up.  
+Statics have many fewer timing problems,  and tend to run faster,  hotter 
+and, some think, more reliably.  These advantages have made many computer 
+users willing to pay the 2:1 premium for static rather than dynamic  RAM.  
+Altough  they have generally believed that dynamic RAMs were the wave  of 
+the future, they have gone on buying static and waiting.
+
+But  the situation now seems to have taken an unexpected  twist.   Almost 
+unnoticed  by  many  experts,  statics are undergoing a  strong  revival, 
+especially in the S-100 field.  The market has suddenly been flooded with 
+offerings of new,  ultra-high capacity static boards which are (1) relat-
+ively cheap,  (2) compatible with almost all processors and disk control-
+lers, and (3) very fast indeed.
+
+Static  boards  now run at twice the speed of any  dynamic  board.   Many 
+static brands are fully compatible with the new IEEE S-100 standard; even 
+the most recent and expensive dynamic brands rarely are.   And the  price 
+differential  has  declined so far that one can often find static  boards 
+that are actually cheaper than equivalent dynamic boards.
+
+This  situation is not reflected in the inventory of the average  dealer, 
+who  still may have boxes full of memory boards bought last year and  who 
+may not have made recent price comparisons anyway.   The following  table 
+is  therefore  offered  as a aid to both dealers and their  customers  in 
+deciding what to stock, recommend, and/or buy.   This writer's feeling is 
+that  the  table  gives good reasons for insisting on  recent  models  of 
+static  memory boards in all cases except when the main consideration  is 
+to have massive amounts of memory (128k, 254k or 512k) on a single board.  
+Static  boards of 1979-1980 vintage,  with 16k at @ $300,  should not  be 
+bought.   Famous-name dynamic boards offered at similar prices should  be 
+laughed off the market.
+
+The  data  in the table was extracted from advertisements in  the  August 
+1981  issue of Byte.   Omissions should generally be interpreted as nega-
+tives or as specs the manufacturer is not proud of.   Positive statements 
+about included features should of course be taken with a grain of salt.
+
+---------------------------------------------------------------------------
+Brand                 Size             CPU Speed                     Price    
+           Mfr's       |  'IEEE?'       |   Data Width                 |  
+           Advt?       |    | Bank Sel? |    |  Power Req.             |     
+             | Byte    |    |  | Ext. Add.?  |   |    RAM Type         |    
+             | Page    |    |  |  | Windows? |   |     |    RAM Speed  |    
+             |   |     |    |  |  |  |  |    |   |     |     |         |    
+Mem Merch    y   27   16k   y  y  y  y  5mz  8  1.3a  2114  300ns     $179  
+Quality      y  312   16k   ?  y  n  y  4mz  8  'low' 2114   ?        $175 
+S C Digital  y  354   16k   y  y  y  y  8mz 8/16 .6a   ?     ?        $295 
+CCS          n  438   16k   ?  y  n  y  4mz  8   ?    2114  300ns     $289
+Digital Rsch y  445   16k   ?  y  n  y  4mz  8  1.5a  2114  450ns?    $215 
+Godbout      n  469   16k   y  n  y  n 10mz  8  1.2a   ?     90ns     $169
+Dual Systs   y  138   16k   y  n  y  n? 4mz 8/16 .1a?  ?    250ns     $895 #
+Netronics    y  154   16k   y  y  n  n? 4mz  8  'low' 2114   ?        $230 
+Comp Sys Res n  147   16k   y  y  n  ?   ?   8    ?    ?     ?        $199
+Comp Sys Res n  147   16k   y  y  n  ?   ?   8   1.4w  ?     ?        $279 #
+                                                                            
+Dual Systs   y  138   32k   y  n  y  n? 4mz 8/16 .1a?  ?    250ns    $1095 #
+I/O Tech     y  254   32k   y  y  y  n? 4mz 8/16 .15a  ?    200ns     $485
+Microbyte    n  281   32k   ?  y  n  n? 4mz  8   .8a  2141   ?        $450 
+Tarbell      y  311   32k   ?  n? y  y  4mz  8  'low'  ?     ?        $725  
+S C Digital  y  354   32k   y  y  y  y  8mz 8/16 .6a  2716   ?        $465 
+U S Micro    y  456   32k   ?  n (y) n? 4mz  8    ?   2114  300ns     $299 +
+Comp Sys Res n  147   32k   y  ?  ?  ?   ?  8/16 'low' ?     ?        $499
+Jade         y  467   32k   ?  n  n  n  4mz  8    ?   2114L  ?        $350  
+ 
+Mem Merch    y   27   64k   y  y  y  y  8mz  8   .55a  ?    200ns     $895   
+Seattle      y  255   64k   y  n  y  y  8mz 8/16 1.6a 2167  100ns    $1295  
+Lomas Data   y  270   64k   y  n  y  n? 5mz 8/16  ?    ?    350ns?    $795  
+Godbout      y  469   64k   y  n  y  y 10mz  8    2w   ?     ?        $995 
+Stat Mem Sys y   11*  64k   y  n? y  y  4mz  8   'low'2016   ?        $680
+
+# With CMOS RAMS 
++ Kit.  Not sold A & T.
+* Jul-Aug S-100 Microsystems, Not Byte
+---------------------------------------------------------------------------
+
+These figures should be compared with those for advertised S-100  dynamic 
+RAM  boards,  the  cheapest of which (in this Byte,  Netronics  JAWS  1B, 
+without IEEE-S100 compatibility,  bank selection, extended addressing, or 
+ability to run with DMA) sells for $180 for 16k and $360 for 64k, and the 
+fancier  ones  (i.e.,  Systems Group with "IEEE compatible timing" but  a 
+maximum speed of 4mz, no extended addressing and very limited DMA capabi-
+lity) for $495 for 32k and $749 for 64k.
+
+Date: 15 August 1981 06:15-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: "WORM" memory test
+To: INFO-MICRO at MIT-MC
+cc: INFO-CPM at MIT-MC
+
+The WORM memory test is indeed public domain.  It is an excellent test
+(as recently reviewed in INFO-MICRO).  The source code is available
+from MIT-MC as AR6:CPM;WORM ASM
+
+Date: 10 Aug 1981 1832-PDT (Monday)
+From: Lauren at UCLA-SECURITY (Lauren Weinstein)
+Subject: sort programs
+To: info-cpm at ai
+
+Recently I requested info about public domain CP/M sorting programs.
+I got about 10 messages from people asking to be told of the results.
+That's it.  Like, man, the empty set.
+
+--Lauren--
+-------
+
+
+
+Date: 10 Aug 1981 2057-EDT
+From: ISISW.MOORE at RUTGERS
+Subject: Call for Contributions
+To: info-cpm at MIT-MC
+
+     I would like to invite everyone to submit material for publication in the
+newsletter  of  the  ACM  Special Interest Group for Personal Computing, SigPC
+Notes.
+
+     In addition to publishing technical working papers, SigPC Notes serves as
+a "bulletin board" for  announcements  and  comments, descriptions of projects
+and interests, suggestions for research and other short contributions.
+
+     SigPC is one of the fastest growing ACM Special Interest Groups.  You can
+get feedback on your ideas from a rather large, professional readership.
+
+     The deadline for the next issue is September 1, 1981.    You  may  either
+send contributions over the net or through the mail.
+
+
+Larry Press
+Editor
+Box 5429
+Santa Monica, CA 90405
+(213) 392-1234
+-------
+
+MADLER@MIT-ML 08/09/81 23:32:56 Re: LST: spooling
+To: INFO-CPM at MIT-ML
+I am in the process of writing a line printer spooler for an H89 on
+CP/M 2.2.  Everything has been working perfectly UNTIL one situation
+occurs.  If I am performing some task that requires a disk operation
+and a disk head is loaded when the spooler attempts to read from
+a disk simultaneously, the system crashes.
+
+I have gone so far as to save the old DMA value before I move it around
+with the spooler.  Thus, that is NOT the problem.  Does anybody have
+any ideas on how to avoid the problem.  I suppose that if some status
+bit somewhere indicated that a disk operation was occuring I could
+cause the spooler to wait.  But, since I am using interrupts, I am not
+sure that I could actually have the spooler return to the old process
+until that process had finished with the disk.
+
+Does anyone have any ideas on how I could handle this problem?
+
+Thanks,
+-Michael Adler
+
+
+Date:  9 August 1981 2233-EDT (Sunday)
+From: James Gosling at CMU-10A (C410JG40)
+To: info-cpm at MIT-MC
+Subject:  Difficulties with the BDS C linker.
+CC: leor at MIT-MC
+Message-Id: <09Aug81 223344 JG40@CMU-10A>
+
+I'm getting "Ref table overflow" from the BDS C Linker (CLINK V1.42, running
+on MPM 1.12, with full memory).  Does this mean what I think it means, namely
+that CLINK cannot cope with all of my external references?  Even with trying
+to load the files one at a time, I get the message when I've told CLINK about
+fewer than half of my files.  The various modules reference each other a lot.
+
+				Thanks,
+					James.
+
+Date: 9 August 1981 20:45-EDT
+From: Landon M. Dyer <ZEMON at MIT-MC>
+Subject:  CCS hardware
+To: INFO-CPM at MIT-MC
+
+
+	CCS has a very complete cp/m 2.2, with some extra goodies
+thrown in.  There is a relocatable CBIOS (they supply GENMOD.COM on
+the distribution disk.)  You are allowed to mix and match floppy
+drives (8" and 5.25".)  They have some /good/ documentation.
+
+	However, you absolutely must have a z-80 cpu to use their
+controller (the firmware supplied with the CCS controller has z-80
+code,) prefferably CCS' z-80 board, since their software comes already
+set up for it.  We recently bought the controller board, and now
+have the CPU on order.  C'est la vie.
+
+Date:  9 Aug 1981 at 1350-CDT
+From: mknox at UTEXAS-11 
+Subject: Calif Comp Sys
+To: info-cpm at mit-mc
+
+
+Several people recently mentioned CCS hardware.  Any comments on their
+board set (CPU, floppy controller, 64k dynamic, 4-serial)?  Is their
+CP/M that comes with the FDC a reasonable implementation?
+
+Also, the above system needs to run WordStar to a terminal.  Is there
+a better choice at the price than a VT-100?  
+                         
+                               tnx
+-------
+
+ZEMON@MIT-AI 08/09/81 09:42:40 Re:  Thinkertoys 2D-DJ and CPU speeds
+To: INFO-CPM at MIT-AI
+
+	Gee, our double-density 'Disk Jockey' controller has worked
+just fine with an Ithaca Intersystems CPU (at 4 Mhz,) a Cromemco CPU
+at 2 and 4 Mhz, and even an ancient (but still servicable) IMSAI 8080
+CPU (2 Mhz.)  At double density in all cases.
+
+
+Date:      9 Aug 81 9:43:57-EDT (Sun)
+From:      Rick Conn <rconn@brl>
+To:        Daniel J. Blumenfeld <DAN@mit-ml>
+cc:        Rconn at BRL, info-cpm at Mit-Mc
+Subject:   Re:  Ithaca Intersystems MPU board and Morrow Disk Jockey
+
+Dan,
+
+        Thanks for the note ... thanks also to Keith Petersen for
+his  follow-on note.  Because I am using older 2MHz memory boards
+in my Intersystems, I have never tried running the Morrow Designs
+Rev  B  and Ithaca MPU at 4MHz.  What you two have proposed could
+very well be the answer; I often thought that it was funny that I
+could  bring up CP/M 1.4 but NOT CP/M 2.2.  By the way, the Cali-
+fornia Computer Systems MPU card and Morrow  Designs  Rev  B  are
+running together at 2MHz also.
+
+                                        Rick
+
+
+Date:  9 Aug 1981 0943-EDT
+From: WOHL at CMU-20C
+Subject: Ron Cain's C runs on TOPS-20
+To: info-cpm at MIT-MC
+
+I hacked the code generator for Cain's C one night so it
+would put out macro-10.  It runs on tops-20 and does compile
+itself.  The files are [CMU-20C]<WOHL.BAR>C20*.*, use
+anonymous to login.  I was planning on putting in #if so
+one source could make both versions, but haven't got around
+to it.
+
+I wrote a MP/M,CP/M, LDRBIOS that talks to a N* and SD
+sales double-d with a vdm for a terminal.  The N* code
+doesn't do any smart buffering, but it was fine for copying
+my 45 N* disks a few 2S2D 8in disks.  If somebody is interested
+I can transfer it to CMUC where they can snarf it.  I will
+be in Boston till aug-21 so it won't be before then.
+	Aaron
+-------
+
+Date: 9 August 1981 03:25-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+To: INFO-CPM at MIT-MC
+
+The Morrow Disk Jockey 2D controller will work with a Z80 CPU,
+but only if it's running at 4mhz.  It doesn't like Z80 with
+2 mhz for some reason.
+
+Date: 9 August 1981 03:17-EDT
+From: Daniel J. Blumenfeld <DAN at MIT-ML>
+Subject: Ithaca Intersystems MPU board and Morrow Disk Jockey 
+To: Rconn at BRL, info-cpm at MIT-MC
+
+Rick,
+
+Hmmm, did you try another Ithaca Z80 MPU board?  I'm running an
+MPU board with a Disk Jockey Rev B and CP/M 2.2 with absolutely
+no trouble whatsoever.  In fact, I would recommend the combination
+to anyone putting together an S-100 system, as the MPU board is
+one of the most flexible I've worked with.
+
+Dan
+
+
+Date: 9 August 1981 00:35-EDT
+From: Robert E. Spivack <PHOTOG at MIT-MC>
+To: INFO-CPM at MIT-MC
+
+I have noticed a lot of chatter about Ithaca Intersystems
+s-100 cp/m systems. (note the spelling, not 'ithica', and
+they are no longer 'ithaca audio' which i could never understand
+in the first place--end digression)
+I have worked with a lot of their stuff and recently installed
+two pds-80 (systems with pascal/z etc.) I must admit, the 'cache bios'
+works!1  Wwith an extra 64K of extended memory, the interrupt
+driven bios supports read-after-read, read-after-write, and
+automatic background memory tests when the system is otherwise
+idling.  I am now very curious t see their z8000 coherenet
+o/s (alias Unix) in action.   
+I speak wth ithaca folk about once a week or so; if you need
+any special info just let me know.
+photog at mit-mc
+r.spivack at telemail/ibs
+
+Date:      8 Aug 81 21:47:10-EDT (Sat)
+From:      Rick Conn <rconn@brl>
+To:        lauren at Ucla-Security
+cc:        info-cpm at Mit-Mc
+Subject:   Ithaca
+
+Hi, Lauren,
+
+        The documentation on the Ithaca Z80 card I am use  CLAIMS
+to  be fully compatable with the IEEE S-100 standard.  The 20 ad-
+dress bits (1M byte addressing) is what is supported by this card
+directly,  and it simply lets the high-order 4 bits go low (actu-
+ally claims to force them low).
+
+        I have used this processor with a number of different  S-
+100  boards  from  different  manufacturers  and have had no real
+trouble.  About the only board I couldn't get it to work with was
+the  Morrow Designs 8" disk controller (both Rev A and B) running
+CP/M 2.2 with the Morrow Designs' BIOS (strangely, this runs fine
+with  CP/M 1.4 with the Morrow Designs' BIOS); I don't place much
+emphasis on this problem,  because  I  have  tried  these  Morrow
+Designs  disk controllers with a number of Z80 CPU cards and have
+found CP/M 2.2 to work well with the California Computer  Systems
+Z80  card  only  (Ithaca Z80, Vector Graphic Z80, and a couple of
+others were tried).  Morrow Designs CP/M 2.2 seems to  work  well
+with all the 8080 CPU cards I've tried, however.
+
+                                        Rick
+
+
+Date:      8 Aug 81 21:20:34-EDT (Sat)
+From:      Rick Conn <rconn@brl>
+To:        RAMAG at Usc-Ecl
+cc:        info-cpm at Mit-Ai
+Subject:   Re:  hard/soft sectored floppy formats
+
+Alan,
+
+        I have been faced with a similar problem before, and have
+come  up  with  a software-based alternative which seems to solve
+the problem.  In my particular environment, I have the capability
+of  transferring  the  files  on  hard-sectored North Star 5 1/4"
+single-density disks to  soft-sectored  8"  single-density  (CP/M
+standard) and double-density disks.
+
+        Now for the bad news ... I'm using two microcomputer sys-
+tems  to  do  this.  They are linked by a 9600-baud RS-232 serial
+communications  channel,  and  I  am  running  my   commercially-
+available  TERM II/XTERM programs to do the transfer.  You can do
+a similar thing with the public domain MODEM2/XMODEM programs  or
+other programs which support a file transfer facility.
+
+        This environment can be pictured as follows:
+
+CRT <---> TERM II or MODEM2 Microcomputer <--> XTERM or XMODEM
+          with 8" disks                         Microcomputer
+                                                with 5 1/4" disks
+
+        The steps for transferring a file are as follows:
+
+                1.  Turn on both computers and boot  up  CP/M  on
+each.   The 9600-baud serial link to the TERM II microcomputer is
+the default console for the XTERM microcomputer.
+
+                2.  Run TERM II and select the modem going to the
+desired  XTERM  microcomputer.  Link to this and communicate with
+it in terminal (transparent) mode; from this mode, you can  issue
+normal CP/M commands as though you were directly connected to the
+XTERM microcomputer.
+
+                3.  Run XTERM and specify the file  you  want  to
+work with (file name as it exists or is to exist on the XTERM mi-
+crocomputer) and whether you want to send it from XTERM  to  TERM
+II or receive it on the XTERM system from the TERM II system.
+
+                4.  Return to TERM II, specify the file name  for
+the  TERM  II  system (may be different from the XTERM name), and
+specify to TERM II whether it is to receive (XTERM is sending) or
+send  (XTERM is receiving) the file.  At this point, the two sys-
+tems will synchronize and transfer the file data  with  automatic
+error detection and retry (in packets) between them.
+
+        If  you  have  two  such  systems  with  the  appropriate
+software  (CP/M  and  a communications package), you can transfer
+between virtually any two disk formats you  desire  provided  you
+have  the  controller hardware to support the desired formats.  I
+hope this helps.
+
+                                        Rick
+
+
+
+Date: 8 Aug 1981 1823-PDT (Saturday)
+From: Lauren at UCLA-SECURITY (Lauren Weinstein)
+Subject: Ithaca
+To: info-cpm at mc
+
+For what it's worth, I have an older Ithaca Audio Z80 cpu in my system
+and I don't care for it at all... it has given me considerable trouble.
+
+Can we assume from the fact that the new Z80 card offers 20M addressing that
+it differs from the 696 standard in other ways as well?
+
+--Lauren--
+-------
+
+
+Date:      8 Aug 81 20:49:03-EDT (Sat)
+From:      Rick Conn <rconn@brl>
+To:        David L. Maddox <MADDOX@mit-ml>
+cc:        info-cpm at Mit-Mc
+Subject:   Re:  Query - Intersystems' new hardware
+
+David,
+
+        I have not seen the flyer you refer to, but I DO  own  an
+Ithaca  Intersystems DPS-1 mainframe.  I feel that this is an ex-
+cellent supporting mainframe whose outstanding features include:
+
+                . 20 slot terminated IEEE S-100 motherboard
+                . large, reliable power supply (8V at 30A)
+                . full front panel with the following features:
+                        - memory examine/examine next
+                        - memory deposit/deposit next
+                        - instruction CYCLE single step
+			- instruction CYCLE slow step
+			  (adjustable speed)
+                        - hardware breakpoint when a
+                          specified data byte encountered
+                        - hardware breakpoint when a
+                          specified address encountered
+                        - reset/external clear
+                        - run/stop
+                        - many test points for hardware debugging
+                . Ithaca Z80 CPU Card:
+                        - supports 20-bit (1M byte) addressing
+                          [IEEE S-100 supports 24 bits (16M byte)]
+                        - full on-board interrupt controller
+                        - many options for configuring processor
+                          for specific applications
+                        - full DMA is supported
+
+        The features you described in your message,  namely  disk
+blocking and deblocking and interrupt-driven I/O, can be support-
+ed by this hardware, but they must be  implemented  in  the  CP/M
+BIOS  software.   I  am  quite  pleased with the hardware and its
+quality of design, but I do not run their CP/M on my  system  and
+do not have these more exotic features implemented.
+
+                                        Rick
+
+
+Date: 8 August 1981 18:48-EDT
+From: David L. Maddox <MADDOX at MIT-ML>
+Subject: Query - Intersystems' new hardware
+To: INFO-CPM at MIT-ML
+
+
+I just got a flyer about a new Z80 computer from Ithaca Intersystems, the
+DPS-1, I believe.  They have thrown in a number of very tempting features
+from the world of minis, such as disk cacheing, type-ahead through interrupt
+processing of kb input, and so forth - looks good, but has anybody seen or
+used one?
+
+- Dave
+
+
+Date: 8 Aug 1981 1445-PDT (Saturday)
+From: Lauren at UCLA-SECURITY (Lauren Weinstein)
+Subject: disk formats
+To: info-cpm at ai
+
+A similar question to the one put forth by RAMAG -- well, sortof.
+
+I'd like to know how system/directory tracks are set up in CP/M for
+nonstandard disk sizes and formats.
+
+For example, standard CP/M on an 8inch disk:
+
+tracks 0,1 --- system
+track 2: blocks 0 and 1 (1024 byte blocks) --- directory
+
+Now, what about other systems?  How about double density 8 inch?
+Single and double density 5 1/4 inch?  Northstar?  H89 5 1/4?
+Apple with Softcard?  TRS-80?  What happens with odd sector sizes?
+Are 1024 byte blocks always used internally by CP/M?
+
+And what ARE the differences between regular CP/M and CP/M running on 
+the softcard?
+
+Does anyone have a table or document (or just KNOW) how to translate
+(software-wise) between these various system and disk formats?
+
+Thanks.
+
+--Lauren--
+-------
+
+
+
+Date:  8 Aug 1981 1405-PDT
+From: RAMAG at USC-ECL
+Subject: hard/soft sectored floppy formats
+To:   info-cpm at MIT-AI
+
+I have an application where I need to translate disks from different
+soft-sectored and hard-sectored floppy disk formats to standard cp/m.
+There was a controller advertised in BYTE that claimed to be able to
+do this: the Omega controller by Sirius Systems of Knoxville, TN.
+Unfortunately, their phone is disconnected, so they probably ceased.
+(They don't answer letters either!)
+
+TI has announced a new generalized controller chip that should
+do the job, but it's too new to be in a product yet.
+
+Does anyone know of any other product or approach that might work?
+As a last resort, I might have to commission a custom design using the TTI
+chip, but I would by far rather deal with a standard S-100 product.
+If I can't do it with one general-purpose controller, then I would use
+a separate controller for the hard-sectored formats--but I haven't seen
+an s-100 board for controlling only hard-sectored floppies either.
+
+Hope someone can help!
+
+Alan Thompson
+-------
+
+
+DAN@MIT-ML 08/08/81 06:10:25 Re: Group Purchase of NEC uPD7220 Graphics Display Controller Chips
+To: info-cpm at MIT-MC
+I recently called NEC to find out about pricing and availability of the
+uPD7220 Graphics Display Controller Chip.  According to them, the GDC
+will be available by the end of this month.  Unfortunately, the price
+of this chip in small quantities is rather steep (about $150 for quantity
+1-9), so the best alternative is to place a larger group order, taking
+advantage of a quantity discount.  If a total of ten chips are ordered, for
+example, the price drops to about $120 per chip.
+
+If anyone is planning to order a GDC chip and is interested in a group
+purchase, please get in touch with me via netmail (DAN@MIT-ML).
+
+Thanks,
+Dan
+
+
+Date:  7 Aug 1981 2251-EDT
+From: Richard Kenner <KENNER at RUTGERS>
+Subject: Z80 assembler
+To: info-cpm at MIT-AI
+
+Does anyone know of a Z80 assembler (i.e., one which uses Zilog and not Intel
+mnemonics) which runs under CP/M and produces REL files compatible with
+Microsoft (and Digital Research)?
+-------
+
+
+Date: 4 Aug 1981 0035-PDT (Tuesday)
+From: Lauren at UCLA-SECURITY (Lauren Weinstein)
+Subject: autostart
+To: INFO-CPM at AI
+
+Looking through the collected responses regarding methods for
+autostart under CP/M, I could not find any reference to vanilla
+2.2.
+
+What is the procedure for patching the system to startup a given
+com file on cold boot?  I know the procedure for 1.4, but the layout
+of 2.2 appears to be considerably different.
+
+Thanks much. 
+
+--Lauren--
+
+P.S.  Special techniques used by N* and such are not what I mean
+      by "vanilla"!
+
+--LW--
+-------
+
+
+
+Date:  3 Aug 1981 0915-MDT
+From: CROSSLAND at UTAH-20
+Subject: mailing list
+To: info-cpm at MIT-MC
+
+     Could I be added to your info-cpm mailing list.
+My net address is CROSSLAND@UTAH-20.
+
+					Thank you,
+					Jim Crossland
+-------
+
+Date:  1 Aug 1981 (Saturday) 1237-EDT
+From: PLATTS at WHARTON-10 (Steve Platt)
+Subject: Micro system query: Altos
+To:   info-micro at MIT-AI
+cc:   info-cpm at MIT-AI
+
+  Anyone have any experiences (either good or bad) with these? Either
+comments on hardware or CP/M / MP/M / CP/net running on this hardware
+would be appreciated.  Reply to PLATTS@WHARTON; I will summarize and
+send out the summary later.
+  Also, if you're responding to Dave Gewirtz's request on INFO-MICRO
+from yesterday, please CC: me a copy.
+  Thanks--
+   -Steve
+
+
+
+Date: 31 Jul 1981 2225-PDT (Friday)
+From: Lauren at UCLA-SECURITY (Lauren Weinstein)
+Subject: sort programs
+To: info-cpm at ai
+
+I am looking for a decent sort/merge program for use under CP/M.
+Ideally, it should be able to sort an arbitrary number of lines
+of text, each of "arbitrary" length.  It should be able to handle
+sorting jobs larger than the available core.
+
+Anything around?  Public domain only, please.
+
+Thanks.
+
+--Lauren--
+-------
+
+
+
+Date: 30 July 1981 04:10-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: Multiple-file copy utility for CP/M
+To: INFO-CPM at MIT-MC
+
+A new program has been added to MC:CPM;ar6 asmfil.  This program
+is very useful for those with single-drive systems.  It is a
+multiple-file copy utility.  The file name is MFT46A ASM.  It
+is an updated version of MFT, which appeared in Dr. Dobb's Journal.
+
+Date: 28 July 1981 09:51-EDT
+From: Devon S. McCullough <DEVON at MIT-MC>
+To: INFO-CPM at MIT-MC
+
+I'm not interested in seeing update notices for the MC:CPM; directory on
+this list.  My mailbox overfloweth, and this is the WRONG medium for
+dissemination of directory listings, so please, let's figure out a better
+way!
+
+If people can't deal with just looking at the directory to see what's new,
+how about a directory hacking program to tell you about changes
+to the programs that YOU are interested in?
+
+As for finding out about new unexpected programs, I don't mind seeing
+a short one-line message now & then, if the subject is really new and
+in a class by itself.
+
+Date: 27 July 1981 18:37-EDT
+From: Paul L. Kelley <PLK at MIT-MC>
+Subject: Modification to run BYE below CP/M
+To: INFO-CPM at MIT-MC
+
+
+	AR7:CPM;BYELOW MOD is a short file which shows how to
+modify BYE to run below CP/M so that programs such as TYPESQ
+can be run remotely. Apparently TYPESQ uses space just below
+FBASE.
+
+JerryB@MIT-AI 07/27/81 10:47:12 Re: Single drive copy
+To: Info-CPM at MIT-MC
+CC: KALA at MIT-AI, JERRYB at MIT-AI
+I have a CPM question.  The situation is that a friend and I have
+recently purchased a CPM system with one drive.  The problem is copying
+files between disks and copying disks.  We wrote a small copy program
+that lets you change disks but it seems CMP out foxes us by detecting
+that a disk has been changed and gives a R/O error.
+
+Is there a way to notify CPM that a disk is being changed etc.  Better
+yet, is there a single drive file and disk copy routine around that I
+could look at?
+	Jerry Barber
+
+
+Date: 26 July 1981 00:28-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Hard Disk Partitioning
+To: INFO-CPM at MIT-MC
+cc: FJW at MIT-MC
+
+Well, I finally have a N* hard disk to play with to get it set up for
+our office and I have a problem.  I am stymied by the multitude of
+available options to set up each of the logical drives on the disk.
+
+If anybody knows what I am talking about and has played with the
+system enough to come up with some sort of algorithm/guideline to use,
+please get in touch with me directly by net mail.
+
+For those of you with non-N* hard disk systems, I'd like to hear from
+you also.  I'd like to know how you sized your logical drives, and why
+you picked those values.
+
+--Frank
+
+Date: 24 July 1981 23:33-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: HELP program and files
+To: INFO-CPM at MIT-MC
+
+Those interested in the "HELP" program (which runs on CP/M)
+and its files will find the following available on MC:
+
+Directory for AR2:CPM;
+
+File name	    Creation date
+
+ALGOLM HLP     --     6/26/81	<--Algolm?
+ASM2   HLP     --     6/26/81	<--CP/M 2.2 assembler
+C      HLP     --     6/26/81	<--BDS-C
+CATLOG HLP     --     7/24/81	<--Christensen's catalog pgm.
+CBAS   HLP     --     6/26/81	<--CBASIC
+CBAS2  HLP     --     6/26/81	<--CBASIC2
+CPM2   HLP     --     7/24/81	<--Help for CP/M 2.2 users
+DU-V75 HLP     --     5/27/81	<--Disk utility
+FORTRA HLP     --     6/26/81	<--F80 Fortran
+HELP   COM     --     6/3/81	<--the help program itself
+HELP   HLP     --     6/3/81	<--how to create HLP files
+HELP12 ASM     --     6/23/81	<--source for latest version
+LINK   HLP     --     7/24/81	<--L80 linker
+MAC    HLP     --     6/3/81	<--MAC assembler
+MASM   HLP     --     6/3/81	<--M80 assembler
+MBASIC HLP     --     7/24/81	<--Mbasic interp. & compiler
+PHELP  COM     --     7/24/81	<--prints a HLP file on the printer
+RESOUR HLP     --     5/27/81	<--Christensen's disassembler
+
+Date: 23 July 1981 05:32-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: Updated DU (disk utility) program
+To: INFO-CPM at MIT-MC
+
+DU-V75 (version 7.5) has been updated to DU-V77 and is
+available on MC as:
+AR1:CPM;DU-V77 COM
+AR6:CPM;DU-V77 ASM
+
+The DOC file has not been updated, but only one new function
+("Y" yanks present sector into memory above DU for later
+disk save) is documented in the built-in HELP function of
+the COM file.  DU-V75.DOC is available as:
+AR0:CPM;DU-V75 DOC
+
+Date: 23 July 1981 04:52-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: TABIFY program available
+To: INFO-CPM at MIT-MC
+
+Leor's very nice program to "tabify" ASCII files (replacing
+spaces as needed with TABs to 8-column stops) is now available
+on MC as:
+AR1:CPM;TABIFY COM
+CPM;TABIFY C  (the source code)
+
+Date: 23 July 1981 04:47-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: Squeeze package updates
+To: INFO-CPM at MIT-MC
+
+   SQ/USQ/FLS/TYPESQ file update notice - 7/22/81
+	 by Keith Petersen, W8SDZ
+
+This is a list of CRCs for the latest SQ/USQ/FLS files,
+obtained from Richard Greenlaw (the author) on 7/22/81.
+Also included are the new versions of TYPESQ from Bob
+Mathias (the author) on 7/22/81.
+
+Some of the programs have been updated. This will require
+replacement of some of the previously-released files,
+including USQ.COM, USQ.C, CHANGES.DOC, README.DOC, and
+TYPESQ.COM.
+
+A new user's manual, SQUEEZER.DOC, is now included
+(this replaces BUILDSQ.DOC and gives complete operating
+instructions and theory).
+
+Check your copies with CRCK.  The files with a "Q" as the
+middle letter of the filetype are squeezed versions of the
+originals.  You don't need these to compile - you need the
+un-squeezed versions.  To save disk space and modeming time,
+some systems may offer only the squeezed versions.  You can
+restore those by running USQ on them.
+
+Please note that SQDIO and USQDIO are not supplied because
+they are identical to DIO2 and can be created with PIP.
+
+--> FILE:  BDSCIO  .H  		CRC = 7D 77
+--> FILE:  BDSCIO  .HQ 		CRC = 03 92
+--> FILE:  BUILDSQ .DOC		-----------	[deleted]
+--> FILE:  CHANGES .DOC		CRC = 6C 96	<--new
+--> FILE:  CHANGES .DQC		CRC = 0A 84	<--new
+--> FILE:  DIO     .H  		CRC = 26 B7
+--> FILE:  DIO     .HQ 		CRC = FE 92
+--> FILE:  DIO2    .C  		CRC = 7B 7D
+--> FILE:  DIO2    .CQ 		CRC = 52 7A
+--> FILE:  FLS     .C  		CRC = D8 35
+--> FILE:  FLS     .COM		CRC = 0C 99
+--> FILE:  FLS     .CQ 		CRC = DB DA
+--> FILE:  HISTORY .DOC		CRC = 8A 70
+--> FILE:  HISTORY .DQC		CRC = 7F 83
+--> FILE:  IO      .C  		CRC = CF 59
+--> FILE:  IO      .CQ 		CRC = 40 6A
+--> FILE:  README  .DOC		CRC = E6 80	<--new
+--> FILE:  SQ      .C  		CRC = FF 93
+--> FILE:  SQ      .COM		CRC = 47 15
+--> FILE:  SQ      .CQ 		CRC = C6 6E
+--> FILE:  SQ      .H  		CRC = 63 02
+--> FILE:  SQ      .HQ 		CRC = ED 9A
+--> FILE:  SQCOM   .H  		CRC = 4F 7F
+--> FILE:  SQCOM   .HQ 		CRC = 26 11
+--> FILE:  SQDIO   .C  		CRC = 7B 7D
+--> FILE:  SQUEEZER.DOC		CRC = A0 4D	<--new
+--> FILE:  SQUEEZER.DQC		CRC = 06 24	<--new
+--> FILE:  TYPESQ2 .COM		CRC = 84 AB	<--new
+--> FILE:  TYPESQ40.COM		CRC = CC 13	<--new (limit 40 lines)
+--> FILE:  TYPESQ80.COM		CRC = B2 6F	<--new (limit 80 lines)
+--> FILE:  TR1     .C  		CRC = 0B EE
+--> FILE:  TR1     .CQ 		CRC = 76 F2
+--> FILE:  TR2     .C  		CRC = 12 DE
+--> FILE:  TR2     .CQ 		CRC = 7E 58
+--> FILE:  USQ     .C  		CRC = 0D 14	<--new
+--> FILE:  USQ     .COM		CRC = 39 37	<--new
+--> FILE:  USQ     .CQ 		CRC = 66 B4	<--new
+--> FILE:  USQ     .H  		CRC = 93 0A
+--> FILE:  USQ     .HQ 		CRC = 48 68
+--> FILE:  USQDIO  .C  		CRC = 7B 7D
+--> FILE:  UTR     .C  		CRC = A7 39
+--> FILE:  UTR     .CQ 		CRC = 56 3A
+
+The above files are available on MC as:
+
+Directory for AR3:CPM
+
+File name	  creation date
+BDSCIO H       -     6/28/81
+CHNGES DOC     -     7/23/81	<--new (hi bits removed CRC = 85 4F)
+DIO    H       -     6/28/81
+DIO2   C       -     6/28/81
+FLS    C       -     6/28/81
+FLS    COM     -     6/28/81
+HISTRY DOC     -     6/28/81
+IO     C       -     6/28/81
+README DOC     -     7/23/81	<--new (hi bits removed CRC = 11 F4)
+SQ     C       -     6/28/81
+SQ     COM     -     6/28/81
+SQ     H       -     6/28/81
+SQCOM  H       -     6/28/81
+SQEZER DOC     -     7/23/81	<--new (hi bits removed CRC = 94 9A)
+TR1    C       -     6/28/81
+TR2    C       -     6/28/81
+TYPESQ 40COM   -     7/22/81	<--new
+TYPESQ 80COM   -     7/22/81	<--new
+TYPESQ ALLCOM  -     7/22/81	<--new
+TYPESQ DOC     -     7/8/81
+UPDATE DOC     -     7/23/81	<--new (this is the file you are reading now)
+USQ    H       -     6/28/81
+USQ-14 C       -     7/23/81	<--new
+USQ-14 COM     -     7/23/81	<--new
+UTR    C       -     6/28/81
+
+Date: 22 Jul 1981 0512-PDT
+From: Max Diaz <MMD at SU-AI>
+Subject: Yet another XMODEM 
+To:   info-cpm at MIT-MC    
+
+
+File CPM;XMODEM SAI is an adaptation of W8SDZ's  XMODEM 4.3.   It is written
+in SAIL and should be easily (?) adaptable to TENEX & TOPS-20 sites.  The
+currrent version only allows down-loading (S) of text and COM files.  Up-
+loading (R) will be added later on.
+
+If somebody adapts it to TENEX (or has one available) please let me know.
+
+
+
+Date: 22 July 1981 05:09-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: New version of TYPESQ
+To: INFO-CPM at MIT-MC
+
+TYPESQ.COM, the program for typing "squeezed" ASCII files,
+has been updated as of today (thanks to RJM@MC).  The original
+version of TYPESQ.COM did not stop when it came to the first 1Ah
+in the last sector of the file.  If the file was not filled to
+the end with 1A's, it would print whatever "garbage" was left
+in that sector.  The new version corrects this.
+
+Also available for RCPM operators are two other versions of
+the new TYPESQ, one which limits the maximum number of lines
+that can be typed to 40, the other to 80.  This is to discourage
+RCPM users from spending too much time on the system typing
+long files, thus denying others the use of the system.  These
+limited versions tell the user to please use XMODEM for full
+transfers.  (Reasoning: typing a file takes much longer than
+XMODEMing it because the TABs are expanded).
+
+The new files are on MC
+AR3:CPM;TYPESQ 40COM
+AR3:CPM;TYPESQ 80COM
+AR3:CPM;TYPESQ ALLCOM
+
+No source code is available at this time.  Watch for
+announcement later.
+
+Date: 21 July 1981 2201-EDT (Tuesday)
+From: Bill Sholar <William.Sholar at CMU-10A> 
+To: INFO-CPM at MIT-MC
+Subject:  TRS-80 Model II MODEM Equates & Ports
+Sender: William.Sholar at CMU-10A
+Message-Id: <21Jul81 220101 WS70@CMU-10A>
+
+
+	Since the documentation on the Mod 2 TRS-80 does not bother
+to discuss hardware, the following port addresses and equates for
+MODEM.ASM programs might prove useful to anyone using this machine:
+
+	MODCTLP	EQU	0F6H	;status/control port A
+	MODSNDB	EQU	04H	;bit 2 indicates ready to send
+	MODSNDR	EQU	04H	;  with the bit set to 1
+	MODRCVB	EQU	01H	;bit 0 indicates character received
+	MODRCVR	EQU	01H	;  with the bit set to 1
+	MODDATP	EQU	0F4H	;data port A
+
+	These values, plugged into MODEM.ASM, allow the TRS-80 Mod 2 to
+function without any special system calls or other variations from the
+existing MODEM.ASM program, assuming the port has been set up using the
+SETUP (Pickles & Trout's CPM), CONFIG (Lifeboat's CPM) or SET (Cybernetics'
+CPM) utility for the appropriate baud rate, etc.
+
+	Bill Sholar
+
+Date:      17 Jul 81 4:06:38-EDT (Fri)
+From:      W8sdz at BRL
+To:        INFO-MICRO at Mit-Ai, INFO-CPM at Mit-Mc
+Subject:   Short review of Osborne computer
+
+
+I received the following file on my remote CP/M system yesterday
+and thought all here would find it of interest.
+
+	    OSBORNE.DOC   -   FIRST IMPRESSIONS 
+	       OF THE OSBORNE I MICROCOMPUTER
+
+by:   Steven C. Rich
+      Computer Connection
+      Farmington Hills, Michigan 
+      (313) 477-4470
+
+	  --------------------------------------------
+
+     The wait is finally over!	We  received our  demonstra-
+tion unit of the Osborne I  Microcomputer last Monday,	July 
+13.  I have just spent the past several days going over this 
+unit, and thought you might find my first impressions inter-
+esting.
+
+     First  some technical information at random.  Note that 
+this  is  an initial production unit.	There  may  be	many   
+changes before units get in customer hands. Yes, all digital 
+electronics are on one board!  (and quite a good looking one 
+at  that!).  Only the boards for the drives and the  monitor 
+electronics are seperate.    Memory appears to use 4116 type 
+chips.	The CPU looks like the Japaneese NEC Z-80 Copy!  The 
+drives	are  10 Soft Sector with Standard capacity of  102K.  
+This  is supposed to be expandable through a double  density 
+option.  The  ones in the unit we have are made by  Seimans.  
+All  we have received in the way of software is a very	bare 
+version of CP/M ( SYSGEN,  COPY,  PIP,	and FORMAT,  but  no 
+Assembler or DDT ),  and Microsoft Basic-80.  Both appear to 
+work  beautifully on the Osborne.   The caliber of the	CP/M 
+utilities  sent is excellent (the FORMAT program  automatic-
+ally checks the media for example!).  One interesting bit of 
+information  is  that there is apparently a Real Time  clock 
+function for DATE and TIME which will be set through a SETUP 
+program.  The Microsoft manual, by the way, is a copy of the 
+Standard  Basic 80 one,  but is fully typeset and thus	much 
+more readable.
+
+     OK.  Time for first impressions.	Taken in the context 
+of an economical and complete way to get into computing (and 
+CP/M  software in particular) it is a great machine.   It is 
+true  that  you may not be able to expand  the	machine  for 
+ever,  but how many of us have been able to afford to create 
+our  "dream  machines".   Ever	try to talk YOUR  wife	into 
+agreeing to let you spend $6,000 for a hard disk (but I just 
+HAVE  to have it!).   The 52 character format of the  screen 
+may might seen hard to get used to,  but it is a window on a 
+larger	128 X 36 character screen.  By pressing the  Control 
+key  and  one of the arrow keys,  you INSTANTLY  scroll  the 
+screen.  I cannot praise the speed of the scroll enough.  It 
+is  extremely  smooth  and  fast,  and	will  overcome	many 
+objections  of	the screen format.  And if you	truly  can't  
+stand  the  small  screen and don't like  the  9"  ($250.00) 
+monitor,  then just connect a "Professional" terminal to the 
+RS-232 port,  reassign the CON:  to the port and off you  go 
+with a full 80 characters!
+
+     I	am going to reserve final judgement until I see  the 
+rest of the software.	But, from what I have seen so far, I 
+feel that Mr.  Osborne has done just what he started out  to 
+do  - Place a full function CP/M business system within  the 
+reach of anyone and made it portable to boot!
+
+     More information will follow shortly.   Please call  me 
+if you want more info.
+
+STEVE RICH
+
+
+Date: 19 July 1981 17:00-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: New archive file on MC:CPM
+To: INFO-CPM at MIT-MC
+
+On MC:CPM;AR8 UGLIBS are a group of catalog and abstract files
+of the latest CPMUG and SIG/M disks.  I have all these disks
+and can upload selected files on request, but please don't ask
+for a whole disk to be uploaded to MC!
+
+Date: 19 July 1981 16:55-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: New RCPM phone list
+To: INFO-CPM at MIT-MC
+
+MC:CPM;RCP/M NOS updated to RCPMLIST.18 as of today.  This is
+the latest list of all known remote CP/M systems.
+
+Date: 18 July 1981 07:54-EDT
+From: Steve Kudlak <FFM at MIT-MC>
+Subject: CPM eats control chars going to listing device?
+To: INFO-CPM at MIT-MC, INFO-MICRO at MIT-MC
+
+
+Recently I have become endowed with a CPM system of strange
+origins. It has a version of CPM by some group called Teletek.
+Since it has a nice EPSOM printer hanging off of it,
+myself and a friend have become intersted in doing
+intersting things with the printer(like boldface,widetype etc)
+via assembly language hacking.
+
+Apparently as far as we can tell CPM eats control characters
+going to the 'list device'. Is this normal for CPM? If so
+is there anyway to turn it off,so that one can just send
+any character one wants to the printer. Does anyone know
+where in memory the i/o routines usually lurk???
+
+Thanks Muchly,
+Have fun
+Sends Steve
+
+Date: 16 Jul 1981 0943-EDT
+From: Dave Mitton <SCHRIESHEIM.MITTON at DEC-MARLBORO>
+To: INFO-CPM at MIT-MC
+Reply-to: SCHRIESHEIM.MITTON at DEC-MARLBORO
+DTN: 247-2073
+Mail-stop: TW/E07
+Subject: BIOS loader needed for CP/M V2.2
+Message-ID: <MS"5(1631)"11744463227.20.139.3111 at DEC-MARLBORO>
+
+I have run into the classic CP/M V2.2 BIOS problem, Lack of space.
+Surely someone out there has written a program to load extra BIOS
+code above CP/M at boot time.  Please send me some pointers. Thanks.
+   --------
+
+Date: 16 July 1981 05:13-EDT
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  Multi-user, etc., revisited
+To: INFO-MICRO at MIT-MC, INFO-CPM at MIT-MC
+
+In the last few months it seems a number of multi-user systems have
+come out of the woodwork and are demanding our attention.  My office
+has been investigating several systems and are aware of several
+others, mainly through advertising in the various trade magazines.
+
+What we'd like to do is build up a better base of information on the
+schemes available and of those, which ones actually exist, in use at a
+customer's site - not a prototype.
+
+I would like to hear first-, and possibly, second-hand information in
+those two catagories: what is actually available, and of those,
+end-user descriptions of the system features and failings.
+
+The major criteria is that the system must provide an environment
+capable of running any program designed to run under CP/M 1.4 or 2.2
+with a shared hard disk and be capable of spooling output to at least
+one shared printer.
+
+We are already aware of and in the process of evaluating Micro-Mike's
+JOESHARE, and Action Computer Enteprise's DPC/OS and MuSYS's MuDOS.
+We are only aware of OSM's ZEUS system and Micromation's M/NET from
+seeing them demonstrated at the West Coast Computer Faire.
+
+Since then we have come across many others apparently capable of
+handling the basic requirement (with the secondary advantage of being
+able to share files as well - currently a limitation of the Micro-Mike
+system).
+
+Again, we would like to hear from end-users of any of these systems
+with mail addressed directly to FJW@MC - and NOT to these lists.  I
+will consolidate the replies and send out a pointer later.
+
+Thanks,
+Frank
+
+Date: 15 July 1981 05:20-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: XMODEM.C
+To: INFO-CPM at MIT-MC
+
+New file on MC:
+AR7:CPM;XMODEM C - for use on RCPM systems. Offers familiar
+features of XMODEM plus new feature to "hide" files and
+make a log of usage.  This file may prove useful to those
+who would like to put up XMODEM on UNIX systems.  Some
+re-writing will be necessary, particularly in the area of
+I/O and switching ports to 8-bits during the transfer of
+files.
+
+Date: 15 July 1981 05:15-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: MC:CPMNET JUL81
+To: INFO-CPM at MIT-MC
+
+File contained several errors in section discussing UNIX versus
+CP/M.  Errors now corrected.  Apologies to any who took earlier
+file.
+
+Date: 15 July 1981 02:47-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: More complete documentation on squeeze programs
+To: INFO-CPM at MIT-MC
+
+		      SQUSQFLS.DOC
+	Documentation for FLS, SQ, USQ, and TYPESQ
+
+---------------------------------------------------------------
+
+FLS.COM
+
+ The purpose of this program is to build parameter lists
+ for programs such as the SQ and USQ file compression
+ utilities. This and those programs use the directed io
+ package to allow redirection of console input and/or output.
+ They are coded to accept parameters from the console input or
+ from the command line. Each parameter is on a seperate line.
+
+ Names beginning with '-' are passed through as options.
+
+ Drive names (with ':') alone are also passed through.
+
+ Other parameters are treated as ambiguous file names with
+ optional drive specification. The disk directory is searched
+ and every specific file name which matches the pattern is
+ sent to the output list (with the optional drive specifier).
+ If there are no matches a comment is sent to the console.
+
+ Example test run (output to console):
+      A>fls.c c:*.com b:.h
+
+ Example to build list in "file":
+      A>fls.c c:*.com b:.h >file
+
+ Example to build list in file and send to console too:
+      A>fls.c c:*.com b:.h +file
+
+ Example to build list and run program SQ.COM with list
+ substituting for keyboard input:
+      A>fls b:.c d:*.?Q? |sq
+
+---------------------------------------------------------------
+
+SQ.COM
+
+ This program compresses a file without loosing information.
+ The usq.com program is required to unsqueeze the file
+ before it can be used.
+
+ Typical compression rates are:
+      .COM    6%      (Don't bother)
+      .ASM    33%     (using full ASCII set)
+      .DIC    46%     (using only uppercase and a few others)
+
+ Squeezing a really big file takes a few minutes.
+
+ Useage:
+
+      SQ item ...
+
+ where ... represents more (optional) items and "item" is
+ either:
+
+      drive:	      to change the output drive
+
+      file	      input file
+
+      drive:file      input file
+
+
+ If no such items are given on the command line you will be
+ prompted for commands (one at a time). An empty command
+ terminates the program.
+
+ SQ uses the dio package, so input and output can be redirected
+ by special items on the command line such as:
+
+      <file	      reads console input from file
+
+      >file	      sends console output to file
+
+      +file	      sends console output to console and file
+
+
+ Also console output of another program using dio can be piped
+ to the input of this one or vice-versa. Example:
+
+      A>fls parameters |sq
+
+
+ where fls might be a program that expands patterns like.com to
+ a list of ambiguous file names for sq to squeeze.
+
+ The squeezed file name is formed by changing the second letter
+ of the file type to Q. If there is no file type, the squeezed
+ file type is QQQ. If the name exists it is overwritten!
+
+ Examples:
+
+      A>SQ GRUMP	      makes GRUMP.QQQ on A:
+
+      A>SQ D:CRAP.XYZ	      makes CRAP.XQZ on A:
+
+      A>SQ B: D:CRAP.COM      makes CRAP.CQM on B:
+
+      B>SQ X.A C: Y.B	      makes X.AQ on B: and Y.BQ on C:
+
+
+ The transformations compress strings of identical bytes and
+ then encode each resulting byte value and EOF as bit strings
+ having lengths in inverse proportion to their frequency of
+ occurrance in the intermediate input stream.  The latter uses
+ the Huffman algorithm.	 Decoding information is included in
+ the squeezed file, so squeezing short files or files with
+ uniformly distributed byte values will actually increase size.
+
+---------------------------------------------------------------
+
+USQ.COM
+
+ Program to unsqueeze files formed by sq.com.
+
+ Useage:
+
+      USQ item ...
+
+ where ... represents more (optional) items and "item" is
+ either:
+
+      drive:	      to change the output drive
+
+      file	      input file
+
+      drive:file      input file
+
+
+ If no such items are given on the command line you will be
+ prompted for commands (one at a time). An empty command
+ terminates the program.
+
+ USQ uses the dio package, so input and output can be redirec-
+ ted by special items on the command line such as:
+
+      <file	      reads console input from file
+
+      >file	      sends console output to file
+
+      +file	      sends console output to console and file
+
+
+ Also console output of another program usinf dio can be piped
+ to the input of USQ or vice-versa. Example:
+
+      A>fls parameters |usq
+
+ where fls might be a program that expands patterns like.asm to
+ a list of specific file names for usq to unsqueeze.
+
+ The unsqueezed file name is recorded in the squeezed file.
+
+ Examples:
+
+      A>USQ GRUMP.QQQ	      writes on a:
+
+      A>USQ D:CRAP.XQZ	      writes on A:
+
+      A>USQ B: D:CRAP.CQM     writes on B:
+
+      B>USQ X.AQ C: Y.BQ      writes X.?? on B: and Y.?? on C:
+
+---------------------------------------------------------------
+
+TYPESQ.COM
+
+ Program to print squeeze files formed by sq.com.
+
+---------------------------------------------------------------
+
+
+Date: 14 July 1981 05:33-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: CP/M-NET.JUL now available
+To: INFO-CPM at MIT-MC
+
+MC:CPM;CPMNET JUL81 is the July issue of Kelley Smith's news
+letter (somewhat edited for release on here due to non-
+commercial policy).
+
+Date: 14 July 1981 03:40-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+To: INFO-CPM at MIT-MC
+
+Another new file on MC:
+
+AR6:CPM;FILFND 5ASM - directory program searches all drives
+and all user areas for file named on command line.  Example:
+FILEFIND *.COM searches all available drives and all user
+areas and displays where .COM files are found.  User MAX
+and MIN may be specified at assembly time to make this
+program safe to leave around on a RCPM system.
+
+Date: 14 July 1981 03:17-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: New files on MC;CPM
+To: INFO-CPM at MIT-MC
+
+Several new files on MC:
+
+AR6:CPM;SCRMBL 2ASM - an updated version of Ward's SCRAMBLE
+program, fixed for proper operation on CP/M 2.x.
+
+AR7:CPM;RBBS25 ASC - latest version of MBASIC bulletin
+board program, compile with BASCOM for better speed.
+
+AR7:CPM;SECURE SYSDOC - a discussion of how to make your RCPM
+system more secure.
+
+AR7:CPM;USERPW 21ASM - a password program for allowing limited
+access to other user areas.  Replaces the USER command in
+CP/M 2.x.
+
+Date: 12 July 1981 05:02-EDT
+From: Robert E. Spivack <PHOTOG at MIT-MC>
+To: INFO-CPM at MIT-MC
+
+need z89 disc!!
+Can anyone with a Heath/Zenith Z-89 send me a disc (5 1/4) with
+the latest version of  Ward's 'MODEM" program on it?  I am helping
+someone bring up cp/m utilities and need to save a dreary keypunch job.
+Willing to pay for disc and/or shipping.
+   r. spivack
+   333 cobalt way, suite 106
+   Sunnyvale, CA   94086
+ 
+Thank you.
+photog at mit-mc
+
+Date: 9 July 1981 02:07-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: MC:CPM;RCP/M INFO updated
+To: INFO-CPM at MIT-MC
+
+File is now updated, as of today.
+
+Date:  8 Jul 1981 (Wednesday) 1115-PST
+From: MARON at LLL-MFE
+Subject: I need a SEQIO.LIB
+To:   info-cpm at MIT-MC
+
+Can somebody put a copy of SEQIO.LIB into MC:CPM (if thats okay to do).
+I don't have a copy and would sure appreciate it. 
+--thanks, neil
+
+
+
+Date: 8 July 1981 04:28-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: MLIST.COM location on MC
+To: INFO-CPM at MIT-MC
+
+Make that AR1:CPM for the COM file.  Sorry
+
+Date: 8 July 1981 04:26-EDT
+From: Keith B. Petersen <W8SDZ at MIT-MC>
+Subject: MLIST revision
+To: INFO-CPM at MIT-MC
+
+
+To meet the need for MLIST to recognize possible squeezed
+files, MLIST version 5.0 is now available on MC.
+
+AR0:CPM;MLIST COM  and  AR6:CPM;MLIST ASM
+
+Date: 8 July 

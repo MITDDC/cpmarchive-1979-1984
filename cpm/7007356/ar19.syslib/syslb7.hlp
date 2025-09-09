@@ -1,0 +1,188 @@
+Introduction
+Arithmetic Operations -- Add, Subtract, Multiply, Divide
+Complement Operations -- Negate (2's Comp) and Complement (1's)
+Rotate and Shift Operations -- Left and Right
+Logical Operations -- And, Or, Xor
+:Introduction
+
+     This  module  contains a set of 16-bit  unsigned  arithmetic 
+routines.   All routines use HL as the accumulator or the result, 
+and  HL and DE contain the operands required (if only one operand 
+is needed, HL contains it).
+
+     The available routines are:
+
+          ADDHD -- HL = HL + DE    SUBHD -- HL = HL - DE
+          MULHD -- HL = HL * DE    DIVHD -- HL = HL / DE
+          NEGH  -- HL = 2's Complement of HL
+          CMPH  -- HL = 1's Complement of HL
+          ROTLH -- HL is rotated left one bit position
+          ROTRH -- HL is rotated right one bit position
+          SHFTLH -- HL is shifted left one bit position
+          SHFTRH -- HL is shifted right one bit position
+          ANDHD  -- HL = HL AND DE
+          ORHD   -- HL = HL OR DE
+          XORHD  -- HL = HL XOR DE
+
+:Arithmetic Operations -- ADDHD, SUBHD, MULHD, DIVHD
+
+     All  of  these routines operate on HL and  DE,  placing  the 
+result  in HL.   The Carry Flag is affected,  frequently used  to 
+indicate overflow.
+
+
+     Routine Name:  ADDHD
+     Function:
+          HL = HL + DE
+     Inputs:  HL, DE are operands
+     Outputs:  HL is result, Carry Flag Set (C) means overflow
+     Registers Affected:  HL, PSW
+     SYSLIB Routines Called:  None
+     Special  Error Conditions:  None
+
+
+     Routine Name:  SUBHD
+     Function:
+          HL = HL - DE
+     Inputs:  HL, DE are operands
+     Outputs:  HL is result, Carry Flag Set (C) if HL<DE
+     Registers Affected:  HL, PSW
+     SYSLIB Routines Called:  None
+     Special  Error Conditions:  None
+
+
+     Routine Name:  MULHD
+     Function:
+          HL = HL * DE
+     Inputs:  HL, DE are operands
+     Outputs:  HL is result, Carry Set means Overflow
+     Registers Affected:  HL, PSW
+     SYSLIB Routines Called:  SHFTRH, SHFTLH
+     Special  Error Conditions:  None
+     Note:   This  routine is optimized for speed,  with a  minor 
+sacrifice  on size,  and it always takes 16 loops to perform  any 
+multiplication.
+
+
+     Routine Name:  DIVHD
+     Function:
+          HL = HL / DE
+     Inputs:  HL, DE are operands
+     Outputs:  HL is result
+     Registers Affected:  HL
+     SYSLIB Routines Called:  SHFTLH
+     Special  Error Conditions:  None
+     Note:   This  routine is optimized for speed,  with a  minor 
+sacrifice  on size,  and it always takes 16 loops to perform  any 
+division.
+
+:Complement Operations -- NEGH and CMPH
+
+     These routines operate on HL, placing the result into HL.
+
+
+     Routine Name:  NEGH
+     Function:
+          HL = 2's Complement of HL
+     Inputs:  HL is operand
+     Outputs:  HL is result
+     Registers Affected:  HL
+     SYSLIB Routines Called:  CMPH
+     Special  Error Conditions:  None
+
+
+     Routine Name:  CMPH
+     Function:
+          HL = 1's Complement of HL
+     Inputs:  HL is operand
+     Outputs:  HL is result
+     Registers Affected:  HL
+     SYSLIB Routines Called:  None
+     Special  Error Conditions:  None
+
+:Rotate and Shift Operations -- ROTLH, ROTRH, SHFTLH, SHFTRH
+
+
+     These operations operate on HL, placing the result into HL.
+
+
+     Routine Name:  ROTLH
+     Function:
+          HL  is  rotated  left one  bit  position.   This  is  a 
+circular  rotate,  and  the most significant bit of H is  rotated 
+into the least significant bit position of L.
+     Inputs:  HL is operand
+     Outputs:  HL is result
+     Registers Affected:  HL
+     SYSLIB Routines Called:  None
+     Special  Error Conditions:  None
+
+
+     Routine Name:  ROTRH
+     Function:
+          HL  is  rotated  right one bit  position.   This  is  a 
+circular  rotate,  and the least significant bit of L is  rotated 
+into the most significant bit position of H.
+     Inputs:  HL is operand
+     Outputs:  HL is result
+     Registers Affected:  HL
+     SYSLIB Routines Called:  None
+     Special  Error Conditions:  None
+
+
+     Routine Name:  SHFTLH
+     Function:
+          HL  is  shifted  left  one  bit  position.   The  least 
+significant bit of L is filled with a Zero.
+     Inputs:  HL is operand
+     Outputs:  HL is result
+     Registers Affected:  HL
+     SYSLIB Routines Called:  None  
+     Special  Error Conditions:  None
+
+
+     Routine Name:  SHFTRH
+     Function:
+          HL  is  shifted  right  one  bit  position.   The  most 
+significant bit of H is filled with a Zero.
+     Inputs:  HL is operand
+     Outputs:  HL is result
+     Registers Affected:  HL
+     SYSLIB Routines Called:  None  
+     Special  Error Conditions:  None
+
+:Logical Operations -- ANDHD, ORHD, XORHD
+
+     These operate on HL and DE, placing the result into HL.
+
+
+     Routine Name:  ANDHD
+     Function:
+          HL = HL AND DE
+     Inputs:  HL and DE are operands
+     Outputs:  HL is result
+     Registers Affected:  HL
+     SYSLIB Routines Called:  None  
+     Special  Error Conditions:  None
+
+
+     Routine Name:  ORHD
+     Function:
+          HL = HL OR DE
+     Inputs:  HL and DE are operands
+     Outputs:  HL is result
+     Registers Affected:  HL
+     SYSLIB Routines Called:  None  
+     Special  Error Conditions:  None
+
+
+     Routine Name:  XORHD
+     Function:
+          HL = HL XOR DE
+     Inputs:  HL and DE are operands
+     Outputs:  HL is result
+     Registers Affected:  HL
+     SYSLIB Routines Called:  None
+     Special  Error Conditions:  None
+
+

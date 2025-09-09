@@ -1,0 +1,256 @@
+LIBRARY.CTL   Microcomputer Diskette Library Control.
+
+04/25/81.     T. McCormick.
+
+
+	Control  of computer libraries is well developed in large 
+computer  operations.  Only  tiny operations can get  by  without 
+specific  rules for naming programs and data  files,  segregating 
+test files from production, indicating as-of dates, etc.
+
+	With the rapid growth of microcomputer use,  and with the 
+continual improvement in disk storage capacity per  dollar,  many 
+business  and  hobby users are discovering that with  no  library 
+plan,  too  much time and effort are wasted looking for the right 
+version, starting to run the wrong version...again, etc.
+
+	It  is  possible  to acquire and  store  more  files  and 
+programs than you can manage without some library system.
+
+	Micro operating systems,  editors, and utilities offer an 
+occasional  assist  in one way or another such as  creating  .BAK 
+backup  file copies automatically.   But the user is left to  put 
+his  library control scheme together by himself.  He often  lacks 
+the  experience  which comes from years of grappling  with  these 
+problems,  and  is  forced to discover solutions one at  a  time.  
+This results in a weak start, and continual change.
+
+	I have made many mistakes related to computer  libraries, 
+and  have  seen many others.   As computer center manager  for  a 
+nationwide accounting firm, we daily were working with files from 
+all kinds of outside program libraries.   I would like to pass on 
+a  few suggestions based on my experience with about 300 computer 
+libraries over an eleven year period.
+
+	The following is not intended as a exact prescription for 
+you,  you will have to decide what fits,  and what doesn't.  I'll 
+use  my library control methods as an example,  knowing that  you 
+will have to adapt it to your circumstances.
+
+	Here is a summary of important rules:
+
+	1.  Never alter a "distribution" diskette in any  way.  A 
+distribution  diskette is one you receive from someone else,  and 
+for which you usually have paid money.   You may have to send  it 
+back  to get a new release at the "update" price rather than  buy 
+another  license!   You may not be able to read it next year  and 
+you  want a fresh copy at nominal charge.  You may want to get  a 
+bug fixed at no charge.  Do NOT change anything on this diskette. 
+N O T H I N G . 
+
+	2.  A program that is one bit, one byte, or one statement 
+different  from another MUST have a different name.   There is no 
+such thing as	"same as....,  except".  Resist the temptation to 
+leave the names the same when they are "only slightly" different.  
+Subtle differences are hard to sort out six months later!  Subtle 
+differences may be much harder to find than large differences  or 
+gross errors.
+
+	3. Follow your system rigidly.
+
+	4. Label things immediately, while they are fresh in your 
+mind.  Little peel-off dots and labels are inexpensive,  and easy 
+to use.  Office supply stores have a rainbow assortment (Avery is 
+one  of the brand names) and they are cheap.   Color  coding  can 
+segregate  test from permanent files,  release 2 from release  3, 
+etc. without any writing.
+
+	5.   Begin  library  control  at  once:  it  gets  harder 
+geometrically as you acquire more stuff.
+
+	6.  When you initialize/format a diskette,  place a small 
+peel-off  label  (I  use  one-inch  dots  on  it  indicating  the 
+operating system version you used, date, and density or format if 
+you have more than one. Eventually, you will have more than one.
+
+	7.  Specifically  label backup copies,  and write-protect 
+them.  Store them separately from daily-use diskettes. Store them 
+inside,  where the humidity and temperature are fairly  constant. 
+Exchange  backup storage with another user,  if you can.  Do  not 
+store diskettes or cassettes in your car trunk!
+
+	Why bother with backup?   Have you ever entered 
+
+	A>ERA *.*     instead of    A>ERA B:*.*    or
+
+	A>PIP A:=B:*.*[V]  instead of
+	      B:=A:*.*[V]
+
+	HUMMMM?
+
+	You say you're not that stupid??   OK.
+
+
+	8.   Establish  categories,   and  label  your  diskettes 
+accordingly.	For example, Proprietary software such as MBASIC, 
+CP/M, etc could be replaced by a dealer.  Your modifications, and 
+custom programs could not.  They should be protected to a greater 
+degree.
+
+	9. Never keep all your backup in one place. Two suitcases 
+ten  miles  apart  is  more secure  than  one  bomb-proof  vault.  
+Remember, with all the electrical equipment in one computer room, 
+a  small  fire could destroy alot of diskettes in a  hurry.   Bet 
+you've got 'em stored close by so they'll be nice and handy too!
+
+       10.  Data-file diskettes change periodically.  Use a peel-
+off label to indicate clearly the filenames,  and as-of date.  Do 
+not  store  backup  of  data files on  the  same  diskette  under 
+different filenames.  Diskettes can become unusable no matter how 
+careful you are.
+
+       11. I recognize three flavors of diskettes:
+		a. never used.
+		b. initialized/formatted, not used.
+		c. in use, contains one or more files.
+
+Come  up with a scheme to indicate each of these.  I do not put a 
+peel-off file label on never-used diskettes.  If I see a diskette 
+with  no  peel-off  label  at  all,   I  know  it  has  not  been 
+initialized/formatted.   When I initialize/format a  diskette,  I 
+place  a  one-inch  colored dot on it  indicating  the  operating 
+system  version,  today's date,  and the recording format/density 
+with  which it was initialized/formatted.  Such diskettes have  a 
+directory,  but  do not have any files.  Every diskette  of  mine 
+which  contains a file has a large peel-off label indicating  the 
+name(s),  or something else indicative such as "SYSTEM",  "WORK", 
+"MBASIC", etc.
+
+	Never  write  on a distribution copy,...the diskette  you 
+received from someone else.  If you alter such a diskette in  any 
+way, you usually void any warranty. Do not add to it, delete from 
+it,  or rename anything.  Do not even write a .DOC file, a volume 
+serial  number,  or  anything else on it.   You should  label  it 
+"DISTRIB", and make a complete fresh copy from which to work.  If 
+you have to send it back for an update to the next release, or to 
+get a bug fixed,  or because you can't read it anymore,  etc. you 
+can not expect the people you got it from to listen to your story 
+of how "..it's exactly like when you sent it to me,  except....". 
+It  is  bound  to  cost you money sooner or later  if  you  alter 
+distribution diskettes.
+
+Since you will not be altering them,  you must count on  peel-off 
+labels to identify your distribution diskette contents, etc. 
+
+		A. Apply a peel-off label saying
+		   "DISTRIB".
+
+		B. Write the date received on that
+		   label.
+
+		C. Write protect the diskette.
+
+		D. Make your working copy from which
+		   you will begin tailoring.
+		   Clearly label this copy.
+		   I call mine "DISTCOPY".
+
+		E. Make a 2nd copy of valuable stuff
+		   for an off-site location. This
+		   might be your office, or another
+		   user. It should NOT be your car
+		   trunk, or other outside storage.
+		   Humidity will ruin your diskettes.
+
+		F. Store the "DISTRIB" diskette with
+		   other "DISTRIB" diskettes, not with
+		   the working copies of that system.
+		   Physically separate backup copies
+		   from those you use daily.
+
+
+	Now that we have secured your distribution diskette,  and 
+made  a working copy,  we are ready to tackle one of the cruelest 
+problems in using a computer.  Give some thought to the NAMES you 
+apply to programs in the process of being changed.
+
+	One  scheme is to add a "suffix" to the filename,  or  to 
+change the filetype to .001  .002  etc.
+
+	You  want to keep some consistency so that the names  are 
+meaningful,  and wildcards can be used with utilities   (example:  
+PIP  B:=C:PROGM???.BAS[V]).   But  you  must  name  your  changes 
+differently  from the distribution filename,  and from your other 
+changes. How will you know which is your latest version? How will 
+you know which is your latest version which works?
+
+	It  is a mistake to count on keeping the  same  filename, 
+and using different diskettes.  The trend is rapidly toward large 
+capacity,  non-removeable hard disks.   In a few years,  everyone 
+will  have  5 or 10 MB disks!  Anyway,  it is easier to  learn  a 
+disciplined approach,  and follow it,  than to spend alot of time 
+making  gobs  of  filecopies and then trying to  remember  what's 
+what.
+
+	If  you begin changing a program called  BUDGET.BAS,  you 
+might  call your first  modification  BUDGET01.BAS,  BUDGET1.BAS, 
+BUDGET.001, BUD1.BAS, B1.BAS etc. It is a matter of taste, and of 
+how large your library is.   The larger it is,  the more specific 
+you have to be...you might have more than one budget program.  If 
+you  have an editor,  and you save the basic program as an  ASCII 
+file  (ie.  SAVE "B:BUDGET01.ASC",A),  you may want to adopt  the 
+.ASC  filetype naming convention to clearly identify it as  ready 
+for your editor, or to be modemed to another user.  Be aware that 
+some operating systems have a limit of six character names.
+
+	As  you  modify  programs,  add remarks in the  front  to 
+indicate  the as-of date,  version,  etc.  Professional  programs 
+display this information as they are read in to be executed:  for 
+example,  note  how MBASIC clearly identifies it's  version/date.  
+In  that  way,  the  user knows from looking at the  CRT  if  the 
+correct version of the program has been loaded. Many programs are 
+dependant  on  the  release/version  of  the  operating   system. 
+Unfortunately,  the  program names often do not change,  but  the 
+programs  are  different.  Some will not run with  new  releases. 
+Peel-off  labels  will help with this  problem  also:  ie.   "1.4 
+depen", etc.
+
+	After  you have migrated to a new release/version of your 
+operating system,  a new set of problems appear.  Programs  which 
+used to work,  now do not. You may have to rename some of them if 
+you  are  going  to  retain old  versions  (everyone  does).  For 
+example, you may want to rename CLIST to CLIST15 or CLIST16 if it 
+runs  on ver 1.5 or 1.6.  Then you can use CLIST for  the  latest 
+version.  This  approach  requires  you to rename a  lot  of  OLD 
+programs  that do not run on new releases.   I prefer this to the 
+next  method because I do not mix much among different  versions. 
+If I did, I would do as below.
+
+	Another approach (please do not mix this with the  above) 
+is  to  identify  the release in the name  (CL15  or  CL16),  and 
+perhaps shorten the names at the same time.   But this starts you 
+talking a "different language" than the documentation,  and other 
+users.  You  have to translate their conversations to your naming 
+scheme.  If  you  are bright and independent,  or  shorten  names 
+anyway,  then this has the advantage of avoiding a lot of  donkey 
+work  at  conversion time.....you rename on your working copy  of 
+the DISTRIB diskette,  and then PIP them as you go along.  You do 
+not have to go back and rename a dozen copies of every program.
+
+	There  is no right or wrong way;  it is a matter of  your 
+style.   Remember though,  you can't avoid the work.  It's just a 
+matter of when and how you prefer to do it.   I prefer NOT to mix 
+different  releases if I have a choice.   I would rather generate 
+entire new diskettes for the new release.   In this way,  I  have 
+complete diskettes to go back to if I want (or need) to.  No half 
+this,  and  half  that.   I avoid having to flip something  on  a 
+diskette  to tell it which flavor I want to run.  If you get very 
+many of these "switches" on a diskette, it is a long process just 
+to  find out where your beginning from!   I make specific  copies 
+and  label  them  as  to options in  effect  on  that  particular 
+diskette.  Saves me time and nerves.
+
+	I hope one or two of these ideas are helpful.  Good luck.
+
+	*********************************************************
+ 

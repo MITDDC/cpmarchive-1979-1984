@@ -1,0 +1,13 @@
+LCAT is designed to concatenate existing .REL files into a
+searchable library as required by LINK.  FOR creates such a
+library from the modules included in the source file.  ASMB
+can assemble only one module at a time.  .REL files created
+by FOR and ASMB are suitable for LCAT, as is ASMLIB.  FORLIB
+must have a 1A patched in behind the final 9E before any
+attempt is made to append to it using LCAT.  LCAT assumes that
+the byte sequence 9E 1A is always used for end of file.  It is
+not known whether it is possible for this sequence to occur
+within the bit data stream, but if this should happen, LCAT
+will not be usable.  To guard against this possibility, it
+would be necessary to make LCAT interpret the .REL file as LINK
+does.

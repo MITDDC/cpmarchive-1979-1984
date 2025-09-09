@@ -1,0 +1,21 @@
+The CPM; directory on MIT-MC has been restructured to be easier
+to find the program that you desire;  and also to add new archives
+and programs.
+
+The directory is in a group/tree structure now:
+
+ar10-ar19 are for misc. asm/doc/com/hex programs and any special
+		news (like CP/M-NET and CPMug/SIG/M abstracts.)
+
+ar20 to ar29 are for utilities (Disk, Text, Directory, etc.)
+
+ar30 to ar39 are for specific languages (Basic, Pascal, Forth, RatFor,
+		BDS-C, etc.)
+
+ar40 to ar49 are for specific machines (Apple, Osborne, Trs-80 (CP/M),
+		and also UNIX)
+
+ar50 to ar59 are for program packages (Fast, SQ/USQ, CCP's, ZCPR, etc.)
+
+ar60 to ar69 are for communication related programs (Modem, Modem7, MTN,
+		RCP/M programs too)

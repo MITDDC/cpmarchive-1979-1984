@@ -1,0 +1,109 @@
+The following list of features included in comunications packages is
+taken from theoct, 1982 issue of "Business Computer Systems".  This
+is a quick look at what my IBMFTP package includes IN ITS CURRENT STATE.
+
+----------------
+
+Computer system:		IBM Personal computer.
+
+Operating requirements:		MS-DOS 1.0, 1.1, 64K memory, IBM (or IBM
+				  compatable) rs232 card, 1 disk drive (2
+				  recomended), advanced basic, color or
+				  monochrome display.  video monitor
+				  capable of displaying 80 characters/row.
+
+Menu driven:			Yes.  25th line is used to lable function keys.
+					Configuration program also menu driven.
+
+Error recovery prompts:		Yes.
+
+Data capure ability:		Yes.  Variable sized buffer, depending on
+					amount of memory installed.
+
+Custom design of parameters:	Yes.
+
+Keyboard macro instructions:	Yes.  Any or all of the "extened function"
+					keys, including the keypad and
+					ALT-x keys, may be redefined to
+					be any sting.  Also, the file xfer
+					and othre commands are tied to the
+					function keys.
+
+Auto-dial:			No.
+
+Auto-receive:			Yes.
+
+Can suppress/redefine		Sort of.  Emulates the popular H19, Z19,
+  incomming characters:			and VT52 display terminals.
+
+Off-line editing:		No.
+
+Retransmits upon error:		Yes.
+
+Direct transfer from data	Yes.  The remote system must support some
+  stream to memory/disk:		kind of flow control.
+
+Data compression:		No.
+
+Softwae controlled baud rate:	Yes.
+
+Transmission without operator:	No.
+
+Supports 80 column card:	Yes.  Both the color and monchrome displays
+					are supported at the 80 column width.
+
+Electronic mail:		No.
+
+Log on to info-services:	Yes.
+
+Passwords, encryption, etc:	No.
+
+Bulletin board:			No.
+
+Chat mode:			Yes.
+
+Phone directory:		No.
+
+File transfer:			Yes.  MODEM2 protocol.  allows transfers to
+					and from systems running CP/M, TENEX,
+					UNIX, ITS, tops-20, others,
+
+Terminal program:		Yes.  implements the cursor control function
+					of a native mode heath/zenith z19
+					terminal, in addition to all of the
+					functions of a DEC VT52 terminal.
+
+Telephone answering/
+  voice message storage:	No.
+
+Transmission verification:	Yes.
+
+Handshaking protocol:		Yes.  In addition to the MODEM2 file transfer
+					protocol, supports xon/xoff type
+					flow control.
+
+Editing/word processing:	No.  However, works successfully with many
+					large system display editors.
+
+
+Other features:			9600 baud operation.  Terminal emulator is
+				callable from BASIC as a subroutine.
+
+
+----------------------------------------------------------------
+
+Possible additions:	These are in decreasing order of ease of/interest in
+			implementation, approximately.
+----------------
+
+access to disk: DIRectory, ERAse, etc. commands.
+
+Autodialer support.
+	Phone directory.  Part of script files/configuration files ?
+
+Script files: automatic dial/login/setup.  Maybe do stuff, log out.
+
+multiple key definition/configuration files for different systems.
+
+ANSI mode/vt100 support.
+

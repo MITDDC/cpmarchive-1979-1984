@@ -1,0 +1,4113 @@
+.COMMENT \
+                       *** SMODEM ***
+
+                 CP/M SMARTMODEM PROGRAMME
+                 =========================
+                        Version 3.8
+
+                      by Walter Blady
+
+
+                       CONFIGURATION
+                       -------------
+                      (put yours here)
+
+                       EXIDY Sorcerer
+                      Hayes Smartmodem
+       Morrow Disk-Jockey controller v4-B, serial I/O
+               double density capacity drives
+                          CP/M 2.2
+                   
+
+This programme is a greatly revised version of MODEM7.MAC 
+written by Ward Christensen and revised by M.Zeiger and 
+J.Mills for the PMMI modem board.  Full credits for expertise 
+and talent, that is at the heart of this programme, belong 
+solely to these people.
+
+Other contributors are not mentioned here but their 
+contributions are noted and documented in various versions 
+of 'MODEM'.  My appologies.
+
+Many additional routines added to SMODEM, are 
+COPYRIGHTED (1980) by Mark M.Zeiger and J.Mills, or are 
+proprietary to Walter Blady.  Permission is granted to use 
+but NOT sell these routines.
+
+                           *****
+
+Source code is prepared for compilation with Microsoft's
+M80 assembler and L80 linker.  
+
+For full information on the use of 'SMODEM', please refer to
+the instruction file 'SMODEM.DOC'.
+
+To assemble this programme and create a CP/M 'COM' file, use 
+the following commands....
+
+	M80 =SMODEM
+	L80 /P:100,SMODEM,SMODEM/N/E
+
+                           *****
+\
+
+
+.8080	;ASSEMBLE USING 8080 CODE RECOGNITION
+
+	JMP	START	;PROGRAMME BEGINNING
+
+
+;--------------------- ASCII EQUATES -----------------------
+
+PRINTR	EQU 'P'-40H	; ^P = LIST DEVICE TOGGLE
+ECOTOG	EQU 'E'-40H	; ^E = TERM/ECHO TOGGLE
+OFFLIN  EQU 'O'-40H     ; ^O = OFFLINE WITHOUT DISCONNECT
+DISCCHR EQU 'D'-40H     ; ^D = DISCONNECT
+TRANCHR EQU 'T'-40H     ; ^T = TRANSFER CHARACTER
+CAN     EQU 'X'-40H     ; ^X = CANCEL SEND/RECEIVE
+EOFCHAR EQU 'Z'-40H     ; ^Z = END OF FILE
+SAVECHR EQU 'R'-40H     ; ^R = RECEIVE CHARACTER
+XOFF    EQU 'S'-40H     ; ^S = XOFF CHARACTER
+XON     EQU 'Q'-40H     ; ^Q = XON CHARACTER
+REPTER  EQU 'I'-40H     ; ^I = REPRINT TERMINAL MENU
+FF	EQU 'L'-40H     ; ^L = CLEAR SCREEN
+UP	EQU 'W'-40H	; ^W = CURSOR UP
+CRC	EQU 'C'		; CRC CHECK INSTEAD OF CHECKSUM
+SOH     EQU 1           ; START OF HEADER
+EOT     EQU 4           ; END OF TEXT
+ACK     EQU 6           ; ACKNOWLEDGE
+NAK     EQU 15H         ; NOT ACKNOWLEDGE
+BDNMCH  EQU 75H         ; BAD NAME MATCH
+OKNMCH  EQU ACK         ; OKAY NAME MATCH
+LF      EQU 0AH         ; LINEFFEED
+CR      EQU 0DH         ; CARRIAGE RETURN
+BELL    EQU 7           ; BELL CHARACTER
+YES	EQU 'Y'
+NO	EQU 'N'
+
+;---------------------- CP/M BDOS EQUATES ---------------------
+
+;THESE EQUATES ARE DESCRIBED IN THE CP/M USER'S GUIDE
+
+RDCON   EQU 1
+WRCON   EQU 2
+PRINT   EQU 9
+RDBUF   EQU 10
+CONST   EQU 11
+RESET	EQU 13
+SELDSK	EQU 14
+OPEN    EQU 15
+CLOSE   EQU 16
+SRCHF   EQU 17
+SRCHN   EQU 18
+ERASE   EQU 19
+READ    EQU 20
+WRITE   EQU 21
+MAKE    EQU 22
+REN     EQU 23
+RCDSK	EQU 25
+STDMA   EQU 26
+ALLOC	EQU 27
+FILSIZ	EQU 35
+BDOS    EQU 5
+REIPL   EQU 0
+FCB     EQU 5CH
+FCBEXT  EQU FCB+12
+FCBSNO  EQU FCB+32
+FCBRNO  EQU FCB+32
+FCB2    EQU 6CH
+
+
+;------------------ RECONFIGURATION SECTION -------------------
+
+TRUE    EQU 0FFH
+FALSE   EQU 0
+
+DBFSIZ	EQU 16		;DISK BUFFER SIZE IN 128 BYTE SECTORS
+			;...CHANGE THIS FOR SMALLER SYSTEMS
+RAMTOP	EQU 0BFFFH	;TOP OF ACTUAL RAM IN YOUR SYSTEM 
+
+BOTRAM  EQU 3000H	;BOTTOM +  OF SMODEM
+
+ERRLIM  EQU 10		;NUMBER OF TIMES TO RETRY
+                        ;SEND/RECEIVE ERRORS BEFORE QUIT
+
+DJBRD	EQU	TRUE	;TRUE=DISK-JOCKEY CONTROLER RS232 I/O
+
+PORTIO	EQU	FALSE	;TRUE=RS232 I/O OTHER THAN DISK-JOCKEY
+
+INLZE	EQU	FALSE	;TRUE=RS232 I/O PORT INITIALIZATION
+			;IS NEEDED
+
+CHEK	EQU	FALSE	;TRUE=OVERRUN,FRAMING AND PARITY
+			;CHECKS NEEDED...ONLY SET TO TRUE IF
+			;PORTIO=TRUE.
+
+FASCLK:	DB 	FALSE	;2 MZ OPERATION = FALSE...4 MZ = TRUE
+
+BKBYTE: DB 	TRUE    ;TRUE = MAKE .BAK FILE
+
+XPRFLG: DB 	TRUE    ;FALSE = PRINT MENU ON INITIALIZATION
+
+
+.COMMENT \
+
+NOTE:   SOME CUSTOMIZING WILL HAVE TO BE DONE IN THE 'DIRLST' ROUTINES 
+	IN ORDER FOR SMODEM TO PROPERLY CALCULATE REMAINING
+	DISK SPACE.
+
+
+-------------------- HAYES COMMANDS -----------------------
+
+
+'STYLE' DEFINES THE DIALING COMMAND THAT WILL BE SENT
+TO THE HAYES SMARTMODEM WHEN USING THE AUTO DIALING OPTION.
+'AT'= ATTENTION...'D'= DIAL.
+AND THE '$'= END OF COMMAND LINE (MUST BE IN PLACE).
+COMMANDS TO HAYES MAY ALSO BE ENTERED DIRECTLY IN TERMINAL OR
+ECHO MODES.  4 EXTRA BYTES ARE ALLOTED FOR LONGER COMMANDS.
+\
+
+STYLE:  DB 'ATD $'	;MODEM DIALING COMMAND...ENTER A 'P'
+	DS 4		;OR 'T' FOR PULSE OR TOUCH AFTER THE
+			;'D' IF DESIRED.
+
+
+.COMMENT \
+
+'OFFHK'DEFINES THE ESCAPE AND HANG-UP CODE SENT TO THE
+SMARTMODEM.  '+++'= THE HAYES DEFAULT ESCAPE CODE TO
+RE-ENTER THE COMMAND STATE, AND 'ATH'= THE HANG-UP COMMND.
+THE '$'= END COMMAND LINE (MUST BE IN PLACE). 
+\
+
+OFFHK:  DB '+++$ATH',CR,'$'	;MODEM ESCAPE AND 
+	DS 4			;HANG-UP CODE
+  
+
+;--------------------- DJ BOARD I/O -----------------------
+
+;(PRESENTLY SET-UP FOR REVISION 4 & B BOARDS)
+
+	IF	DJBRD		;IF DISKJOCKEY BOARD
+MODATP 	EQU 0D3F8H              ;MODEM DATA PORT
+MOCTLP 	EQU 0D3F9H              ;MODEM CONTROL PORT
+MOSNDB 	EQU 8                   ;MODEM SEND BIT 
+MOSNDR 	EQU 0                   ;MODEM SEND READY
+MORCVB 	EQU 4                   ;MODEM RECEIVE BIT 
+MORCVR 	EQU 0                   ;MODEM RECEIVE READY
+
+;I/O ROUTINES FOR DJ BOARD SERIAL PORT
+
+INCTLP: LDA	MOCTLP 	;in modem control port
+	RET
+
+OTDATP: CMA		;out modem data port
+	STA	MODATP
+	CMA
+	RET
+
+ANSNDB: ANI 	MOSNDB 	;bit to test/send ready
+	RET
+
+CPSNDR:	CPI 	MOSNDR 	;value send bit/ready
+	RET
+
+INDATP: LDA	MODATP 	;in modem data port
+	CMA
+	RET
+
+ANRCVB: ANI 	MORCVB 	;bit test receive ready
+	RET
+
+CPRCVR: CPI 	MORCVR 	;value receive ready
+	RET
+
+OTCTLP: LDA	MOCTLP 	;modem output control port
+	RET
+	ENDIF	;DJBOARD
+
+
+;------------------- SERIAL PORT I/O ----------------------
+
+.COMMENT \
+SET THESE THE FOLLOWING EQUATES TO MATCH YOUR SERIAL 
+I/O ASSIGNMENTS, AND DELETE THE ONES NOT USED.
+\
+
+	IF	PORTIO	;IF OTHER THAN DJBOARD
+PORT	EQU	000H		;BASE ADDRESS
+
+MOCTLP	EQU	PORT		;MODEM CONTROL PORT
+MOSNDB	EQU	0		;MODEM SEND READY BIT
+MOSNDR	EQU	0		;VALUE WHEN MODEM SEND READY
+MORCVB	EQU	0		;MODEM RECEIVE READY BIT
+MORCVR	EQU	0		;VALUE WHEN MODEM RECEIVE READY
+MODATP	EQU	PORT+?		;MODEM DATA PORT
+BAUDRP	EQU	PORT+?		;BAUD RATE PORT
+MOCTL2	EQU	PORT+?		;2ND MODEM CONTROL PORT
+
+	IF	CHEK
+FRMER	EQU	00H		;FRAMING ERROR MASK
+ORUNER	EQU	00H		;OVERRUN ERROR MASK
+PARER	EQU	00H		;PARITY ERROR MASK
+ERRMSK  EQU	00H		;MASK TO BLOCK ALL BITS EXCEPT
+	ENDIF	;CHEK
+
+;I/O ROUTINES FOR SERIAL PORTS OTHER THAN DJ BOARD
+
+INCTLP: IN	MOCTLP 	;in modem control port
+	RET
+
+OTDATP: OUT	MODATP	;out modem data port
+	RET
+
+ANSNDB: ANI 	MOSNDB 	;bit to test/send ready
+	RET
+
+CPSNDR:	CPI 	MOSNDR 	;value send bit/ready
+	RET
+
+INDATP: IN	MODATP 	;in modem data port
+	RET
+
+ANRCVB: ANI 	MORCVB 	;bit test receive ready
+	RET
+
+CPRCVR: CPI 	MORCVR 	;value receive ready
+	RET
+
+OTCTLP: IN	MOCTLP 	;modem output control port
+	RET
+	ENDIF	;PORTIO
+
+
+;-------------------- INITIALIZE EQUATES --------------------
+
+;IF YOUR SERIAL PORTS MUST BE INITIALIZED SET THESE EQUATES
+
+	IF	INLZE	
+	INITC1	EQU	00H
+	INITC2	EQU	00H
+	;(MORE IF NEEDED)
+	ENDIF	;INLZE
+
+
+;--------------------- PROGRAMME START ------------------------
+
+START:  LXI 	H,0
+        DAD 	SP          ;GET CP/M'S STACK
+        SHLD 	STACK       ;SAVE IT
+        LXI 	SP,STACK    ;START LOCAL STACK
+	MVI 	A,' '
+	STA 	FCB3+1
+
+        CALL 	START1
+
+START1:	CALL 	INITDR    ;INITIALIZE ADDRESSES
+        MVI 	A,TRUE      ; 0FFH
+        STA 	NFLFLG
+        CMA             ; 0
+        STA 	SAVFLG
+
+        CALL 	PROCOPT    ;PROCESS CONTROL OPTIONS
+        LDA 	OPTION      ;GET MAIN OPTION
+        CPI 	'X'         ;EXPERT FLAG?
+        JNZ 	RESTAR     ;NO
+        MVI 	A,TRUE      ;YES
+        STA 	XPRFLG      ;MAKE EXPERT
+        JMP 	MENU
+
+RESTAR:	LDA 	OPTION      	;GET MAIN OPTION
+	CPI 	' '             ;NO OPTION SPEC'D?
+	JZ	MENU
+        CPI 	'M'                 ;MENU ASKED FOR?
+        JZ 	MENU                 ;YES, GO MENU
+	CPI	'C'
+	JNZ	RSTR1
+	LXI	H,80H		;POINT TO CP/M CMDBUF
+	LXI	D,CMDBUF+1
+	MOV	B,M		;GET LENGTH OF COMMD.LINE
+	INR	B		;UP ONE FOR CHAR.COUNTER
+	CALL	MOVE
+	JMP	DIALPL
+RSTR1:	CPI 	'E'         ;ECHO MODE?
+        JZ 	TRMEC1      ;YES
+        CPI 	'D'         ;DISCONNECT?
+        JZ 	DNTCB        ;YES, DISCONNECT & GO MENU
+
+        CALL 	MOVEFCB
+        MVI 	A,FALSE
+        STA 	NFLFLG
+        CALL 	INDATP         ;GOBBLE UP GARBAGE..
+        CALL 	INDATP         ;..CHARACTERS ON LINE
+        LDA 	OPTION      ;PROCESS MAIN OPTION
+        CPI 	'T'         ;TERMINAL MODE?
+        JZ 	DSKSAVE      ;YES
+        CPI 	'S'         ;SEND A FILE?
+        JZ 	SENDFIL      ;YES
+        CPI 	'R'         ;RECEIVE A FILE?
+        JZ 	RCVFIL       ;YES
+	CPI	'K'	    ;KILL A FILE?
+	JZ	KILFIL	     ; YES, GO DO IT
+
+	JMP	MENU	    ;NO OPTION SPEC'D, GO MENU
+
+;REVISED TERMINAL ROUTINE ALLOWING MEMORY SAVE
+
+DSKSAVE:MVI	A,FF
+	CALL	TYPE
+	LDA 	NFLFLG     ;NEW FILE FLAG
+        CPI 	TRUE        ;OFFH? (TRUE=NORMAL TERMINAL MODE)
+        JZ 	TERM         ;YES
+        LDA 	FCB+1       ;FIRST CHAR OF FILENAME
+        CPI 	' '         ;FILE SPEC'D
+        JNZ 	GOODNM      ;YES, GOOD NAME
+        MVI 	A,TRUE      ;0FFH
+        STA 	NFLFLG     ;
+        CMA             ; 0
+        STA 	SAVFLG     ;
+        JMP 	TERM        ;
+
+GOODNM:	CALL	ILPRT
+        DB CR,LF,'++ IS INCOMING FILE OBJECT CODE? >>',0
+
+	LXI	D,CMDBUF
+	CALL	INBUFF
+	CALL	CRLF
+	LDA	CMDBUF+2
+	CPI	NO
+	JZ	GODNM2
+	CPI	YES
+	JZ	GODNM1
+
+	CALL	ILPRT
+        DB CR,LF,'++ ANSWER YES OR NO ONLY PLEASE! ++',CR,LF,LF,0
+	JMP	GOODNM
+
+GODNM1:	MVI	A,0FFH
+	STA	MACFLG		;SET CODE FLAG ON	
+
+GODNM2: CALL 	ERASFIL
+        CALL 	MOVE2
+        LXI 	D,FCB3
+        MVI 	C,MAKE
+        CALL 	BDOS
+        LXI 	D,FCB3
+        MVI 	C,OPEN
+        CALL 	BDOS
+        LXI 	H,BOTRAM
+        SHLD 	HLSAVE
+        MVI 	A,FALSE
+        STA 	NFLFLG
+	JMP	TERM
+
+TERM1:	MVI	C,PRINT
+	LXI	D,TERL9
+	CALL	BDOS
+	JMP	TERM
+
+TERL9 	EQU	$
+
+DB FF,LF
+DB '                COMMANDS - IN TERMINAL MODE',CR,LF
+DB '                ===========================',CR,LF,LF
+DB '          ^Q   - XON character',CR,LF
+DB '          ^E   - Terminal/Echo (toggle on/off)',CR,LF
+DB '          ^R   - Receive informal file (toggle on/off)',CR,LF
+DB '          ^T   - Transmit informal file',CR,LF
+DB '          ^I   - Kill screen & reprint menu',CR,LF
+DB '          ^O   - Off line/return to menu',CR,LF
+DB '          ^P   - Printer (toggle on/off)',CR,LF
+DB '          ^S   - XOFF character',CR,LF
+DB '          ^D   - Disconnect phone (HAYES)',CR,LF
+DB '          ^Z   - END of file',CR,LF
+DB '          ^X   - Cancel send/receive',CR,LF,'$'
+
+
+TERM:   CALL 	STAT         ;KEYPRESS?
+        JZ 	TERML        ;NO, CHECK LINE
+        CALL 	KEYIN        ;GET CHAR FROM KBD
+
+	CPI	REPTER	     ;^I	
+	JZ	TERM1	     ;...YES, REPRINT MENU	
+
+	CPI	ECOTOG	     ;^E?	
+	JNZ	TERM10
+
+	CALL	ILPRT
+        DB CR,LF,'++ ECHO ON ++',CR,LF,0
+	JMP	TRMECHO      ;YES, GO ECHO MODE
+
+TERM10: CPI 	OFFLIN      ;^O?
+        JZ 	MENU         ;YES, RETURN TO MENU
+
+        CPI 	DISCCHR      ;^D?
+        JZ 	DNTCB        ;YES, DISCONNECT & RETURN TO MENU
+
+LST:	CPI	PRINTR	     ;^P? 	
+	JNZ	TERCON	     ;NO OUTPUT TO LIST DEV...CONT.
+	LDA	LSTFLG       ;GET LIST DEV.TOGGLE	
+	CMA		     ;MAKE TOGGLE
+	STA	LSTFLG       ;SAVE IT 		
+	INR	A
+	JNZ	LST1
+
+	CALL	ILPRT
+        DB CR,LF,'++ PRINTER ON ++',CR,LF,0
+	JMP	TERM
+
+LST1:	CALL	ILPRT
+        DB CR,LF,'++ PRINTER OFF ++',CR,LF,0
+	JMP	TERM
+
+TERCON: CPI 	TRANCHR      ;^T TEST FOR TRANSFER REQUEST 
+        CZ 	TRANSFER     ;SEND-A-FILE (BLIND SEND)
+        JZ 	TERM         ;LOOP
+
+	CPI 	SAVECHR	     ;^R TEST FOR RECEIVE REQUEST
+        JNZ 	NOTOG	     ;NO, CONT.
+
+        LDA 	NFLFLG     ; YES BUT, DO NOT ALLOW SAVE IF..
+        CPI 	TRUE        ;..THIS FLAG IS SET.
+        JZ 	TERML
+	LDA	SAVFLG       ;SAVE DATA TO DISK?	
+	CMA		     ;MAKE TOGGLE
+	STA	SAVFLG       ;SAVE IT 		
+	INR	A
+	JNZ	PRR1
+
+	CALL	ILPRT
+        DB CR,LF,'++ RECEIVE ON ++',CR,LF,0
+	JMP	TERML
+
+PRR1:	CALL	ILPRT
+        DB CR,LF,'++ RECEIVE OFF ++',CR,LF,0
+	JMP	TERML
+
+NOTOG:  CALL 	OTDATP
+
+TERML:  CALL 	INCTLP
+        CALL 	ANRCVB
+        CALL 	CPRCVR
+        JNZ 	TERM
+        CALL 	INDATP
+	PUSH	PSW		;SAVE ORG.CHAR.
+	LDA	MACFLG		;GET MACHINE LANG.FLAG
+	INR	A		;MACHINE LANG.COMING THROUGH?
+	JZ	TERML9		;YES...SKIP FILTER
+	POP	PSW		;SAVE ORIG.CHAR
+        CPI 	00H          ;CHECK FOR NULLS
+        JZ 	TERM         ;DON'T PROCESS THEM
+        ANI 	7FH          ;STRIP PARITY
+	PUSH	PSW		;SAVE FILTERED CHAR.
+TERML9:	POP	PSW		;GET FILTERED OR ORG.CHAR. 
+	PUSH	PSW		;SAVE IT AGAIN
+	CALL	TYPE
+	LDA	LSTFLG
+	INR	A
+	JNZ	PUSHON
+	POP	PSW
+	CALL	LISTDV
+PUSHON: LDA 	SAVFLG
+        INR 	A
+        JNZ 	NOSAVE
+        POP 	PSW
+	LHLD	HLSAVE
+        MOV 	M,A
+        INX 	H
+        SHLD 	HLSAVE     ;MENU COMMAND DESTROYS HL-REG..
+                         ;..GET HL WHEN ENTERING VIA 'RET' CMD.
+	CPI 	LF          ;IF NO FRONT PANEL, THEN..
+        JNZ 	NOCOLON     ;..TYPE ":" AFTER EACH LINE FEED..
+        MVI 	A,':'       ;..WHEN MEMORY SAVE ACTIVE.
+        CALL 	TYPE
+NOCOLON:LDA 	07H           ;CHECK TO SEE IF..
+        DCR 	A           ;..PAGE BELOW BDOS HAS BEEN..
+        CMP 	H           ;..REACHED AND DISKSAVE IS NEEDED.
+        CZ 	INTDSSV
+	JMP	TERM
+
+NOSAVE:	POP	PSW
+	JMP	TERM
+
+SAVFLG:	DB FALSE
+LSTBY1:	DB 0
+LSTBY2:	DB 0
+
+
+INTDSSV:MVI A,XOFF      ;SEND A CTRL-S TO STOP..
+        CALL OTDATP        ;..REMOTE COMPUTER OUTPUT.
+
+        MVI D,0         ;D IS THE BUFFER COUNT
+        CALL INMODEM    ;GET LAST BYTES SENT..
+        STA LSTBY1    ;..AFTER CTRL-S.
+        CALL INMODEM    ;ADD MORE CALLS TO INMODEM..
+        STA LSTBY2    ;..AND STA LASTBYT# IF YOU ARE..
+                        ;..LOSING BYTES WHEN MEMORY IS FULL.
+        PUSH D
+        CALL NMREC1
+        CALL WRTDSK     ;WRITE THE RECORDS
+        POP D
+
+        LXI H,BOTRAM
+        INR D
+        DCR D           ;TEST BUFFER COUNT FOR ZERO
+        JZ CTRLQ
+        LDA LSTBY1    ;GET THE LAST BYTES THAT WERE..
+        MOV M,A         ;..SAVED AND PUT THEM IN..
+        INX H           ;..BOTRAM.
+        CALL TYPE
+        DCR D
+        JZ CTRLQ
+        LDA LSTBY2
+        MOV M,A
+        INX H
+        CALL TYPE
+
+CTRLQ:  MVI A,XON       ;SEND START CHARACTER..
+        CALL OTDATP        ;..TO REMOTE COMPUTER.
+        RET
+
+.COMMENT \
+THIS SUBROUTINE WILL LOOP UNTIL THE MODEM RECEIVES A CHARACTER
+OR 100 MILLISECONDS. IF A CHARACTER IS RECEIVED, A FLAG IS SET
+TO STORE THE CHARACTER.A MAXIMUM OF TWO CHARACTERS ARE STORED,
+BUT MORE MAY BE STORED IF DESIRED (SEE COMMENT IN "INTDSSV"
+ABOVE).
+\
+
+INMODEM:LXI B,1250
+
+TIMERL: CALL INCTLP
+        CALL ANRCVB
+        CALL CPRCVR
+        JZ GETBYTE
+        DCX B
+        MOV A,B
+        ORA C
+        JNZ TIMERL
+        RET
+GETBYTE:CALL INDATP
+        INR D
+        RET
+
+NMRECS:MVI M,EOFCHAR
+        INX H
+        LXI D,127
+        DAD D
+
+NMREC1:LXI D,-(BOTRAM)
+        DAD D
+        MOV A,L         ;DIVIDE HL BY 128..
+        ORA A
+        RAL             ;..TO GET THE..
+        MOV L,H         ;..NUMBER OF SECTORS
+        MVI H,0
+        PUSH PSW
+        DAD H
+        POP PSW
+        MVI A,0
+        ADC L
+        MOV L,A         ;RETRNS WITH NUMBER OF..
+        RET             ;..128 BYTE RECORDS IN HL.
+
+WRTDSK: LXI D,BOTRAM
+
+NEXTWRT:MVI C,STDMA
+        CALL BDOSRT
+        PUSH D
+        LXI D,FCB3
+        MVI C,WRITE
+        CALL BDOSRT
+        POP D
+        XCHG
+        PUSH D
+        LXI D,128
+        DAD D
+        POP D
+        XCHG
+        DCX H
+        MOV A,H
+        ORA L
+        JNZ NEXTWRT
+        RET
+
+CLOSE3: LXI D,FCB3
+        MVI C,CLOSE
+        CALL BDOS
+        RET
+
+BDOSRT: PUSH B 
+	PUSH D 
+	PUSH H 
+	PUSH PSW
+        CALL BDOS
+        POP PSW 
+	POP H 
+	POP D 
+	POP B
+        RET
+
+MOVE2:  LXI H,FCB3
+        CALL INITFCB
+        LXI H,FCB
+        LXI D,FCB3
+        MVI B,12
+        CALL MOVE
+        RET
+
+;FILE TRANSFER ROUTINE - CALLED WITH 
+;CONTROL-T FROM TERMINAL ROUTINE.
+;TRANSFER MAY BE CANCELLED WHILE SENDING BY USING CONTROL-X.
+
+TRANSFER:
+        PUSH H 
+	PUSH D 
+	PUSH B 
+	PUSH PSW
+        LXI H,FCB4
+        CALL INITFCB   ;INITIALIZES FCBS POINTED..
+        LXI H,FCB+16    ;..TO BY HL REG.
+        CALL INITFCB
+
+GET:    CALL GETNAME
+        LDA CMDBUF+2    ;WAS FILE ENTERED
+        CPI 20H
+        JZ TRNSL2
+        CALL MOVE4
+        CALL OPEN4
+        CPI 0FFH        ;RETURN WITH 0FFH MEANS
+        JNZ CONTIN      ;FILE DOES NOT EXIST
+
+TRNSL1:CALL ILPRT
+        DB CR,LF,'++ FILE DOES NOT EXIST ++',CR,LF,LF,0
+
+TRNSL2:CALL ILPRT
+        DB '   ...TYPE ''R'' TO RETURN TO MODEM ++',CR,LF
+        DB '   ...TYPE ''A'' TO RE-ENTER NAME ',CR,LF,LF
+	DB '      COMMAND >>',BELL,0
+
+        CALL KEYIN
+        CALL UCASE
+        CALL TYPE       ;ECHO RESPONSE
+        CALL CRLF
+        CPI 'A'
+        JZ GET
+        CPI 'R'
+        JZ RETURN
+        JMP TRNSL2
+
+CONTIN: LXI D,80H
+        MVI C,STDMA
+        CALL BDOS
+
+READMR: CALL READ80
+        CPI 1           ;END OF FILE
+        JZ RETRNS
+        CPI 2           ;BAD READ
+        JZ RETRNU
+        CALL SEND80C
+        CPI EOFCHAR     ;END OF FILE - OMIT IF OBJECT..
+        JZ RETRNS      ;..CODE IS TO BE SENT.
+        CPI CAN         ;CANCELLATION?
+        JZ TRANCAN
+        JMP READMR
+
+RETRNS:CALL ILPRT
+        DB CR,LF,'++ FILE TRANSFER COMPLETED ++',CR,LF,BELL,0
+
+        JMP RETURN
+
+RETRNU:CALL ILPRT
+        DB CR,LF,'++ FILE TRANSFER UNSUCCESSFUL ++',CR,LF,BELL,0
+        JMP RETURN
+
+TRANCAN:CALL ILPRT
+        DB CR,LF,'++ TRANSFER CANCELLED ++',CR,LF,BELL,0
+
+RETURN: XRA A
+	STA MACFLG
+	POP PSW 
+	POP B 
+	POP D 
+	POP H
+        RET
+
+	                ;ENTRY AT +2 WILL LEAVE..
+INITFCB:MVI M,0         ;..DRIVE NO. INTACT.
+        INX H           ;WILL INITIALIZE AN FCB..
+        MVI B,11        ;..POINTED TO BY HL-REG. FILLS 1ST POS
+
+LOOP10: MVI M,' '       ;..WITH 0, NEXT 11 WITH..
+        INX H           ;..WITH BLANKS, AND LAST..
+        DCR B           ;..21 WITH NULLS.
+        JNZ LOOP10
+        MVI B,21
+
+LOOP11: MVI M,0
+        INX H
+        DCR B
+        JNZ LOOP11
+        RET
+
+GETNAME:CALL ILPRT
+DB CR,LF,'++ IS OUTGOING FILE OBJECT CODE? >>',0
+
+	LXI	D,CMDBUF
+	CALL	INBUFF
+	CALL	CRLF
+	LDA	CMDBUF+2
+	CPI	NO
+	JZ	GTNAM2
+	CPI	YES
+	JZ	GTNAM1
+
+	CALL	ILPRT
+DB 'ANSWER YES OR NO ONLY PLEASE!',CR,LF,LF,0
+	JMP	GETNAME
+
+GTNAM1:	MVI	A,0FFH
+	STA	MACFLG		;SET CODE FLAG ON	
+
+GTNAM2: CALL ILPRT
+DB CR,LF,'++ ENTER FILE NAME TO BE TRANSFERED...C/R TO QUIT ++',CR,LF,LF
+DB '   COMMAND >>',0
+
+        LXI D,CMDBUF
+        CALL INBUFF
+        CALL CRLF
+        RET
+
+MOVE4:  LXI D,CMDBUF
+        LXI H,FCB4
+        CALL CPMLINE
+        RET
+
+OPEN4:  LXI D,FCB4
+        MVI C,OPEN
+        CALL BDOS
+        RET
+
+READ80: LXI D,FCB4
+        MVI C,READ
+        CALL BDOS
+        RET
+
+SEND80C:MVI B,80H
+	LXI H,80H
+
+SENDCH1:PUSH B
+	PUSH D
+	PUSH H
+	CALL INDATP
+	CPI  XOFF
+	JNZ  SNDCH9
+
+TWO:	CALL STAT
+	JZ   THREE
+	CALL KEYIN
+	CPI  CAN
+	JZ   SNDCH9	
+
+THREE:	CALL INDATP
+	CPI  XON
+	JNZ  TWO
+
+SNDCH9: POP H
+	POP D
+	POP B
+	CPI CAN
+	RZ
+
+	MOV A,M
+        CALL MODOUT
+
+	PUSH PSW
+	LDA  MACFLG
+	INR  A
+	JZ   SNDC1	
+
+	POP  PSW
+        CPI EOFCHAR
+        RZ
+	PUSH PSW
+
+SNDC1:  POP  PSW	;RESTORE STACK
+	CALL STAT       ;TEST TO SEE IF
+        ORA A           ;CANCELLATION REQUESTED
+        JZ SKIP12
+        CALL KEYIN
+        CPI CAN
+        RZ
+
+SKIP12: INX H
+        DCR B
+        JNZ SENDCH1
+        RET
+
+MODOUT: PUSH PSW
+
+MODOTL: CALL OTCTLP
+        CALL ANSNDB
+        CALL CPSNDR
+        JNZ MODOTL
+        POP PSW
+        CALL OTDATP
+        CALL TYPE
+        RET
+
+FCB4:   DS 33
+
+;TERMINAL ECHO MODE
+
+TRMEC1:	MVI	A,FF
+	CALL	TYPE
+
+TRMECHO:CALL INCTLP
+        CALL ANRCVB
+        CALL CPRCVR
+        JNZ KEYBRD
+
+LINECHR:CALL INDATP
+
+LINEC2:	CALL MODOUT
+
+	PUSH PSW
+	LDA  LSTFLG
+	INR  A
+	JNZ  KYCONT
+	POP  PSW
+	CALL LISTDV
+	PUSH PSW
+
+KYCONT: POP  PSW
+	CPI  CR
+	JNZ  TRMECHO
+	MVI  A,LF
+	JMP LINEC2
+
+KEYBRD: CALL STAT
+        JZ TRMECHO
+        CALL KEYIN
+
+	CPI  ECOTOG
+	JNZ  KEYBR3
+
+	CALL ILPRT
+        DB CR,LF,'++ ECHO OFF ++',CR,LF,0
+	JMP  TERM
+
+KEYBR3: CPI OFFLIN
+        JZ MENU
+
+	CPI DISCCHR
+	JZ  DNTCB
+
+	CPI PRINTR	     ;^P? 	
+	JNZ KEYBR2	     ;NO OUTPUT TO LIST DEV...CONT.
+	LDA LSTFLG       ;GET LIST DEV.TOGGLE	
+	CMA		 ;MAKE TOGGLE
+	STA LSTFLG       ;SAVE IT 		
+	JMP TRMECHO
+
+KEYBR2:	CALL MODOUT
+	CPI  CR
+	JNZ  TRMECHO
+	MVI  A,LF
+	JMP  KEYBR2
+
+
+;               SEND A CP/M FILE
+
+SENDFIL:LDA BATCHFLG    ;CHECK IF MULTIPLE FILE..
+        ORA A           ;..MODE IS SET.
+        JNZ SENDC1
+        MVI A,TRUE      ;INDICATE BATCH SEND
+        STA SENDFLG
+        LDA FSTFLG      ;IF FIRST TIME THRU..
+        ORA A           ;..SCAN THE COMMAND LINE..
+        CNZ TNMBUF      ;..FOR MULTIPLE NAMES.
+        CALL SENDFN     ;SENDS FILE NAME TO RECEIVER
+        JNC SENDC2      ;CARRY SET MEANS NO MORE FILES.
+        MVI A,'B'       ;STOP BATCH..
+        STA BATCHFLG    ;..MODE OPTION.
+        MVI A,EOT       ;FINAL XFER END
+        CALL SEND
+        JMP DONE
+
+SENDC1: LDA FCB+1
+        CPI ' '
+        JZ BLKFILE
+
+SENDC2:	CALL 	CNREC
+	CALL OPENFIL
+        MVI E,80
+        CALL WAITNAK
+
+SENDLP: CALL RDSECT
+        JC SENDEOF
+        CALL INCRSNO
+        XRA A
+        STA ERRCT
+
+SENDRPT:CALL SENDHDR
+        CALL SENDSEC
+	LDA  CRCFLG	;CRC REQUEST?
+	ORA  A
+	CZ   SNDCRC	;YES...SEND CRC CHECKS
+	CNZ  SENDCKS	;NO...SEND CHECKSUMS
+        CALL GETACK
+        JC SENDRPT
+        JMP SENDLP
+
+SENDEOF:MVI A,EOT
+        CALL SEND
+        CALL GETACK
+        JC SENDEOF
+        JMP DONE
+
+;               RECEIVE A FILE
+
+RCVFIL: LDA BATCHFLG    ;CHECK IF MULT..
+        ORA A           ;..FILE MODE.
+        JNZ RCVC1
+        MVI A,FALSE     ;FLAG WHERE TO RETURN..
+        STA SENDFLG     ;..FOR NEXT FILE TRANS.
+        CALL GETFN      ;GET THE FILE NAME.
+        JNC RCVC2       ;CARRY SET MEANS NO MORE FILES.
+        MVI A,'B'       ;STOP BATCH..
+        STA BATCHFLG    ;..MODE OPTION.
+        JMP DONE
+
+RCVC1:  LDA FCB+1       ;MAKE SURE FILE IS NAMED
+        CPI ' '
+        JZ BLKFILE
+        JMP RCVC3
+
+RCVC2:  CALL CKCPM2
+        CALL CKBAKUP
+
+RCVC3:  CALL ERASFIL
+        CALL MAKEFIL
+        LDA QFLG
+        ORA A
+	JZ  RCVFST
+        LDA BATCHFLG
+        ORA A           ;DON'T PRINT MSSG IF..
+	JZ  RCVFST	;...IN MULTI AND QUIET MODE.
+
+        CALL ILPRT
+        DB CR,LF,'++ FILE OPEN, READY TO RECEIVE ++',CR,LF,0
+
+RCVFST: LDA CRCFLG
+	ORA A
+	MVI A,NAK
+	JNZ RCVFL2
+	MVI A,CRC
+
+RCVFL2: CALL SEND
+
+RCVLP:  CALL RCVSECT
+        JC RCVEOT
+        CALL WRSECT
+        CALL INCRSNO
+        CALL SENDACK
+        JMP RCVLP
+
+RCVEOT: CALL WRBLOCK
+        CALL SENDACK
+        CALL CLOSFIL
+        JMP DONE
+        
+;SUBROUTINES
+
+SENDFN: LDA QFLG
+        ORA A
+        JZ SWNAK
+
+        CALL ILPRT
+        DB CR,LF,'++ AWAITING NAME NAK ++',CR,LF,0
+
+SWNAK:  MVI E,80
+        CALL WAITNLP
+        MVI A,ACK       ;GOT NAK, SEND ACK
+        CALL SEND
+        LXI H,FILECT
+        DCR M
+        JM NOMRNM
+        LHLD NBSAVE     ;GET FILE NAME..
+        LXI D,FCB       ;..IN FCB
+        MVI B,12
+        CALL MOVE
+        SHLD NBSAVE
+        CALL SENDNM     ;SEND IT
+        ORA A           ;CLEAR CARRY
+        RET
+
+NOMRNM: MVI A,EOT
+        CALL SEND
+        STC
+        RET
+
+SENDNM: PUSH H
+
+SNDNM1: MVI D,11        ;COUNT CHARS IN NAME
+        MVI C,0         ;INIT CHECKSUM
+        LXI H,FCB+1     ;ADDRESS NAME
+
+NAMLPS: MOV A,M         ;SEND NAME
+        ANI 7FH         ;STRIP HIGH ORDER BIT SO CP/M 2..
+        CALL SEND       ;..WON'T SEND R/O FILE DESIGNATION.
+        LDA QFLG        ;SHOW NAME IF..
+        ORA A           ;..QFLG NOT SET.
+        MOV A,M
+        CNZ TYPE
+
+ACKLP:  PUSH B          ;SAVE CKSUM
+        MVI B,1         ;WAIT FOR RECEIVER..
+        CALL RECV       ;..TO ACKNOWLEDGE..
+        POP B           ;..GETTING LETTER.
+        JC SCKSER
+        CPI ACK
+        JNZ ACKLP
+        INX H           ;NEXT CHAR
+        DCR D
+        JNZ NAMLPS
+        MVI A,EOFCHAR   ;TELL RECEIVER END OF NAME
+        CALL SEND
+        LDA QFLG
+        ORA A
+        CNZ CRLF
+        MOV D,C         ;SAVE CHECKSUM
+        MVI B,1
+        CALL RECV       ;GET CHECKSUM..
+        CMP D           ;..FROM RECEIVER.
+        JZ NAMEOK
+
+SCKSER: MVI A,BDNMCH    ;BAD NAME-TELL RECEIVER
+        CALL SEND
+        LDA QFLG
+        ORA A
+        JZ SKCSR1
+
+        CALL ILPRT
+        DB CR,LF,'++ CHECKSUM ERROR ++',CR,LF,0
+
+SKCSR1:MVI E,80        ;DO HANDSHAKING OVER
+        CALL WAITNLP    ;DON'T PRINT "AWAITING NAK" MSG
+        MVI A,ACK
+        CALL SEND
+        JMP SNDNM1
+
+NAMEOK: MVI A,OKNMCH    ;GOOD NAME-TELL RECEIVER
+        CALL SEND
+        POP H
+        RET     
+
+GETFN:  LXI H,FCB
+        CALL INITFCB+2 ;DOES NOT INITIALIZE DRIVE
+        LDA QFLG
+        ORA A
+        JZ GNAMELP
+
+        CALL ILPRT
+        DB CR,LF,'++ AWAITING FILE NAME ++',CR,LF,0
+
+GNAMELP:CALL HSNAK
+        JC GNAMELP
+        CALL GETNM      ;GET THE NAME
+        CPI EOT         ;IF EOT, THEN NO MORE FILES
+        JZ NMRNMG
+        ORA A           ;CLEAR CARRY
+        RET
+
+NMRNMG: STC
+        RET
+
+GETNM:  PUSH H
+
+GETNM1: MVI C,0         ;INIT CHECKSUM
+        LXI H,FCB+1
+
+NAMELPG:MVI B,5
+        CALL RECV       ;GET CHAR
+        JNC GETNM3
+        LDA QFLG
+        ORA A
+        JZ GETNM2
+
+        CALL ILPRT
+        DB CR,LF,'++ TIME OUT RECEIVING FILENAME ++',CR,LF,0
+
+GETNM2: JMP GCKSER
+
+GETNM3: CPI EOT         ;IF EOT, THEN NO MORE FILES
+        JZ GNRET
+        CPI EOFCHAR     ;GOT END OF NAME
+        JZ ENDNAME
+        MOV M,A         ;PUT NAME IN FCB
+        LDA QFLG        ;TYPE IT IF NO QFLG
+        ORA A
+        MOV A,M
+        CNZ TYPE
+        PUSH B          ;SAVE CKSUM
+        MVI A,ACK       ;ACK GETTING LETTER
+        CALL SEND
+        POP B
+        INX H           ;GET NEXT CHAR
+        MOV A,L         ;DON'T LET NOISE...
+        CPI 7FH         ;..CAUSE OVERFLOW..
+        JZ GCKSER       ;..INTO PROGRAM AREA.
+        JMP NAMELPG
+
+ENDNAME:LDA QFLG
+        ORA A
+        CNZ CRLF
+        MOV A,C         ;SEND CHECKSUM
+        CALL SEND
+        MVI B,1
+        CALL RECV       ;CHECKSUM GOOD?
+        CPI OKNMCH      ;YES IF OKNMCH SENT..
+        JZ GNRET        ;..ELSE DO OVER.
+
+GCKSER: LXI H,FCB       ;CLEAR FCB (EXCEPT DRIVE)..
+        CALL INITFCB+2 ;..SINCE IT MIGHT BE DAMAGED..
+        LDA QFLG        ;..BY TOO MANY CHARS.
+        ORA A
+        JZ GCKSR1
+
+        CALL ILPRT
+        DB CR,LF,'++ CHECKSUM ERROR ++',CR,LF,0
+
+GCKSR1:CALL HSNAK      ;DO HANDSHAKING OVER
+        JC GCKSR1
+        JMP GETNM1
+
+GNRET:  POP H
+        RET
+
+HSNAK:  MVI A,NAK       ;SEND NAK UNTIL..
+        CALL SEND       ;..RECEIVING ACK.
+        CALL CKABORT    ;DON'T GET HUNG UP HERE
+        MVI B,2         ;WAIT 2 SECONDS..
+        CALL RECV       ;..IN RECEIVE.
+
+;REINITIALIZE THIS CODE IF YOU WANT THE ABILITY TO ABORT 
+;WHILE RECEIVING.
+
+;        CPI CAN         ;IF SENDER ABORTS..
+;        JZ ABORT        ;..DURING NAME TRANSFER.
+
+        CPI ACK         ;IF NAK,RETURN WITH..
+        RZ              ;..CARRY CLEAR.
+        STC
+        RET
+
+TNMBUF: MVI A,FALSE     ;CALL FROM SENDFIL ONLY ONCE.
+        STA FSTFLG
+        STA FILECT
+        CALL SCAN
+        LXI H,NAMEBUF
+        SHLD NBSAVE     ;SAVE ADDR OF 1ST NAME
+
+TNLP1:  CALL TRTOBUF
+        LXI H,FCB
+        LXI D,FCBBUF
+        CALL CPMLINE    ;PARSE NAME TO CP/M FORMAT
+
+TNLP2:  CALL MFNAME	;SEARCH FOR NAMES (* FORMAT)
+
+        JC NEXTNM
+        LDA FCB+10      ;IF CP/M 2 $SYS FILE..
+        ANI 80H         ;..DON'T SEND
+        JNZ TNLP2
+        LHLD NBSAVE     ;GET NAME
+        LXI D,FCB       ;MOVE IT TO FCB
+        XCHG
+        MVI B,12
+        CALL MOVE
+        XCHG
+        SHLD NBSAVE     ;ADDR OF NEXT NAME
+        LXI H,FILECT    ;COUNT FILES FOUND
+        INR M
+        JMP TNLP2
+
+NEXTNM: LXI H,NAMECT    ;COUNT NAMES FOUND
+        DCR M
+	JNZ TNLP1
+        LXI H,NAMEBUF   ;SAVE START OF BUFFER
+        SHLD NBSAVE
+        LDA FILECT
+        CPI 65          ;NO MORE THAN 64 TRANSFERS
+        RC
+        MVI A,64        ;ONLY X'FER FIRST 64
+        STA FILECT
+        RET
+
+;SCANS CMDBUF COUNTING NAMES AND PUTTING DELIMITER (SPACE)
+;AFTER LAST NAME
+
+SCAN:   PUSH H
+        LXI H,NAMECT
+        MVI M,0
+        LXI H,CMDBUF+1  ;FIND END OF CMD LINE..
+        MOV C,M         ;..AND PUT SPACE THERE.
+        MVI B,0
+        LXI H,CMDBUF+2
+        DAD B
+        MVI M,20H
+        LXI H,CMDBUF+1
+        MOV B,M
+        INR B
+        INR B
+
+SCNLP1: INX H
+        DCR B
+        JZ DNSCAN
+        MOV A,M
+        CPI 20H
+        JNZ SCNLP1
+
+SCNLP2: INX H           ;EAT EXTRA SPACES
+        DCR B
+        JZ DNSCAN
+        MOV A,M
+        CPI 20H
+        JZ SCNLP2
+        SHLD BGNMS      ;SAVE START OF NAMES IN CMDBUF
+        INR B
+        DCX H
+
+SCNLP3: INX H
+        DCR B
+        JZ DNSCAN
+        MOV A,M
+        CPI 20H
+        JNZ SCNLP3
+        LDA NAMECT      ;COUNTS NAMES
+        INR A
+        STA NAMECT
+
+SCNLP4: INX H           ;EAT SPACES
+        DCR B
+        JZ DNSCAN
+        MOV A,M
+        CPI 20H
+        JZ SCNLP4
+        JMP SCNLP3
+
+DNSCAN: MVI M,20H       ;SPACE AFTER LAST CHAR
+        POP H
+        RET
+
+;PLACES NEXT NAME IN BUFFER SO CPMLINE MAY PARSE IT
+
+TRTOBUF:LHLD BGNMS
+        MVI B,0
+        LXI D,FCBBUF+2
+
+TBLP:   MOV A,M
+        CPI 20H
+        JZ TRBFEND
+        STAX D
+        INX H
+        INX D
+        INR B           ;COUNT CHARS IN NAME
+        JMP TBLP
+
+TRBFEND:INX H
+        MOV A,M         ;EAT EXTRA SPACES
+        CPI 20H
+        JZ TRBFEND
+        SHLD BGNMS
+        LXI H,FCBBUF+1  ;PUT # CHARS BEFORE NAME
+        MOV M,B
+        RET
+
+;IN CP/M V.2, IF FILE IS R/O OR SYS, IT IS CHANGED TO 'BAK'.
+
+CKCPM2: MVI C,12
+        CALL BDOS
+	MOV A,L		;TRANSFER VERSION #             W.B.
+        ORA A           ;RETURN 0 MEANS CP/M 1
+        RZ
+        MVI C,STDMA
+        LXI D,80H
+        CALL BDOS
+        MVI C,SRCHF     ;SEARCH FOR FILE
+        LXI D,FCB
+        CALL BDOS
+        CPI 0FFH
+        RZ
+        ADD A 
+	ADD A   ;MULT A-REG BY..
+        ADD A 
+	ADD A   ;..32 TO FIND..
+        ADD A           ;..NAME IN DMA.
+        LXI H,80H
+        ADD L
+        MOV L,A         ;HL POINTS TO DIR NAME
+        LXI D,9
+        DAD D           ;POINT TO R/O ATTRIB BYTE
+        MOV A,M
+        ANI 80H         ;TEST MSB
+        JNZ MKCHG       ;IF SET, MAKE CHANGE
+        INX H           ;CHECK SYSTEM ATTRIB BYTE
+        MOV A,M
+        ANI 80H
+        RZ              ;NOT $SYS OR $R/O
+        DCX H
+
+MKCHG:  LXI D,-8
+        DAD D           ;POINT HL TO FILENAME + 1
+        LXI D,FCB+1     ;MOVE DIR NAME TO FCB..
+        MVI B,11        ;..WITHOUT CHANGING DRIVE.
+        CALL MOVE
+        LXI H,FCB+9     ;R/O ATTRIB
+        MOV A,M
+        ANI 7FH         ;STRIP R/O ATTRIB
+        MOV M,A
+        INX H           ;SYS ATTRIB
+        MOV A,M
+        ANI 7FH
+        MOV M,A
+        LXI D,FCB
+        MVI C,30        ;SET NEW ATTRIBS IN DIR
+        CALL BDOS
+
+;MAY BE CALLED BY CKBAKUP BELOW. ITS RETURN DONE HERE
+
+PLANCHG:LXI H,FCB       ;CHANGE NAME TO TYPE "BAK"
+        LXI D,6CH
+        MVI B,9         ;MOVE DRIVE AND NAME (NOT TYPE)
+        CALL MOVE
+        LXI H,75H       ;START OF TYPE IN FCB2
+        MVI M,'B'
+        INX H
+        MVI M,'A'
+        INX H
+        MVI M,'K'
+        LXI D,6CH
+        MVI C,ERASE     ;ERASE ANY PREV BACKUPS
+        CALL BDOS
+        LXI H,6CH       ;FCB2 DR FIELD SHOULD..
+        MVI M,0         ;..0 FOR RENAME.
+        LXI D,FCB
+        MVI C,23        ;RENAME
+        CALL BDOS
+        RET
+
+CKBAKUP:LDA BKBYTE
+        ORA A
+        RZ
+        MVI C,SRCHF
+        LXI D,FCB
+        CALL BDOS
+        INR A
+        RZ              ;FILE NOT FOUND
+        JMP PLANCHG     ;IN "CKCPM2" - RET DONE THERE
+
+.COMMENT \
+-------------------------------------------------------------
+MFACCESS	MACRO ROUTINES
+
+MFFLG1 IS NOT SET LOCAL BECAUSE IT MUST BE RESET
+IN MAIN MODEM PROGRAM ON AN ABORT
+
+MULTI-FILE ACCESS SUBROUTINE.  ALLOWS PROCESSING
+OF MULTIPLE FILES (I.E. *.ASM) FROM DISK.  THIS
+ROUTINE BUILDS THE PROPER NAME IN THE FCB EACH
+TIME IT IS CALLED.  THIS COMMAND WOULD BE USED
+IN SUCH PROGRAMS AS MODEM TRANSFER, TAPE SAVE,
+ETC IN WHICH YOU WANT TO PROCESS SINGLE OR
+MULTIPLE FILES.
+
+THE FCB WILL BE SET UP WITH THE NEXT NAME, READY TO
+DO NORMAL PROCESSING (OPEN, READ, ETC.) WHEN ROUTINE IS CALLED.
+
+CARRY IS SET IF NO MORE NAMES CAN BE FOUND
+\
+
+;	DEFINE DATA MOVE MACRO
+
+MOV1    MACRO   ?F,?T,?L,?I
+
+        IFNB	<?F>;      NOT NUL ?F
+        LXI     H,?F
+        ENDIF
+
+        IFNB	<?T>;      NOT NUL ?T
+        LXI     D,?T
+        ENDIF
+
+        IFNB	<?L>;      NOT NUL ?L
+        LXI     B,?L
+        ENDIF
+
+        IFNB	<?I>;      NOT NUL ?I
+        LOCAL   ?N,?Z
+        CALL    ?Z
+
+?N:     DB      ?I
+
+?Z:     POP     H       ;GET TO
+        LXI     B,?Z-?N
+        ENDIF
+
+        CALL    MOVER
+
+MF      SET     -1      ;;SHOW EXPANSION
+        ENDM
+
+;DEFINE CP/M MACRO - CPM FNC,PARM
+
+CPM     MACRO   ?F,?P
+
+        PUSH    B
+        PUSH    D
+        PUSH    H
+
+        IFNB	<?F>;      NOT NUL ?F
+        MVI     C,?F
+        ENDIF
+
+        IFNB	<?P>;      NOT NUL ?P
+        LXI     D,?P
+        ENDIF
+
+        CALL    BDOS
+        POP     H
+        POP     D
+        POP     B
+        ENDM
+
+.COMMENT \
+------------------------------------------------
+MULTI-FILE ACCESS SUBROUTINE
+
+THE ROUTINE IS COMMENTED IN PSEUDO CODE,
+EACH PSEUDO CODE STATEMENT IS IN <<...>>
+\
+
+MFNAME  EQU $
+
+;<<INIT DMA ADDR, FCB>>
+
+
+CPM STDMA,80H
+
+	XRA A 
+ 	STA FCBEXT
+
+;<<IF FIRST TIME>>
+
+	LDA MFFLG1 
+ 	ORA A 
+ 	JNZ MFN01
+
+;<<TURN OFF 1ST TIME SW>>
+
+	MVI A,1 
+ 	STA MFFLG1
+
+;<<SAVE THE REQUESTED NAME>>
+
+MOV1 FCB,MFREQ,12	;SAVE ORIG REQ
+
+	LDA FCB 
+ 	STA MFCUR ;SAVE DISK IN CURR FCB
+
+;<<SRCHF REQ NAME>>
+
+MOV1 MFREQ,FCB,12
+
+CPM SRCHF,FCB
+
+;<<ELSE>>
+
+	JMP MFN02
+
+MFN01  EQU $
+
+;<<SRCHF CURR NAME>>
+
+MOV1 MFCUR,FCB,12
+
+CPM SRCHF,FCB
+
+;<<SRCHN REQ NAME>>
+
+MOV1 MFREQ,FCB,12
+
+CPM SRCHN,FCB
+
+;<<ENDIF>>
+
+MFN02  EQU $
+
+;<<RETURN CARRY IF NOT FOUND>>
+
+	INR A 
+ 	STC 
+ 	JNZ MFFIX1 
+ 	STA MFFLG1 
+ 	RET            ;FIX BY M.Z.
+
+MFFIX1  EQU $
+
+;<<MOVE NAME FOUND TO CURR>>
+
+ 	DCR A 
+ 	ANI 3 
+ 	ADD A
+ 	ADD A 
+ 	ADD A 
+ 	ADD A 
+ 	ADD A
+ 	ADI 81H 
+ 	MOV L,A 
+ 	MVI H,0
+ 	PUSH H 		;SAVE NAME POINTER
+
+ MOV1 ,MFCUR+1,11
+
+;<<MOVE NAME FOUND TO FCB>>
+
+ 	POP H 
+
+ MOV1 ,FCB+1,11
+
+;<<SETUP FCB>>
+
+ 	XRA A 
+ 	STA FCBEXT 
+ 	STA FCBRNO                        ;FIX BY M.Z.
+
+;<<RETURN>>
+
+ 	RET
+
+;MULTI-FILE ACCESS WORK AREA
+
+MFFLG1: DB      0       ;1ST TIME SW
+MFREQ:  DS      12      ;REQ NAME
+MFCUR:  DS      12      ;CURR NAME
+;------------------------------------------------
+
+;MOVE SUBROUTINE
+
+MOVER:  MOV     A,M
+        STAX    D
+        INX     H
+        INX     D
+        DCX     B
+        MOV     A,B
+        ORA     C
+        JNZ     MOVER
+        RET
+
+;END OF MFACCESS ROUTINES
+;--------------------------------------------------------------
+
+
+RCVSECT:XRA A
+        STA ERRCT
+
+RCVRPT: XRA A		;FOR ERROR CHECK RS232
+	STA ERRCDE
+	LDA QFLG
+        ORA A
+        JZ RCVSQ
+
+        CALL ILPRT
+        DB '   AWAITING SECTOR...',0
+
+	PUSH	H
+	LHLD	SECTNO
+	INX	H
+	CALL	DECOUT
+
+	CALL	ILPRT
+	DB	' (',0
+
+	CALL	DHXOUT
+
+	CALL	ILPRT
+	DB	'H)',CR,0
+
+	MOV	A,L
+	POP	H
+
+RCVSQ:  MVI B,10         ;10 IN ORIG PROG
+        CALL RECV
+        JC RCVSTOT
+
+	IF	CHEK
+	CALL	RCVERR	;FOR ERROR CHECK RS232
+	JC	RCVDER
+	ENDIF	;CHEK
+
+        CPI CAN         ;CHECK FOR CANCEL..
+        JZ ABORT        ;..REQUEST FROM SENDER.
+
+        CPI SOH
+        JZ RCVSOH
+        ORA A
+        JZ RCVSQ
+        CPI EOT
+        STC
+        RZ
+        MOV B,A
+        LDA VSEEFLG
+        ORA A
+        JZ RCVSEH
+        LDA QFLG
+        ORA A
+        JZ RCVSERR
+
+RCVSEH: CALL CRLF  
+        MOV A,B
+        CALL HEXO
+
+        CALL ILPRT
+        DB 'H RECEIVED, NOT (SOH) ++',CR,LF,0
+
+RCVSERR:MVI B,1
+        CALL RECV
+        JNC RCVSERR
+	LDA 	CRCFLG	;WB...REPEAT CRC REQUEST 
+	ORA 	A	;     IN CASE SENDER WAS SLOW IN
+	MVI 	A,NAK	;     GETTING STARTED.
+	JNZ 	RCVS1
+	MVI 	A,CRC
+RCVS1:  CALL 	SEND
+
+        LDA ERRCT
+        INR A
+        STA ERRCT
+        CPI ERRLIM
+        JC RCVRPT
+        LDA VSEEFLG
+        ORA A
+        JZ RCVCKQ
+        LDA QFLG
+        ORA A
+        JZ RCVSABT
+
+RCVCKQ: CALL CKQUIT
+        JZ RCVSECT
+
+RCVSABT:CALL CLOSFIL
+
+        CALL ERXIT
+        DB CR,LF,'++ UNABLE TO RECEIVE BLOCK...ABORTING ++',CR,LF,'$'
+
+RCVSTOT:LDA VSEEFLG
+        ORA A
+        JZ RCVSPT
+        LDA QFLG
+        ORA A
+        JZ RCVSERR
+
+RCVSPT: CALL ILPRT
+
+        DB CR,LF,'++ TIMEOUT...',0
+
+RCVPRN: LDA ERRCT
+        CALL HEXO
+        CALL CRLF
+        JMP RCVSERR
+
+.COMMENT \
+RCVERR: Checks for framing, overrun, and parity errors.
+Parity errors cannot be detected unless the parity option
+has been selected.
+	1.  Error code (ERRCDE) was set in RECV routine.
+	2.  ERRCDE=0 for no errors, ERRCDE<>0 for errors.
+	3.  If there is an error this routine returns with
+	    carry flag set.
+\
+	IF	CHEK
+RCVERR:	PUSH	PSW	;SAVE CHAR TRANSMITTED
+	LDA	ERRCDE	;GET RECEIVE ERROR CODE
+	ANA	A	;IS IT ZERO?
+	JZ	RCVER2	;YES, NO RECEIVE ERROR
+	POP	PSW	;RESTORE CHAR TRANSMITTED
+	STC		;SET CARRY ON TO INDICATE AN ERROR
+	RET
+
+RCVER2: POP	PSW	;RESTORE CHAR TRANSMITTED
+	RET
+
+;RCVDER: Checks for a receive error and displays appropriate
+;error message. Then goes to RCVSERR to purge the line and
+;send a NAK.
+
+RCVDER: LDA	VSEEFLG	;VIEWING
+	ORA	A	;...MODE?
+	JZ	RCVDEP ;YES,..PRT MSG
+	LDA	QFLG	;QUIET...
+	ORA	A	;...MODE?
+	JZ	RCVSERR	;YES, NO MSG
+
+RCVDEP: CALL ILPRT
+	DB	CR,LF,0
+
+	LDA	ERRCDE	;GET RECEIVE ERR CODE
+	ANI	FRMER	;WAS THERE A FRAMING ERROR?
+	JZ	RCVDE2 ;NO, GO CHECK FOR OVERRUN
+
+	CALL	ILPRT
+	DB	'++ FRAMING ERROR...',0
+
+	CALL	RCVDE5 ;PRINT # OF ERROR
+
+RCVDE2: LDA	ERRCDE	;GET RECEIVE ERR CODE
+	ANI	ORUNER	;WAS THERE AN OVERRUN
+	JZ	RCVDE3 ;NO, GO CHECK FOR PARITY ERROR
+
+	CALL	ILPRT
+	DB	LF,'++ OVERRUN ERROR...',0
+
+	CALL	RCVDE5
+
+RCVDE3: LDA	ERRCDE	;GET RECEIVE ERR CODE
+	ANI	PARER	;WAS THERE A PARITY ERROR?
+	JZ	RCVDE4 ;NO, GO PURGE LINE
+
+	CALL	ILPRT
+	DB	LF,'++ PARITY ERROR...',0
+	CALL	RCVDE5
+
+RCVDE4: JMP	RCVSERR	;GO PURGE LINE, SEND NAK
+
+;Display number of error, do a carriage return and line feed.
+
+RCVDE5: LDA	ERRCT	;GET ERROR NUMBER
+	CALL	HEXO	;DISPLAY IT
+	CALL	CRLF	;DO CR, LF
+	RET
+	ENDIF	;CHEK
+
+
+RCVSOH: MVI B,1
+        CALL RECV
+        JC RCVSTOT
+
+	IF	CHEK
+	CALL	RCVERR		;RS232 ERROR CHECK
+	JC	RCVDER
+	ENDIF	;CHEK
+
+        MOV D,A
+        MVI B,1
+        CALL RECV
+        JC RCVSTOT
+
+	IF	CHEK
+	CALL	RCVERR		;RS232 ERROR CHECK
+	JC	RCVDER
+	ENDIF	;CHEK
+
+        CMA
+        CMP D
+        JZ RCVDATA
+        LDA VSEEFLG
+        ORA A
+        JZ RCVBSE
+        LDA QFLG
+        ORA A
+        JZ RCVSERR
+
+RCVBSE: CALL ILPRT
+
+        DB CR,LF,'++ BAD SECTOR NUMBER IN HEADER ++',CR,LF,0
+        JMP RCVSERR
+
+RCVDATA:MOV A,D
+        STA RCVSNO
+        MVI A,1
+        STA DATAFLG
+        MVI C,0
+	CALL	CLRCRC	;CLEAR CRC COUNTER
+        LXI H,80H
+
+RCVCHR: MVI B,1
+        CALL RECV
+        JC RCVSTOT
+
+	IF	CHEK
+	CALL	RCVERR		;RS232 ERROR CHECK
+	JC	RCVDER	
+	ENDIF	;CHEK
+
+        MOV M,A
+        INR L
+        JNZ RCVCHR
+	LDA	CRCFLG
+	ORA	A
+	JZ	RCVCRC
+        MOV D,C
+        XRA A
+        STA DATAFLG
+        MVI B,1
+        CALL RECV
+        JC RCVSTOT
+
+	IF	CHEK
+	CALL	RCVERR		;RS232 ERROR CHECK
+	JC	RCVDER
+	ENDIF	;CHEK
+
+        CMP D
+        JNZ RCVCERR
+
+CHKSNM: LDA RCVSNO
+        MOV B,A
+        LDA SECTNO
+        CMP B
+        JZ RECVACK
+        INR A
+        CMP B
+        JNZ ABORT
+        RET
+
+RCVCRC:	MVI	E,2	;NUMBER OF CRC BYTES
+RCVCR2:	MVI	B,1
+	CALL	RECV
+	JC	RCVSTOT
+
+	IF	CHEK
+	CALL	RCVERR		;RS232 ERROR CHECK
+	JC	RCVDER
+	ENDIF	;CHEK
+
+	DCR	E
+	JNZ	RCVCR2
+	CALL	CHKCRC
+	ORA	A
+	JZ	CHKSNM
+	LDA	VSEEFLG
+	ORA	A
+	JZ	RCVCRER
+	LDA	QFLG
+	ORA	A
+	JZ	RCVSERR
+
+RCVCRER:CALL	ILPRT
+	DB	CR,LF,'++ CRC ERROR...',0
+
+	JMP	RCVPRN	
+
+RCVCERR:LDA VSEEFLG
+        ORA A
+        JZ RCVCPR
+        LDA QFLG
+        ORA A
+        JZ RCVSERR
+
+RCVCPR: CALL ILPRT
+        DB CR,LF,'++ CHECKSUM ERROR...',0
+
+        JMP RCVPRN
+
+RECVACK:CALL SENDACK
+        JMP RCVSECT
+
+SENDACK:MVI A,ACK
+        CALL SEND
+        RET
+
+SENDHDR:LDA QFLG
+        ORA A
+        JZ SENDHNM
+
+        CALL ILPRT
+        DB '   SENDING SECTOR...',0
+
+	PUSH	H
+	LHLD	SECTNO
+	CALL	DECOUT
+
+	CALL	ILPRT
+	DB	' (0',0
+
+	CALL	DHXOUT
+
+	CALL	ILPRT
+	DB	'H)',CR,0
+
+	POP	H
+
+SENDHNM:MVI A,SOH
+        CALL SEND
+        LDA SECTNO
+        CALL SEND
+        LDA SECTNO
+        CMA
+        CALL SEND
+        RET
+
+SENDSEC:MVI A,1
+        STA DATAFLG
+        MVI C,0
+	CALL	CLRCRC
+        LXI H,80H
+
+SENDC:  MOV A,M
+        CALL SEND
+        INR L
+        JNZ SENDC
+        XRA A
+        STA DATAFLG
+        RET
+
+SENDCKS:MOV A,C
+        CALL SEND
+        RET
+
+SNDCRC:	CALL	FINCRC
+	MOV	A,D
+	CALL	SEND
+	MOV	A,E
+	CALL	SEND
+	XRA	A
+	RET
+
+GETACK: MVI  B,10
+        CALL RECVDG
+        JC GETATOT
+        CPI ACK
+        RZ
+ 	MOV B,A
+ 	ANI 7FH		
+        CPI CAN
+        JZ ABORT
+        LDA QFLG
+        ORA A
+        JZ ACKERR
+        CALL CRLF
+        MOV A,B
+        CALL HEXO
+
+        CALL ILPRT
+        DB 'H RECEIVED...NOT (ACK) ++',CR,LF,0
+
+ACKERR: LDA ERRCT
+        INR A
+        STA ERRCT
+        CPI ERRLIM
+        RC
+
+;REACHED ERROR LIMIT
+
+        LDA VSEEFLG
+        ORA A
+        JZ GACKV
+        LDA QFLG
+        ORA A
+        JZ CSABORT
+
+GACKV:  CALL CKQUIT
+        STC
+        RZ
+
+CSABORT:CALL ERXIT
+        DB CR,LF,'++ CAN''T SEND SECTOR...ABORTING ++',CR,LF,'$'
+
+GETATOT:LDA QFLG
+        ORA A
+        JZ ACKERR
+        CALL ILPRT
+
+        DB CR,LF,'++ TIMEOUT ON (ACK) ++',CR,LF,0
+
+        JMP ACKERR
+
+CKABORT:
+CKABGO: CALL STAT
+        RZ
+        CALL KEYIN
+        CPI CAN
+        RNZ
+
+ABORT:  LXI SP,STACK
+
+ABORTL: MVI B,1
+        CALL RECV
+        JNC ABORTL
+        MVI A,CAN
+        CALL SEND
+
+ABORTW: MVI B,1
+        CALL RECV
+        JNC ABORTW
+        MVI A,' '
+        CALL SEND
+        CALL ILPRT
+
+        DB CR,LF,'++ ROUTINE CANCELLED ++',CR,LF,BELL,0
+
+        MVI A,'B'               ;TURN MULTI-FILE MODE..
+        STA BATCHFLG            ;..OFF SO ROUTINE ENDS.
+        JMP DNTCE
+
+INCRSNO:PUSH	H
+	LHLD	SECTNO
+	INX	H
+	SHLD	SECTNO
+	MOV	A,L
+	POP	H
+	RET
+
+;RESET DISKS ROUTINES
+
+NEWDSK:	PUSH	PSW
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	MVI	C,RCDSK
+	CALL	BDOS
+	STA	SCDSK
+	MVI	C,RESET		;RESET THE DISKS
+	CALL	BDOS
+	LDA	SCDSK		;GET BACK ORIG.LOGGED DISK
+	MOV	E,A
+	MVI	C,SELDSK	;...LOG IT IN AGAIN
+	CALL	BDOS
+	POP	H
+	POP	D
+	POP	B
+	POP	PSW
+	RET
+
+;LOG DRIVE ROUTINE
+
+LOGON:	LDA	CMDBUF+6	;GET DRIVE
+	CPI	' '		;NO DRIVE SPECIFIED?
+	JZ	XPRT9		;THEN LEAVE
+	SUI	41H		;MAKE DRIVE #
+	MOV	E,A
+	MVI	C,SELDSK	;...AND LOG IT
+	CALL	BDOS
+	JMP	XPRT9
+
+
+;ERASE A FILE FROM DISK, MENU MODE
+
+KILFIL:	MVI	A,TRUE
+	STA	NFLFLG
+	CMA
+	STA	SAVFLG
+	LDA FCB+1
+	CPI ' '
+	JZ  BLKFILE
+	LXI D,FCB
+	MVI C,SRCHF
+	CALL BDOS
+	INR A
+	JNZ KILFL2
+
+	CALL ILPRT
+        DB CR,LF,'++ FILE DOES NOT EXIST ++',CR,LF,0
+	JMP XPRT
+
+KILFL2: LXI D,FCB
+	MVI C,ERASE
+	CALL BDOS
+	JMP XPRT
+
+ERASFIL:LDA BATCHFLG            ;DON'T ASK FOR ERASE..
+        ORA A                   ;..IN MULTI-FILE MODE,..
+        JZ NOASK                ;..JUST DO IT.
+        LXI D,FCB
+        MVI C,SRCHF
+        CALL BDOS
+        INR A
+        RZ
+
+        CALL ILPRT
+        DB LF,'++ FILES EXISTS, TYPE ''Y'' TO ERASE...',BELL,0
+
+        CALL KEYIN
+        PUSH PSW
+        CALL TYPE
+        POP PSW
+        CALL UCASE
+        CPI 'Y'
+        JNZ MENU
+        CALL CRLF
+
+NOASK:  LXI D,FCB
+        MVI C,ERASE
+        CALL BDOS
+        RET
+
+BLKFILE:CALL ILPRT      ;ROUTINE IF NO FILE IS NAMED FOR
+                        ; "SEND" OR "RECEIVE"
+
+        DB CR,LF,'++ NO FILE SPECIFIED ++',CR,LF,BELL,0
+
+	LXI  B,0FFFFH
+DELAY:	DCX  B
+	MOV  A,B
+	ORA  C
+	JNZ  DELAY
+        JMP MENU
+
+MAKEFIL:LXI D,FCB
+        MVI C,MAKE
+        CALL BDOS
+        INR A
+        RNZ
+
+        CALL ERXIT
+        DB CR,LF,'++ CAN''T MAKE FILE...DIRECTORY FULL ++',CR,LF,'$'
+
+	IFNB	<CPM2+>		;IF CPM2+
+CNREC:	MVI	C,FILSIZ    ;COMPUTE FILE SIZE FUNC IN CP/M 2.x
+	LXI	D,FCB		;POINT TO FILE CONTROL BLOCK
+	CALL	BDOS
+	LHLD	FCB+33		;GET RECORD COUNT
+	SHLD	RCNT		;STORE IT
+	LXI	H,0		;ZERO HL
+	SHLD	FCB+33		;RESET RANDOM RECORD IN FCB
+	RET
+	ENDIF	;CPM2+
+
+	IFB	<CPM2+>
+CNREC:	MVI	A,'?'	;MATCH ALL EXTENTS
+	STA	FCBEXT
+	MVI	A,0FFH
+	STA	MAXEXT	;INIT MAX EXT NO.
+	MVI	C,SRCHF	;GET 'SEARCH FIRST' FNC
+	LXI	D,FCB
+	CALL	BDOS	;READ FIRST
+	INR	A	;WERE THERE ANY?
+	JNZ	SOME	;GOT SOME
+
+	CALL	ERXIT
+	DB	CR,LF,'++ FILE NOT FOUND ++',CR,LF,'$'
+
+;READ MORE DIRECTORY ENTRIES
+
+MOREDIR:MVI	C,SRCHN	;SEARCH NEXT
+	LXI	D,FCB
+	CALL	BDOS	;READ DIR ENTRY
+	INR	A	;CHECK FOR END (0FFH)
+	JNZ	SOME	;NOT END OF DIR...PROCESS EXTENT
+	LDA	MAXEXT	;HIT END...GET HIGHEST EXTENT NO. SEEN
+	MOV	L,A	;WHICH GIVES EXTENT COUNT -1
+	MVI	H,0
+	MOV	D,H
+	LDA	RCNT	;GET RECORD COUNT OF MAX EXTENT SEEN
+	MOV	E,A	;SAVE IT IN DE
+	DAD	H
+	DAD	H	;MULTIPLY # OF EXTENTS -1
+	DAD	H	; TIMES 128
+	DAD	H
+	DAD	H
+	DAD	H
+	DAD	H
+	DAD	D	;ADD IN SIZE OF LAST EXTENT
+	SHLD	RCNT	;SAVE TOTAL RECORD COUNT
+	RET		;AND EXIT
+
+;POINT TO DIRECTORY ENTRY
+
+SOME:	DCR	A	;UNDO PREV 'INR A'
+	ANI	3	;MAKE MODULUS 4
+	ADD	A	;MULTIPLY...
+	ADD	A	;..BY 32 BECAUSE
+	ADD	A	;..EACH DIRECTORY
+	ADD	A	;..ENTRY IS 32
+	ADD	A	;..BYTES LONG
+	LXI	H,80H ;POINT TO BUFFER
+	ADD	L	;POINT TO ENTRY
+	ADI	15	;OFFSET TO RECORD COUNT
+	MOV	L,A	;HL NOW POINTS TO REC COUNT
+	MOV	B,M	;GET RECORD COUNT
+	DCX	H
+	DCX	H	;BACK DOWN TO EXTENT NUMBER
+	DCX	H
+	LDA	MAXEXT	;COMPARE WITH CURRENT MAX.
+	ORA	A	;IF NO MAX YET
+	JM	BIGGER	;THEN SAVE RECORD COUNT ANYWAY
+	CMP	M
+	JNC	MOREDIR
+BIGGER:	MOV	A,B	;SAVE NEW RECORD COUNT
+	STA	RCNT
+	MOV	A,M	;SAVE NEW MAX. EXTENT NO.
+	STA	MAXEXT
+	JMP	MOREDIR	;GO FIND MORE EXTENTS
+	ENDIF	;NOT CPM2+
+
+OPENFIL:LXI D,FCB
+        MVI C,OPEN
+        CALL BDOS
+        INR A
+        JNZ OPENOK
+
+        CALL ERXIT
+        DB CR,LF,'++ CAN''T OPEN FILE...NOT FOUND ON DISK ++',CR,LF,'$'
+
+OPENOK: LDA BATCHFLG
+        ORA A
+        JNZ OPNOK1
+        LDA QFLG
+        ORA A
+        RZ
+
+OPNOK1:CALL ILPRT
+        DB CR,LF,'++ FILE OPEN...SIZE: ',0
+
+	LHLD	RCNT	;RECORD COUNT
+	CALL	DECOUT	;PRINT SECTORS IN DECIMAL
+
+	CALL	ILPRT
+	DB	' (',0
+
+	CALL	DHXOUT
+
+	CALL	ILPRT
+	DB	'H) SECTORS',CR,LF,0
+
+	RET
+
+CLOSFIL:LXI D,FCB
+        MVI C,CLOSE
+        CALL BDOS
+        INR A
+        RNZ
+
+        CALL ERXIT
+        DB CR,LF,'++ CAN''T CLOSE FILE...NOT FOUND ON DISK ++',CR,LF,'$'
+
+RDSECT: LDA SECINBF
+        DCR A
+        STA SECINBF
+        JM RDBLOCK
+        LHLD SECPTR
+        LXI D,80H
+        CALL MOVE128
+        SHLD SECPTR
+        RET
+
+RDBLOCK:LDA EOFLG
+        CPI 1
+        STC
+        RZ
+        MVI C,0
+        LXI D,DBUF
+
+RDSECLP:PUSH B
+        PUSH D
+        MVI C,STDMA
+        CALL BDOS
+        LXI D,FCB
+        MVI C,READ
+        CALL BDOS
+        POP D
+        POP B
+        ORA A
+        JZ RDSECOK
+        DCR A
+        JZ REOF
+
+        CALL ERXIT
+        DB CR,LF,'++ READ ERROR...END OF FILE ++',CR,LF,'$'
+
+RDSECOK:LXI H,80H
+        DAD D
+        XCHG
+        INR C
+        MOV A,C
+	CPI	DBFSIZ*8	;BUFFER IN 128 BYTE SECTORS
+        JZ RDBFULL
+        JMP RDSECLP
+
+REOF:   MVI A,1
+        STA EOFLG
+        MOV A,C
+
+RDBFULL:STA SECINBF
+        LXI H,DBUF
+        SHLD SECPTR
+        LXI D,80H
+        MVI C,STDMA
+        CALL BDOS
+        JMP RDSECT
+
+WRSECT: LHLD SECPTR
+        XCHG
+        LXI H,80H
+        CALL MOVE128
+        XCHG
+        SHLD SECPTR
+        LDA SECINBF
+        INR A
+        STA SECINBF
+	CPI	DBFSIZ*8	;BUFFER IN 128 BYTE SECTORS
+        RNZ
+
+WRBLOCK:LDA SECINBF
+        ORA A
+        RZ
+        MOV C,A
+        LXI D,DBUF
+
+DKWRLP: PUSH H
+        PUSH D
+        PUSH B
+        MVI C,STDMA
+        CALL BDOS
+        LXI D,FCB
+        MVI C,WRITE
+        CALL BDOS
+        POP B
+        POP D
+        POP H
+        ORA A
+        JNZ WRERR
+        LXI H,80H
+        DAD D
+        XCHG
+        DCR C
+        JNZ DKWRLP
+        XRA A
+        STA SECINBF
+        LXI H,DBUF
+        SHLD SECPTR
+        RET
+
+WRERR:  MVI C,CAN
+        CALL SEND
+
+        CALL ERXIT
+        DB CR,LF,'++ WRITE ERROR...DISK FULL ++',CR,LF,'$'
+
+RECVDG  EQU $
+	CALL INDATP
+	CALL INDATP
+
+RECV:   PUSH D
+
+	LDA FASCLK	;DOUBLE UP THE LOOP COUNTER IF
+	ORA A		;4 MZ OR GREATER
+	JZ MSEC
+	MOV A,B
+	ADD A
+	MOV B,A
+
+MSEC:   LXI D,15000             ;60% OF ORIG 50000
+	CALL CKABORT
+
+MWTI:   CALL INCTLP
+        CALL ANRCVB
+        CALL CPRCVR
+        JZ MCHAR
+        DCR E
+        JNZ MWTI
+        DCR D
+        JNZ MWTI
+        DCR B
+        JNZ MSEC
+        POP D
+        STC
+        RET
+
+	IF	CHEK
+MCHAR:	CALL INDATP
+	ANI  ERRCDMSK
+	STA  ERRCDE
+
+	ELSE
+MCHAR:  CALL INDATP
+	ENDIF	;CHEK
+
+	POP D
+        PUSH PSW
+	CALL	UPDCRC	;CALCULATE CRC
+        ADD C
+        MOV C,A
+        LDA RSEEFLG
+        ORA A
+        JZ MONIN
+        LDA VSEEFLG
+        ORA A
+        JNZ NOMONIN
+        LDA DATAFLG
+        ORA A
+        JZ NOMONIN
+
+MONIN:  POP PSW
+        PUSH PSW
+        CALL SHOW
+
+NOMONIN:POP PSW
+        ORA A
+        RET
+
+SEND:   PUSH PSW
+        LDA SSEEFLG
+        ORA A
+        JZ MONOUT
+        LDA VSEEFLG
+        ORA A
+        JNZ NOMONOT
+        LDA DATAFLG
+        ORA A
+        JZ NOMONOT
+
+MONOUT: POP PSW
+        PUSH PSW
+        CALL SHOW
+
+NOMONOT:POP PSW
+        PUSH PSW
+	CALL	UPDCRC	;CALCULATE CRC
+        ADD C
+        MOV C,A
+
+SENDW:  CALL OTCTLP
+        CALL ANSNDB
+        CALL CPSNDR
+        JNZ SENDW
+        POP PSW
+        CALL OTDATP
+        RET
+
+WAITNAK:LDA VSEEFLG
+        ORA A
+        JZ WAITNPR
+        LDA QFLG
+        ORA A
+        JZ WAITNLP
+
+WAITNPR:CALL ILPRT
+        DB CR,LF,'++ AWAITING INITIAL (NAK) ++',CR,LF,0
+
+WAITNLP:CALL CKABORT
+        MVI B,1
+        CALL RECV
+        CPI NAK
+        RZ
+	CPI	CRC
+	JZ	WAITCRC
+        DCR E
+        JZ ABORT
+        JMP WAITNLP
+
+WAITCRC:CALL	ILPRT
+DB	CR,LF,'++ (CRC) REQUEST RECEIVED ++',CR,LF,BELL,0
+
+	XRA	A
+	STA	CRCFLG
+	RET
+
+INITDR:
+        LHLD 1
+        LXI D,3
+        DAD D
+        SHLD VSTAT+1
+        DAD D
+        SHLD VKEYIN+1
+        DAD D
+        SHLD VTYPE+1
+	DAD D
+	SHLD VLISTD+1
+
+	IF	INLZE		;ENTER WHATEVER OTHER
+	MVI	A,INITC1	;INIT. ROUTINES ARE REQUIRED
+	OUT	MOCTLP
+	MVI	A,INITC2
+	OUT	MOCTLP
+	ENDIF	;INLZE
+
+	RET
+
+PROCOPT:LXI D,FCB+1
+        LDAX D
+        STA OPTION
+
+OPTLP:  INX D
+        LDAX D
+        CPI ' '
+        JZ ENDOPT
+        LXI H,OPTBL
+        MVI B,OPTBE-OPTBL
+
+OPTCK:  CMP M
+        JNZ OPTNO
+        MVI M,0
+        JMP OPTLP
+
+OPTNO:  INX H
+        DCR B
+        JNZ OPTCK
+        JMP BADOPT
+
+ENDOPT:	LDA	CRCFLG
+	ORA	A
+	JNZ	ENDOP2
+	LDA	OPTION
+	CPI	'R'
+	JNZ	BADOPT	;CRC ONLY ALLOWED IN RECEIVE MODE
+
+ENDOP2: LDA VSEEFLG
+        ORA A
+        RNZ
+        STA QFLG
+        RET
+
+DONE:   LDA BATCHFLG
+        ORA A
+        JNZ DNTCC
+        LDA QFLG
+        ORA A
+        JZ NMSTRNS
+        LXI H,FCB+1             ;PUT FILE NAME IN..
+        LXI D,FTRNMSG           ;..SPACES IN MESSAGE..
+        MVI B,8                 ;..BELOW.
+        CALL MOVE
+        INX D                   ;PUT FILE TYPE AFTER..
+        MVI B,3                 ;..SKIPPING ONE SPACE..
+        CALL MOVE               ;..BELOW.       
+
+        CALL ILPRT
+FTRNMSG:DB '              TRANSFERRED ++',CR,LF,0    ;13 SPACES
+
+NMSTRNS:LDA FCB                 ;SAVE DRIVE NO.
+        STA DISKNO
+        LXI H,FCB               ;BLANK OUT FILE CONTROL BLOCKS
+        CALL INITFCB
+        LDA DISKNO              ;PUT DRIVE NUMBER BACK
+        STA FCB
+        LXI H,RESTSN            ;RESTORE SECTORE NUMBERS..
+        LXI D,SECTNB           ;..FOR NEW FILE TRANSFER.
+        MVI B,SECTNE-SECTNB   ;ROUTINE ALSO DONE IN MENU.
+        CALL MOVE
+        LDA SENDFLG             ;GOES TO EITHER SEND OR..
+        ORA A                   ;..RECEIVE FILE, DEPENDING..
+        JNZ SENDFIL             ;..UPON WHICH ROUTINE SET..
+        JMP RCVFIL              ;..THE FLAG IN MULTI-FILE MODE.
+
+DNTCC:	MVI A,TRUE              ;INDICATE NO FILES BEING..
+        STA FSTFLG              ;RESET MULTIFILE TRANS
+        STA NFLFLG             ;..USED IN TERMINAL ROUTINE.
+        CMA
+        STA SAVFLG             ;STOP MEM.SAVE IN TERM ROUTINE.
+        LDA VSEEFLG
+        ORA A
+        JZ DONETC
+        LDA QFLG
+        ORA A
+        JZ DNTCA
+
+DONETC: CALL ILPRT
+        DB CR,LF,'++ ALL TRANSFERS COMPLETED ++',CR,LF,BELL,0
+
+DNTCA:	MVI	A,TRUE
+	STA	NFLFLG
+	CMA
+	STA	SAVFLG
+	LDA     DISCFLG         ;DISCONNECT WHEN THROUGH?
+        ORA     A
+        JNZ     DNTCE         	;...NO, CONT.
+
+DNTCB:	CALL    ILPRT
+        DB      CR,LF,'++ DISCONNECTED ++',CR,LF,0
+
+	LXI D,80H		;RESET DMA AND SEND '+++'
+	MVI C,STDMA		;...ESCAPE CODE TO SMARTMO.
+	CALL BDOS
+	LXI D,OFFHK
+OFF1:	LDAX D
+	CPI '$'
+	JZ OFF2
+	CALL MODOUT
+	INX D
+	JMP OFF1
+
+OFF2:	CALL CRLF		;C/R COMPLETES ESCAPE
+	MVI B,15		;2 SECOND DELAY FOR SMARTMO.
+OFF3:	CALL TIMER		;...TO RESPOND.
+	DCR B
+	JNZ OFF3
+	INX D
+OFF4:	LDAX D			;SEND ON-HOOK COMMAND TOO
+	CPI '$'
+	JZ OFF5
+	CALL MODOUT
+	INX D
+	JMP OFF4
+
+OFF5:	CALL TIMER		;SHORT DELAY AT THE END
+	CALL INDATP		;...TIDY UP
+	JMP  TERM		;...CLOSE UP SHOP.
+
+DNTCE:  LDA TERMFLG             ;SEE IF RETURN TO..
+        ORA A                   ;..TERMINAL MODE..
+	JZ  TERM
+	LDA ECHOFLG
+	ORA A
+        JNZ MENU                ;..AFTER X'FER.
+        JMP TRMECHO
+
+TIMER:	PUSH 	PSW		;TIME INTERVAL BETWEEN ESCAPE
+	PUSH 	B		;CODE AND ON-HOOK COMMAND
+	LXI 	B,3500H		
+TIMER2: DCX 	B	
+	MOV 	A,B
+	ORA 	C
+	JNZ 	TIMER2
+	POP 	B
+	POP 	PSW
+	RET
+
+;INITMOD:
+
+MOVEFCB:LXI H,FCB+16
+        LXI D,FCB
+        MVI B,16
+        CALL MOVE
+        XRA A
+        STA FCBSNO
+        STA FCBEXT
+        RET
+
+SHOW:   CPI LF
+        JZ CTYPE
+        CPI CR
+        JZ CTYPE
+        CPI 9
+        JZ CTYPE
+        CPI ' '
+        JC SHOWHEX
+        CPI 7FH
+        JC CTYPE
+
+SHOWHEX:PUSH PSW
+        MVI A,'('
+        CALL CTYPE
+        POP PSW
+        CALL HEXO
+        MVI A,')'
+        JMP CTYPE
+
+LISTDV: PUSH B
+	PUSH D
+	PUSH H
+	MOV  C,A
+VLISTD:	CALL $-$
+	POP  H
+	POP  D
+	POP  B
+	RET
+
+CTYPE:  PUSH B
+        PUSH D
+        PUSH H
+        MOV E,A
+        MVI C,WRCON
+        CALL BDOS
+        POP H
+        POP D
+        POP B
+        RET
+
+CRLF:   PUSH PSW
+        MVI A,CR
+        CALL TYPE
+        MVI A,LF
+        CALL TYPE
+        POP PSW
+        RET
+
+TYPE:   PUSH PSW
+        PUSH B
+        PUSH D
+        PUSH H
+        MOV C,A
+VTYPE:  CALL $-$
+        POP H
+        POP D
+        POP B
+        POP PSW
+        RET
+
+STAT:   PUSH B
+        PUSH D
+        PUSH H
+VSTAT:  CALL $-$
+        POP H
+        POP D
+        POP B
+        ORA A
+        RET
+
+KEYIN:  PUSH B
+        PUSH D
+        PUSH H
+VKEYIN: CALL $-$
+        POP H
+        POP D
+        POP B
+        RET
+
+UCASE:  CPI 61H         ;CHANGES LOWER CASE CHARACTER..
+        RC              ;..IN A-REG TO UPPER CASE.
+        CPI 7BH
+        RNC
+        ANI 5FH
+        RET
+
+DECOUT:	PUSH	PSW
+	PUSH	B
+	PUSH	D
+	PUSH	H
+	LXI	B,-10
+	LXI	D,-1
+DECOT2:	DAD	B
+	INX	D
+	JC	DECOT2
+	LXI	B,10
+	DAD	B
+	XCHG
+	MOV	A,H
+	ORA	L
+	CNZ	DECOUT
+	MOV	A,E
+	ADI	'0'
+	CALL	CTYPE
+	POP	H
+	POP	D
+	POP	B
+	POP	PSW
+	RET
+
+DHXOUT:	PUSH	H
+	PUSH	PSW
+	MOV	A,H
+	CALL	HEXO
+	MOV	A,L
+	CALL	HEXO
+	POP	PSW
+	POP	H
+	RET
+
+HEXO:   PUSH PSW
+        RAR
+        RAR
+        RAR
+        RAR
+        CALL NIBBL
+        POP PSW
+NIBBL:  ANI 0FH
+        CPI 10
+        JC ISNUM
+        ADI 7
+ISNUM:  ADI '0'
+        JMP TYPE
+
+;RETRNS W/ ZERO SET IF RETRY ASKED. IF MULTI-FILE MODE, THEN
+;NO QUESTIONS ASKED, JUST QUIT
+
+CKQUIT: LDA BATCHFLG
+        ORA A
+        JNZ CKQTASK     ;ASK FOR RETRY
+        INR A           ;RESET ZERO FLG
+        RET
+CKQTASK:XRA A
+        STA ERRCT
+
+        CALL ILPRT
+        DB CR,LF,'++ MULTIPLE ERRORS ENCOUNTERED',CR,LF,LF
+        DB '   ...TYPE ''Q'' TO QUIT',CR,LF
+	DB '   ...TYPE ''R'' TO RETRY',CR,LF,LF
+	DB '      COMMAND >>',BELL,0
+
+        CALL KEYIN
+        PUSH PSW
+        CALL CRLF
+        POP PSW
+        CALL UCASE      ;INSTEAD OF "ANI 5FH"
+        CPI 'R'
+        RZ
+        CPI 'Q'
+        JNZ CKQUIT
+        ORA A
+        RET
+
+ILPRT:  XTHL
+
+ILPLP:  MOV A,M
+        ORA A
+        JZ ILPRET
+        CALL CTYPE
+        INX H
+        JMP ILPLP
+ILPRET: XTHL
+        RET
+
+PRTMSG: MVI C,PRINT
+        JMP BDOS
+
+ERXIT:  POP D
+        CALL PRTMSG
+
+        CALL ILPRT
+        DB BELL,0
+
+        LDA BATCHFLG
+        ORA A
+        JNZ DNTCE
+        MVI A,'Q'               ;RESET QFLG
+        STA QFLG
+        JMP ABORT               ;ABORT OTHER COMPUTER
+
+EXIT:   LXI D,80H
+        MVI C,STDMA
+        CALL BDOS
+        JMP 0
+
+MOVE128:MVI B,80H
+MOVE:   MOV A,M
+        STAX D
+        INX H
+        INX D
+        DCR B
+        JNZ MOVE
+        RET
+
+
+;DIALING ROUTINE MODIFIED FOR HAYES SMART MODEM
+;
+
+DIRNAM:	DB 'PHONE   001'
+DILFLG:	DB FALSE
+
+;THIS ROUTINE CHECKS TO SEE IF A DIRECTORY LETTER OR A 
+;PHONE NUMBER WAS ENTERED IN THE COMMAND LINE.
+
+DIALPL:	MVI	A,FALSE		;CLEAR DEFAULT DIAL FLAG
+	STA	DILFLG
+	LXI     H,CMDBUF+1      ;POINT # OF CHARS IN BUFF
+        MOV     A,M             ;GET # OF CHARS
+        CPI     4               ;WAS A NUMBER OR LETTER ENTRD.?
+        JC      ENTNM           ;NO, DISPLAY DIREC.& ASK
+	SUI	3		;REDUCE COUNT FOR 'CAL'
+	MOV	M,A		;PUT IT BACK
+	MVI	A,TRUE		;SET DEFAULT DIAL FLAG
+	STA	DILFLG
+        LXI     H,CMDBUF+5      ;POINT TO NUMBER TO DIAL
+DI8:	MOV	A,M		;GET CHAR.OR NUMBER
+	CPI	32		;SPACE?
+	JNZ	DI9		;...NO, 
+	INX	H		;BUMP THE CMDBUF UP,
+	PUSH	H
+	LXI	H,CMDBUF+1
+	DCR	M		;...AND THE CHAR.COUNTER DOWN.
+	POP	H
+	JZ	ERROR3		;ERROR IF NO MORE CHARS.
+	JMP	DI8		;CHECK AGAIN
+DI9:	CPI	48		;LOWER THAN A NUMBER?
+	JC	ERROR3		;...YES, HOPP IT!
+	CPI	58		;IS IT A NUMBER?
+	JC	DIALPX		;...YES, DIAL DIRECT
+	JMP	ENTM2		;...NO, LOAD DEFAULT FILE '001'
+
+;ASKS FOR DIRECTORY NAME THEN MOVES IT TO THE FCB.
+
+ENTNM:	CALL	ILPRT
+	DB '++ ENTER DIRECTORY NAME >>',0
+
+	LXI	D,CMDBUF	;GET FILE NAME	
+	CALL	INBUFF
+	LDA	CMDBUF+2
+	CPI	32		
+	JZ	MENU		;ZERO MEANS 'NO ENTRY MADE'
+	LXI	H,FCB4
+	CALL	INITFCB
+	CALL	MOVE4
+	JMP	DI1
+
+;LOAD THE DEFAULT FILE NAME FROM DEFAULT DRIVE
+
+ENTM2:	PUSH	H
+	LXI	H,FCB4
+	CALL	INITFCB		;INITIALIZE FCB
+	LXI	D,FCB4+1
+	LXI	H,DIRNAM
+	MVI	B,11		;COUNT
+	CALL	MOVE		;GET CHARS.IN 
+	POP	H
+
+;THIS ROUTINE READS THE FILE TO THE DBUF
+
+DI1:	PUSH	H
+	CALL	OPEN4
+	POP	H
+	INR	A		;OPEN OK?
+	JZ	ERROR2		;...NO, PRINT NO FILE.
+	PUSH	H
+	LXI	D,DBUF		;SET DMA.
+DI2:	PUSH	D
+	MVI	C,STDMA
+	CALL	BDOS
+	CALL	READ80		;128 BYTES SEQUENTIAL
+	POP	D		;ONCE MORE INTO THE BREACH
+	LXI	H,128		;LOAD DMA INCREMENT
+	DAD	D		;AND INCREMENT IN 'HL'
+	XCHG			;GIVE IT BACK TO 'DE'
+	ORA	A		;END OF FILE?
+	JZ	DI2		;...NO, CONT. 
+	POP	H
+	LDA	DILFLG		
+	INR	A		;DIRECT DIAL TO DEFAULT FILE?
+	JZ	DIAL10		;...YES, DON''T PRINT DIR.
+
+;THIS ROUTINE PRINTS THE DIRECTORY TO THE SCREEN
+
+DI0:	CALL	ILPRT
+DB FF
+DB '                 *** PHONE DIRECTORY ***',CR,LF
+DB '===============================================================',CR,LF,0
+
+	MVI	C,PRINT		;PRINT TO SCREEN
+	LXI	D,DBUF		
+	CALL	BDOS		
+
+;THIS ROUTINE ASKS FOR NUMBER TO DIAL
+
+COMMD:	CALL ILPRT
+DB '++ ENTER NUMBER/LETTER...C/R TO QUIT >>',0
+
+	LXI 	D,CMDBUF
+        CALL 	INBUFF
+	CALL	CRLF
+	LDA 	CMDBUF+1	;NO.OF CHARS.IN BUFFER
+        ORA	A               ;NULL MEANS <CR> WAS TYPED
+        JZ 	MENU            ;ABORT DIALING, RETURN TO MENU
+	LXI 	H,CMDBUF+2	;FIRST CHAR.OF NO.TO DIAL
+
+; ENTER THIS ROUTINE WITH HL POINTING TO DIAL LINE
+ 
+DIAL10:	MOV	A,M		;GET CHAR.OR NUMBER
+	CPI	32		;SPACE?
+	JNZ	DI6		;...NO, 
+	INX	H		;BUMP THE CMDBUF UP,
+	PUSH	H
+	LXI	H,CMDBUF+1
+	DCR	M		;...AND THE CHAR.COUNTER DOWN.
+	POP	H
+	JZ	ERROR4
+	JMP	DIAL10		;CHECK AGAIN
+
+
+DI6:	CPI	48		;LOWER THAN A NUMBER?
+	JC	ERROR4
+	CPI	58		;IS IT A NUMBER?
+	JZ	DI0
+	JC	DIALPX		;...YES, DIAL DIRECT
+	CPI	91		;IS IT UPPER CASE?
+	JC	DI3		;...YES, GO POINT TO IT.
+
+;INITIALIZE THIS CODE IF YOU WANT LOWER-CASE IN DIRECTORY.
+
+;	SUI	6		;READY FOR LOWER CASE
+;	CPI	117		;IS IT LOWER CASE?
+;	JC	DI3		;...YES, POINT.
+
+DI5:	XRA	A		;NO, MAKE NULL
+	JMP	DILP2		;PRINT ERROR MESSAGE
+DI3:	SUI	64		;MAKE INDEX NO.
+	MOV	B,A		;LOAD INDEX NUMBER
+	LXI	H,DBUF		;POINT TO START OF DBUF
+	LXI	D,32		;LOAD INCREMENT
+DI4:	DCR	B		;ARE WE THERE?
+	JZ	DIAL13		;...YES, DIAL IT.
+	DAD	D		;INCREMENT TO NEXT LINE
+	JMP	DI4		;DO AGAIN
+
+DIAL13:	MVI     E,30            ;NO. OF CHAR TO GET FROM TABLE
+        JMP     DIALP2		;GO DIAL
+
+DIALPX:	LDA	CMDBUF+1	;LOAD CDMBUF COUNT
+	MOV	E,A		;...& PUT HERE
+
+;THIS ROUTINE SENDS THE PROPER DIALING INITIATION 
+;COMMANDS TO THE HAYES SMARTMODEM.  IT CAN BE CHANGED BY
+;ALTERING THE 'STYLE' OPTION AT THE BEGINNING OF THIS PRGM.
+
+DIALP2:	PUSH 	D
+	MVI 	A,CR
+	CALL 	MODOUT
+	LXI 	D,STYLE
+ONW1:	LDAX 	D
+	CPI 	'$'		;SEND 'ATD' TO SMARTMODEM
+	JZ 	ONW2
+	CALL 	MODOUT
+	INX 	D
+	JMP 	ONW1
+ONW2:	POP 	D
+
+;DIAL DIGIT OR ABORT IF NULL ENCOUNTERED
+
+DILP2:	MOV 	A,M             ;GET FIRST # FROM BUFFER
+	ORA     A               ;FAULTY DIRECTORY ENTRY?
+	JZ	ERROR1		;...YES, ABORT DIAL.
+        CALL 	DIAL            ;DIAL IT
+        INX 	H               ;BUMP POINTER
+        DCR 	E               ;COUNT DOWN CHARS IN BUFF
+        JNZ 	DILP2           ;NOT DONE, LOOP
+        JMP 	DIALDN          ;DIALING DONE
+
+
+;AUTO DIALER
+
+DIAL:	CPI	44		;LET COMMAS THROUGH
+	JZ	DIA2
+	CPI 	48
+        JC 	DIA1            ;DIGIT MUST BE AT LEAST 0..
+        CPI 	58
+        JNC 	DIA1            ;..AND NOT MORE THAN 9
+DIA2:	CALL 	MODOUT	       ;NUMBERS PRINTED IN THIS ROUTINE
+	RET
+DIA1:	CALL 	TYPE		;PRINT ALL EXCEPT NUMBERS 
+	RET
+	 
+DIALDN:	CALL ILPRT
+DB CR,LF,'++ DIALING...NOW IN TERMINAL MODE ++',CR,LF,BELL,0
+
+;ROUTINE TO SEND C/R TO SMARTMODEM AT END OF DIAL
+
+	MVI 	A,CR
+	CALL 	MODOUT		;COMPLETE THE DIALING
+	CALL 	INDATP		;GOBBLE GARBAGE
+	CALL 	INDATP
+	MVI	C,STDMA
+	LXI	D,80H
+	CALL	BDOS		;RESTORE ORIG.DMA
+	MVI	A,TRUE
+	STA	NFLFLG
+	CMA
+	STA	SAVFLG
+	JMP  	TERM
+
+ERROR1:	CALL 	ILPRT
+DB CR,LF,'++ FAULTY NUMBER...INSPECT DIRECTORY ++',CR,LF,LF,0
+	JMP	XPRT9
+
+ERROR2:	CALL	ILPRT
+DB CR,LF,'++ FILE DOSN''T EXIST ++',CR,LF,LF,0
+	JMP	XPRT9
+
+ERROR3:	CALL	ILPRT
+DB CR,LF,'++ BAD NUMBER...CALL AGAIN ++',CR,LF,LF,0
+	JMP	XPRT9
+
+ERROR4:	CALL	ILPRT
+DB CR,LF,'++ BAD NUMBER...TRY AGAIN ++',CR,LF,LF,0
+	JMP	COMMD
+
+;INITIALIZES CP/M FILE CONTROL BLOCKS AT 5CH AND 6CH
+
+SETFCB: LXI D,CMDBUF
+        LXI H,FCB
+        CALL CPMLINE
+        CALL PROCOPT
+
+CHECKNM:LDA FCB+1       ;CHECK ON THE PRIMARY OPTION
+	CPI 'C'		;RETURN IF AUTO DIALER OPTION
+	RZ
+        CPI 'E'         ;RETURN IF ECHO OPTION
+        RZ
+        CPI 'M'         ;RETURN TO MENU
+        RZ
+	CPI 'T'
+        JZ TERMSEL
+	CPI 'K'
+	JZ CKFILE
+        CPI 'S'
+        JZ CKFILE
+        CPI 'R'
+        JNZ BDOPT
+        LDA BATCHFLG    ;IF MULT FILE MODE, THEN..
+        ORA A           ;..RECV OPT DOES NOT NEED..
+        RZ              ;..NAME.
+        JMP CKFILE
+BDOPT:  CALL ILPRT
+
+        DB CR,LF,'++ BAD OPTION ++',CR,LF,0
+
+        JMP REENT
+CKFILE: LDA FCB+17      ;IF OPTION THAT NEEDS FILE NAME,..
+        CPI ' '         ;..THEN CHECK TO SEE IF NAME..
+        RNZ             ;..EXISTS. IF NOT..
+REENT:  CALL ILPRT      ;..DO EVERYTHING OVER.
+
+        DB CR,LF,'++ RE-ENTER PRIMARY OPTION AND FILE NAME ONLY ',CR,LF,LF
+	DB 'COMMAND >>',BELL,0
+
+        LXI D,CMDBUF
+        CALL INBUFF
+        JMP SETFCB
+
+TERMSEL:LDA FCB+17
+        CPI ' '
+        JNZ SAVAGN
+        MVI A,FALSE
+        STA SAVFLG
+        MVI A,TRUE
+        STA NFLFLG
+        CMA
+        RET
+SAVAGN: MVI A,FALSE
+        STA NFLFLG
+        RET
+
+
+.COMMENT \
+CRCSUBS (Cyclic Redundancy Code Subroutines) version 1.20
+These subroutines will compute and check a true 16-bit	
+Cyclic Redundancy Code for a message of arbitrary length. 
+The  use of this scheme will guarantee detection of all 
+single and double bit errors, all  errors  with  an  odd 
+number of error bits, all burst errors of length 16 or less, 
+99.9969% of all 17-bit error bursts, and  99.9984% of all
+possible longer  error bursts.  (Ref: Computer	Networks, 
+Andrew S.Tanenbaum, Prentiss-Hall, 1981) Designed & coded by 
+Paul Hansknecht, June 13, 1981 Copyright (c) 1981, Carpenter
+Associates  Box 451 Bloomfield Hills, MI 48013	313/855-3074
+This program may be freely reproduced for non-profit use.
+
+\
+;	ENTRY	CLRCRC,UPDCRC,FINCRC,CHKCRC
+
+CLRCRC	EQU	$    ; Reset CRC Accumulator for a new message.
+	PUSH	H
+	LXI	H,0
+	SHLD	CRCVAL
+	POP	H
+	RET
+
+UPDCRC	EQU	$   ; Update CRC Accumulator using byte in (A).
+	PUSH	PSW
+	PUSH	B
+	PUSH	H
+	MVI	B,8
+	MOV	C,A
+	LHLD	CRCVAL
+
+UPDLOOP:MOV	A,C
+	RLC
+	MOV	C,A
+	MOV	A,L
+	RAL
+	MOV	L,A
+	MOV	A,H
+	RAL
+	MOV	H,A
+	JNC	SKIPIT
+	MOV	A,H    ; The generator is X^16 + X^12 + X^5 + 1
+	XRI	10H    ; as recommended by CCITT.
+	MOV	H,A    ; An alternate generator which is often
+	MOV	A,L    ; used in synchr. transmission protocols
+	XRI	21H    ; is X^16 + X^15 + X^2 + 1. This may be
+	MOV	L,A    ; used by subst, XOR 80H for XOR 10H and
+SKIPIT:	DCR	B      ; XOR 05H for XOR 21H in the adj, code.
+	JNZ	UPDLOOP
+	SHLD	CRCVAL
+	POP	H
+	POP	B
+	POP	PSW
+	RET
+
+FINCRC	EQU	$      ; Finish CRC calc for outbound message.
+	PUSH	PSW
+	XRA	A
+	CALL	UPDCRC
+	CALL	UPDCRC
+	PUSH	H
+	LHLD	CRCVAL
+	MOV	D,H
+	MOV	E,L
+	POP	H
+	POP	PSW
+	RET
+
+CHKCRC	EQU	$	; Check CRC bytes of received message.
+	PUSH	H
+	LHLD	CRCVAL
+	MOV	A,H
+	ORA	L
+	POP	H
+	RZ
+	MVI	A,0FFH
+	RET
+
+CRCVAL:	DW	0
+
+BADOPT: CALL ILPRT
+	DB LF,'++ INVALID OPTION ++',CR,LF,BELL,0
+
+	LXI B,0FFFFH
+DELAY2: DCX B	
+	MOV A,B
+	ORA C
+	JNZ DELAY2
+
+MENU:   LXI H,RESTSN            ;RESTORE SECTORE NUMBERS..
+        LXI D,SECTNB           ;..FOR NEW FILE TRANSFER.
+        MVI B,SECTNE-SECTNB
+        CALL MOVE
+        LXI H,RESTROPT          ;RESTORE OPTION TABLE
+        LXI D,OPTBL
+        MVI B,OPTBE-OPTBL
+        CALL MOVE
+	XRA	A
+        STA 	MFFLG1         ;RESET MFACCESS ROUTINE..
+	STA 	LSTFLG
+	STA 	MACFLG
+        CMA                    ;..AND MULTI TRANS IN CASE..
+        STA 	FSTFLG         ;..OF ABORT.
+
+MENU1:  LDA XPRFLG              ;TEST IF MENU SHOULD BE SHOWN
+        ORA A
+        JNZ XPRT1
+
+MENU2:	MVI	C,PRINT
+	LXI	D,MENUD
+	CALL	BDOS
+	JMP	XPRT9
+
+MENUD	EQU	$
+DB FF
+DB '                       *** SMODEM 3.8 ***',CR,LF,LF
+
+DB '                          OFFLINE MENU',CR,LF
+DB '                          ============',CR,LF
+DB 'WRT  - Write informal file      DEL  - Erase informal file',CR,LF
+DB 'DSC  - Disconnect phone         RET  - Return to terminal mode',CR,LF
+DB 'CAL  - auto-Call <:>            XPR  - eXpert mode (toggle)',CR,LF
+DB 'MEN  - display Menu             CPM  - exit to CP/M',CR,LF
+DB 'DIR  - Directory <:>            ^C   - reset drives',CR,LF
+DB 'LOG  - Log disk drive',CR,LF
+DB CR,LF
+
+DB 'PRIMARY OPTIONS                    SECONDARY OPTIONS',CR,LF
+DB '---------------                    -----------------',CR,LF
+DB 'S... - Send file [fn.ext]       ...B - Batch file mode',CR,LF
+DB 'R... - Receive file [fn.ext]    ...S - show file as Sent',CR,LF
+DB 'T    - Terminal mode <fn.ext>   ...R - show file as Received',CR,LF
+DB 'E    - terminal mode with Echo  ...V - View as sent/received',CR,LF
+DB 'K    - Kill disk file [fn.ext]  ...T - return to Terminal mode',CR,LF
+DB '                                ...E - return to Echo mode',CR,LF
+DB 'X    - force eXpert on boot     ...D - Disconnect phone',CR,LF
+DB 'C... - auto-Call on boot        ...C - (CRC) request',CR,LF
+DB '       (...number/letter)       ...Q - Quiet (no messages)',CR,LF,LF,'$'
+ 
+
+XPRT1:  CALL ILPRT
+	DB FF,0
+
+XPRT:   CALL ILPRT
+        DB CR,LF,0
+
+XPRT9:	MVI C,RCDSK        ;CURRENT DISK FUNCTION
+        CALL BDOS
+        ADI 41H         ;MAKE ASCII
+        CALL TYPE
+        CALL ILPRT
+
+        DB ': COMMAND >>',0
+
+GETCMD: LXI D,CMDBUF            ;ENTER COMMAND
+        CALL INBUFF
+        CALL CRLF
+        LXI D,CMDBUF+2          ;POINT TO COMMAND
+
+	CALL ILCOMP
+	DB 'DSC',0
+	JNC DNTCB
+
+        CALL ILCOMP
+        DB 'CPM',0
+        JNC EXIT
+
+        CALL ILCOMP
+        DB 'DIR',0
+        JNC DIR
+
+        CALL ILCOMP
+        DB 'RET',0
+        JC NXTOPT1              ;CARRY SET = NO MATCH
+        LHLD HLSAVE             ;RETURN TO TERMINAL..
+        JMP TERM                ;..MODE WITH SAVE OPTION..
+                                ;..IF PREVIOUSLY ENABLED.
+NXTOPT1:CALL ILCOMP
+        DB 'WRT',0
+        JNC WRTFIL
+
+        CALL ILCOMP
+        DB 'XPR',0
+        JNC XPRMODE
+
+        CALL ILCOMP
+        DB 'DEL',0
+        JNC NEWFILE
+
+	CALL ILCOMP
+	DB 'CAL',0
+	JNC DIALPL
+
+	CALL ILCOMP
+	DB 'MEN',0
+	JNC MENU2
+
+	CALL ILCOMP
+	DB 'LOG',0
+	JNC LOGON
+
+NXTPT2: PUSH H
+        LDA CMDBUF+2
+        LXI H,COMPLIST
+        CALL COMPARE 	   ;COMPARES LIST POINTED TO BY HL..
+        POP H              ;..TO CHAR IN A-REG.
+        JC MENU1           ;CARRY SET = NO MATCH
+
+DOOPT:  PUSH H             ;LOAD ORIGINAL FCB WITH TRANSFER..
+        CALL SETFCB        ;..CMDS AND GO TO BEGINNING OF..
+        POP H              ;..PROGRAM. WILL FOLLOW SAME LOGIC..
+        JMP RESTAR        ;..AS IF PROGRAM WERE CALLED WITH..
+
+
+NEWFILE:LDA FCB3+1
+        CPI ' '
+        JZ MENU1        ;IF NO FILE, DON'T ERASE
+        LXI D,FCB3
+        MVI C,ERASE
+        CALL BDOSRT
+        MVI A,TRUE      ;DO NOT ALLOW TERMINAL..
+        STA NFLFLG     ;..SAVE SINCE NO FILE..
+        CMA             ;..SPECIFIED.
+        STA SAVFLG
+        LXI H,FCB3
+        CALL INITFCB
+        JMP MENU1
+
+WRTFIL: LDA NFLFLG
+        CPI TRUE
+        JZ MENU1
+        LDA FCB3+1      ;CHECK THAT FILE WAS REQUESTED
+        CPI ' '
+        JZ MENU1
+        LHLD HLSAVE
+        CALL NMRECS    ;DISK WRITE ROUTINE AS USED IN..
+        CALL WRTDSK     ;..IN THE INTDSSV ROUTINE.
+        CALL CLOSE3
+        MVI A,TRUE
+        STA NFLFLG
+        CMA
+	STA MACFLG	;RESET OBLECT FILE SAVE FLAG
+        STA SAVFLG
+        LXI H,FCB3
+        CALL INITFCB   ;BLANK OUT FCB SO WRITTEN FILE..
+        JMP MENU1       ;..CAN'T BE ERASED.
+
+XPRMODE:LDA XPRFLG
+        CMA
+        STA XPRFLG
+        JMP MENU1
+
+
+COMPARE:MOV B,M         ;COMPARES A-REG WITH LIST..
+COMPLP: INX H           ;..ADDRESSED BY HL. FIRST ELEMENT..
+        CMP M           ;..OF LIST MUST BE NUMBER OF ELEMENTS..
+        JZ VALID        ;..BEING COMPARED. RETRNS WITH..
+        DCR B           ;..CARRY SET IF A-REG DOES NOT..
+        JNZ COMPLP      ;.. CONTAIN AN ELEMENT IN LIST.
+        STC
+VALID:  RET
+
+COMPLIST:DB 7, 'S', 'R', 'T', 'E', 'K', 'M', 'D' 
+
+
+ILCOMP: XTHL            ;POINT HL TO 1ST CHAR.
+        PUSH D
+ILCMPL: MOV A,M         ;HL POINTS TO IN-LINE STRING.
+        ORA A           ;END OF STRING IF ZERO.
+        JZ SAME
+        LDAX D
+        CMP M
+        JNZ NOTSAME
+        INX H
+        INX D
+        JMP ILCMPL
+NOTSAME:MVI A,0         ;IF NOT SAME, FINISH THRU..
+NSLP:   INX H           ;..STRING SO RETURN WILL..
+        CMP M           ;..GO TO INSTRUCTION AFTER..
+        JNZ NSLP        ;..STRING AND NOT REMAINDER OF STRING.
+        STC
+SAME:   POP D
+        INX H           ;AVOIDS A NOP INSTRUCTION..
+        XTHL            ;..WHEN RETURNING.
+        RET
+
+
+INBUFF: PUSH PSW
+        PUSH H
+        PUSH B
+        PUSH D          ;DE REGISTERS MUST BE PUSHED LAST
+STRT:   CALL CLEAR      ;CLEAR THE BUFFER AREA
+        POP D           ;GET ADDRESS OF BUFFER ON RETRIES
+        PUSH D          ;RESTORE STACK
+        XRA A
+        INX D           ;ADDRESS COUNT FIELD
+        STAX D          ;INITIALIZE WITH A ZERO IN COUNT BYTE
+        INX D
+        XCHG            ;ADDRESS FIRST BUFFER BYTE WITH HL
+
+INBUFA: CALL CONIN
+	CPI 'C'-40H	;RESET DISKS?
+	CZ NEWDSK	;YES, DO IT
+        CPI 0DH         ;IS IT A RETURN?
+        JZ INBUFR       ;IF SO, THEN RETURN
+        CPI 7FH         ;IS IT A DELETE?
+        JZ DELETE
+        CPI 8           ;CTRL-H WILL BACKSPACE..
+        JZ DELETE       ;..OVER DELETED CHAR.
+        CPI 'U'-40H     ;IS IT A CTRL-U
+        JZ INBUFO       ;OUTPUT # CR LF AND START OVER
+        CPI 'R'-40H     ;CTRL-R RETYPES LINE
+        JZ RETYPE
+        CPI 'E'-40H
+        JZ PCRLF
+        CPI 20H         ;NO CONTROL CHARACTERS OTHER..
+        JC INBUFA       ;..THAN ABOVE ALLOWED.
+        MOV B,A         ;SAVE INPUTTED CHARACTER
+        XCHG            ;SAVE HL IN DE
+        POP H           ;GET ADDRESS OF BUFFER IN HL
+        PUSH H          ;RESTORE STACK
+        INX H           ;ADDRESS COUNT BYTE
+        INR M           ;INCREASE COUNT BYTE
+        DCX H           ;ADDRESS MAXIMUM
+        MOV A,M         ;PUT MAXIMUM IN A
+        INX H           ;ADDRESS COUNT
+        CMP M           ;COMPARE COUNT TO MAXIMUM
+        JC ALERT        ;IF MAXIMUM, RING BELL AND WAIT FOR CR
+        XCHG            ;RESTORE BUFFER POINTER TO HL
+        MOV M,B         ;PUT INPUTTED CHARACTER IN BUFFER
+        MOV A,B         ;OUTPUT IT
+        CALL CONOUT
+        INX H           ;BUMP POINTER
+        JMP INBUFA      ;GET NEXT CHARACTER
+
+DELETE: XCHG            ;SAVE BUFFER POINTER IN DE
+        POP H           ;ADDRESS BEGINNING OF BUFFER
+        PUSH H          ;RESTORE STACK
+        INX H           ;ADDRESS COUNT FIELD
+        MOV B,A         ;SAVE DELETE CHAR - 7FH OR 08H
+        MOV A,M
+        SUI 1           ;DECREASE COUNT
+        MOV M,A
+        JC NODEL        ;DON'T DELETE PAST BEGINING OF BUFFER.
+        XCHG            ;RESTORE BUFFER POINTER TO HL
+        DCX H           ;POINT TO LAST BYTE INPUTTED
+        MOV A,B         ;GET BACK EITHER 7FH OR 08H
+        MOV B,M         ;GET CHARACTER BEING DELETED
+        MVI M,20H       ;RESTORE BLANK
+        CPI 08H
+        JZ BKSPC
+        MOV A,B         ;ECHO CHAR IF 7FH
+        CALL CONOUT
+        JMP INBUFA      ;GET NEXT CHARACTER
+NODEL:  INR M           ;DON'T LEAVE COUNT NEGATIVE
+        XCHG            ;RESTORE POINTER TO HL
+        JMP INBUFA
+BKSPC:  CALL CONOUT     ;TRUE ERASE IF 08H
+        MVI A,20H
+        CALL CONOUT
+        MVI A,08
+        CALL CONOUT
+        JMP INBUFA
+
+INBUFO: MVI A,'#'
+        CALL CONOUT
+        MVI A,0DH
+        CALL CONOUT
+        MVI A,0AH
+        CALL CONOUT
+        JMP STRT
+
+RETYPE: POP D
+        PUSH D
+        INX D           ;POINT TO CURRENT NUMBER..
+        LDAX D          ;..OF CHARACTERS.
+        MOV B,A
+        MVI A,'#'
+        CALL CONOUT
+        MVI A,0DH
+        CALL CONOUT
+        MVI A,0AH
+        CALL CONOUT
+        MOV A,B         ;TEST IF ZERO INPUT
+        ORA A
+        JZ INBUFA
+CTLRLP: INX D
+        LDAX D
+        CALL CONOUT
+        DCR B
+        JNZ CTLRLP
+        JMP INBUFA
+        
+ALERT:  MVI A,7
+        CALL CONOUT
+        DCR M
+        XCHG
+        JMP INBUFA
+
+PCRLF:  MVI A,0DH
+        CALL CONOUT
+        MVI A,0AH
+        CALL CONOUT
+        JMP INBUFA
+
+INBUFR: MVI A,0DH
+        CALL CONOUT
+        MVI A,0AH
+        CALL CONOUT
+        POP D
+        POP B
+        POP H
+        POP PSW
+        RET
+
+CLEAR:  POP D           ;ACCOUNTS FOR CALL
+        POP H           ;ADDRESS BUFFER IN HL
+        PUSH H          ;RESTORE..
+        PUSH D          ;..STACK
+        MOV B,M         ;SAVE MAXIMUM IN B
+        INX H           ;POINT TO FIRST..
+        INX H           ;..BUFFER BYTE.
+        MVI A,20H
+CLEARL: MOV M,A
+        INX H
+        DCR B
+        JNZ CLEARL
+        RET
+
+CONIN:  PUSH H 
+	PUSH D 
+	PUSH B
+CONINLP:CALL CONSTAT
+        ORA A
+        JZ CONINLP
+	CALL CONIN1
+
+        CPI 61H         ;CHANGE TO UPPER..
+        JC NOUCASE      ;..CASE SINCE CP/M..
+        CPI 7BH         ;..DOES THE SAME.
+        JNC NOUCASE
+        ANI 5FH
+
+NOUCASE:POP B 
+	POP D 
+	POP H
+        RET
+CONIN1: LHLD 1
+        LXI D,6
+        DAD D
+        PCHL
+
+CONSTAT:PUSH H 
+	PUSH D 
+	PUSH B
+        CALL CONST1
+        POP B 
+	POP D 
+	POP H
+        RET
+
+CONST1: LHLD 1
+        LXI D,3
+        DAD D
+        PCHL
+
+CONOUT: PUSH H 
+	PUSH D 
+	PUSH B 
+	PUSH PSW
+        CALL CONOT1
+        POP PSW 
+	POP B 
+	POP D 
+	POP H
+        RET
+
+CONOT1: LHLD 1
+        LXI D,9
+        DAD D
+        MOV C,A
+        PCHL
+
+CPMLINE:PUSH PSW
+        PUSH B
+        PUSH D
+        PUSH H
+
+        CALL INIT       ;FILLS FCBS WITH BLANKS AND NULLS
+
+        XCHG            ;GET START OF COMMAND LINE IN HL.
+        INX H           ;ADDRESS # BYTES IN CMD LINE.
+        MOV E,M         ;LOAD DE PAIR WITH # BYTES.
+        MVI D,0
+        INX H
+        DAD D           ;POINT TO BYTE AFTER LAST CHAR..
+        MVI M,0DH       ;..IN CMD LINE AND STORE DELIMITER.
+        POP H           ;RESTORE HL AND DE.
+        POP D
+        PUSH D
+        PUSH H
+        INX D           ;ADDRESS START OF COMMAND.
+        INX D
+
+        CALL DRIV
+
+NAME1:  MVI C,8         ;TRANSFER FIRST FILENAME TO FCB.
+        CALL TRANS
+        CPI 0DH
+        JZ DONE2
+        CPI 20H         ;IF SPACE, THEN START OF..
+        JZ NAME2        ;..SECOND FILENAME.
+
+TYPE1:  POP H           ;FILETYPE MUST BE AFTER..
+        PUSH H          ;..EIGHTH BYTE OF NAME.
+        LXI B,9
+        DAD B
+        MVI C,3         ;TRANSFER TYPE OF FIRST FILE
+        CALL TRANS
+        CPI 0DH
+        JZ DONE2
+
+NAME2:  LDAX D          ;EAT MULTIPLE SPACES..
+        CPI 20H         ;..BETWEEN NAMES.
+        JNZ NAME2C
+        INX D
+        JMP NAME2
+        LDAX D
+        CPI 0DH         ;TEST IF FIRST NAME..
+        JZ DONE2         ;..ONLY AND THEN SPACE.
+
+NAME2C: POP H           ;SECOND NAME STARTS IN 16TH BYTE.
+        PUSH H          ;POINT HL TO THIS BYTE.
+        LXI B,16
+        DAD B
+        CALL DRIV
+        MVI C,8
+        CALL TRANS
+        CPI 0DH
+        JZ DONE2
+
+TYPE2:  POP H           ;SECOND TYPE STARTS IN 25TH BYTE.
+        PUSH H
+        LXI B,25
+        DAD B
+        MVI C,3
+        CALL TRANS
+
+DONE2:  POP H
+        PUSH H
+        INX H       ;POINT TO FIRST CHAR OF FIRST NAME IN FCB.
+        CALL SCANM   ;CHECK FOR * (AMBIGUOUS NAMES).
+        POP H
+        PUSH H
+        LXI B,17    ;POINT TO FIRST CHAR OF SECOND NAME IN FCB.
+        DAD B
+        CALL SCANM
+        POP H
+        POP D
+        POP B
+        POP PSW
+        RET
+
+INIT:   PUSH H  ;INITIALIZES FCB WITH 1 NULL (FOR FIRST DRIV).
+        PUSH B  ;..11 BLANKS, 4 NULLS, 1 NULL (FOR 2ND DRIV),.
+        MVI M,0         ;..11 BLANKS, AND 4 NULLS.
+        INX H
+        MVI B,11
+        MVI A,20H
+        CALL INTFIL
+        MVI B,5
+        MVI A,0
+        CALL INTFIL
+        MVI B,11
+        MVI A,20H
+        CALL INTFIL
+        MVI B,4
+        MVI A,0
+        CALL INTFIL
+        POP B
+        POP H
+        RET
+
+INTFIL: MOV M,A
+        INX H
+        DCR B
+        JNZ INTFIL
+        RET
+
+DRIV:   INX D           ;CHECK 2ND BYTE OF FILENAME. IF IT..
+        LDAX D          ;..IS A ":", THEN DRIV WAS SPECIFIED.
+        DCX D
+        CPI ':'
+        JNZ DEFDR ;ELSE ZERO DEFAULT DRIV ('INIT' PUT ZERO)
+        LDAX D
+        ANI 5FH
+        SUI 40H         ;CALCULATE DRIV (A=1, B=2,...)..
+        MOV M,A         ;..AND PLACE IT IN FCB.
+        INX D           ;ADDRESS FIRST BYTE OF..
+        INX D           ;..IN CMD LINE,..
+DEFDR:  INX H           ;..AND NAME FIELD IN FCB.
+        RET
+
+TRANS:  LDAX D          ;TRANSFER FROM CMD LINE TO FCB..
+        INX D           ;..UP TO NUMBER OF CHARS SPECIFIED..
+        CPI 0DH         ;..BY C-REG. KEEP SCANNING FIELD..
+        RZ              ;..WITHOUT TRANSFER UNTIL DELIMITING..
+        CPI '.'         ;..FIELD CHAR SUCH AS '.', BLANK, OR..
+        RZ              ;..C/R (FOR END OF CMD LINE).
+        CPI 20H
+        RZ
+        DCR C
+        JM TRANS  ;ONCE C-REG IS LESS THAN ZERO, KEEP READING..
+        MOV M,A         ;..CMD LINE BUT DO NOT TRANSFER TO FCB.
+        INX H
+        JMP TRANS
+
+SCANM:  MVI B,8         ;SCAN FILE NAME ADDRESSED BY HL.
+TSTNAM: MOV A,M
+        CPI '*'         ;IF '*' FOUND, FILL IN REST OF FIELD..
+        JZ FILL1        ;..WITH '?' FOR AMBIGUOUS NAME.
+        INX H
+        DCR B
+        JNZ TSTNAM
+        JMP TSTTYP
+FILL1:  CALL FILL
+
+TSTTYP: MVI B,3         ;SCAN AND FILL TYPE FIELD FOR NAME..
+TSTYPL: MOV A,M         ;..SPECIFIED ABOVE.
+        CPI '*'
+        JZ FILL2
+        INX H
+        DCR B
+        RZ
+        JMP TSTYPL
+FILL2:  CALL FILL
+        RET
+
+FILL:   MVI M,'?'       ;ROUTINE TRANSFERS '?'.
+        INX H
+        DCR B
+        JNZ FILL
+        RET
+
+;------------------- LIST DIRECTORY ROUTINE ----------------
+
+DIR:	MVI	A,FF
+	CALL	TYPE
+	CALL 	DIRLST
+        JMP 	XPRT
+
+DIRLST:	MVI	C,RCDSK
+	CALL	BDOS		;GET CURRENT DISK
+	STA	SCDSK		;STORE CURRENT DISK
+	LXI D,CMDBUF    	;PUT COMMAND LINE IN FCB
+        LXI H,FCB
+        CALL CPMLINE
+        LXI H,SRCHFCB
+        CALL INITFCB
+        LDA FCB2         ;GET DRIVE #
+        STA SRCHFCB
+        LDA FCB2+1
+
+	CPI	':'	;USER ONLY WANTS REMAINING SPACE
+	JZ	DIRDN
+
+        CPI 20H         ;IF BLANK GET ALL NAMES
+        PUSH PSW
+        CZ QSTMARK
+        POP PSW
+        CNZ MVNM    ;ELSE MOVE NAME INTO SRCHFCB
+        CALL DRIVE
+        LXI D,80H
+        MVI C,STDMA
+        CALL BDOS
+        XRA A
+        STA NAMCT      ;CR AFTER 4 NAMES
+        LXI D,SRCHFCB
+        MVI C,SRCHF     ;DO FIRST SEARCH
+        CALL BDOS
+        CPI 0FFH
+        JZ NOFILE
+
+DIRLP:	CALL 	GETADD
+	LXI 	D,10
+        DAD 	D           ;POINT TO $SYS ATTRIB BYTE
+        MOV 	A,M
+        ANI 	80H
+        JNZ 	NEXTSR      ;NO LIST IF $SYS FILE
+
+	LXI	D,5	;POINT TO RECORD
+	DAD	D
+	MOV	A,M	;GET RECORD
+	PUSH	H
+	LHLD	RCNT	;GET TOTAL RECORDS
+	MOV	E,A
+	MVI	D,0
+	DAD	D	;ADD NEW ONES
+	SHLD	RCNT	;AND PUT THEM AWAY
+	POP	H	;GET POINTER
+	LXI	D,-3	
+	DAD	D	;POINT TO EXTENSIONS
+	MOV	A,M
+	ORA	A	;IS THIS NAME AN EXTENSION?
+	JNZ	NEXTSR	;...YES, DON'T PRINT IT
+	LXI	D,-12	;...NO, IT'S THE FIRST, POINT TO NAME
+	DAD	D	;...THEN PRINT IT.
+	INX	H
+        LXI D,PRNTNM
+        MVI B,8
+        CALL MOVE
+        INX D
+        MVI B,3
+        CALL MOVE
+
+        CALL ILPRT
+PRNTNM: DB '        ',' ','   ',  ' | ', 0   ;8,1,3 SPACES
+
+        LDA NAMCT
+        INR A
+        STA NAMCT
+        ANI 03H
+        ORA A
+        CZ CRLF
+NEXTSR: LXI D,SRCHFCB
+        MVI C,SRCHN     ;DO NEXT SEARCH
+        CALL BDOS
+        CPI 0FFH
+        JNZ DIRLP
+	LDA	NAMCT
+	ANI	03H
+	ORA	A
+	CNZ	CRLF
+	JMP	DIRDONE
+
+NOFILE:	CALL ILPRT
+        DB '++ FILE NOT FOUND ++',0
+	CALL	CRLF
+	RET
+
+DIRDN:	CALL	DRIVE
+
+DIRDONE:CALL	CRLF
+	MVI	C,SELDSK	;SELECT DISK FUNCTION
+	LDA	SRCHFCB		;GET SELECTED DISK
+	ORA	A
+	JNZ	DDE
+	LDA	SCDSK
+	INR	A
+DDE:	DCR	A
+	MOV	E,A		;PUT SELECTED DISK HERE
+	CALL	BDOS		;DO IT
+	MVI	C,ALLOC		;DISK ALLOCATION FUNCTION
+	CALL	BDOS		;HL HAS ALLOC TABLE
+	LXI	D,0		;FREE SECTOR COUNTER SET TO 0
+
+;PUT NO.OF (ALLOC.TABLE BYTES -1) HERE
+	MVI	C,37		;NUMBER OF BYTES IN ALLOC TBL.
+
+ST1:	MVI	B,8		;EIGHT BITS TO CHECK IN EACH BYTE
+	MOV	A,M		;GET FIRST BYTE
+
+;PUT AS MANY 'RLC's AS HEADER BITS
+	RLC			;JUMP 2 BITS FOR HEADERS
+	RLC
+
+ST2:	RLC			;CARRY SET MEANS SPACE ALLOCATED.
+	JC	ST3		;NOT ZERO...GO NEXT BIT
+	INX	D		;IF ZERO...INCREMENT COUNT
+ST3:	DCR	B		;EIGHT BITS YET?
+	JNZ	ST2		;...NO, DO AGAIN
+	INX	H		;POINT TO NEXT BYTE
+	DCR	C		;DECREMENT BYTE COUNTER
+	JNZ	ST1		;CONT.UNTIL ALL 37 READ
+
+;PUT NO.OF BITS USED IN LAST ALLOC.TABLE BYTE, HERE
+ST4:	MVI	B,4		;...LAST 6 BITS
+
+	MOV	A,M		;DO THE SAME THING
+ST5:	RLC
+	JC	ST6
+	INX	D
+ST6:	DCR	B
+	JNZ	ST5
+	XCHG			;PUT COUNT IN HL
+
+;IF YOU GET TWICE AS MUCH SPACE AS YOU SHOULD, WITH SINGLE 
+;DENSITY, ELIMINATE 'DAD H'.
+	DAD	H		;MULTIPLY BY 2 FOR BOUBLE DENS.
+
+	CALL	DRPNT		;PRINT IT
+
+	CALL	ILPRT
+DB ' K BYTES LEFT ON DISK',CR,LF,0
+
+	CALL	ILPRT
+DB CR,LF,'SELECTED FILE(S) = ',0
+
+	LHLD	RCNT
+	CALL	DRPNT
+
+	CALL	ILPRT
+DB ' RECORDS',CR,LF,0
+
+	LXI	H,0
+	SHLD	RCNT
+	LDA	SCDSK		;GET BACK ORIG. DISK
+	MOV	E,A
+	MVI	C,SELDSK
+	CALL	BDOS	
+	RET
+
+DRPNT:	CALL	DECOUT
+	CALL	ILPRT
+	DB	' (',0
+	CALL	DHXOUT
+	CALL	ILPRT
+	DB	'H)',0
+	RET
+
+SCDSK:	DB 	0
+
+QSTMARK:MVI A,'?'       ;IF BLANK IN FCB, PUT IN 12 ?'s
+        MVI B,12
+        LXI H,SRCHFCB+1
+QSTLP:  MOV M,A
+        INX H
+        DCR B
+        JNZ QSTLP
+        RET
+
+MVNM:   LXI H,FCB2+1
+        LXI D,SRCHFCB+1
+        MVI B,11
+        CALL MOVE               ;MOVE IN CP/M PROGRAM
+	MVI	A,'?'
+	STAX	D
+        RET
+
+GETADD: ANI 03H                 ;GET MOD4 FOR CP/M 1.4
+        ADD A 
+	ADD A 
+	ADD A   ;ADD 32
+        ADD A 
+	ADD A
+        MOV E,A
+        MVI D,0
+        LXI H,80H               ;ADD DMA OFFSET
+        DAD D
+        RET
+
+DRIVE:  LDA SRCHFCB             ;IF NO DRIVE, CAL
+        ORA A                   ;LOGGED IN DRIVE
+        JZ CALCDR
+        ADI 40H
+        JMP PRNTHD
+CALCDR: MVI C,25
+        CALL BDOS
+        ADI 41H
+PRNTHD: STA DRNAME
+
+        CALL ILPRT
+        DB CR,LF,'DRIVE '
+DRNAME: DB ' :',CR,LF,LF,0
+        RET
+
+
+
+
+
+
+SRCHFCB:DS 33
+NAMCT:  DS 1
+
+
+NFLFLG:DB FALSE      ;NORMALLY SET TO FALSE. ALLOWS WRITE TO..
+                      ;..MEMORY IN TERMINAL MODE.
+LSTFLG:	DB 0
+MACFLG:	DB 0
+OPTION: DB 0
+
+OPTBL   EQU $
+DISCFLG:DB 'D'
+QFLG:   DB 'Q'
+RSEEFLG:DB 'R'
+SSEEFLG:DB 'S'
+VSEEFLG:DB 'V'
+TERMFLG:DB 'T'
+ECHOFLG:DB 'E'
+CRCFLG: DB 'C'
+BATCHFLG:DS 1   ;SET TO 'B' BY MENU. DOES NOT ALLOW MULTI-..
+OPTBE   EQU $   ;..FILE XFER WHEN PROGRAM INITIALLY CALLED.
+
+RESTROPT:       ;MUST BE IN SAME ORDER AS TABLE ABOVE
+
+        DB 'D','Q','R','S','V','T','E','C','B'
+
+RESTSN: DB 0,0,0,0,0,0
+        DW DBUF
+        DB 0,0,0,0,0,0
+
+SECTNB  EQU $
+RCVSNO: DB 0
+SECTNO: DW 0
+ERRCT:  DB 0
+ERRCDE: DB 0
+EOFLG:  DB 0
+SECPTR: DW DBUF
+SECINBF:DB 0
+MAXEXT: DB 0
+RCNT:	DW 0
+DATAFLG:DB 0
+EXACFL:	DB 0
+SECTNE  EQU $
+
+FSTFLG: DB TRUE
+
+CMDBUF: DB 80H,0
+        DS 80H
+
+HLSAVE: DS 2
+DISKNO: DS 1
+SENDFLG:DS 1
+NBSAVE: DS 2
+BGNMS:  DS 2
+FILECT: DS 1
+NAMECT: DS 1
+
+        DS 60
+STACK:  DS 2
+FCB3:   DS 33
+FCBBUF: DS 15
+
+DBUF	EQU $   	      ;DISK BUFFER...DBFSIZ SET AT 
+			      ;BEGINNING
+NAMEBUF EQU DBUF+(DBFSIZ*1024);BUFFER FOR NAMES IN BATCH MODE.
+			      ;OVERFLOWS ABOVE PROGRAM CODE.
+
+;--------------------------- END -----------------------------
+END	
+

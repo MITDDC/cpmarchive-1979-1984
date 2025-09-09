@@ -1,0 +1,154 @@
+                        The SIG/M Report
+                          November 1980
+                            edited by
+                   Bruce Ratoff and Bill Chin
+
+     SIG/M has now been in full operation for the past two months 
+and  things  are really starting to happen.  As Sol announced  in 
+this  column  last  month,  our  first  three  software  volumes, 
+containing  source and object of two souped-up  Adventure  games, 
+are now available.  Since that announcement, we have collected an 
+additional four volumes of software,  which will be available for 
+the first time at the November meeting of SIG/M (at the 808X/Z80, 
+CP/M,  N*,  TRS-80 users' meeting) at UCTI on Friday, November 7.  
+The new volumes are:
+
+         SIG/M004 - miscellaneous CP/M utilities
+         SIG/M005 - 8080/8085 diagnostics package
+         SIG/M006 - 6502 monitor and simulator (on Z80!)
+         SIG/M007 - modem and BBS utilities
+
+     Another  disk  of  games has been started but does  not  yet 
+contain sufficient material for release.  Expected future volumes 
+include more CP/M utilities, and a set of cross-development tools 
+for the TI9900 processor.   These and all future volumes will  be 
+announced  in  this column,  and on our participating BBS's  (see 
+below).
+
+     We  are  of  course  always  seeking  software contributions  
+in all areas of interest.    Remember that the "quickie" that you 
+threw  together to solve some  minor problem may be  a  lifesaver 
+for  another user, no matter how trivial you may consider it.
+
+     For those who have not yet heard about SIG/M, its purpose is 
+to promote the exchange of programs and information on/about CP/M 
+and  related systems.  It is our goal to provide this exchange in 
+as open and non-commercial an environment as  possible.   Besides 
+providing  software exchange,  we would like to serve as a  forum 
+for  sharing ideas/comments on CP/M related topics.  This is your 
+organization, and can only succeed with everyone's participation. 
+SIG/M was jointly founded by CP/M proponents in ACGNJ and the New 
+York Amateur Computer Club (NYACC).
+
+
+                        WHERE TO FIND US
+
+     There are many ways to contact/locate SIG/M for  information 
+or  to  exchange software.  We can always be found at the  "first 
+Friday"  ACGNJ  users'  group  meeting at  UCTI  or  the  "second 
+Tuesday"  NYACC  users' group meeting at  Computer  Emporium  (in 
+NYC). You may also contact one of the four coordinators directly.  
+We are:
+
+           Bruce Ratoff   Iselin, NJ      201-283-2724
+           Bill Chin      Clifton, NJ     201-778-5140
+           Marty Nichols  Dover, NJ       201-361-7180
+           Henry Kee      Flushing, NY    212-539-3202
+
+     Written correspondence and diskettes may be mailed to:
+
+                              SIG/M
+                           P.O. Box 97
+                        Iselin, NJ  08830
+
+     If  you  have  a modem at your disposal,  you  may  wish  to 
+contact  us  and/or  obtain programs by  calling  Bruce  Ratoff's 
+Remote  Iselin  Bulletin  Board System (RIBBS).  In  addition  to 
+normal BBS functions,  it is possible to go into CP/M and send or 
+receive programs using the Ward Christensen MODEM program.  Plans 
+are currently underway,  although not yet implemented, to support 
+Apple CP/M and TRS-80 CP/M on this system.  To reach the  system, 
+dial Bruce's number (listed above), let it ring once, hang up and 
+call  back within 40 seconds.  The system will answer the  second 
+call.  A number of other BBS owners and potential BBS owners have 
+expressed  interest  in  providing  the  same  service  on  their 
+systems.  Their  numbers will be published in future columns.  We 
+are especially looking for participants in other regions (both in 
+and  out  of  the  NY/NJ  area).   Contact  us  if  you  wish  to 
+participate.
+
+
+                       LOCAL COORDINATORS
+
+     We  are looking for people to coordinate local  distribution 
+of  the  SIG/M  software collection.  This is in  line  with  our 
+general  policy  of keeping both user costs and club costs  to  a 
+minimum.   If  you  are the 8080 or CP/M coordinator of  a  local 
+club,  or  wish to act as the "dropping off point" for the  other 
+CP/M  users in your area,  please contact us.   The point of  all 
+this  is  to minimize the number of disk copies that we  have  to 
+produce,  while providing the widest possible distribution of the 
+software  collection.  Clubs  and area  coordinators  may  obtain 
+copies  of  the SIG/M volumes for a donation of $4 per  diskette, 
+plus  $2  to  cover mailing costs.   These diskettes  are  to  be 
+redistributed locally on a non-profit basis.  Funds collected  by 
+the  local  coordinator  should go back into the support  of  the 
+local  club or group.  All commercial use of these diskettes  and 
+their contents is expressly forbidden.
+
+
+                        PROGRAM SUBMITTAL
+
+     All programs/files for submittal to SIG/M should be provided 
+on 8" single-density  soft-sectored "standard CP/M" format, along 
+with our standard  submittal form.   A copy of this form  appears 
+on  each  SIG/M  volume  as  the  file  SIG/M.LIB.   It  is  also 
+reproduced  in this issue of the newsletter.   Contributions  and 
+forms  may also be sent via modem to a participating BBS,  but  a 
+signed  copy  of the submittal form must be received  before  the 
+program  can  be  distributed.   This  protects all  of  us  from 
+copyright  problems,  and assures a consistent method of  program 
+documentation and cataloging.
+
+
+                        UPCOMING RELEASES
+
+     The  NYACC S-100 users' group has published a  directory  of 
+public-domain  software.   It contains the catalogs and abstracts 
+from  all  current CPMUG and SIG/M releases.   The  directory  is 
+available for $5 (subject to change) from NYACC.
+
+     Digital  Research has released the first version of  CP/NET, 
+their distributed-processing system.   This release allows up  to 
+16  modified CP/M systems to share disks and printers residing on 
+an MP/M system.   Each disk drive may be either locally supported 
+or mapped into the network (controlled by the MP/M system).   The 
+communication method is left up to the installer,  making this  a 
+very  general  and powerful  tool for applications requiring  too 
+much "crunch" per terminal to be served with a single  processor.  
+The  cost  is $200,  and the license is linked to a  single  MP/M 
+system license.
+
+     A  new  version of MP/M is scheduled for release before  the 
+end of the year.   The main enhancement will be the inclusion  of 
+file interlocks between users, making multi-terminal file updates 
+much  easier   to  implement.   This version of  MP/M  will  also 
+support the next release of CP/NET, which allows the inclusion of 
+slave  processors that do not contain any local disk storage.   A 
+further update of MP/M and CP/NET,  which allows MP/M systems  to 
+function  as  slaves to other MP/M systems,  is expected  at  the 
+beginning of next year.
+
+     Questions about the much-delayed release of CP/M-86 were met 
+with a reply that it should be released "any week now".   It will 
+consist  of 8086/8088-resident versions of all the standard  CP/M 
+programs, plus a cross-assembler that will allow the installer to 
+use an existing 8-bit CP/M system to bring up the 16-bit system.
+
+
+                      CP/M TIP-OF-THE-MONTH
+
+     This "department" will hopefully appear on a regular  basis.  
+Its  purpose is to provide answers to common technical  questions 
+about CP/M and MP/M.   Please send your questions, ideas and tips 
+to Bruce for inclusion in this column.

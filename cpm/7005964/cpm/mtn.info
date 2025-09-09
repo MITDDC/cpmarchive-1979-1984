@@ -1,0 +1,26 @@
+Date: 8 January 1982 16:56-EST
+From: Frank J. Wancho <FJW at MIT-MC>
+Subject:  MTN 2.2A DCHayes Bug Fix
+To: INFO-CPM at MIT-MC
+cc: INFO-MTN at MIT-MC
+
+With the help of Ron Fowler (RGF@MC), we tracked down the bug using an
+old listing of MTN 2.1.  (My listing and disk for MTN 2.2A are
+apparently permanently and irretrievably archived...)  I have just now
+found a machine with a DCHayes modem in it and tested the following
+patch - and it worked!  With this patch installed in a copy of the
+uncustomized MTN22A.COM, REName it to MTN22B.COM.  My apologies to all
+for not finding and fixing this rather elusive bug much sooner...
+
+This patch will prevent a reentered MTN from hanging up the phone when
+there is a carrier already present:
+
+21B4 -> 3E A5 00 (LD A,0A5H)
+27ED -> 42 ("B")
+
+For those who still have 2.2, this upgrades it to 2.2A:
+
+2.2 -> 2.2A  11E4 to 11E7 -> 00
+
+--Frank
+

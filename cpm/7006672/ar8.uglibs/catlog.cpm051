@@ -1,0 +1,81 @@
+VOLUME 50	National CP/M Users Group
+
+DESCRIPTION: STAGE2 MACRO PROCESSOR
+
+By:	Dick Curtiss			
+	843 NW 54th
+	Seattle, WA 98107
+
+<<Congratulations to Dick for a superb User's group contribution: A major
+  work, well documented, good examples, a good reference book, etc.>>
+
+STAGE2 is a macro programming language, documented
+sufficiently on this disk to effectively use it.  Examples
+given include a library of extensions for assembler
+programming, (ALX) including WHILE, REPEAT, IF, BRANCH (a CASE
+statement), etc.  STAGE2 is a general-purpose text-replacement
+processor, not limited to programming language applications.
+Those interested in transporting it to other machines, or in
+studying its background and implementation will want to
+purchase:
+
+	"Software Tools for Non-Numeric Applications"
+
+    by: Wm. M. Waite
+
+  from: Prentice Hall, Inc.
+	Rt. 59 at Brook Hill Dr.
+	P.O. Box 505
+	West Nyack, NY 10994
+
+   for: $24.95 + 1.00 tax + 1.85 Postage/handling
+
+NUMBER	SIZE	NAME		COMMENTS
+
+		CATALOG.051	CONTENTS OF CP/M VOL. 51
+51.1	2K	ABSTRACT.051	Overview of volume
+51.2	16K	ALX.S2M		Assembly Language Extension macros
+51.3	3K	ALX-.DOC	Doc on above
+51.4	3K	ALXTEST.ALX	Sample macros to test above, including
+		ALXTEST.ALX		errors to be detected.
+51.5	4K	CIO.ALX		Console I/O routines in ALX
+51.6	2K	CRCK.COM	Keith Petersen's program to CRC check files
+51.7	1K	CRCKLIST.CRC	Contains the CRCs for all files on this
+					disk. (except itself)
+51.8	2K	DEMO.S2M	Interactive STAGE2 demo macros.
+51.9	17K	DISKIO2.SRC	(*) disk I/O for STAGE2 processor
+51.10	6K	DISKIO2-.DOC	(*) DOC on above
+51.11	5K	FLD1.DAT	(*) Sample data for FLUB test
+51.12	4K	FLD2.DAT	(*) 		"
+51.13	13K	FLT1.FLB	(*) Sample program for FLUB test
+51.14	11K	FLT2.FLB	(*)		"
+51.15	1K	FLUB$.SUB	(*) Submit file for FLT1, FLT2, STG2.
+51.16	4K	FLUB8080.S2M	(*) Macros to turn FLUB into 8080 asm
+51.17	3K	HELP.DOC	First-timer's "to do" list.
+51.18	2K	IMPL.DOC	(*) Notes on implementing STAGE2
+51.19	2K	INTERACT.S2M	Another macro demo.
+51.20	22K	INTRO.DOC	Sufficient info to "read" STAGE2 macros,
+					and with diligence, write them.
+51.22	1K	IOOP$.SUB	(*) submit file for macro pass + asm of above
+51.21	16K	IOOP.SRC	(*) I/O processor 8080 source
+51.23	1K	MEMORY.INP	Another macro demo.
+51.24	2K	ST2T.DAT	(*)
+51.25	12K	STAGE2.COM	The executable macro processor itself.
+51.26	48K	STG2.FLB	(*) Source for STAGE2 in FLUB code
+51.27	5K	STG2MATH.ASM	(*) STAGE2 support routines
+51.28	5K	STG2SUP.ASM	(*)		"
+51.29	8K	TERM.ALX	Sample 8080 terminal program w/ALX macros.
+51.30	3K	TERMSUP.ASM	Subroutines for TERM.ALX
+51.31	2K	USE.DOC		How to execute STAGE2.
+51.32	6K	VDB.ALX		TDL video driver in ALX, a "state machine".
+51.33	5K	VOLUME51.DOC	Dick Curtiss' own excellent documentation.
+
+(*)	Files are necessary only to change STAGE2.
+
+NOTE:	Included on this volume for the first time, is a file
+	of CRC's for each file.  Thus people concerned that a
+	copy when wrong somewhere, can check the CRC of the
+	file, and compare it to the one stored in CRCKLIST.CRC.
+
+	Thanks to Keith Petersen for this excellent program.
+

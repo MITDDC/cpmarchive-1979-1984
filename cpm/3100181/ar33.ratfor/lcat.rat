@@ -1,0 +1,76 @@
+	PROGRAM LCAT
+# Written by Tim Prince, July 1979
+# on MCOS, CP/m RATFOR, Microsoft/Cromemco FORTRAN
+# requires IOER.Z80 & Cromemco ASMLIB
+# Concatenate .REL files into searchable library.
+#files must end with 9E 1A as do compiler output files
+#FOR automatically makes library of those modules in the
+#.FOR file but ASMB must be used separately for each module
+# .REL files not made by compilers may be scrambled beyond the
+# 9E byte and must have 1A patched in before using LCAT;
+# note that 9E and 1A bytes will occur separately within
+# bit data stream.
+include ASMDEF
+INTEGER*1 XFCB(40),BUF(128),XBUF(512),OFN(11)
+INTEGER*1 DRV,NCHAR,MCHAR,EOR,CZ,SUB
+LOGICAL NMI
+EQUIVALENCE(LXBUF,XFCB(36))
+INCLUDE CONSTS
+DATA XFCB/11*0,'R','E','L',25*0,4/,EOR/158/,SUB/26/
+DATA OFN/8*0,'R','E','L'/
+LXBUF=LOC(XBUF)
+WRITE(KONS,10)
+10	FORMAT(1X,'Output .REL file (aaaaaaaa)?')
+READ(KONS,20)(OFN(I),I=1,8)
+20	FORMAT(8A1)
+WRITE(KONS,30)
+30	FORMAT(1X,'Drive(A/B)?')
+READ(KONS,40)DRV
+40	FORMAT(A1)
+CALL OPEN(6,OFN,DRV-'@')
+WRITE(KONS,50)
+50	FORMAT(1X,'Input files will be requested singly;')
+CALL OPIF(XFCB,NMI)
+NCHAR=GCHAR(0,XFCB)
+REPEAT{ #Until stopped by blank filename
+FOR(IC=1;IC<=128;)
+{MCHAR=NCHAR;NCHAR=GCHAR(0,XFCB)
+IF(MCHAR==EOR&NCHAR==SUB)
+{CALL ZCLOS(ERMSG,XFCB)
+CALL OPIF(XFCB,NMI);IF(^NMI) NCHAR=GCHAR(0,XFCB)
+ELSE{BUF(IC)=EOR;IF(IC<128)BUF(IC+1)=SUB;BREAK}}
+ELSE{BUF(IC)=MCHAR;IC=IC+1}}
+WRITE(6)BUF}UNTIL (NMI)
+CALL ZCLOS(ERMSG,XFCB)
+STOP
+END
+BYTE FUNCTION LOC(X)#Return address of X in HL
+BYTE X
+RETURN
+END
+SUBROUTINE OPIF(XFCB,NMI)#Open existing file for XFCB
+INCLUDE ASMDEF
+INTEGER*1 LN
+INTEGER*1 BLANK, XFCB(40),NAME(14)
+LOGICAL NMI#Return true if no more input files
+INCLUDE CONSTS
+DATA BLANK/' '/
+WRITE(KONS,10)
+10	FORMAT(1X,'Input file (aaaaaaaa)?')
+READ(KONS,20)(XFCB(I),I=4,11)
+20	FORMAT(8A1)
+NMI=XFCB(4)==BLANK;IF(^NMI)
+{WRITE(KONS,30)
+30	FORMAT(1X,'Drive (A/B)?')
+READ(KONS,40)XFCB(3)
+40	FORMAT(A1)
+XFCB(3)=XFCB(3).XOR.'@'#Convert to numeric
+CALL ZOPN(ERMSG,XFCB)
+IF(IOER(ERMSG))CALL ZIOER
+ELSE {LN=PFNAM(NAME)
+WRITE(KONS,50)(NAME(I),I=1,LN)
+50	FORMAT(1X,14A1)
+}}
+RETURN
+END
+

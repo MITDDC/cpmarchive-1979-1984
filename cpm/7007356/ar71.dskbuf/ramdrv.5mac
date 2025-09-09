@@ -1,0 +1,571 @@
+	TITLE	RAMDRIV5.MAC
+;
+;***********************************************************************
+;
+;	RAMDRIV - A program that permits extended memory to function as
+;	a fast disk drive.  This program does not require modification
+;	of the existing BIOS.
+;
+;	Copyright 1982, by
+;	Herbert B. Shore
+;	Department of Physics
+;	San Diego State University
+;	San Diego, CA 92182
+;	(619) 265-6159
+;
+;	Released to the public domain for non-commercial use.
+;
+;	RAMDRIV has been extensively modified by Paul J. Gans.  Changes
+;	are copyright (c) by Paul J. Gans, Department of Chemistry, New
+;	York University, New York, NY  10003 (212) 598-2515
+;
+;	New or modified features include:
+;
+;	For RAMDRIV5:
+;
+;	1.  Code has been converted to Z80 code throughout.
+;	2.  The target assembler is now Microsoft's M80.
+;	3.  The code is now self-loading.  The original RAMLD program is
+;		no longer required.
+;	4.  It is no longer required to have contiguous memory banks of
+;		the same size.  Available memory is controlled by the
+;		BLEN table described below.
+;	5.  Track size is now a variable multiple of 1K and can be
+;		changed through an equate.
+;	6.  The original ALV parameter has been dropped in favor of
+;		TRAKLEN, the number of kilobytes per track.
+;	7.  The DRAM parameter has been dropped.  Extended (bank)
+;		addresses are now contained in the BLEN table.
+;	8.  The program now uses both the directory buffer and the host
+;		buffer in the local BIOS instead of its own buffer.
+;		This requires that the user know the addresses of both
+;		of these buffers in his or her BIOS.  To accomodate
+;		those who choose not to use the BIOS buffers, two DS
+;		definitions are required a few lines after the label
+;		WBOOT1.  The proper spot is commented in the code
+;		below.
+;
+;
+;	INSTALLATION of RAMDRIV5:
+;
+;	RAMDRIV assumes that the user's system has "extra" memory
+;	available beyond the normal 64K maximum directly addressable
+;	in Z80 systems.  This memory may be either "bank select" or
+;	S-100 extended addressing.
+;
+;	RAMDRIV is installed by setting a number of equates and by
+;	properly configuring the BLEN table located near the end of
+;	the code.  After the proper values have been set by equates and
+;	the BLEN table has been set up, the code should be assembled
+;	using M80.  The commands for so doing are:
+;
+;	>M80 =RAMDRIV5/L	<== /L optionally produces a .PRN file
+;	>L80 /P:100,RAMDRIV5,RAMDRIV5/N/E
+;
+;	The equates for DIRBUF and RAMBUF must be set to reflect the
+;	location of these buffers in the user's BIOS.  If this is not
+;	feasible, see the comments at the label WBOOT1.
+;
+;	Equates that must be set are defined and explained below.
+;
+;	In normal use the user must also configure the BLEN table for
+;	his or her system and recompile.  There is one BLEN table entry
+;	for each bank of memory to be used by RAMDRIV.  It is assumed
+;	that each of these banks starts at address 0000 and proceeds
+;	upward to some value without any holes.  It is also assumed that
+;	at least the upper 1K of system memory is global, thus no bank
+;	can exceed 63K.
+;
+;	A BLEN table entry consists of two bytes for each bank of memory
+;	to be used by RAMDRIV.  The first byte is the number of kilo-
+;	bytes available for RAMDRIV in that bank.  This value is placed
+;	into the BLEN table as the value divided by TRAKLEN.  The actual
+;	number of kilobytes of that bank used by RAMDRIV is the integral
+;	part of the division.  For instance a 30K bank of memory would
+;	be indicated to the system as 30/TRAKLEN.
+;
+;	The second byte in the BLEN table entry	is the extended (or 
+;	bank) address byte for that bank of memory.  There is one such 
+;	entry pair for each bank.  The table is terminated by a single 
+;	zero byte.
+;
+;	Thus a system with 20K at a bank addressed as 0DEH and 8K at a
+;	bank addressed as 70H could have a BLEN table as:
+;
+;		BLEN:	DB	20/TRAKLN,0DEH
+;			DB	08/TRAKLN,70H
+;			DB	0
+;
+;	while the same system in which the user wanted to reserve 4K on
+;	the board at 0DEH for some other purpose could have a BLEN table
+;	as:
+;
+;		BLEN:	DB	16/TRAKLN,0DEH
+;			DB	08/TRAKLN,70H
+;			DB	0
+;
+;	
+;************************************************************************
+;
+;  The code and tables in this file will reside in high memory, above the
+;  existing BIOS.  The system is self-loading.  Typing RAMDRIV3 from the
+;  console is sufficient to initiate RAMDRIV3.
+;
+	.Z80
+;
+FALSE	EQU	0
+TRUE	EQU	NOT FALSE
+;
+;  The following equates are system dependent.
+;
+;  DIRBUF:  This is the address of the CP/M directory buffer in the
+;    user's BIOS.  CP/M 2.x systems are required to have such a buffer
+;    available.  The address will vary in different implementations.
+;
+;  RAMBUF:  This is the address of the CP/M host buffer in the user's
+;    BIOS.  In a normal CP/M 2.x system this buffer will be at least 1K
+;    long.  The address will vary in different implementations.
+;
+;  PANEL:  If you have an (IMSAI-type) front panel, set PANEL=TRUE.  The
+;    lights will display the extended address, simulating the LED on the
+;    door of the disk drive.  Flipping switch D0 up will "write protect"
+;    the RAM drive.
+;
+;  RAMDRIV:  Set to a memory location above BIOS.  Less than 1K of
+;    GLOBAL memory is required at this location; i.e. the same block
+;    of memory must be accessible independent of the setting of the ex-
+;    tended address bus or any bank byte.
+;
+;  PRAM:  The extended address of regular program RAM.  Usually this is
+;    00H, but need not be.
+;
+;  XPORT:  The output port that sets the extended address bus or bank
+;    byte.
+;
+;  DNAME:  The alphabetic designation of the RAM drive.
+;
+;  LIGHTS:  The output port for front panel lights.  This is signif-
+;    icant only if PANEL is TRUE.
+;
+;  SWITCH:  The input port for front panel switches.  This is signif-
+;    icant only if PANEL is TRUE.
+;
+;  TRAKLN:  The number of kilobytes per track.  This must be a minimum
+;    of 1K and a maximum no greater than the smallest bank of memory to
+;    be made available to RAMDRIV.  A good value to use is the greatest
+;    common divisor of each of the memory banks to be used by RAMDRIV.
+;
+;  DIRECT:  The number of directory entries permitted on the RAM drive.
+;    The number specified must be a multiple of 32.  I used 32 to leave
+;    the maximum space for program files.
+;
+	.Z80
+;
+DIRBUF	EQU	0F77FH		; CP/M BIOS directory buffer address
+RAMBUF	EQU	0F7FFH		; CP/M BIOS host buffer
+PANEL	EQU	FALSE		;IMSAI FRONT PANEL
+RAMDRIV	EQU	0FC00H		;START OF PROGRAM.
+PRAM	EQU	00H		;EXTENDED ADDR. OF MAIN RAM
+XPORT	EQU	0FDH		;PORT TO SET EXT. ADDR.
+DNAME	EQU	'C'		;DRIVE NAME OF RAMDRIV.
+	IF	PANEL
+LIGHTS	EQU	0FFH		;FRONT PANEL LIGHTS.
+SWITCH	EQU	0FFH		;FRONT PANEL SWITCHES.
+	ENDIF	
+TRAKLN	EQU	 4		; kilobytes per track
+DIRECT	EQU	32		;NO. OF DIRECTORY ENTRIES.
+;
+;  These equates will normally not need to be changed.
+;
+BDOS	EQU	5
+DELCHR	EQU	0E5H		;DELETED DIRECTORY ENTRY.
+DNUMB	EQU	DNAME - 'A'	;RAMDRIV DRIVE NUMBER
+CR	EQU	0DH
+LF	EQU	0AH
+;
+;
+;  The code below replaces the original loader code, since that
+;  mechanism will not work on a program compiled under M80.  The
+;  M80 .PHASE commands have been used rather than the original
+;  ORG's.
+;
+	LD	DE,SIGNON	; print signon message from loader
+	LD	C,9
+	CALL	BDOS
+;
+	LD	HL,(0001)	; check to see if BIOS modified
+	INC	HL		; point to jump vector
+	LD	E,(HL)
+	INC	HL
+	LD	D,(HL)
+	EX	DE,HL
+	LD	DE,RAMDRIV
+	AND	A		; clear carry
+	SBC	HL,DE		; WBOOT minus RAMDRIV
+	JP	C,CONTIN	; if carry we are OK
+	LD	DE,NOWAY
+	LD	C,9
+	CALL	BDOS
+	JP	0
+;
+SIGNON:	DB	'RAMDRIV5'
+	DB	CR,LF,'$'
+NOWAY:	DB	'Cannot load RAMDRIV',CR,LF
+	DB	'Cold boot system and try again'
+	DB	CR,LF,'$'
+;
+CONTIN:	LD	HL,SETUP
+	LD	DE,RAMDRIV
+	LD	BC,1023
+	LDIR
+	JP	RAMDRIV
+;
+	.PHASE	RAMDRIV
+;
+;  ORIGINAL JUMP TABLE FROM BIOS
+;
+WBOOT1:	DS	48
+WCK:				;END OF BIOS TABLE.
+;
+CSV:	DS	DIRECT/4	; this should probably be zero since no
+;				    checking is done
+ALV:	DS	72		; this is allocation vector space which
+;				    must have 1 bit available per block.
+;				    this value corresponds to 576 1K
+;				    blocks.
+;
+;  If the user does not wish to (or cannot) use the directory and host
+;  buffers in the system BIOS, the buffers can alternatively be defined
+;  here.  In this case the following lines should be uncommented and the
+;  corresponding equates above commented.
+;
+;DIRBUF: DS	128		; directory buffer
+;RAMBUF: DS	128		; bank communication buffer
+;
+ENDTBL:				;END OF DATA TABLES.
+;
+	.DEPHASE
+;
+;  The following code is executed once to set up the RAMDRIV system.  In
+;  order to conserve space it will be overwritten by data buffers during
+;  actual access to RAMDRIV.
+;
+;
+SETUP:	
+;
+	.PHASE	RAMDRIV
+;
+;  Determine the amount of available RAMDRIV memory
+;
+	XOR	A
+	LD	C,A
+	LD	HL,BLEN		; RAMDRIV memory table
+	LD	DE,0002		; table entry increment
+BCHEK0:	LD	A,(HL)		; get bank kilobytesa
+	OR	A		; zero means end of table
+	JR	Z,BCHEK1
+	ADD	A,C		; accumulate count
+	LD	C,A		; and save it
+	ADD	HL,DE		; point to next BLEN entry
+	JR	BCHEK0
+;
+BCHEK1:	CP	C		; is there any ram available at all?
+	JR	NZ,RAMOK	; jump if there is
+	LD	DE,NORAM	; no ram, tell the user
+	LD	C,9
+	CALL	BDOS
+	RET			; avoid warm boots!
+;
+NORAM:	DB	'Cannot activate RAMDRIV.  No available RAM.'
+	DB	CR,LF,'$'
+;
+RAMOK:	XOR	A		; clear counter
+	LD	B,TRAKLN	; the count must be multiplied
+;				    by TRAKLN to yeild kilobytes
+RAMOK1:	ADD	A,C		; multiply by repeated adding
+	DJNZ	RAMOK1
+;
+	DEC	A		; RAMDRIV kilobytes minus 1
+	LD	(DSM),A		; maximum block number to DPB
+;
+;  MODIFY BIOS JUMP TABLES
+;
+	IF	$ LT WCK	;MAKE SURE THAT WBOOT1 TABLE
+	JP	BJUMP		;WILL NOT OVERWRITE
+	ENDIF			;BJUMP ROUTINE.
+	IF	$ LT WCK
+	DEFS	WCK - $
+	ENDIF	
+;
+BJUMP:	LD	HL,(1)		;GET ADDRESS OF WARM BOOT
+	LD	DE,WBOOT1	;TRANSFER TABLE FROM BIOS UP HERE
+	LD	BC,48		;48 BYTES
+	LDIR	
+	LD	HL,WBOOT2	;TRANSFER OUR TABLE TO BIOS
+	LD	DE,(0001)
+	LD	BC,48
+	LDIR	
+;
+;  PRINT MESSAGE AND ASK QUESTION
+;
+	LD	DE,QUEST
+	LD	C,9		;PRINT STRING
+	CALL	BDOS
+	LD	C,1		;GET CHARACTER
+	CALL	BDOS
+	RES	5,A		;CONVERT TO UPPER CASE.
+	CP	'Y'
+	JP	NZ,QUIT
+;
+;  CLEAR DIRECTORY OF RAMDRIV
+;
+	LD	BC,0000		; directory on track 0 sector 0
+	CALL	MAP
+	OUT	(XPORT),A
+	IF	PANEL
+	CPL	
+	OUT	(LIGHTS),A	;TO IMSAI FRONT PANEL
+	ENDIF	
+	EX	DE,HL		; HL = base location of directory
+	LD	DE,32		;EVERY 32 BYTES
+	LD	B,DIRECT	;NO. OF ENTRIES.
+	LD	A,DELCHR
+CLEAR:	LD	(HL),A
+	ADD	HL,DE
+	DJNZ	CLEAR
+	LD	A,PRAM		;RESET EXT. ADDR.
+	OUT	(XPORT),A
+	IF	PANEL
+	CPL	
+	OUT	(LIGHTS),A
+	ENDIF	
+;
+QUIT:	LD	DE,CRLF
+	LD	C,9
+	CALL	BDOS
+	JP	0		;BACK TO CP/M.
+;
+QUEST:	DB	CR,LF
+	DB	'RAMDRIV active on drive ',DNAME
+	DB	CR,LF
+	DB	'Should directory of drive ',DNAME
+	DB	' be cleared (Y/N)? $'
+CRLF:	DB	CR,LF,'$'
+;
+;  NEW TABLE COPIED INTO BIOS
+;
+WBOOT2:	JP	WBOOT
+	JP	WBOOT1+3
+	JP	WBOOT1+6
+	JP	WBOOT1+9
+	JP	WBOOT1+12
+	JP	WBOOT1+15
+	JP	WBOOT1+18
+	JP	HOME		;21
+	JP	SELDSK		;24
+	JP	SETTRK		;27
+	JP	SETSEC		;30
+	JP	SETDMA		;33
+	JP	READ		;36
+	JP	WRITE		;39
+	JP	WBOOT1+42
+	JP	SECTRN		;45
+;
+;  IMPLEMENT BIOS FUNCTIONS
+;
+	IF	$ LT ENDTBL	;MAKE SURE THAT BIOS
+	DEFS	ENDTBL - $	; FUNCTIONS BEGIN
+	ENDIF			; AFTER TABLES.
+;
+WBOOT:	LD	HL,80H		;SET INITIAL DMA ADDR.
+	LD	(DMAADR),HL
+	JP	WBOOT1		;BACK TO BIOS
+;
+;
+HOME:	LD	A,(DISK)	;CHECK DISK NUMBER.
+	CP	DNUMB		;IS IT THE RAMDRIV?
+	JP	NZ,WBOOT1+21	;IF NOT, LET BIOS HANDLE IT.
+	LD	A,0		;SET "TRACK" TO 0
+	LD	(XTRAK),A
+	RET	
+;
+;
+SELDSK:	LD	A,C		;CHECK REQUESTED DISK,
+	LD	(DISK),A
+	CP	DNUMB
+	JP	NZ,WBOOT1+24
+	LD	HL,DPH		;RETURN DISK PAR. HEADER.
+	RET	
+;
+;  DISK PARAMETER HEADER FOR RAMDRIV
+;
+DPH:	
+	DW	0		;NO SECTOR TRANSLATION
+	DW	0,0,0		;SCRATCH
+	DW	DIRBUF		;LOC. OF SCRATCHPAD AREA.
+	DW	DPB		;DISK PARAMETER BLOCK
+	DW	CSV		;DIR. CHECK AREA
+	DW	ALV		;ALLOC. VECTOR.
+;
+;  DISK PARAMETER BLOCK
+;
+DPB:	
+	DW	(1024*TRAKLN)/128	;SECTORS PER TRACK
+	DB	3		;BSH
+	DB	7		;BLM
+	DB	0		;EXM
+DSM:	DW	62		;MAX BLOCK NO.
+	DW	DIRECT-1	;HIGHEST DIRECT. NO.
+;
+AL0	EQU	LOW (0FFH SHL (8-DIRECT/32))
+AL1	EQU	0
+;
+	DB	AL0,AL1		;DIRECTORY BLOCKS.
+;
+CKS	EQU	0		;CHECK DIRECT. ENTRIES.
+;
+	DW	CKS
+	DW	0		;NO SKIPPED TRACKS.
+;
+;
+SETTRK:	LD	A,(DISK)
+	CP	DNUMB
+	JP	NZ,WBOOT1+27
+	LD	A,C		;TRACK NO.
+	LD	(XTRAK),A
+	RET	
+;
+;
+SETSEC:	LD	A,(DISK)
+	CP	DNUMB
+	JP	NZ,WBOOT1+30
+	LD	(SECTOR),BC
+	RET	
+;
+;
+SETDMA:	LD	(DMAADR),BC	;SAVE DMA ADDR. BOTH HERE
+	JP	WBOOT1+33	;AND IN BIOS.
+;
+;
+READ:	LD	A,(DISK)
+	CP	DNUMB
+	JP	NZ,WBOOT1+36
+	LD	BC,(SECTOR)	; but we asssume sector fits in one byte
+	LD	A,(XTRAK)	;SET EXTENDED ADDRESS.
+	LD	B,A
+	CALL	MAP		; to compute bank and offset
+	OUT	(XPORT),A
+	IF	PANEL
+	CPL	
+	OUT	(LIGHTS),A
+	ENDIF	
+	EX	DE,HL
+	LD	DE,RAMBUF	;TEMPORARY BUFFER.
+	LD	BC,128		;SECTOR=128 BYTES.
+	LDIR	
+	LD	A,PRAM		;RESET ADDR.
+	OUT	(XPORT),A
+	IF	PANEL
+	CPL	
+	OUT	(LIGHTS),A
+	ENDIF	
+	LD	HL,RAMBUF	;MOVE FROM BUFFER
+	LD	DE,(DMAADR)	; back to main ram
+	LD	BC,128
+	LDIR	
+	XOR	A		; show no errors
+	RET	
+;
+;
+WRITE:	LD	A,(DISK)
+	CP	DNUMB
+	JP	NZ,WBOOT1+39
+	IF	PANEL
+	IN	A,(SWITCH)	;CHECK D0 OF FRONT PANEL
+	AND	1
+	RET	NZ		;RETURN IF WRITE PROTECT.
+	ENDIF	
+	LD	HL,(DMAADR)	;DMA --> BUFFER
+	LD	DE,RAMBUF
+	LD	BC,128
+	LDIR	
+;
+	LD	BC,(SECTOR)	; but we assume sector < 256
+	LD	A,(XTRAK)
+	LD	B,A
+	CALL	MAP
+	OUT	(XPORT),A
+	IF	PANEL
+	CPL	
+	OUT	(LIGHTS),A
+	ENDIF	
+	LD	HL,RAMBUF	;BUFFER --> RAMDRIV.
+	LD	BC,128
+	LDIR
+;
+	LD	A,PRAM
+	OUT	(XPORT),A
+	IF	PANEL
+	CPL	
+	OUT	(LIGHTS),A
+	ENDIF	
+	XOR	A		; show no error
+	RET	
+;
+;
+SECTRN:	LD	A,(DISK)
+	CP	DNUMB
+	JP	NZ,WBOOT1+45
+	LD	H,B
+	LD	L,C
+	RET	
+;
+;
+;  Subroutine to calculate RAM address and bank
+;
+;	called with  B = track number (starts from 0)
+;		     C = sector number (starts from 0)
+;
+;	returns with A = extended address byte
+;		    DE = offset into bank for start of sector
+;
+MAP:	XOR	A		; clear A
+	LD	A,B		; track number to A
+	LD	DE,2		; increment for BLEN table
+	LD	HL,BLEN
+;
+MAP1:	SUB	(HL)		; subtract bank length in K's
+	JR	C,MAP2		; jump if track in this bank
+	ADD	HL,DE		; point to next BLEN entry
+	JR	MAP1		; repeat till done
+;
+MAP2:	ADD	A,(HL)		; A = relative track number in bank
+	RLCA			; multiply by 4K
+	RLCA
+	RLCA
+	RLCA
+	LD	E,D		; clear E
+	LD	D,C		; multiply sector number by 128
+	RR	D
+	RR	E
+	ADD	A,D		; add to track starting address
+	LD	D,A		; DE = sector start in bank
+	INC	HL
+	LD	A,(HL)		; A = extended (bank) address
+	RET
+;
+BLEN:	DB	32/TRAKLN,0FFH	; first bank has 32K at FF
+	DB	32/TRAKLN,0FEH	; second bank has 32K at FE
+	DB	04/TRAKLN,001H	; third bank has 4K at 01
+	DB	0		; end of table
+;
+;  DATA STORAGE AREA
+;
+DISK:	DB	0
+XTRAK:	DB	0
+DMAADR:	DW	80H
+SECTOR:	DW	0
+;
+	.DEPHASE
+;
+	END	

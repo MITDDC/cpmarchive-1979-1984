@@ -1,0 +1,83 @@
+
+title 'disk7 -- cp/m file manipulation program'
+
+copyright (c) 1983 by frank gaude'.  all rights reserved.  released to the
+public domain for non-commercial use.  monetary gain in not permitted under
+any circumstance by individual, partnership, or corporation.
+
+'disk7' is based on common ideas presented in 'cleanup', 'wash', and 'sweep',
+written by ward christensen, michael karas, and robert fisher, respectively.
+existence of these programs generated impetus for writing 'disk7'.
+
+a single-screen menu is provided after entering 'disk7' followed by cursor
+return.  wildcard filenames and optional drive declaration are permitted.
+disk7 [d:]*.asm shows only 'asm' files on [selected] or current drive.
+any other than a command key causes the menu to reappear.  full error
+trapping and command cancellation recovery is provided.  cancellation occurs
+by entering a <return>, if no other entry has been made and execution has
+not begun.
+
+display is circular, single-file columnar, with crt console cursor moved
+'forward' with <space> or <return>, and 'reverse' with 'b'.  drive
+remaining storage in kilobytes is automatically displayed whenever disks
+are logged-in or menu recalled.  if a user area with no files is logged-in,
+new drive/user area prompt is presented.
+
+command functions of 'disk7' are:
+
+    c - copy file to another drive/user with automatic 'crc' verification.
+        format is --> to drive/user: 'd[nn]<return>' where 'd' is drive and
+        'n' is optional user area.  a 'colon' after the drive or user area
+        is optional.  d, d:, dn, dn:, dnn, dnn: are all valid entries.
+        (system reset occurs for disk change.)  prompts to erase already
+        existing file on other drive or in other user area.
+    d - delete file from disk, prompts for certainty.
+    f - file size in kilobytes, rounded up to next disk allocation block.
+    j - jump 'forward' 22 file names.  used to quickly scan through lengthy
+        disk directories.
+    l - log-in new drive/user for display and reset system for disk changes.
+        format is same as 'c' for copy.
+    m - mass copy of tagged files to another drive/user area.  auto-erase
+        occurs if file(s) already exist(s).  prompts for desired drive/user
+        area as with 'c' and 'l'.  mass copy function can be repeated
+        without re-tagging files.  simply enter 'm' again to copy previously
+        tagged files to another drive/user area.  (entering 'm' without any
+        files tagged causes cursor to move to directory beginning.)
+    p - print text file to cp/m list device (printer), any keypress cancels.
+    r - rename file on current drive, only cp/m convention names permitted.
+    s - stat of requested drive, shows remaining disk storage in kilobytes.
+    t - tag file for inclusion for mass copy to another drive/user area.
+        file remains tagged until either a disk log-in or 'u' is used to
+        untag it.  a '*' marker is placed on the tagged filename cursor
+        line as a reminder the file is tagged for mass copy.  tagged file
+        size is shown, totals accumulated and presented in parentheses.
+    u - untag file previously tagged for mass copy.  'u' can be used to move
+        cursor 'forward' for quick untagging of files.  logging-in drive
+        again with 'l' also quickly untags all files.
+    v - view text file on console, with pagination and single-line turn-up.
+        <crtl-x> or <esc> cancels function.  only 'ascii' characters are
+        processed.
+    w - write ascii file to cp/m logical punch device, any keypress cancels.
+    x - exit to cp/m (to ccp without rebooting, or optionally warmboot if
+        program assembled with 'warmboot' equate set true.)  <esc> can be
+        used also to exit to cp/m.
+
+'disk7' is an alternative to 'pip' and 'sweep'.  conveniently, it can be
+added as a subroutine to application programs that require file manipulation
+but without returning to the cp/m operating system.  'disk7' loads fast and
+copies files at near theoretical speed using an 8-bit 'crc' table-driven
+ccitt recommended routine.  the compact menu makes operation essentially
+self-documenting.  the program occupies less than 4k bytes of memory.
+
+installation requires setting maximum allowed drive to be logged-in or
+copied to, and deciding if to warmboot or not on returning to cp/m.  these
+equate options plus several others are at program 'starting definitions'
+below.
+
+disk7 works with cp/m 2.2 only, with 24k or more of ram.  file copy
+functions are faster with large amounts of ram.
+
+please report bugs noted or improvements incorporated to frank gaude'
+at 10925 stonebrook drive, los altos hills, ca 94022.  telephone is
+415/941-2219, 6pm to 10pm daily, pacific time.
+

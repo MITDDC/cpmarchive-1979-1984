@@ -1,0 +1,140 @@
+MicroTELNET (MTN) is a program written in Z80 code and designed to
+interface with the facilities of CP/M 1.4 and 2.2.  The program
+consists of two files: MTNxx.COM and MTNMSGS.OVR, where xx is the
+version number - currently 21 (2.1).
+
+Running MTN will automatically drop you into a customizing sequence
+where you can change all of the default settings, define keyboard
+macros (or program function or soft keys), indicate you terminal type,
+select your modem card type, and finally save the current state to a
+filename of your own choosing.  It is that file which you run for
+subsequent sessions.  All of the customizing code and one-time code is
+in the area used by the buffer and is why the actual size of the
+program differs from the running size.  When the customization is
+complete, and you chose to save that version to a file, MTN will exit.
+Otherwise, you will be left in that unsaved version to experiment.
+
+Once you have completed the customization sequence, or run the
+customized version, you are left online, unless you type a CTRL-^,
+which is the default (and customizable) Intercept Character.  The
+program stops looking at the remote (modem) port and awaits another
+character as a command.  If you do not type Command Character within
+about five seconds, a built-in menu will be displayed (as if you had
+typed the Intercept Character and a question mark).  When the command
+has completed its action, it will resume checking the remote port for
+input.  Any characters sent by the remote host are ignored during that
+time.
+
+The customized version of the program itself is about 10K and
+currently resides beginning at 0100H.  The code itself is over 138K of
+well-commented source in 90 files, and another 32K for the source to
+the documentation in 21 files, all written in Z80 code starting in May
+1980, and assembled and linked using Microsoft's MACRO-80 and LINK-80,
+respectively.
+
+All of the "built-in" documentation causes the screen to be cleared.
+Other special messages from the program are displayed in inverse or
+dim video, if those sequences are known to the program.  The text is
+actually kept in a separate file (MTNMSGS.OVR) and accessed by
+starting sector number in a similar fashion that WordStar uses.
+
+
+What's New in MTN 2.1 (from MTN 1.3/1.4):
+
+1.  The Intercept Character is now installable at customization time.
+    The current Intercept Character is displayed as part of the signon.
+
+2.  All port values for Console and Modem are now installable values.
+
+3.  List File and List Buffer now pauses every 22 lines and rings the
+    bell, waiting for any character to continue.
+
+4.  The disk select for 1.4 was wrong and now fixed.  Also extraneous
+    disk system resets have been flushed.
+
+5.  A non-empty RECORD buffer is offered for disposal when RECORD is
+    turned ON or OFF, and when Quitting.
+
+6.  You can now execute a zero-length .COM file to continue MTN after
+    Quitting, provided that you have nothing in the buffer area
+    extending into the CCP area that you intend to keep and run only
+    CCP built-in commands.  This is particularly helpful when you have
+    encountered a disk error when writing the buffer, giving you a
+    chance to recover by putting in another disk, restarting, and
+    attempting the write to disk again.
+
+7.  You can now upload a file OR the current contents of the buffer
+    using either the wait-for-lf-echo technique, or, if FLOW is
+    toggled to XON/XOFF and your remote recognizes that, use the
+    significantly faster XON/XOFF flow control.
+
+8.  All of the built-in switches are now toggles.  It offers you the
+    current value and the toggled value to be set upon confirmation.
+
+9.  All confirmation lists the one-letter choices.  Typically, Y,
+    SPACE, or RETURN means YES, and only N means NO.  All other
+    responses are ignored unless listed and requiring further
+    confirmation.
+
+10. The Key Definition Command now accepts input in either ASCII or
+    HEX and offers to display the settings of the keys (which is also
+    available as a new List subcommand).  Values below 20H are
+    displayed in two-character representations (up-arrow and letter),
+    while values above 7EH are displayed in HEX surrounded by angle
+    brackets and in inverse or dim video, if available.
+
+11. Another new List subcommand, courtesy of W8SDZ@MC, is the
+    Directory lister... the first of the CCP commands to be available
+    directly inside of MTN.
+
+12. The RECORD buffer area now can extend into the CCP and thus a warm
+    boot jump is now taken when you return to CP/M via the Quit
+    Command instead of simply returning to CCP.
+
+13. The interdigit dialing delay has now been reduced to one second instead
+    of the previous two seconds needed at one particular installation,
+    and 20 pulse-per-second dialing may be optionally specified at
+    customization time.
+
+14. The Dial Command now checks and offers to redial a previous
+    number, leaving the old ReDial Command now available to toggle the
+    Record Mode instead.  The "Type any character to abort" while
+    waiting for carrier will now really abort rather than abort that
+    particular dial attempt and not try any more of the remaining out
+    of three.
+
+15. The AUTO Command is new.  It will allow you to download a file
+    larger than memory into one continuous file, provided that there
+    is space available on the disk and there is XON/XOFF flow control
+    available from the remote.  The filename to write the buffer(s) is
+    solicited up front and there are no bells when the buffer becomes
+    nearly full.
+
+16. All writes to disk now write to the requested filename.$$$ and
+    then rename upon successful closure.
+
+17. The VERBOSE Mode is now gone, and in its place is the VERIFY Mode.
+    Turn this ON and all output to the console from the remote or
+    buffer display or disk file is displayed as two HEX digits and a
+    SPACE, 20 triplets to a line.
+
+18. Users of the PMMI Modem now get a proper hangup with the Terminate
+    Command or when carrier is lost.  D.C.Hayes users should now get
+    "proper" operation when dialing, i.e., the transmitter is disabled
+    until the carrier is detected and disabled when carrier is lost.
+
+19. The short list menu of commands is incorporated into the program
+    to minimize unnecessary disk accesses and is automatically
+    displayed if there is a five second pause after the Intercept
+    Character is typed.  This text was the single contributing factor
+    to the increase in the running size of the program.
+
+There are many other changes in the way the program works internally
+as well as other cosmetic changes not worth detailing here.  The
+"built-in" documentation available by typing a question mark to most
+of the command prompts should be self-explanatory.  If not, or if
+there are any bug reports or feature requests, send mail to
+BUG-MTN@MIT-MC.
+
+MicroTELNET (MTN) Copyright (C) 1981 Frank J. Wancho.  All rights
+reserved.

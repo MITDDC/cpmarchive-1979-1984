@@ -1,0 +1,57 @@
+                 *** SMODEM38/SMODEX38 ***
+                        ( fix 001 )
+
+                          W.Blady
+
+
+A problem occurs when Smodem is receiving data in the informal
+mode.  Once the buffer if filled an XOFF is sent to the
+transmitting system.  All buffered data is then written to
+disk.  An XON is then sent to resume transmission.  Smodem 
+fails to reset the buffer pointer prior to XON and as a result,
+continually reads the buffer as filled, falling into a
+disk-action loop.
+
+The problem is fixed by inserting the new line shown at the
+bottom of the following code.
+
+
+
+INTDSSV:MVI A,XOFF      ;SEND A CTRL-S TO STOP..
+        CALL OTDATP        ;..REMOTE COMPUTER OUTPUT.
+
+        MVI D,0         ;D IS THE BUFFER COUNT
+        CALL INMODEM    ;GET LAST BYTES SENT..
+        STA LSTBY1    ;..AFTER CTRL-S.
+        CALL INMODEM    ;ADD MORE CALLS TO INMODEM..
+        STA LSTBY2    ;..AND STA LASTBYT# IF YOU ARE..
+                        ;..LOSING BYTES WHEN MEMORY IS FULL.
+        PUSH D
+        CALL NMREC1
+        CALL WRTDSK     ;WRITE THE RECORDS
+        POP D
+
+        LXI H,BOTRAM
+        INR D
+        DCR D           ;TEST BUFFER COUNT FOR ZERO
+        JZ CTRLQ
+        LDA LSTBY1    ;GET THE LAST BYTES THAT WERE..
+        MOV M,A         ;..SAVED AND PUT THEM IN..
+        INX H           ;..BOTRAM.
+        CALL TYPE
+        DCR D
+        JZ CTRLQ
+        LDA LSTBY2
+        MOV M,A
+        INX H
+        CALL TYPE
+
+CTRLQ:	SHLD HLSAVE	;RESET BUFFER SAVE LOCATION
+^	MVI A,XON       ;SEND START CHARACTER...
+^	CALL OTDATP     ;...TO REMOTE COMPUTER.
+^	RET
+^
+^
+(add this new line)
+
+                    *** end fix 001 ***

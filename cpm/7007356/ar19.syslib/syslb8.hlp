@@ -1,0 +1,141 @@
+ZCPR2-Specific File Name String Parser (ZFNAME) and Support
+Initialize Named Directory FCB
+Directory Name File Loader
+DIR: Prefix Evaluator
+Extended File Name Scanner
+:Introduction
+
+     This set of routines is specific to the ZCPR2-Specific Named 
+Directory Structure.   These routines provide the programmer with 
+a  set  of routines which resolve the named directory  references 
+for him, translating a named directory into the disk/user area it 
+refers to.
+
+     Four routines are included in this set:
+          o ZFNINIT -- Initialize Named Directory Buffers
+          o ZDNFIND -- Scan for Disk Directory Name
+          o ZDNAME  -- Load All Disk Directory Name Data
+          o ZFNAME  -- Named Directory File Name Scanner
+
+:Initialize Named Directory FCB
+
+     Routine Name:  ZFNINIT
+     Function:
+          ZFNINIT  allows the user to initialize the name of  the 
+named  directory  file (default name of NAMES.DIR) to some  other 
+name  and to change the number of names permitted in a  directory 
+file (default of 64).
+
+     Inputs:  DE pts to FCB containing the new file name
+              C is the new maximum number of directory names
+              A is a flag indicating values to set as follows:
+                    Bit 7 -- Set to 1 to load default FCB fm DE
+                    Bit 6 -- Set to 1 to load name count fm C
+
+     Outputs:  None
+     Registers Affected:  None
+     SYSLIB Routines Called:  MOVEB
+     Special  Error Conditions:  None
+
+:Directory Name File Loader
+
+     Routine Name:  ZDNAME
+     Function:
+          ZDNAME  loads the contents of the NAMES.DIR  file  into 
+the memory buffer pointed to by HL.  Each entry in this buffer is 
+structured as follows:
+               Byte 0:  Disk Number (A=0)
+               Byte 1:  User Number
+               Bytes 2-9:  Directory Name, 8 Chars Max, Space
+                    Fill at End
+
+     Inputs:  HL pts to the memory buffer extending to the base
+               of the BDOS
+
+     Outputs:  HL pts to the first entry in the buffer
+               C is the number of valid entries, B=0
+               A is the error flag (A=0 and Z if error)
+
+
+     Registers Affected:  HL, BC, PSW
+
+     SYSLIB Routines Called:  INITFCB, ZPFIND, FI3$OPEN, F3$GET
+
+     Special Error Conditions:  None
+
+
+:DIR: Prefix Evaluator
+
+     Routine Name:  ZDNFIND
+     Function:
+          ZDNFIND examines the DIR:  prefix for either a DU: form 
+or a directory name.  If it is determined that the DIR: prefix is 
+not of the DU:  form, then the NAMES.DIR file is sought along the 
+ZCPR2  path,  loaded,  and scanned for a corresponding name.   If 
+found,  the corresponding user and disk values are  returned;  if 
+not found, an error code is returned.
+
+     Inputs:  HL pts to first byte of DIR: prefix
+              A=0 if DU: form NOT allowed
+
+     Outputs:  B=Disk (B=1 if Disk A, B=0FFH if Current Disk),
+               C=User (C=0FFH if Current User), HL pts to colon,
+               Zero Flag Clear (NZ) if no error; Zero Flag Set 
+               (Z) if error, and no valid values returned
+
+
+     Registers Affected:  BC, HL, PSW
+
+     SYSLIB Routines Called:  INITFCB, ZPFIND, FI3$OPEN,
+                              FI3$CLOSE, F3$GET
+
+     Special Error Conditions:  Note that ZDNFIND uses Input File 
+3,  so  Input  File 3 should not be opened when this  routine  is 
+called.   Also,  ZPFIND is used, so the programmer must be sure a 
+proper external path is specified if needed by calling ZINIEXT.
+
+:Extended File Name Scanner
+
+     Routine Name:  ZFNAME
+     Function:
+          ZFNAME  is a file name scanner.   Pointing to the first 
+character   of   a   file  name   specification   of   the   form 
+'DIR:FILENAME.TYP',  where  any  part  of this  specification  is 
+optional,  this  routine fills in an FCB  with  zeroes,  properly 
+initializes  the  FN and FT (File Name and File Type)  fields  if 
+'FILENAME.TYP'  or any part thereof is present,  and returns  the 
+value of disk and user if they are specified (or 0FFH if not).
+
+     The directory indicator 'DIR:',  if specified, may be of one 
+of four forms:
+          DIRECT: -- A named directory, of up to 8 chars long
+          d:      -- A disk drive letter
+          u:      -- A user number
+          du:     -- A disk drive letter and a user number
+
+     The du:  form is checked first, so unnecessary disk activity 
+in looking for the NAMES.DIR file is avoided.
+
+     Examples of valid input strings:
+          HELP:*.HLP     A5:TEST.TXT    C?:ABC.*  PASCAL:*.COM
+
+     Inputs:  DE pts to FCB to fill, HL pts to first byte of
+               target string; FCB is 36 bytes long
+
+     Outputs:  B=Disk (B=1 for Disk A), C=User
+               B=0FFH if no disk specified (current disk)
+               C=0FFH if no user specified (current user)
+               C=? if all user areas specified
+               HL pts to terminating character
+               A=0 and Zero Flag Set (Z) if error in disk
+                    or user numbers; A=0FFH and NZ if no error
+
+     Registers Affected:  BC, HL, PSW
+
+
+     SYSLIB Routines Called:  ZDNFIND
+
+     Special   Error   Conditions:    See   FNAME   routine   for 
+similarities
+
+

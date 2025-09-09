@@ -1,0 +1,286 @@
+.cm screen editor:  command summary
+.cm source:  edsum.doc
+.he 'edsum.doc''September 6, 1981'
+.fo ''-#-''
+
+.ul
+special characters
+
+   All special characters may be used in edit and insert
+modes, but only
+the command, edit, insert, undo and delete character keys
+may be used in command mode.
+The function of each special character is given below:
+
+.in 10
+.ti 0
+up key: (default is line feed)
+
+Move the cursor up one line unless the
+cursor is already at the top line of the file.
+Enter edit mode.
+
+.ti 0
+down key: (default is carriage return)
+
+Move the cursor down one line unless the
+cursor is already at the bottom line of the file.
+Enter edit mode.
+
+.ti 0
+right key: (default is control-r)
+
+Move the cursor right one character.
+
+.ti 0
+left key: (default is back space)
+
+Move the cursor left one character.
+
+.ti 0
+insert up key: (default is control-u)
+
+Insert a new line above the current line and enter
+insert mode.
+
+.ti 0
+insert down key: (default is control-d)
+
+Insert a new line below the current line and enter
+insert mode.
+
+.ti 0
+delete character key: (default is del)
+
+Delete the character to the left of the cursor.
+
+.ti 0
+delete line key: (default is control-z)
+
+Delete the line on which the cursor rests.
+
+.ti 0
+insert key: (default is control-n)
+
+Enter insert mode.
+
+.ti 0
+command key: (default is escape)
+
+Enter command mode.
+
+.ti 0
+edit key: (default is control-e)
+
+Enter edit mode.
+
+.ti 0
+Undo key: (default is control-x)
+
+Undo any editing done since the cursor last came to 
+the current line.
+
+.ti 0
+Split key:  (default is control-s)
+
+Split the current line into two lines.
+
+.ti 0
+Join key:  (default is control-p)
+
+Append the current line to the line above it.
+Then delete the lower line.
+
+.in 0
+.ul
+edit mode
+
+   The following are the edit mode commands:
+
+.in 10
+.ti 0
+<space>
+
+Move the cursor right one character.
+
+.ti 0
+b  (beginning)
+
+Move the cursor to the beginning of the current line.
+
+.ti 0
+c  (command)
+
+Enter command mode.
+
+.ti 0
+d  (scroll down)
+
+Scroll the cursor down rapidly.  Hit any key to stop scrolling.
+
+.ti 0
+e  (end)
+
+Move the cursor to the end of the line.
+
+.ti 0
+g <line #>  (go to line)
+
+Move the cursor to the start of the indicated line.
+
+.ti 0
+i  (insert)
+
+Enter insert mode.
+
+.ti 0
+k <char>  (kill up to <char>)
+
+Delete from the cursor up to, but not including <char>.
+Delete to the end of the line if <char> does not
+appear to the right of the cursor.
+Do not delete anything if <char> is a special
+character.
+
+.ti 0
+s <char>  (search for <char>)
+
+Move cursor to the next occurence of <char> to the 
+right of the cursor.
+Move cursor to the end of the current line if
+<char> does not appear to the right of the cursor.
+
+.ti 0
+u  (scroll up)
+
+Scroll the cursor up rapidly.  Hit any key to stop.
+
+.ti 0
+x <char>  (eXchange one character)
+
+If <char> is not a special character then <char>
+replaces the character under the cursor.
+
+.ti 0
+anything else (ignored)
+
+If <char> is neither a special character nor an edit mode
+mode command it is completely ignored.
+
+.in 0
+.ul
+insert mode
+
+   Use insert mode to enter multiple lines of text into
+the buffer.
+All characters which are not special characters are simply
+inserted into the buffer.
+
+.ul
+command mode
+
+   Use command mode to load or save files or to do things
+which might cause drastic changes to the edit buffer.
+Here is a list of the command mode commands and what they do:
+
+.in 10
+.ti 0
+append <filename>
+
+Append the file <filename> to  the main
+buffer at the current cursor postion.
+
+.ti 0
+change <line range>
+
+Change the first instance of <search mask> on each line
+in the line range to
+<change mask>.
+
+Question marks match any character in <search mask>.
+Question marks in <change mask> match the character that
+the corresponding question mark matched in <search mask>.
+
+A leading up arrow (^) anchors the search mask to the
+start of the line.
+
+.ti 0
+clear
+
+Erase the entire buffer.
+
+.ti 0
+delete <line range>
+
+Delete all lines with numbers in <line range>.
+
+.ti 0
+dos
+
+Return to the operating system (exit from the editor).
+
+.ti 0
+find
+
+Search for the next occurance of <search mask>.
+Enter edit mode if <search mask> is found.
+Otherwise, stay in command mode.
+The '?' and '^' characters are treated just as in the
+change command.
+
+.ti 0
+g <n>
+
+Enter edit mode and set the cursor on line <n>.
+If you do not type <n>, the current line is used for <n>.
+
+.ti 0
+list <line range>
+
+List all lines with numbers in <line range> on the
+list device (printer).
+
+.ti 0
+load <filename>
+
+Erase the buffer, then load it with the file named
+by <filename>.
+<filename> becomes the current file name
+which is used by the save and resave commands.
+
+.ti 0
+name <filename>
+
+Make <filename> the current file name
+for use by the save and resave commands.
+
+.ti 0
+resave
+
+Save the buffer in the file named
+in the load or name commands.
+The file must already exist.
+
+.ti 0
+save
+
+Save the buffer in the file named
+in tahe load or name commands.
+The file must
+.ul
+not
+already exist.
+
+.ti 0
+search <line range>
+
+Print all lines on the display which contain an instance
+of <search mask>.
+The '?' and '^' characters are treated just as in the
+change command.
+
+.ti 0
+tabs <number>
+
+Cause tabs to be printed as <number> blanks on the screen
+and on the list device.

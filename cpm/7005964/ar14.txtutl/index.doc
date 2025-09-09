@@ -1,0 +1,397 @@
+         Text file INDEX generator (c) T.Jennings 7/21/81    Page 1
+
+
+
+                  You  can do anything you want with this program  except 
+             sell  it.  Give  it to anyone who wants  it.  Address  bugs, 
+             suggestions, etc. to:
+
+                  Tom Jennings
+                  221 W. Springfield St.
+                  Boston MA 02118
+
+                  Leave me a message at NECS CBBS.
+
+                  INDEX is a utility for use with WordStar, and generates 
+             an alphabetically sorted index for a file.  Words or phrases 
+             to  be put in the indexed are marked with control characters 
+             not used elswhere within WordStar.  (At least as of  version 
+             1.01)  If a file is later edited,  invoking INDEX again will 
+             remove the old index,  produce a new one,  and add it to the 
+             end of the file.
+             
+                  INDEX can also be use with any non-WordStar text editor  
+             that  can insert control characters into the text.  No other 
+             assumptions are made about the contents of the file,  except 
+             that  the  file  is  terminated  by  a  control-Z  character 
+             (correct way) or end of file.
+
+                  INDEX  scans  the text file for certain  WordStar  "dot 
+             commands",  such as page breaks,  etc., in order to maintain 
+             proper page numbers. If no page "dot" commands are found, as 
+             with other editors, pages are counted internally. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         Text file INDEX generator (c) T.Jennings 7/21/81    Page 2
+
+
+
+                  There are two different kinds of index  entries;  WORDS 
+             and  PHRASES.  WORDS  are  what are normally thought  of  as 
+             words;  groups of characters,  seperated by  spaces,  commas 
+             carriage  returns (called CR from now on) or linefeeds (LF). 
+             PHRASES  are  groups of words,  including  the  spaces  that 
+             seperate the words. 
+
+                  Since  words are easy to find,  only a single marker is 
+             necessary  to  identify them.  This marker  is  a  control-K 
+             character,  ^K.  Phrases  must  have both ends  marked,  and 
+             control-P is used, ^P. Below are some examples:
+
+             The sixth word in this ^Ksentence will be put in the index.
+
+             ^PThis entire phrase will be there^P, also.
+
+                  Since this is page 2 of the manual, the index for these 
+             should look like:
+
+             Sentence...................................... 2
+             This entire phrase............................ 2
+
+                  These two examples are actually in the index at the end 
+             of this manual.
+
+             WordStar dot commands
+
+                  INDEX is optimized for use with WordStar.  By  default, 
+             it  scans  the  file for "dot  commands";  notably  .pa  and 
+             "..index". .PA is used to count pages, and must be the first 
+             word on the line to be counted as a dot command. 
+
+                  The "..index" is created and used by INDEX.  As defined 
+             in  the  WordStar manual,  any line beginning with two  dots 
+             (..) will be ignored when printed.  INDEX uses this to  mark 
+             the beginning of the index.  When INDEX is run,  if it finds 
+             the  "..index" line,  it will remove all text following that 
+             line. This allows creating an index for an updated file that 
+             already has an index. If one was not found, it is added.
+
+                  CAUTION: NEVER put a ".." WordStar dot command followed 
+             by index,  as described above.  All text following this line 
+             will  be deleted from the file.  A single space after the .. 
+             will suffice, or use .IG instead.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         Text file INDEX generator (c) T.Jennings 7/21/81    Page 3
+
+
+             Sorting
+
+                  As  stated  before,   the  index  generated  is  sorted 
+             alphabetically.  The  entire  phrase  or  word  is  used  in 
+             sorting,  except  that  case is ignored.  
+
+                  If  identical entries are found,  they are listed on  a 
+             single  line,   followed  by  all  page  numbers  found  on. 
+             Unfortunately,  multiple  identical  page  numbers  will  be 
+             listed.  For  clarity,  some  examples of  how  things  work 
+             follows.
+
+             The  following  two  phrases  are  equivalent,  as  case  is 
+             ignored, and will be listed on one line. The first occurence 
+             will be the entry on the left side of the page.
+
+             This is the first phrase
+             THIS IS THE FIRST PHrAsE
+
+             Since length counts, these next are all in proper order.
+
+             This
+             This is
+             This is what
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         Text file INDEX generator (c) T.Jennings 7/21/81    Page 4
+
+
+             Side effects and cautions
+
+                  This is a list of implementation peculiarities, etc.
+
+             -In general, any group of one or more white-space characters 
+             (see  below)  are converted into a single  space  character. 
+             Phrases  with  embedded spaces will have  all  extra  spaces 
+             (more  than  one)  removed.  A phrase may start and  end  on 
+             different  lines  (or even pages) and  will  work  properly. 
+             Leading spaces will be removed from the index entry.
+
+             -The  following characters are converted to and treated as a 
+             single ASCII space character.  These also mark the end of  a 
+             word:
+
+                          CR LF tab comma (,) semicolon (;) 
+                              colon (:) suprise-mark (!)
+            
+             -BUG  NOTICE Periods are removed from the character  stream. 
+             This was a cheap way out since it is a  sentence-terminator. 
+             The  only  time this is a problem is when putting things  in 
+             the index such as filenames. (i.e., FILENAME.TYP) If someone 
+             complains, it will probably get fixed.
+
+             -BUG  NOTICE     The buffers for the indexed words is in  an 
+             array in memory.  Like most of my kludges,  there is minimal 
+             error  checking  done.  There is currently a limit  of  1000 
+             decimal words/phrases per index,  and there is a 32768  byte 
+             buffer made for them. If you only have 40K of memory....
+
+             -ANNOYANCE      WordStar  control characters,  such  as  ^B, 
+             count as legal characters, but are not printer in the index. 
+             So,  if you indexed two words,  ^K^Bfoo and ^Kfoo, they will 
+             get seperate entries.
+
+             -GOOD  THING     INDEX assumes you do not want to lose  your 
+             source  file,  and does all work in  temporary  files.  When 
+             invoked,  it generates a file name.IDX, and copies the input 
+             file  to it as it looks for words.  (see note on ..index and 
+             EOF) Then,  the index is put in it,  and the file is closed. 
+             Then  if  all  is OK,  any file  name.BAK  is  deleted,  the 
+             original name.ext renamed to name.BAK,  and name.IDX renamed 
+             to name.ext.
+
+             -Words and phrases will have any leading spaces removed. The 
+             first  character of any word or phrase will be converted  to 
+             upper  case.  Note  that  if a phrase consists of  a  single 
+             blank,  it will NOT be removed from the index. This does not 
+             count  for words,  of course,  as the next word  that  comes 
+             along will be indexed.
+
+             -Because  of wonderful CP/M,  and the fact that some of it's 
+             utilities  use end-of-file instead of a control-Z  character 
+             to  terminate text,  INDEX cannot detect the following  read 
+             errors: unwriten random record, zero length.
+
+
+
+
+
+
+
+
+         Text file INDEX generator (c) T.Jennings 7/21/81    Page 5
+
+
+
+             -INDEX sorts in ASCII order.  Digits,  quotes,  parenthesis, 
+             etc come before letters.
+
+             -The  sort routine used is horrible.  It uses a bubble sort, 
+             with  extra  unnecessary  exchanges.   Didn't  require  much 
+             thought, though.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         Text file INDEX generator (c) T.Jennings 7/21/81    Page 6
+
+
+                Colon...................................  4
+                Comma...................................  4
+                Control-Z...............................  4
+                CP/M....................................  4
+                CR......................................  4
+                Embedded spaces.........................  4
+                End-of-file.............................  4
+                Examples................................  2
+                Filenames...............................  4
+                INDEX...................................  1
+                Leading spaces..........................  4, 4
+                LF......................................  4
+                Non-WordStar text editor................  1
+                Periods.................................  4
+                PHRASES.................................  2
+                Semicolon...............................  4
+                Sentence................................  2
+                Side effects and cautions...............  4
+                Suprise-mark............................  4
+                Tab.....................................  4
+                This entire phrase will be there........  2
+                White-space characters..................  4
+                WORDS...................................  2
+                WordStar................................  1
+                WordStar "dot commands".................  1
+                WordStar dot commands...................  2
+                ^B......................................  4
+                ^K......................................  2
+                ^P......................................  2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

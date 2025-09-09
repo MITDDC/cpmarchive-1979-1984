@@ -1,0 +1,19 @@
+5:33am  Wednesday, 3 December 1980  			GZ@MC
+
+Documentation for CPM;DOWN LOAD and CPM;UP LOAD
+
+:LISP MC:CPM;DOWN LOAD $ File
+where the $ is an escape, will cause File to be printed out on
+the terminal in raw super-image mode, with all control-character
+interrupts (^Z,^_,^G etc.)  disabled and echo turned off.  When
+it is finished, it will just sit there in this state until you
+type 10 ^C's.  This is so you can save the file away locally.
+
+:LISP MC:CPM;UP LOAD $ File 
+where the $ is an escape, will print "ready" and then proceed to
+read characters from the terminal in raw super-image mode, with
+all control-character interrupts (^Z,^_,^G etc.) disabled, and
+put the characters in File.  When it receives 10 consecutive
+^C's it will print "done" and finish.  These last 10 ^C's will
+get placed in the File, but you won't see them if you look at
+the file in emacs.

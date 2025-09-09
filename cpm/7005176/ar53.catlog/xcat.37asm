@@ -1,0 +1,1446 @@
+; XCAT -- CATALOG CROSS-REFERENCE PROGRAM FOR MAST.CAT 
+;
+;
+; 09/20/82 v3.7  CTL-C WILL ABORT AT ANY TIME DISK IS NOT WRITING;
+;                RESET TEAR TABS FOR ROLL PAPER TO 72 COLUMNS FOR
+;                MODEL 35 PRINTERS, ETC.                    -IMH
+;
+; 09/07/82 v3.6  CHOICE OF FANFOLD PAPER OR ROLL PAPER WITH 11"
+;                TEAR TABS.                                 -IMH
+;
+; 08/22/82 v3.5  ADDED COUNT SHOWING TOTAL NUMBER OF FILES IN
+;                ADDITION TO A SPECIAL "UNIQUE NAMES" COUNT WHICH
+;                SHOWS HOW MANY DIFFERENT FILES THERE ARE.  THEY
+;                ARE ADDED AT THE END OF THE NEW DISK FILE OR THE
+;                HARD COPY, AS WELL AS THE CRT DISPLAY.
+;                                                           -IMH
+;
+; 08/10/82 v3.4  CAN INSERT FROM 0-9 LEFT MARGIN SPACES FOR HARD
+;                COPY.  (FEW PRINTERS CAN ADJUST THE MARGINS.)
+;                                                           -IMH
+;
+; 08/08/82 v3.3  CAN SELECT PAGE TO START ON AND PAGE TO QUIT AT
+;                FOR HARD COPY.                             -IMH
+;
+; 08/04/82 v3.2  ADDED CHOICE OF HARD COPY OR DISK FILE.  TYPING
+;                A 'Y' GIVES A POSITIVE ANSWER, ANY OTHER KEY IN-
+;                CLUDING 'RET' GIVES A 'N' ANSWER FOR SIMPLICITY.
+;                                                          -IMH
+;
+;     This program makes a cross-reference catalog listing of the
+; MAST.CAT file.  (Previously created by some catalog program such
+; as NCAT, or FMAP/UCAT from the CP/M user's library.)  It names
+; this new file MAST.LST.  This file may then be listed using the
+; normal printer routine, or viewed on the CRT using the TYPE com-
+; mand.
+;     It can use any length MAST.CAT files even beyond 6-8-10,000
+; file names.  If the file is too long for available memory, it puts
+; a note on the CRT to that effect, handles that portion of the file 
+; and continues with the rest of the file until finished.  A 64k
+; computer could typically handle about 3200 file names before
+; this happens.
+;
+;     Rapid information can also be obtained regarding any file
+; and the disk it is on by using an auxiliary program 'FIND.COM':
+;
+; A>FIND MAST.LST PIP
+;
+;     This will print a list (on CRT and on hard copy via CTL-P)
+; of any file names in the MAST.LST file having the characters PIP
+; in the contents.  (You can as easily find all .ASM files, etc.)
+; The combination of MAST.LST plus FIND.COM makes an excellent way
+; to keep an updated catalog listing without the necessity of hard
+; copy.  (Use NCAT or FMAP/UCAT to keep the MAST.CAT file current.)
+; 
+;     This program assumes each disk has an unique volume number as
+; a disk ID.  It ignores any volume name that may be on the same
+; line.  Example of one method in common use:
+;
+; A>SAVE 0 B:-.123
+; A>SAVE 0 B:-01AUG82
+; A>SAVE 0 B:-UNIQUE
+;
+;     The first line places a disk volume number on the B: disk
+; of zero length.  The "-" identifies it as a volume number for
+; NCAT (or UCAT) to use.  The second line shows how, if desired,
+; an extra unique disk volume date could be added.  The third line
+; shows an unique volume name.  All three could be used, only the
+; disk volume number is used for the MAST.LST cross-reference list.
+; (Don't forget the period in front of the volume number to show it
+; is a file type, not a file name.  That automatically gives it 8
+; spaces for a file name, so it will alphabetize ahead of any other
+; lines startins with "-" and be considered the disk volume number.)
+;
+;     XCAT is based on a program called CROSSREF.  This was  written
+; in 1979 by Lewis Moseley, Jr. of Conyers, Georgia.
+;
+;     This program is placed in the public domain.
+;
+;                                        Irvin M. Hoff
+;                                        Los Altos Hills, CA 94022
+;
+; 
+; VERSION 3.1  01-AUG-82  (place in MSG1: area)
+;
+
+        ORG   100H
+;
+;
+        JMP   BEGIN
+;
+;
+; BDOS COMMANDS
+;
+CFFC    EQU   16                 ;CLOSE FILE
+DFFC    EQU   19                 ;DELETE FILE
+ENTRY   EQU   0005H              ;BDOS ENTRY LOCATION
+KSTAT   EQU   11                 ;GET CONSOLE STATUS
+MFFC    EQU   22                 ;MAKE FILE
+OPEN    EQU   15                 ;OPEN FILE
+RCFC    EQU   1                  ;CONSOLE INPUT
+SDMA    EQU   26                 ;SET 'DMA' ADDRESS
+RNFC    EQU   20                 ;READ SEQUENTIAL
+WCFC    EQU   2                  ;CONSOLE OUTPUT
+WCLD    EQU   5                  ;WRITE CHAR. TO LIST DEVICE
+WRFC    EQU   21                 ;WRITE SEQUENTIAL
+;.....
+;
+; 
+; ASCII CHARACTERS
+;
+BS      EQU   08H                ;BACKSPACE
+CR      EQU   0DH                ;CARRIAGE RETURN
+EX      EQU   12
+FN      EQU   01
+FT      EQU   09
+LF      EQU   0AH                ;LINE FEED
+NR      EQU   32
+SI      EQU   16H                ;SYNCH IDLE
+TFCB    EQU   005CH              ;DEFAULT FILE CONTROL BLOCK
+;.....
+;
+;
+; MESSAGES
+;
+MSG1:   DB    CR,LF,'CATALOG X-REFERENCE PGM v3.7 - 09/20/82',CR,LF,LF
+        DB    'Do you want to include any ".FRE" files? (Y/N): ',0
+MSG1A:  DB    'Do you want hard copy instead of a file? (Y/N): ',0
+MSG1B:  DB    'Do you want tear tabs to use roll paper? (Y/N): ',0
+MSG1C:  DB    'Number of spaces to augment left margin? (0-9): ',0
+MSG1D:  DB    'Current date is: ',0
+MSG1E:  DB    'Start at page  : ',0
+MSG1F:  DB    'Quit  at page  : ',0
+MSG2:   DB    '++ UNABLE TO OPEN MAST.CAT ++',CR,LF,0
+MSG3:   DB    CR,LF,'** READING MAST.CAT **',CR,LF,0
+MSG4:   DB    '++ READ ERROR OR EARLY EOF ++',CR,LF,0
+MSG5:   DB    CR,LF,'++ MAST.CAT FILE TOO LONG.   ',CR,LF,'   '
+        DB    'LAST ENTRY THIS SECTION:  "'
+MSG5A:  DB    '           "',CR,LF,'   WORKING ON NEXT '
+        DB    'SECTION',CR,LF,LF,0
+MSG6:   DB    '** WRITING OUTPUT FILE **',CR,LF,0
+MSG7:   DB    '++ UNABLE TO MAKE OUTPUT FILE ++',CR,LF,0
+MSG8:   DB    '++ DISK OR DIRECTORY FULL ++',CR,LF,0
+MSG9:   DB    CR,LF,'   DONE: '
+MSG9A:  DB    '   0 FILE NAMES',CR,LF,'         '
+MSG9B:  DB    '   1 UNIQUE NAMES',CR,LF,0
+MSG10:  DB    '++ PROGRAM ABORTED ++'
+MSG11:  DB    CR,LF,0
+;.....
+;
+;
+; MISC STORAGE LOCATIONS
+;
+DASH:   DB    '  - '             ;USED TO FORMAT PRINTOUT
+;.....
+;
+;
+CCP:    DB    0                  ;INITIAL 'CCP' PAGE
+CNT:    DB    0                  ;NUMBER OF DISKID'S ON LINE
+DBUFC:  DB    0                  ;OUTPUT BUFFER COUNT
+DBUFI:  DB    0,0                ;INPUT BUFFER POINTER
+DBUFO:  DB    0,0                ;OUTPUT BUFFER POINTER
+FNTP:   DB    0,0                ;FILE NAME TABLE POINTER
+HCFLG:  DB    0                  ;HARD COPY FLAG, '1' FOR HARD COPY
+ICNT:   DB    0,0                ;OUTER LOOP INDEX
+JCNT:   DB    0,0                ;INNER LOOP INDEX
+LCNT:   DB    0                  ;LINE COUNT FOR HARD COPY
+NEXT:   DB    0                  ;INPUT NEXT SERIES OF FILES
+REPEAT: DB    0                  ;FOR CONTINUOUS PRINTING
+SAVEOB: DB    0,0                ;SAVE OUBPUT BUFFER POSITION
+SAVESP: DB    0
+START:  DB    0                  ;START PRINTING FLAG
+STOP:   DB    0                  ;STOP PRINTING FLAG
+XDONE:  DB    0                  ;USE LAST NAME FILE
+;.....
+;
+;
+; HEADING LINE FOR HARD COPY
+;
+HEAD:   DB    CR,LF,LF,LF,CR,LF
+HEAD1:  DB    SI,SI,SI,SI,SI,SI,SI,SI,SI,'Master Catalog as of '
+HEAD2:  DB    '                                    Page '
+HEAD3:  DB    '  1',CR,LF,LF,LF,0
+PAGES:  DB    '  1   '
+PAGEQ:  DB    '      '
+QUIT:   DB    CR,LF,LF,LF,LF,LF,0
+QUITR:  DB    CR,LF,LF,LF,LF
+        DB    '-                       '
+        DB    '                        '
+        DB    '                       -'
+        DB    CR,LF,LF,LF,LF,LF,0
+;.....
+;
+;
+; TO GIVE THE FINAL LISTING A LEFT-MARGIN SO THAT IT CAN BE
+; MORE EASILY USED IN A BINDER, EXTRA SPACES CAN BE INSERTED
+; AUTOMATICALLY INTO 'HEAD1' AND 'PRBUF' AREAS WHEN ANSWERING
+; THE QUESTION AT BOOT TIME.  (NONE NEEDED IF YOUR PRINTER HAS
+; ADJUSTABLE MARGINS.)
+;
+;
+PRBUF:  DB    SI,SI,SI,SI,SI,SI,SI,SI,SI  ;TO AUGMENT LEFT MARGIN
+;
+OBUF:   DB    '               '  ;OUTPUT BUFFER, 75 COLUMNS MAX.
+        DB    '               '
+        DB    '               '
+        DB    '               '
+        DB    '               '
+TRASH:  DB    '          '       ;STORAGE FOR UNWANTED DISK NAME
+;.....
+;
+;
+; FCB FOR READING MAST.CAT
+;
+FCB:    DB    0,'MAST    CAT',0  ;2ND 0 = EXTENT #
+        DB    '          '
+        DB    '         '        ;REST OF 'FCB' FOR 32 BYTES
+        DB    0                  ;NR FIELD
+;
+DEFLT:  DB    0,'MAST    '
+DEF1:   DB    'LST'    ;DEFAULT OUTPUT FILE NAME
+;.....
+;
+;
+;= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+;                                                                      ;
+;                       PROGRAM STARTS HERE                            ;
+;                                                                      ;
+;= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+;
+;
+BEGIN:  POP   H                  ;GET 'CCP' RETURN ADDRESS
+        SHLD  EXIT1+1   
+        LXI   SP,STACK
+        LXI   H,MSG1             ;PRINT SIGN ON MESSAGE
+        CALL  WASC
+        CALL  INPUT              ;GET KEYBOARD CHAR.
+        ANI   5FH                ;CHANGE TO UPPER-CASE IF NEEDED
+        CPI   'Y'
+        JNZ   BEGIN1             ;IF NOT, EXIT
+        XRA   A                  ;OTHERWISE IGNORE AND CONTINUE
+        STA   LOOP1+1
+;
+BEGIN1: LXI   H,MSG11            ;TURN UP A NEW LINE
+        CALL  WASC
+;
+;
+;====== READ 'MAST.CAT' INTO MEMORY ======
+;
+; OPEN 'MAST.CAT', READ ENTIRE CONTENTS INTO
+; MEMORY TABLE (EXCLUDING THE MAST.CAT IGNORE FILES)
+;
+READ:   LXI   H,FNT
+        SHLD  FNTP               ;INIT. FNT POINTER
+        LXI   H,BUFREC+80
+        SHLD  DBUFI              ;FORCE INITIAL DISK READ  
+;
+;
+; OPEN MAST.CAT
+;
+        CALL  SETR               ;DISK READ 'DMA' TO 'BUFREC' ADDRESS
+        LXI   D,FCB
+        MVI   C,OPEN
+        CALL  ENTRY
+        INR   A
+        LXI   H,MSG2
+        JZ    ERXIT              ;JUMP IF UNABLE TO OPEN
+        CALL  PRHC               ;WANT HARD COPY?
+        LXI   H,MSG3             ;KEEP USER INFORMED
+        CALL  WASC
+        LHLD  ENTRY+1            ;START OF 'BDOS' AREA
+        MOV   A,H
+        SUI   8
+        STA   CCP                ;STORE 'CCP' STARTING PAGE
+        CALL  CLEAR              ;CLEAR USEABLE RAM
+;
+;
+; SKIP THE 'IGNORE' FILE NAMES AT THE HEAD OF THE 'MAST.CAT' FILE
+;
+SKPIGN  CALL  RDCHR
+        CPI   ')'                ;END OF IGNORE?
+        JNZ   SKPIGN
+;
+;
+; MAIN READ LOOP:  READ FN,FT,DN,DT FROM MAST.CAT, 
+; DISCARD DN, ENTER THE REST IN THE FNT.  16 CHARS.
+; ARE PLACED IN MEMORY FOR EACH FILE NAME.
+;
+; SKIP TO END OF LINE (L/F) IN MAST.CAT FILE
+;
+SKIPLF: CALL  TERM               ;READY TO QUIT?
+        CALL  RDCHR              ;READ UNTIL <LF>
+        CPI   0AH
+        JNZ   SKIPLF
+;
+LOOP:   LHLD  FNTP               ;GET LOCATION IN TABLE
+        XCHG                     ;TO DE
+;
+;
+; SEE IF 1ST CHAR. IS A NULL
+;
+        CALL  RDCHR
+        ORA   A
+        JZ    SKIPLF             ;IF YES IGNORE THIS LINE
+;
+;
+; OR A "+" SIGN FOR  ".FRE FILES"
+;
+LOOP1:  CPI   '+'                ;(OVERWRITTEN BY "BEGIN" IF WANTED)
+        JZ    SKIPLF             ;IF YES, IGNORE THIS LINE
+;
+LOOP2:  CPI   '-'                ;IGNORE ANY LINES STARTING WITH '-'
+        JZ    SKIPLF
+;
+; GET FILENAME
+;
+        MVI   B,8
+        CALL  GETNF+3
+;
+;
+; GET FILETYPE
+;
+        MVI   B,3
+        CALL  GETNF
+;
+;
+; SKIP OVER DISK NAME PART OF FLAG FILE, AND TAKE
+; ONLY THE DISK NUMBER (UP TO 3 ALPHANUMERIC CHARS)
+;
+        PUSH  D                  ;SAVE TABLE POINTER
+        LXI   D,TRASH            ;THROW AWAY DISK NAME
+        MVI   B,8
+        CALL  GETNF
+;
+;
+; NOW MOVE IN DISK'S FILETYPE (NUMBER)
+;
+        POP   D                  ;GET BACK TABLE POINTER
+        MVI   A,20H              ;PUT IN LEADING SPACE
+        STAX  D
+        INX   D
+        MVI   B,3
+        CALL  GETNF              ;FILE TYPE
+        MVI   A,20H              ;AND TRAILING SPACE
+        STAX  D  
+        INX   D
+        XCHG
+        SHLD  FNTP               ;SAVE POINTER
+;
+;
+; STOP IT IF IT REACHES 'CCP' AREA
+;
+        LDA   CCP                ;GET 'CCP' START PAGE
+        CMP   H                  ;COMPARE ADDRESSES
+        JNZ   SKIPLF             ;IF LESS, OK TO CONTINUE
+;
+;
+; IF RUNNING TOO LONG, PRINT WHAT WE HAVE, AND GET THE REST LATER
+;
+        MVI   A,1                ;SOME NON-ZERO VALUE
+        STA   NEXT
+        LHLD  FNTP               ;END OF BUFFER ADDRESS
+;
+        MOV   A,L                ;SUBTRACT 16 TO GET LAST NAME
+        SUI   16
+        MOV   L,A
+        MOV   A,H
+        SBI   0
+        MOV   H,A
+;
+        LXI   D,MSG5A            ;MOVE FILE NAME INTO MESSAGE
+        MVI   B,11
+        CALL  MOVE
+        LXI   H,MSG5             ;'FILE TOO LONG' MSG
+        CALL  WASC               ;SHOW THE MESSAGE
+;...  
+;
+;
+;======  PRNT - PRINT FILE FROM 'FNT' TO DISK ======
+;
+; CHECK FIRST TO SEE IF HAVE BEEN THIS WAY BEFORE
+;
+PRNT:   CALL  SETO               ;SET DISK OUTPUT 'DMA' ADDRESS
+        LDA   REPEAT
+        ORA   A
+        JZ    PRNT1
+        LXI   H,0
+        SHLD  ICNT               ;RESET 'ICNT' TO SPECIAL BUFFER START
+        INX   H
+        SHLD  JCNT               ;RESET 'JCNT' TO START OF NEW BUFFER
+;
+        LDA   SAVESP             ;SPECIAL SAVE FROM END-AROUND?
+        ORA   A
+        JNZ   PRNT4
+        LHLD  SAVEOB             ;GET POSITION IN OBUF BACK
+        XCHG                     ;PUT IN 'DE'
+        JMP   PRNT5
+;
+;
+; NOW SEE IF AN OUTPUT FILE NAME WAS GIVEN INITIALLY
+;
+PRNT1:  INR   A
+        STA   REPEAT             ;SHOW WE HAVE BEEN THIS WAY ALREADY
+        LDA   HCFLG              ;FOR HARD COPY TO PRINTER
+        ORA   A
+        JNZ   PRNT3              ;IF YES, DO NOT OPEN FILE
+;
+        LDA   TFCB+FN            ;JUMP IF NON-BLANK NAME OR TYPE
+        CPI   ' '
+        JNZ   PRNT2
+;  
+        LDA   TFCB+FT            ;ALLOW BLANK FILE TYPE
+        CPI   ' '
+        JNZ   PRNT2
+;
+        LXI   H,DEFLT            ;DEFAULT TO 'MAST.LST'
+        LXI   D,TFCB
+        MVI   B,12
+        CALL  MOVE
+;
+PRNT2:  XRA   A
+        STA   TFCB+EX
+        CALL  CREATE
+        INR   A                  ;NEW FILE STARTED OK?
+        LXI   H,MSG7
+        JZ    ERXIT              ;ERROR MESSAGE IF NOT
+        LXI   H,MSG6             ;SAYS FILE IS WRITING NOW
+        CALL  WASC
+        XRA   A
+        STA   TFCB+NR
+;
+PRNT3:  LXI   H,BUFOUT
+        SHLD  DBUFO
+        XRA   A
+        STA   DBUFC
+        LXI   H,1                ;ICNT=1
+        SHLD  ICNT
+        INX   H                  ;JCNT=2
+        SHLD  JCNT
+;
+PRNT4:  LHLD  ICNT               ;COPY NAME (ICNT) INTO 'OBUF'
+        CALL  NDX
+        LXI   D,OBUF
+        MVI   B,8
+        CALL  MOVE
+        MVI   A,'.'              ;COPY '.' INTO 'OBUF'
+        STAX  D
+        INX   D
+        MVI   B,3                ;COPY TYPE(ICNT) INTO 'OBUF'
+        CALL  MOVE
+        PUSH  H
+        LXI   H,DASH             ;COPY ' - ' INTO 'OBUF'
+        MVI   B,4
+        CALL  MOVE
+        POP   H
+        MVI   B,4                ;COPY DISK ID (ICNT) INTO 'OBUF'
+        CALL  MOVE
+        XRA   A                  ;FLAG END OF 'OBUF'
+        STAX  D
+        MVI   A,1                ;START WITH ONE DISK ID ON THE LINE
+        STA   CNT
+;
+PRNT5:  XRA   A
+        STA   SAVESP             ;NULL THE FLAG
+        CALL  FILES              ;INCREMENT FILE COUNT
+        MVI   C,11               ;COMPARE FILE NAME AND FILE TYPE
+        CALL  COMP               ;SEE IF THE SAME BUT FOR DISK ID
+;
+;
+; IF THE SAME EXCEPT FOR DISK ID, EXIT
+;
+        JZ    PRNT6
+;
+;
+; SINCE DIFFERENT, PUT 'OBUF' INTO OUTPUT BUFFER
+;
+        CALL  FILESD
+        CALL  WRBUF              ;WRITE THE LINE TO DISK BUFFER
+;
+        LDA   XDONE              ;SEE IF FINISHED NOW
+        ORA   A
+        JNZ   PRNT13             ;IF YES, GO TERMINATE
+;
+        LHLD  JCNT               ;SEE IF NEARLY DONE NOW
+        SHLD  ICNT               ;ICNT=JCNT
+        INX   H
+        SHLD  JCNT               ;JCNT=JCNT+1
+        CALL  NDX                ;CONVERT TO AN ADDRESS
+;       
+        XCHG                     ;COMPARE ADDRESS WITH END OF BUFFER
+        LHLD  FNTP               ;GET END OF BUFFER ADDRESS
+        MOV   A,D                ;COMPARE ONES DONE WITH TOTAL
+        CMP   H
+        JC    PRNT4              ;IF LESS, GO GET ANOTHER
+        MOV   A,E
+        CMP   L
+        JC    PRNT4              ;IF LESS GO GET ANOTHER
+;
+        
+        LDA   NEXT               ;SEE IF MORE TO COME
+        STA   SAVESP             ;STORE FOR 'DIFFERENT NAME'
+        ORA   A
+        JNZ   PRNT11             ;IF MORE TO COME, EXIT
+        INR   A
+        STA   XDONE
+        JMP   PRNT4
+;.....
+;
+;
+; SINCE FILE NAMES ARE IDENTICAL, CROSS-REFERENCE THE DISK ID.
+;
+PRNT6:  LDA   CNT                ;ADD ONE TO NUMBER ON LINE
+        CPI   10                 ;EXIT IF LESS THAT 10 ON LINE YET
+        JC    PRNT8
+;
+        CALL  WRBUF              ;WRITE 'OBUF' LINE TO DISK BUFFER
+;
+        LXI   D,OBUF             ;START NEW 'OBUF' LINE
+        MVI   B,15
+        MVI   A,' '
+;
+PRNT7:  STAX  D
+        INX   D
+        DCR   B
+        JNZ   PRNT7
+        XRA   A                  ;BACK TO ONE DISK ID ON  'OBUF' LINE
+;
+PRNT8:  INR   A
+        STA   CNT
+        MVI   A,' '              ;INSERT 1 BLANK IN 'OBUF'
+        STAX  D
+        INX   D
+;
+        LHLD  JCNT               ;COPY DISK ID (JCNT) INTO 'OBUF'
+        CALL  NDX
+        LXI   B,11
+        DAD   B
+        MVI   B,4
+        CALL  MOVE
+        XRA   A                  ;FLAG END OF 'OBUF'
+        STAX  D
+;
+        LHLD  JCNT               ;SEE IF NEARLY DONE NOW
+        INX   H                  ;INCREMENT FOR NEXT TIME
+        SHLD  JCNT
+        CALL  NDX                ;GET NEW ADDRESS
+        PUSH  D                  ;SAVE 'OBUF' ADDRESS FOR NOW
+        XCHG                     ;COMPARE ADDRESS WITH END OF BUFFER
+;
+        LHLD  FNTP               ;GET END OF BUFFER ADDRESS
+        MOV   A,D                ;COMPARE ONES DONE WITH TOTAL
+        CMP   H
+        JC    PRNT9              ;IF LESS, GO GET ANOTHER
+        MOV   A,E
+        CMP   L
+        JC    PRNT9              ;IF LESS, GO GET ANOTHER
+;
+        POP   D
+        LDA   NEXT               ;MORE TO COME?
+        ORA   A
+        JNZ   PRNT10             ;IF YES, EXIT
+        MVI   A,1
+        STA   XDONE
+        PUSH  D                  ;TO COMPENSATE FOR NEXT LINE
+;
+PRNT9:  POP   D
+        JMP   PRNT5
+;.....
+;
+;
+PRNT10: XCHG                     ;PUT 'OBUF' POSITION TO 'HL'
+        SHLD  SAVEOB
+        LHLD  ICNT
+        CALL  NDX                ;INDEX INTO TABLE
+        JMP   PRNT12
+;
+;
+; SEE IF THERE IS STILL MORE 'MAST.CAT' FILE TO INPUT
+;
+PRNT11: XRA   A
+        STA   NEXT               ;RESET THE FLAG 
+        LHLD  ICNT               ;COUNT OF LAST FILE NAME LINE
+        CALL  NDX
+;
+PRNT12: LXI   D,SPBUF            ;SPECIAL END-AROUND BUFFER
+        MVI   B,16               ;FILE NAME LENGTH
+        CALL  MOVE               ;PUT NAME INTO SPECIAL BUFFER
+        CALL  CLEAR1             ;CLEAR USEABLE MEMORY
+;
+        LXI   H,FNT              ;POINT TO START OF FILE NAME BUFFER
+        SHLD  FNTP
+        MVI   A,1
+        STA   REPEAT             ;SHOW WE HAVE ALREADY OPENED THE FILE
+        CALL  SETR               ;SET DISK RECIEVE 'DMA' ADDRESS
+        JMP   SKIPLF             ;GET NEXT GROUP OF FILES
+;.....
+;
+;
+PRNT13: LXI   H,LCNT             ;GET THE LINE COUNT
+        MOV   A,M
+        CPI   52
+        JNC   $+12               ;IF TOO CLOSE TO END, SKIP MSG9
+        ADI   3
+        MOV   M,A                ;STORE NEW LINE COUNT
+        LXI   H,MSG9
+        CALL  WASD
+        CALL  FLUSH              ;FINISH END OF FILE
+        LDA   HCFLG              ;PRINTING HARD COPY?
+        ORA   A
+        JZ    EXIT               ;EXIT IF NOT
+        XRA   A
+        STA   STOP               ;RESET FLAG IF SET
+        CALL  ROLL
+        JMP   EXIT               ;FINISHED
+;......
+;
+;
+;= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+;                                                                      ;
+;                     SUPPLEMENTAL ROUTINES                            ;
+;                                                                      ;
+;= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+;
+;
+; HANDLE A BACKSPACE CHAR. WHILE ENTERING A FILE NAME
+;
+BCKSP:  MOV   A,B                ;GET POSITION ON LINE
+        ORA   A
+        JNZ   BCKSP1             ;EXIT IF AT INITIAL COLUMN
+        MVI   A,' '              ;DELETE THE CHAR.
+        JMP   BCKSP3
+;
+BCKSP1: DCR   B                  ;SHOW ONE LESS COLUMN USED
+        DCX   H                  ;DECREASE BUFFER LOCATION
+        MVI   A,' '
+        MOV   M,A                ;REPLACE TO ORIGINAL
+        CALL  WACC               ;BACKSPACE THE CRT
+;
+BCKSP2: MVI   A,BS               ;RESET THE CRT AGAIN
+;
+BCKSP3: CALL  WACC               ;WRITE TO CRT
+        RET
+;.....
+;
+;
+; CHECK TO SEE IF READY TO START PRINTING YET
+;
+CKST:   PUSH  H                  ;SAVE THE REGS.
+        PUSH  D
+        PUSH  B
+        LXI   H,PAGES+2          ;ADDRESS OF STARTING PAGE ANSWER
+;
+CKST1:  INX   H                  ;FIND THE RIGHTMOST DIGIT
+        MOV   A,M
+        CPI   ' '
+        JNZ   CKST1
+        DCX   H
+;
+        LXI   D,HEAD3+2          ;RIGHTMOST DIGIT FOR PAGE NUMBER
+        MVI   C,2
+;
+CKST2:  LDAX  D                  ;COMPARE TWO STRINGS OF NUMBERS
+        CMP   M
+        JNZ   CKST5              ;IF DIFFERENT, NOT READY YET
+;
+        DCX   D                  ;CHECK NEXT DIGIT
+        DCX   H
+        DCR   C
+        JNZ   CKST2
+;
+        STA   START              ;ALLOWS HARD COPY TO COMMENCE
+;
+CKST3:  DB    0,0,0              ;OVERWRITTEN IF USING ROLL PAPER
+        DB    0,0,0
+        
+;
+CKST4:  LXI   H,HEAD1-2
+        CALL  WASD
+;
+CKST5:  POP   B                  ;RESTORE THE REGS.
+        POP   D
+        POP   H
+        RET
+;.....
+;
+;
+; CHECK TO SEE IF READY TO STOP PRINTING YET
+;
+CKSP:   PUSH  H                  ;SAVE THE REGS.
+        PUSH  D
+        PUSH  B
+        LXI   H,PAGEQ+2          ;ADDRESS OF QUITTING PAGE ANSWER
+;
+CKSP1:  INX   H                  ;FIND THE RIGHTMOST DIGIT
+        MOV   A,M
+        CPI   ' '
+        JNZ   CKSP1
+        DCX   H
+;
+        LXI   D,HEAD3+2          ;RIGHTMOST DIGIT FOR PAGE NUMBER
+        MVI   C,2
+;
+CKSP2:  LDAX  D                  ;COMPARE TWO STRINGS OF NUMBERS
+        CMP   M
+        JNZ   CKSP3              ;IF DIFFERENT, NOT READY YET
+;
+        DCX   D                  ;CHECK NEXT DIGIT
+        DCX   H
+        DCR   C
+        JNZ   CKSP2
+;
+        STA   STOP               ;ALLOWS HARD COPY TO COMMENCE
+;
+CKSP3:  POP   B                  ;RESTORE THE REGS.
+        POP   D
+        POP   H
+        RET
+;.....
+;
+;
+; CLEAR USEABLE MEMORY FROM START OF BUFFER TO START OF 'CCP'
+;
+CLEAR:  LXI   H,STACK            ;CLEAR ALL OF USER-RAM ABOVE STACK
+        JMP   CLEAR1+3           ;SKIP NEXT LINE
+;
+CLEAR1: LXI   H,FNT              ;START OF FILE NAME TABLE AREA
+        LDA   CCP                ;GET 'CCP' STARTING PAGE
+        MOV   D,A                ;PUT IN 'D' REG.
+;
+CLEAR2: MVI   M,0                ;NULL THE LOCATION
+        INX   H                  ;NEXT LOCATION
+        MOV   A,H                ;CHECK CURRENT PAGE ADDRESS
+        CMP   D                  ;COMPARE WITH STOPPING ADDRESS
+        JC    CLEAR2             ;IF LESS, KEEP GOING
+        RET
+;......
+;
+;
+; CLOSE - CLOSE DISK FILE
+;
+CLOSE:  PUSH  H
+        PUSH  D
+        PUSH  B
+        LXI   D,TFCB
+        MVI   C,CFFC
+        CALL  ENTRY
+        LXI   H,MSG8             ;CLOSE ERROR?
+        CPI   255
+        JZ    ERXIT              ;JUMP IF SO
+        POP   B
+        POP   D
+        POP   H
+        RET
+;.....
+;
+;
+; COMP - COMPARE ENTRIES IN 'FNT', AND SWAP IF NECESSARY
+;
+COMP:   PUSH  H
+        PUSH  D
+        LHLD  ICNT               ;HL=FNT+16*ICNT
+        CALL  NDX
+        PUSH  H
+        LHLD  JCNT               ;DE=FNT+16*JCNT
+        CALL  NDX
+        XCHG
+        POP   H
+;
+COMP1:  LDAX  D                  ;COMPARE NEXT BYTE
+        ORA   A                  ;CONTROL-Z FOR END-OF-FILE?
+        JZ    COMP3
+        CMP   M
+        JNZ   COMP2              ;JUMP IF NOT EQUAL
+        INX   D
+        INX   H
+        DCR   C                  ;KEEP TRYING
+        JNZ   COMP1
+        XRA   A                  ;STRINGS ARE EQUAL
+;
+COMP2:  POP   D
+        POP   H
+        RET
+;
+COMP3   LDA   NEXT
+        ORA   A
+        JNZ   COMP2              ;IF MORE COMING, BACK TO WORK
+        CALL  WRBUF              ;WRITE THE FINAL LINE
+        JMP   PRNT13             ;TERMINATE
+;.....
+;
+;
+; CREATE - CREATE DISK FILE
+; 
+CREATE: PUSH  H
+        PUSH  D
+        PUSH  B
+        LXI   D,TFCB
+        MVI   C,DFFC             ;FIRST ERASE ANY SIMILAR FILE      
+        CALL  ENTRY
+        LXI   D,TFCB
+        MVI   C,MFFC             ;NOW OPEN NEW FILE
+        CALL  ENTRY
+        POP   B
+        POP   D
+        POP   H
+        RET
+;.....
+;
+;
+; EXIT ROUTINES:  ERXIT - COME HERE ON ERROR OF SOME TYPE.  PRINT
+;                            MSG IN (HL), THEN PRINT 'ABORT' MSG.
+;                 EXIT  - NORMAL EXIT. PRINT MSG IN (HL) AND
+;                            RETURN TO CP/M.
+;
+ERXIT:  CALL  WEOLC              ;INITIAL <CR><LF>
+        CALL  WASC
+        LXI   H,MSG10
+        CALL  WASC
+        JMP   0000H              ;WARM BOOT - IN CASE OF AN ERROR
+;
+EXIT:   LXI   H,MSG9
+        CALL  WASC
+;
+EXIT1:  JMP   0000H              ;GO TO 'CCP' (OVERWRITTEN BY 'BEGIN')
+;.....
+;
+;
+; COUNTS TOTAL NUMBER OF FILES HANDLED
+;
+FILES:  PUSH  B
+        PUSH  H
+        LXI   H,MSG9A+3
+        MVI   C,4
+        CALL  NMBR1
+        POP   H
+        POP   B
+        RET
+;.....
+;
+;
+; COUNTS TOTAL NUMBER OF UNIQUE FILE NAMES HANDLED
+;
+FILESD: PUSH  B
+        PUSH  H
+        LXI   H,MSG9B+3
+        MVI   C,4
+        CALL  NMBR1
+        POP   H
+        POP   B
+        RET
+;.....
+;
+;
+; FLUSH - FLUSH DISK OUTPUT BUFFER
+;
+;
+FLUSH:  LDA   HCFLG              ;HARD COPY THIS TIME?
+        ORA   A
+        RNZ                      ;IF YES, NO FILE TO CLOSE
+;       
+        PUSH  H
+        PUSH  D
+        MVI   A,1AH
+        CALL  WACD
+        LHLD  DBUFO
+        LDA   DBUFC
+;
+FLUSH1: CPI   128
+        JZ    FLUSH2
+        MVI   M,1AH
+        INX   H
+        INR   A
+        JMP   FLUSH1
+;...
+;
+;
+FLUSH2: CALL  WRREC
+        CALL  CLOSE
+        POP   D
+        POP   H
+        RET
+;.....
+;
+;
+; GET NEXT FILENAME OR FILETYPE FROM 'MAST.CAT'.
+; TERMINATE WHEN 'B' CHARS HAVE BEEN READ. IF
+; NAME IS SHORTER THAN 'B' CHARS, LEFT-JUSTIFY
+; AND BLANK-FILL.
+;
+GETNF:  CALL  RDCHR              ;GET ONE CHAR FROM DISK
+        STAX  D                  ;ASSUME GOOD CHAR
+        CPI   '.'                ;END OF FN?
+        JZ    PAD
+        CPI   ','                ;FN,DN SEPARATOR?
+        JZ    PAD
+        CPI   CR                 ;END OF LINE?
+        JZ    PAD
+        INX   D                  ;ELSE KEEP CHAR & PREPARE FOR NEXT
+        DCR   B                  ;ENOUGH CHARS READ?
+        JNZ   GETNF              ;JUMP IF NOT
+        CALL  RDCHR              ;ELSE THROW AWAY SEPARATOR
+        RET                      ;AND RETURN
+;.....
+;
+;
+; FOR HARD COPY TO LIST DEVICE
+;
+;       CHARACTER IN 'A' REG.
+;
+HCOPY:  LDA   START              ;READY TO START PRINTING YET?
+        ORA   A
+        JZ    HCOPY2             ;IF NOT, EXIT AND WAIT
+        LDA   STOP               ;NOT SUPPOSED TO PRINT NOW?
+        ORA   A
+        JNZ   EXIT               ;IF NOT, EXIT AND TERMINATE
+        POP   PSW                ;GET THE CHAR. BACK
+;
+        CALL  WACC               ;SHOW ON THE CRT
+;
+HCOPY1: PUSH  H                  ;SAVE THE VALUES
+        PUSH  D
+        PUSH  B
+        PUSH  PSW
+        MOV   E,A
+        MVI   C,WCLD             ;SEND TO LIST DEVICE
+        CALL  ENTRY
+        POP   PSW
+        POP   B
+        POP   D
+        POP   H
+        RET
+;...
+;
+;
+HCOPY2: POP   PSW
+        RET
+;
+;
+; GET A CHARACTER FROM THE KEYBOARD
+;
+INPUT:  PUSH  H                  ;SAVE THE VALUES
+        PUSH  D
+        PUSH  B
+        MVI   C,RCFC
+        CALL  ENTRY
+        ANI   7FH                ;STRIP OFF ANY PARITY
+        POP   B
+        POP   D
+        POP   H
+        CPI   3                  ;CONTROL-C ?
+        JZ    EXIT1              ;IF YES, TERMINATE
+        RET
+;...
+;
+;
+; MOVE - MOVE UP TO 256 BYTES OF MEMORY
+; ENTRY CONDITIONS:
+;
+;       'HL'    'FWA' OF SOURCE
+;       'DE'    'FWA' OF DESTINATION
+;       'B'     NUMBER OF BYTES TO MOVE
+;
+MOVE:   MOV   A,M
+        STAX  D
+        INX   D
+        INX   H
+        DCR   B                  ;ONE LESS TO GO
+        JNZ   MOVE               ;IF NOT ZERO, DO ANOTHER
+        RET
+;.....
+;
+;
+; COMPUTE 'FWA' OF TABLE ENTRY FROM THE INDEX TO THE TABLE.
+; 'FWA'=(INDEX*16)+TABLE$ORIGIN.  WORKS EASY BECAUSE ENTRIES
+; ARE 16 BYTES LONG.  ENTER WITH 'INDEX' IN 'HL', EXIT WITH
+; 'FWA' IN 'HL'.
+;
+NDX:    PUSH  D
+        DAD   H
+        DAD   H
+        DAD   H
+        DAD   H
+        LXI   D,FNT-16           ;ADD TO TABLE ORIGIN
+        DAD   D
+        POP   D
+        RET
+;.....
+;
+;
+; INCREMENT THE PAGE NUMBER FOR HARD COPY
+;
+NMBR:   LXI   H,HEAD3+2
+        MVI   C,2
+;       
+NMBR1:  MOV   A,M                ;GET THE VALUE
+        CPI   ' '                ;IS IT A SPACE?
+        JNZ   NMBR2              ;EXIT IF NOT
+        MVI   A,'0'              ;OTHERWISE CALL IT A ZERO
+;
+NMBR2:  INR   A
+        MOV   M,A
+        CPI   '9'+1              ;READY TO START NEXT DIGIT?
+        JNZ   NMBR3              ;IF NOT, FINISHED
+;
+        MVI   M,'0'              ;OTHERWISE MAKE THIS ONE A ZERO
+        DCX   H                  ;WORK ON NEXT COLUMN
+        DCR   C                  ;ONE LESS TO GO
+        JNZ   NMBR1              ;GO DO THE NEXT ONE
+;
+NMBR3:  RET                      ;FINISHED
+;.....
+;
+;
+; FILL AREA BETWEEN FILE NAMES AND FILE TYPES UNIFORMLY
+;
+PAD:    MVI   A,20H              ;BLANK-FILL IF NECESSARY
+        STAX  D
+        INX   D
+        DCR   B
+        JNZ   PAD+2
+        RET
+;.....
+;
+;
+; PRINT HARD COPY REQUEST FROM KEYBOARD
+;
+PRHC:   LXI   H,MSG1A            ;WANT HARD COPY?
+        CALL  WASC
+        CALL  INPUT              ;GET CHAR. FROM KEYBOARD
+        ANI   5FH                ;CHANGE GO UPPER-CASE IF NEEDED
+        CPI   'Y'
+        JNZ   PRHC11             ;NO HARD COPY IF NOT 'Y' ANSWER
+        STA   HCFLG              ;SET FLAG FOR HARD COPY
+        LXI   H,MSG11            ;TURN UP A LINE
+        CALL  WASC
+        CALL  RPAPER             ;USING ROLL PAPER?
+;
+;
+; ASK FOR ANY FILL CHARS. TO AUGMENT LEFT MARGIN
+;
+        LXI   H,MSG1C            ;WANT FILL CHARS.?
+        CALL  WASC
+        CALL  INPUT              ;GET KEYBOARD ANSWER
+        CPI   '1'                ;LOWER LIMIT OF 0-9
+        JC    PRHC2
+        CPI   '9'+1              ;UPPER LIMIT OF 0-9
+        JNC   PRHC2
+        SUI   30H                ;CHANGE TO BINARY FROM ASCII
+;
+        LXI   H,HEAD1
+        LXI   D,PRBUF
+        MOV   B,A
+        MVI   A,' '
+;
+PRHC1:  MOV   M,A                ;STORE AT 'HL'
+        STAX  D                  ;STORE AT 'DE'
+        INX   D                  ;NEXT 'DE' LOCATION
+        INX   H                  ;NEXT 'HL' LOCATION
+        DCR   B                  ;ONE LESS TO GO
+        JNZ   PRHC1              ;IF NOT ZERO, DO ANOTHER
+
+
+;
+; ASK FOR CURRENT DATE
+;
+PRHC2:  LXI   H,MSG11            ;TURN UP A NEW LINE
+        CALL  WASC
+        LXI   H,MSG1D            ;CURRENT DATE
+        CALL  WASC
+        MVI   B,0
+        LXI   H,HEAD2
+;
+PRHC3:  CALL  INPUT              ;GET KEYBOARD CHAR.
+        CPI   CR                 ;FINISHED IF 'RET'
+        JZ    PRHC5
+        CPI   BS
+        JNZ   PRHC4
+        CALL  BCKSP
+        JMP   PRHC3
+;
+PRHC4:  MOV   M,A
+        INX   H
+        INR   B
+        MOV   A,B
+        CPI   34+1              
+        JC    PRHC3
+        CALL  BCKSP2
+        CALL  BCKSP1             ;DO NOT ALLOW A TOO-LONG LINE
+        JMP   PRHC3
+;
+;
+; ASK FOR STARTING PAGE
+;
+PRHC5:  LXI   H,MSG11            ;TURN UP A NEW LINE
+        CALL  WASC
+        LXI   H,MSG1E
+        CALL  WASC
+        MVI   B,0
+        LXI   H,PAGES+2          ;STARTING PAGE STORAGE
+;
+PRHC6:  CALL  INPUT
+        CPI   CR
+        JZ    PRHC8
+        CPI   BS
+        JNZ   PRHC7
+        CALL  BCKSP
+        JMP   PRHC6
+;
+PRHC7:  MOV   M,A
+        INX   H
+        INR   B
+        MOV   A,B
+        CPI   3+1                ;THREE MAXIMUM PAGE NUMBERS
+        JC    PRHC6
+        CALL  BCKSP2
+        CALL  BCKSP1            ;DO NOT ALLOW A TOO-LONG LINE
+        JMP   PRHC6
+;
+;
+; ASK FOR STOPPING PAGE
+;
+PRHC8:  LXI   H,MSG11            ;TURN UP A NEW LINE
+        CALL  WASC
+        LXI   H,MSG1F
+        CALL  WASC
+        MVI   B,0
+        LXI   H,PAGEQ+2          ;QUITTING PAGE STORAGE
+;
+PRHC9:  CALL  INPUT
+        CPI   CR
+        JZ    PRHC11
+        CPI   BS
+        JNZ   PRHC10
+        CALL  BCKSP
+        JMP   PRHC9
+;
+PRHC10: MOV   M,A
+        INX   H
+        INR   B
+        MOV   A,B
+        CPI   3+1                ;THREE MAXIMUM PAGE NUMBERS
+        JC    PRHC9
+        CALL  BCKSP2
+        CALL  BCKSP1             ;DO NOT ALLOW A TOO-LONG LINE
+        JMP   PRHC9
+;       
+PRHC11: LXI   H,MSG11            ;TURN UP A NEW LINE
+        CALL  WASC
+        RET
+;.....
+;
+;
+; READ CHAR FROM DISK
+;
+RDCHR:  PUSH  B
+        PUSH  D
+        LXI   D,BUFREC+80H       ;ONE BYTE PAST BUFFER STOP ADDRESS
+        LHLD  DBUFI              ;BUFFER START ADDRESS
+        MOV   A,H                ;SEE IF READY TO GET DISK SECTOR
+        CMP   D
+        JC    NOREAD             ;IF NOT CONTINUE READING
+;
+        LXI   D,FCB              ;OTHERWISE GET NEXT RECORD FROM DISK
+        MVI   C,RNFC
+        CALL  ENTRY
+        ORA   A
+        LXI   H,MSG4             ;EARLY END?
+        JNZ   ERXIT              ;JUMP IF SO
+        LXI   H,BUFREC           ;POINTERS TO START OF BUFFER
+;
+NOREAD: MOV   A,M                ;GET CHAR
+        INX   H
+        SHLD  DBUFI
+        POP   D                  
+        POP   B
+        CPI   'Z'-40H            ;EOF?
+;
+;
+; IF CNTL-Z, ABORT READ ROUTINE AND PRINT THE FILE - END OF FILE MARKER
+;
+        JZ    PRNT
+        RET
+;.....
+;
+;
+; OPTION FOR ROLL PAPER (CHANGES FANFOLD AREAS)
+;
+RPAPER: LXI   H,MSG1B
+        CALL  WASC
+        CALL  INPUT
+        CPI   'Y'
+        JNZ   PRAP1              ;IF NOT, EXIT
+;
+        MVI   A,21H              ;'LXI  H,' INSTRUCTION
+        STA   CKST3
+        MVI   A,0CDH             ;'CALL' INSTRUCTION
+        STA   CKST3+3
+        LXI   H,WASD
+        SHLD  CKST3+4
+        LXI   H,QUITR
+        SHLD  CKST3+1            ;STARTS FIRST PAGE WITH TEAR TABS
+        SHLD  ROLL2+1            ;FINISHES LAST PAGE WITH TEAR TABS
+        SHLD  WRBUF2+1           ;FINISHES EACH PAPGE WITH TEAR TABS
+        LXI   H,HEAD1
+        SHLD  CKST4+1            ;START FIRST PAGE
+        SHLD  WRBUF3+1           ;STARTS NEW PAGE
+;
+PRAP1:  LXI   H,MSG11
+        CALL  WASC
+        RET
+;.....
+;
+;
+; ROLL UP PAGE TO TERMINATE
+;
+ROLL:   MVI   A,CR
+        CALL  HCOPY1             ;SEND
+;
+ROLL1:  MVI   A,LF
+        CALL  HCOPY1             ;SEND
+        LDA   LCNT
+        INR   A
+        STA   LCNT
+        CPI   54
+        JC    ROLL1
+;
+ROLL2   LXI   H,QUIT             ;FINAL LINES TO FINISH PAGE
+        JMP   WASD
+;.....  
+;
+;
+; SET "DMA" ADDRESS TO 'BUFOUT' LOCATION FOR OUTPUT TO DISK
+;
+SETO:   MVI   C,SDMA
+        LXI   D,BUFOUT
+        CALL  ENTRY
+        RET
+;.....
+;
+;
+; SET "DMA" ADDRESS TO 'BUFREC' LOCATION FOR INPUT FROM DISK
+;
+SETR:   MVI   C,SDMA
+        LXI   D,BUFREC
+        CALL  ENTRY
+        RET	
+;.....
+;
+;
+; SEE IF READY TO TERMINATE
+;
+;
+TERM:   PUSH  B                  ;SAVE THE VALUES
+        PUSH  D
+        PUSH  H
+        MVI   C,KSTAT            ;READ CONSOLE STATUS
+        CALL  ENTRY
+        ANI   1                  ;CRT HAVE A CHAR.?
+        POP   H
+        POP   D
+        POP   B
+        JNZ   INPUT              ;ELSE GET THE CHAR.
+        RET
+;.....
+;
+;
+; WAC - WRITE ASCII CHARACTER TO DISK OR TO LIST DEVICE/CRT
+;
+WAC:    CPI   SI                 ;SYNCH IDLE CHAR.?
+        RZ                       ;IF YES, IGNORE
+;
+        PUSH  PSW                ;SAVE THE CHARACTER IN 'A' REG.
+        LDA   HCFLG              ;MAKING HARD COPY THIS TIME?
+        ORA   A
+        JNZ   HCOPY              ;IF YES, GO WRITE TO LIST DEVICE
+        POP   PSW
+        JMP   WACD               ;OTHERWISE WRITE TO DISK
+;.....
+;
+;
+; WACC - WRITE ASCII CHARACTER TO CONSOLE
+; ENTRY CONDITIONS:
+;
+;       'A'     CHARACTER TO WRITE
+;
+WACC:   PUSH  H
+        PUSH  D
+        PUSH  B
+        PUSH  PSW
+        MOV   E,A
+        MVI   C,WCFC
+        CALL  ENTRY 
+        POP   PSW
+        POP   B
+        POP   D
+        POP   H
+        RET
+;.....
+;
+;
+; WACD - WRITE ASCII CHARACTER TO DISK
+;
+WACD:   PUSH  H
+        PUSH  PSW
+        LDA   DBUFC
+        CPI   128
+        JC    WACD1
+        CALL  WRREC
+        LXI   H,BUFOUT
+        SHLD  DBUFO
+        XRA   A
+;
+WACD1:  INR   A
+        STA   DBUFC
+        POP   PSW
+        LHLD  DBUFO
+        MOV   M,A
+        INX   H
+        SHLD  DBUFO
+        POP   H
+        RET
+;.....
+;
+;
+; WASC - WRITE ASCII STRING TO CONSOLE
+; ENTRY CONDITIONS:
+;
+;       'HL'    'FWA' OF STRING (TERM. BY ZERO BYTE)
+ 
+WASC:   MOV   A,M
+        ORA   A
+        RZ
+        CALL  WACC
+        INX   H
+        JMP   WASC
+;.....
+;
+;
+; WASD - WRITE ASCII STRING TO DISK
+; ENTRY CONDITIONS:
+;
+;       'HL'    'FWA' OF STRING (TERM. BY ZERO BYTE)
+;
+WASD:   MOV   A,M
+        ORA   A
+        RZ
+        CALL  WAC                ;WRITE THE ASCII CHAR.
+        INX   H
+        JMP   WASD
+;.....
+;
+; 
+; WEOLC - WRITE END OF LINE TO CONSOLE
+;
+WEOLC:  MVI   A,CR
+        CALL  WACC
+        MVI   A,LF
+        CALL  WACC
+        RET
+;.....
+;
+;
+; WEOLD - WRITE END OF LINE TO DISK
+; 
+WEOLD:  MVI   A,CR
+        CALL  WAC                ;WRITE THE ASCII CHAR.
+        MVI   A,LF
+        CALL  WAC                ;WRITE THE ASCII CHAR.
+        RET
+;.....
+;
+;
+; WRITE THE 'OBUF' LINE INTO THE DISK BUFFER
+;
+WRBUF:  LDA   HCFLG              ;PRINTING HARD COPY?
+        ORA   A
+        JZ    WRBUF1             ;IF NOT, EXIT RIGHT AWAY
+        CALL  TERM               ;WANT TO TERMINATE?
+        LDA   START              ;ALREADY PRINTING?
+        ORA   A
+        CZ    CKST               ;IF NOT, CHECK WHEN READY
+;
+WRBUF1: LXI   H,PRBUF            ;INCLUDE ANY NEEDED LEADING SPACES
+        CALL  WASD               ;WRITE INTO THE BUFFER
+        CALL  WEOLD              ;FINISH THE CR-LF AT END OF LINE
+        LDA   HCFLG              ;WRITING HARD COPY?
+        ORA   A
+        RZ                       ;EXIT IF NOT
+;
+        LDA   LCNT
+        INR   A
+        STA   LCNT
+        CPI   54
+        RC                       ;EXIT IF LESS
+        XRA   A
+        STA   LCNT               ;OTHERWISE RESET THE COUNT
+        PUSH  H
+        PUSH  B
+        CALL  NMBR               ;INCREMENT PAGE COUNT IN HEADING
+        POP   B
+;
+WRBUF2: LXI   H,QUIT
+        CALL  WASD
+        CALL  CKSP               ;CHECK ON STOP REQUEST
+;
+WRBUF3: LXI   H,HEAD             ;SEND NEW PAGE START
+        CALL  WASD
+        POP   H
+        RET   
+
+;.....
+;
+;
+; WRREC - WRITE RECORD TO DISK
+;
+WRREC:  PUSH  H
+        PUSH  D
+        PUSH  B
+        LXI   D,TFCB
+        MVI   C,WRFC
+        CALL  ENTRY
+        LXI   H,MSG8             ;WRITE ERROR?
+        ORA   A                  
+        JNZ   ERXIT              ;JUMP IF SO
+        POP   B
+        POP   D
+        POP   H
+        RET
+;.....
+;
+;
+        ORG   0C00H              ;'BUFREC' NEEDS TO BE ON A HALF-PAGE
+;
+;
+STACK   EQU   $                  ;LOCAL STACK
+;
+BUFOUT: DS    128                ;1-PAGE OUTPUT BUFFER
+;
+BUFREC: DS    128                ;1-PAGE INPUT BUFFER
+;
+SPBUF:  DS    16                 ;SPECIAL BUFFER FOR END-OVER USE
+;
+FNT:    DS    0                  ;FILE NAME TABLE STARTS HERE
+;
+        END   BEGIN
+
+

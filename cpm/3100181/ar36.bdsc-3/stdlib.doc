@@ -1,0 +1,390 @@
+ 
+                        BDS C Standard Library Summary
+                         v1.46 Edition --  March, 1982
+ 
+                                  Leor Zolman
+                                  BD Software
+                                33 Lothrop st.
+                        Brighton, Massachussetts 02135
+ 
+ 
+     This document contains an alphabetic summary of ALL general-purpose utiliy
+functions  included  in the BDS C package spread among several different source
+files.  Note that there  are  quite  a few more functions listed here than than
+apppear in the BDS C User's Guide; some  functions  were  intentionally omitted
+from the User's Guide for portability reasons, and many others  have  come into
+existence since the last revision of the User's Guide.  
+ 
+     The summary is organized by columns.  
+ 
+The  first column shows the type of the result returned by the function.    The
+second column shows the calling syntax and parameter types (if not int).  
+ 
+The next  column  shows a code naming the source file in which the function may
+be found;  the codes are as follows:  
+
+        C1      for STDLIB1.C
+        C2      for STDLIB2.C
+        D2      for DEFF2.CSM
+        D2A     for DEFF2A.CSM
+        FLT     for FLOAT.C
+        DIO     for DIO.C
+ 
+The next column tells  the  page  number  in  the  BDS C User's Guide where the
+function is documented, if the function appears in the User's Guide at all. For
+any  function  that  isn't documented in the User's Guide,  there  is  probably
+documentation available  in  the  source  listing for that function (the source
+location is given in the preceding column.) 
+ 
+The  final  column  contains references to a set  of  footnotes  following  the
+function list. If a function has an entry in the NOTE column, the corresponding
+footnote (or notes) should  be  examined  for  additional information about the
+function.  
+ 
+
+TYPE     FUNCTION                                                 FILE PG NOTES
+----     --------                                                 ---- -- -----
+
+int      abs(a,b) int a,b;                                         C1   32
+char *   alloc(nbytes) unsigned nbytes;                            C1   37 14
+char *   atof(op1,s) char op1[5], *s;                              FLT     1
+int      atoi(str) char *str;                                      C1   44
+int      bdos(c,de)                                                D2   30 2
+char     bios(n,c)                                                 D2   30
+int      call(addr,a,h,b,d) unsigned addr;                         D2   32
+char     calla(addr,a,h,b,d) unsigned addr;                        D2   32
+int      close(fd)                                                 D2   46
+         clrplot()                                                 D2A  54
+char *   codend()                                                  D2   36
+int      creat(filename) char *filename;                           D2   46
+char     csw()                                                     D2   30
+         dioflush()                                                DIO
+         dioinit(&argc,argv) int *argc; char **argv;               DIO
+
+BDS C Library Summary, v1.46            1
+î
+
+char *   endext()                                                  D2   36
+int      exec(filename) char *filename;                            D2   34 3
+int      execl(filename,arg1, arg2, ..., NULL) char *filename;     D2   35 3
+int      execv(filename,argvector) char *filename, **argvector;    D2   35 3,16
+         exit(n)                                                   D2   30
+char *   externs()                                                 D2   36
+         fabort(fd)                                                D2   47 17
+char *   fcbaddr(fd)                                               D2   53
+int      fclose(iobuf) FILE *iobuf;                                C1   51
+int      fcreat(filename, iobuf) char *filename; FILE *iobuf;      C1   50
+int      fflush(iobuf) FILE *iobuf;                                C1   51 7
+int      fgets(str,iobuf) char *str; FILE *iobuf;                  C2   52 6,11
+int      fopen(filename,iobuf) char *filename; FILE *iobuf;        C1   48
+char *   fpadd(res,op1,op2) char res[5], op1[5], op2[5];           FLT     1
+int      fpcomp(op1, op2) char op1[5], op2[5];                     FLT
+char *   fpdiv(res,op1,op2) char res[5],op1[5],op2[5];             FLT     1
+char *   fpmult(res,op1,op2) char res[5],op1[5],op2[5];            FLT     1
+int      fprintf(format, arg1, arg2, ...) char *format;            C2   51 4,9
+char *   fpsub(res,op1,op2) char res[5],op1[5],op2[5];             FLT     1
+int      fputs(str,iobuf) char *str; FILE *iobuf;                  C2   53 6,12
+         free(allocptr) unsigned allocptr;                         C1   37 14
+int      fscanf(iob,fmt,&arg1,&arg2,...) FILE *iob; char *fmt;     C2   52 4,10
+char *   ftoa(s1,op1) char *s1; char op1[5];                       FLT
+int      getc(iobuf) FILE *iobuf;                                  C1   49 8
+int      getchar()                                                 D2   38 20
+int      getline(str,maxlen) char *str;                            D2A     18
+char *   gets(str) char *str;                                      D2   40 5
+int      getval(strptr) char **strptr;                             C1   45
+int      getw(iobuf) FILE *iobuf;                                  C1   50
+int      index(str,substr) char *str, *substr;                     D2A     18
+         initb(array,string) char array[], *string;                C1   44
+         initw(array,string) int array[]; char *string;            C1   44
+char     inp(port)                                                 D2   31
+int      isalpha(c) char c;                                        C1   41
+int      isdigit(c) char c;                                        C1   42
+int      islower(c) char c;                                        C1   42
+int      isspace(c) char c;                                        C1   42
+int      isupper(c) char c;                                        C1   41
+char *   itoa(str, n) char *str;                                   FLT
+char *   itof(op1, n) char op1[5];                                 FLT     1
+int      kbhit()                                                   D2   39
+         line(c,x1,y1,x2,y2) char c;                               D2A  54
+int      longjmp(jbuf) char jbuf[JBUFSIZE];                        D2A
+int      max(n1,n2)                                                C1   32
+int      min(n1,n2)                                                C1   32
+         movmem(source,dest,count) char *source, *dest;            D2   34
+int      nrand(n [,prompt] or [,n1,n2,n3]) char * prompt;          D2   33
+int      open(filename,mode) char *filename; int mode;             D2   46
+         outp(port,val) char port, val;                            D2   31
+         pause()                                                   D2   31
+char     peek(port) char port;                                     D2   31
+         plot(x,y,c) char c;                                       D2A  54
+char     poke(addr, val) unsigned addr; char val;                  D2   31
+         printf(format, arg1, arg2, ...) char *format;             C2   40 4,9
+int      putc(c,iobuf) char c; FILE *iobuf;                        C1   50
+         putch(c) char c;                                          D2   39
+         putchar(c) char c;                                        D2   39 20
+         puts(str) char *str;                                      C2   40
+         putw(w,iobuf) int w; FILE *iobuf;                         C1   51
+         qsort(base,nel,width,cmp) char *base; int (*cmp)();       C1   34
+int      rand()                                                    D2   33
+
+BDS C Library Summary, v1.46            2
+î
+
+unsigned rcfsiz(fd)                                                D2A
+int      read(fd, buffer, nsecs) char *buffer;                     D2   47
+int      rename(oldname, newname) char *oldname, *newname;         D2   46
+int      rread(fd, buffer, nsecs) char *buffer;                    D2A     15
+int      rseek(fd, offset, origin)                                 D2A     15
+int      rsrec(fd)                                                 D2A     15
+         rsvstk(n)                                                 D2   38
+int      rtell(fd)                                                 D2A     15
+int      rwrite(fd, buffer, nsecs) char *buffer;                   D2A     15
+char *   sbrk(nbytes)                                              D2   37
+int      scanf(format, &arg1, &arg2, ...) char *format;            C2   42 4,10
+int      seek(fd, offset, origin)                                  D2
+         setfcb(fcbaddr, filename) char *filename;                 D2   53
+int      setjmp(jbuf) char jbuf[JBUFSIZE];                         D2A
+         setmem(addr, count, byte) char *addr; char byte;          D2   33
+         setplot(base,xsize,ysize)                                 D2A  53
+         sleep(ntenths)                                            D2   31
+         sprintf(str,format,arg1,arg2,...) char *str, *format;     C2   42 4,9
+         srand(n)                                                  D2   32
+         srand1(str) char *str;                                    D2   32
+int      sscanf(str,format,&arg1,&arg2,...) char *str, *format;    C2   42 10
+         strcat(s1, s2) char *s1, *s2;                             C1   43
+int      strcmp(s1, s2) char *s1, *s2;                             C1   43
+         strcpy(s1, s2) char *s1, *s2;                             C1   43
+int      strlen(str) char *str;                                    C1   44
+         swapin(filename,addr) char *filename; unsigned addr;      C2   36
+int      tell(fd)                                                  D2   48
+char     tolower(c) char c;                                        C1   42
+char *   topofmem()                                                D2   36 19
+char     toupper(c) char c;                                        C1   42
+         txtplot(string,x,y,ropt) char *string;                    D2A  54
+         ungetc(c,iobuf) char c; FILE *iobuf;                      C1   50
+         ungetch(c) char c;                                        D2   39
+         unlink(filename) char *filename;                          D2   46
+int      write(fd, buffer, nsects) char *buffer;                   D2   47
+ 
+ 
+NOTES:  
+ 
+ 
+1.   This floating point function returns a pointer  to a 5-byte floating point
+     object, represented in a character array of length 5.  
+ 
+2.   The "bdos" function returns HL equal to the value  left  there by the BDOS
+     itself.  Under  standard  CP/M,  8-bit  values are returned in  L  with  H
+     cleared, and 16-bit values are returned in  HL.  Other "CP/M-like" systems
+     do not always follow this convention, though, and  the "bdos" function may
+     take rewriting in order to work with certain system  calls  under  systems
+     such as "SDOS".  
+ 
+3.   Unless an error occurs, this function should never return at all.  
+ 
+4.   Note   that   all  the  upper-level  formatted  I/O  functions  ("printf",
+     "fprintf", "scanf",  and  "fscanf")  now  use  "_spr" and "_scn" for doing
+     conversions. While this leads to very modularized  source  code,  it  also
+     means  that calls to "scanf" and "fscanf" must process ALL the information
+     on a line  of  text  if  the  information is not to be lost; if the format
+     string runs out and there is still  text left in the line being processed,
+     the text will be lost (i.e., the NEXT  scanf  or fscanf call will NOT find
+     it.) 
+ 
+
+BDS C Library Summary, v1.46            3
+î
+
+     An alternate version of "_spr" (the low-level output  formatting function)
+     is  given  in  the file FLOAT.C for use with floating point  numbers;  see
+     FLOAT.C for details. Since "_spr" is used by "printf", this really amounts
+     to an alternate version of "printf." 
+ 
+     Also note that temporary  work  space  is  declared  within  each  of  the
+     high-level  functions  as  a  one-dimensional  character array. The length
+     limit  on  this  array  is  presently  set to 132 by the   define  MAXLINE
+     statement  in  BDSCIO.H;  if you intend to  create  longer  lines  through
+     printf, fprintf,  scanf,  or  fscanf calls, be SURE to raise this limit by
+     changing the  define statement.  
+ 
+5.   Note that the "gets" function (which  simply  buffers up a line of console
+     input at a given buffer location) terminates the  line  with  a  null byte
+     ('\0') WITHOUT any CR or LF.  
+ 
+6.   The  conventional  CP/M  text  format calls for each line in a file to  be
+     terminated by a carriage-return/linefeed  combination.  In  the world of C
+     programming,  though,  we like to just use a single linefeed (known  as  a
+     "newline") to terminate  lines.  AND  SO,  the  functions  which deal with
+     reading  and  writing text lines from disk files to memory and  vice-versa
+     ("fgets", "fputs")  take  special pains to convert CR-LF combinations into
+     single '\n' characters when  reading from disk ("fgets"), and convert '\n'
+     characters to CR-LF combinations  when  writing  TO  disk  ("fputs"). This
+     allows the C programmer to do things in style, dealing only  with a single
+     line  terminator  while  the text is in memory, while maintaining  compat-
+     ibility with the CP/M text  format for disk files (so that, for example, a
+     text file can be "type"d under the CCP.) 
+ 
+7.   Remember to put out a CPMEOF  (control-Z  or 0x1a) byte at the end of TEXT
+     files being written out to disk.  
+ 
+8.   Watch out when reading in text files using  "getc".  While  a text file is
+     USUALLY terminated with a control-Z, it MAY NOT BE if the file  ends on an
+     even  sector boundary (although respectable editors will now usually  make
+     sure the  control-Z  is  always  there.)  This  means  that  there are two
+     possible return values from "getc" which can signal an End-of file: CPMEOF
+     (0x1a)  or  ERROR (-1, or 255 if you assign it to a char variable)  should
+     the CPMEOF be missing.  
+ 
+9.   Since the "_spr"  function  is  used  to  form the output string, and then
+     "puts"  is used to actually print it out, care  must  be  taken  to  avoid
+     generating  null  (zero)  bytes  in  the  output,  since  such a byte will
+     terminate printing of the string by puts. Thus, a statment such as:  
+     
+                     printf("%c foo",'\0');
+ 
+     would not actually print anything at all.  
+ 
+10.  The "%s" termination character has been changed from "any white  space" to
+     the character following the "%s" specification in the format string.  That
+     is, the call 
+     
+                     sscanf(string, "%s:", &str);
+ 
+     would  ignore  leading  white  space  (as  is  the  case  with  all format
+     conversions),  and  then  read in ALL subsequent text (including newlines)
+     into the buffer "str" until a COLON or null byte is encountered.  
+ 
+11.  fgets  is  a  little  tricky due  to  the  CP/M  convention  of  having  a
+     carriage-return AND a linefeed character at the end of every text line. In
+
+BDS C Library Summary, v1.46            4
+î
+
+     order to make text easier  to  deal  with  from  C programs, this function
+     (fgets) automatically strips off the CR from any CR-LF  combinations  that
+     come in from the file. Any CR characters not immediately followed by a  LF
+     are left intact. The LF is included as part of the string, and is followed
+     by  a  null  byte.  There is no limit to how long a line can be here; care
+     should be taken  to make sure the string pointer passed to fgets points to
+     an area large enough  to  accept  the largest expected line length (a line
+     must be terminated by a newline (LF)  character  before  it  is considered
+     terminated).  
+ 
+     The  value  NULL,  NOT  EOF, is returned on end-of-file, whether it  be  a
+     physical end-of-file (attempting  to read past last sector of the file) OR
+     a logical end-of-file (encountered a control-Z.) 
+ 
+12.  The "fputs" function writes a string  out  to  a buffered output file. The
+     '\n' character is expanded into a CR-LF combination,  in  keeping with the
+     CP/M convention. If a null ('\0') byte is encountered before  a newline is
+     encountered,  then  there  will  be  NO  automatic  termination  character
+     appended to the line, thus allowing partial lines to be written.  
+ 
+13.  When  managing  overlays,  the  "swapin"  function may be used by the root
+     segment to swap in overlay code segments from  disk.  The provided version
+     does NOT check to make sure that the code yanked  in  doesn't overlap some
+     data areas that may lie above the swapping area in memory.  
+ 
+14.  The  storage allocation routines were taken from chapter  8  of  K&R,  but
+     simplified  to  ignore  the storage allignment problem and not bother with
+     the "morecore" hack (a call  to  "sbrk"  under  CP/M is a relatively CHEAP
+     operation,  and  can  be done on every call to "alloc"  without  degrading
+     efficiency.) Note that compilation of "alloc" and "free" is disabled until
+     the " define ALLOC_ON 1"  statement  is  un-commented  in  the header file
+     ("BDSCIO.H"). This is done so that the external storage required  by alloc
+     and free isn't declared unless the user actually needs the alloc and  free
+     functions.  
+ 
+15.  The  random-record  file  I/O  functions  are  a  direct  interface to the
+     random-record BDOS functions provided by CP/M versions 2.0  and above, but
+     not available for pre-2.0 CP/M systems. Because of the non-portability  of
+     these functions, they have not been heavily advertised in the BDS C User's
+     Guide  (i.e.,  they  are  not  mentioned  at  all). The "rread", "rwrite",
+     "rseek"  and  "rtell"  functions  work  just  like the  functions  "read",
+     "write", "seek" and "tell", respectively, except  that  they do things via
+     the  random-record  fields  of  the  file's FCB. The "rsrec" and  "rcfsiz"
+     function simply take a file descriptor  of  an open file and perform their
+     namesake  BDOS  operation on the given file, but  in  addition  they  also
+     return the value  computed.  Thus, "rcfsiz" may be used to quickly compute
+     the size of a file under CP/M 2.x.  
+ 
+16.  The  "execv" function no longer  prints  out  "Broken  Pipe"  upon  error;
+     instead, it has the more conventional behavior of returning -1 (ERROR) and
+     letting the user perform diagnostics.  
+ 
+17.  "fabort"  should  not be used under systems like MPM-II in which all files
+     MUST be closed, whether they are open for input or output, in order not to
+     run out of file descriptors and hang the system.  
+ 
+18.  New for v1.46 (see the v1.46 documentation addenda sheet for details.) 
+ 
+19.  Modified for v1.46  to  detect  when  "NOBOOT"  has  been  invoked  on the
+     currently  executing program, and return an adjusted value for the end  of
+     available user-memory.  
+
+BDS C Library Summary, v1.46            5
+î
+
+20.  When the DIO  package  is  linked  in  to a program, alternate versions of
+     "getchar" and "putchar", whose sources are in DIO.C, get used.  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+BDS C Library Summary, v1.46            6
+î

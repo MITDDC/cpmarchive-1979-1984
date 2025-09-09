@@ -1,0 +1,63 @@
+
+                         XTCPM.DOC
+                       11/22/81   RLP
+
+REV 1.5 dated 12/13/81
+XTCPM  now  patches the CCP to allow changing/logging  drive  and             
+user area all on the same command line.  i.e,   B: 10 logs you to             
+B  drive,  user  10.   The USER command also still works  but  no             
+error  message is given if a user number is not specified on  the             
+command   line  (a  minor  glitch  for  this  change  which   was 
+accomplished with no additional code.)
+
+REV 1.4 dated 12/4/81
+Major revision that removes the need for naming transients in the 
+CCP  command  table  and their addresses in  the  address  table. 
+Designation   of  transients  for  password  protection  is   now 
+accomplished  simply by placing them in USERs 13,  14,  or 15  on 
+drive  A  for  password levels 0,  1,  or  2  respectively.   The 
+directory on drive A will be universal at each password level  to 
+include all transients up to the password level achieved.
+
+*** RESTRICTION ***  WHEN CHANGING FILE ATTRIBUTES WITH STAT,  BE 
+SURE  THAT YOU ARE LOGGED TO THE USER AREA ON 'A' DRIVE THAT  THE 
+FILE  IS ACTUALLY IN.   OTHERWISE,  THE FILE WILL BE OWNED BY THE 
+LOGGED  USER AREA..  FOR THAT REASON ALSO,  DO NOT USE WILD  CARD 
+SETTING  OF FILE ATTRIBUTES ON 'A'.   GOOD IDEA TO WRITE  PROTECT 
+YOUR SYSTEM DISK ON 'A' ONCE YOU HAVE SET IT UP FOR TRANSIENTS IN 
+13,  14,  AND  15  SO  THAT  FILE  ATTRIBUTES  CAN'T  BE  CHANGED 
+INADVERTENTLY.
+                         * * * * * *
+
+This  program  allows  you to expand your system by  one  or  two 
+Kbytes  without  the  need for a  special  SYSGEN  program.   The 
+additional  code is loaded directly above CP/M by the CCP  itself 
+and thus does not require any movers in the code.   This is  done 
+in  such  a  manner as not to clobber anything in  the  TPA  when 
+loading.   The  additional code is contained in a transient  that 
+you must keep on your system disk and which is formed at the same 
+time  as formation of a patched CPMxx.COM file that you make with 
+DDT  and XTCPM.HEX.   The DDT overlay value is calculated in  the 
+PRN file and when using that value to patch in all of the patches 
+in XTCPM.ASM, the code from 100H is exactly the code you need for 
+the  transient  so all you have to do is SAVE 4 if it is  1KB  or 
+SAVE  8 if it is 2KB.   The saved CPMxx.COM file is then sysgened 
+using your normal SYSGEN program.
+
+The  specific  implementation  here provides for  additional  CCP 
+commands and pseudo CCP commands that are transients kept in USER 
+13,  14  or  15  on drive A (depending  on  password  level)  and 
+available  from any logged drive/user.   It also provides for two 
+levels of password protection such that certain commands can only 
+be executed at the 2nd level, others at the first level and a few 
+at level 0, i.e, before the password is entered.
+
+This  should work with any CP/M 2.2 system wherein the CCP is  in 
+the original 8080 code provided by DRI.   It has been tested with 
+Lifeboat  CP/M  for  North  Star as well  as  North  Star's  CP/M 
+product.   It  has also been tested with a standard  CP/M  system 
+using a Micromation Doubler.  If after assembling for your system 
+size,  the  location  of the BIOS in the PRN file does not  agree 
+with  your  system,  simply change the ADJUST value in  the  BIOS 
+equate  until it does.   Also,  make sure that the code  for  the 
+USER2 code area appears at 100H after doing the DDT overlay.

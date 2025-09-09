@@ -1,0 +1,933 @@
+	title	MODEM	File transfer program for MICROS <-> TOPS-20
+
+;	Written By Bill Westfield for SRI International Networks Group
+;	Bugs/suggestions/uestions to BillW@SRI-KL
+
+	DEBUG==1
+
+comment	~
+
+	This program is a Tops-20 implementation of the defacto-standard
+	MODEM2 File Transfer Protocol as devised by Ward Christensen?.
+
+	The protocol itself is documented in SRI-KL:<MICRO>MODEM2.PROTO
+
+	This program attempts to implement to standard user interface,
+	IE you type commands like:
+
+	MODEM <options><suboptions> FILE
+	to the Twenex EXEC
+
+
+	Hooks are included to use an autodialer or a TTY line when
+	the Tops-20 system is the "Master" console...
+
+	~
+
+
+
+	search	MONSYM,MACSYM
+
+F==	0
+P==	17
+A==	15
+B==	16
+CHKSUM= 13
+RECNUM= 14
+
+EOT==	"D"-100
+ACK==	"F"-100
+NAK==	"U"-100
+SOH==	"A"-100
+SUB==	"Z"-100
+
+F%S==	1,,0				;view sent characters
+F%R==	2,,0				;view received characters
+F%V==	4,,0				;view data only
+F%T==	10,,0				; go into terminal mode
+F%E==	20,,0				; go into echo mode
+F%D==	40,,0				;disconnect when done
+F%Q==	100,,0				;transfer without messages
+F%A==	200,,0				;ascii
+F%B==	400,,0				;binary
+F%DEB== 1000,,0				;debug connection to PTY open
+F%CAP== 2000,,0				;capabilities were enabled
+F%COMM==4000,,0				;go to command mode
+
+ifndef DEBUG,<DEBUG==0>
+
+BUFSIZ==200				; 128 character buffers
+
+opdef	call [pushj P,0]
+opdef	ret  [popj P,0]
+
+BEGCTR== 0
+SAVCTR== 0
+
+DEFINE %IF
+<BEGCTR==BEGCTR+1
+ JRST <%GTNAM(BEG,\BEGCTR)>
+ SAVCTR==SAVCTR+1
+ %STNAM(SAV,\SAVCTR,BEGCTR)>
+
+DEFINE %ELSE
+<%VAL==%GTNAM(SAV,\SAVCTR)
+ BEGCTR==BEGCTR+1
+ JRST <%GTNAM(BEG,\BEGCTR)>
+ %STNAM(BEG,\%VAL,.)
+ %STNAM(SAV,\SAVCTR,BEGCTR)>
+
+DEFINE %END
+<%VAL==%GTNAM(SAV,\SAVCTR)
+ SAVCTR==SAVCTR-1
+ %STNAM(BEG,\%VAL,.)>
+
+DEFINE %GTNAM(VAR,IND) <VAR'IND>
+
+DEFINE %STNAM(VAR,IND,VAL) <VAR'IND=VAL>
+
+
+
+START:	reset
+	movei	1,.priou
+	rfcoc
+	dmovem	2,OLDCOC
+	dmove	2,[byte(2) 1,1,1,1,1,1,1,1,2,3,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1] ;echo CR, LF, BS, and TAB properly
+	sfcoc
+	rfmod
+	movem	2,OLDMOD
+
+; No system messages please!
+	movx	1,.CTTRM		;Get current refuse
+	movx	2,.MORNT		; seting.
+	mtopr
+	movem	2,OLDSYS#		;Old sys message status.
+	movx	2,.MOSNT		;For sys messages.
+	movx	3,.MOSMN		;Turn them off.
+	mtopr
+
+; Clear and refuse links
+
+	movx	1,<TL%CRO!TL%COR!TL%SAB!TL%STA!.CTTRM>
+	seto 	2,			;Clear all links.
+	tlink
+	 trn
+	
+	move	P,PDLPTR
+	movei	1,.FHSLF		;enable interupts
+	move	2,[LEVTAB,,CHNTAB]
+	sir				; just like in the book
+	eir
+	hrlzi	2,400000		; just activate one channel
+	aic
+	movsi	1,(GJ%SHT)
+	hrroi	2,[asciz/MODEM-DEVICE:/]
+	gtjfn				;save device we are using as
+	 setz	1,			; the data channel (from previous
+	movem	1,MODDEV		;  invocation of MODEM)
+	jumpe	1,FRESH
+	move	2,[10b4 ! OF%RD ! OF%WR]
+	openf
+	 jrst	DEVERR
+	setz	2,
+	sfmod
+
+
+FRESH:	jumpn	1,.+3
+	movei	1,.priou
+	movem	1,MODDEV
+	setz	1,
+	rscan
+	 setz	1,
+	jumpe	1,NOCMDS		;no commands ?
+LOOK1:	pbin
+	cain	1,12
+	 jrst	NOCMDS
+	caie	1,40			;space indicates start of commands
+	 jrst	LOOK1
+	movei	1,.priin
+	hrroi	2,CMDBUF
+	movei	3,100
+	movei	4,12
+	sin				; get commands into buffer
+	cfibf				; discard any other input
+PARSE:	move	A,[point 7,CMDBUF]
+
+PRIMOP:	ildb	1,A			;get primary option
+	cain	1,40
+	 jrst	PRIMOP
+	caie	1,"r"
+	cain	1,"R"
+	 jrst	RECEIVE
+	caie	1,"s"
+	cain	1,"S"
+	 jrst	SEND
+	caie	1,"E"
+	cain	1,"e"
+	 jrst	ECHO
+	caie	1,"T"
+	cain	1,"t"
+	 jrst	TERMINAL
+	caie	1,"C"
+	cain	1,"c"
+	 jrst	DIAL
+	caie	1,"d"
+	cain	1,"D"
+	 jrst	DISCONNECT
+	caie	1,"x"
+	cain	1,"X"
+	 jrst	EXAMPLE
+
+HELP:	caie	1,"H"
+	cain	1,"h"
+	 skipa	1,[-1,,HLPTXT]
+	hrroi	1,[asciz/Use MODEM H for help
+/]
+	psout
+	jrst	CMDLP			;another comand, or exit
+
+NOCMDS:	setom	CMFLAG
+CMDLP:	call	SETTIM
+	 trn				;turn off interupts
+	tlzn	F,(F%CAP)
+	%IF
+	 movei	1,-5
+	 move	2,OLDTIW
+	 stiw				;restore previous Interupt word
+	 movei	1,.FHSLF
+	 rpcap
+	 move	3,OLDCAP
+	 epcap				;disable capabilities
+	%END
+	movei	1,.priou
+	move	2,OLDMOD
+	sfmod
+	trze	F,(F%COMMA)		;go to command mode ?
+	 setom	CMFLAG
+	trze	F,(F%T)			;go to terminal mode ?
+	 jrst	TERMINAL
+	trze	F,(F%E)			; or echo mode ?
+	 jrst	ECHO
+	trze	F,(F%D)
+	 jrst	DISCONNECT
+	skipn	CMFLAG
+	 jrst	HALT
+	hllz	F,F			;clear temporary bits
+	hrroi	1,[asciz/MODEM>/]
+	psout
+	hrroi	1,CMDBUF
+	move	2,[RD%BEL + 100]
+	hrroi	3,[asciz/MODEM>/]
+	rdtty
+	 jrst	CMDLP
+	jrst	PARSE			;execute the comand line
+
+HALT:	movx	1,.CTTRM
+	move	2,OLDSYS#		;Old sys message status.
+	movx	3,.MOSMN		; Restore state
+	mtopr
+	movei	1,.priou
+	dmove	2,OLDCOC
+	sfcoc				;restore control character echoing
+	haltf
+	haltf
+
+
+	subttl	SEND a file
+
+SEND:	call	SUBOPT			;get sub options
+	setzm	EOFFLG
+	movsi	1,(GJ%SHT ! GJ%OLD)
+	move	2,A
+	gtjfn
+	 jrst	SNDERR
+	call	IPNFIL			;open file depending on mode
+
+	skipn	1,MODDEV		; dialer or third line in use?
+	 move	1,.priou		;send to normal channel
+	movem	1,OUTJFN
+	setz	2,
+	sfmod
+	caie	1,.priou		; output directly to teminal ?
+	trne	F,(F%Q)			;  or noisy mode
+	%IF
+	 hrroi	1,[asciz/
+Block    /]
+	 psout
+	%END
+
+	setz	RECNUM,			;zero record number
+	call	GETCHR
+	caie	2,NAK			;wait for initial NAK
+	 jrst	.-2
+
+NEXT:	movei	1,12
+	movem	1,ERRCNT#
+	skipn	EOFFLG			;have we reached the end of the file ?
+	%IF
+	 movei	2,4			;if EOF then
+	 call	SNDCHR
+	 call	GETCHR			; and then wait for <ack> back
+	 call	CLSFIL
+	 jrst	CMDLP			; and exit
+	%END
+	call	GETBUF			;get a buffers worth from file
+	addi	RECNUM,1
+	movei	1,12
+	movem	1,TIMCNT		;reset timeout count
+AGAIN:	setz	CHKSUM,
+	call	SNDHEADER
+	move	2,[point 8,buffer]
+	movni	3,BUFSIZ
+	call	SNDSTR			;transmit the buffer
+	call	CSUM
+	move	2,CHKSUM
+	call	SNDCHR			;and follow with a check-sum
+ACKWAIT:
+	call	SETTIM			;set time limit for waiting
+	 jrst	AGAIN			; what to do if we time out
+	call	GETCHR			;wait for ACK or NAK
+	cain	2,6
+	 jrst	NEXT1			;all OK, transmit next sector
+	caie	2,"U"-100		; oh dear, a NAK...
+	jrst	ACKWAIT			;must be one or the other
+	sosle	ERRCNT#
+	 jrst	AGAIN			;  we will try again
+	hrroi	1,[asciz/10 consectutive NAKs received.  Transfer aborted
+/]
+	psout
+	jrst	CMDLP
+
+NEXT1:	move	1,OUTJFN
+	caie	1,.priou		; output not going directly to terminal
+	tlne	F,(F%Q)			; or noisy mode
+	%IF
+	 hrroi	1,[byte(7) 10,10,10]
+	 psout
+	 movei	1,.priou
+	 movei	2,(RECNUM)
+	 move	3,[NO%LFL + <3,,12>]
+	 nout
+	  trn
+	%END
+	jrst	NEXT
+
+SNDHEADER:
+	movei	2,1			;Start of heading
+	 call	SNDCHR
+	movei	2,(RECNUM)		; Record number
+	call	SNDCHR
+	setca	2,			; Not (Record Number)
+	call	SNDCHR
+	ret
+
+SNDERR:	hrroi	1,[asciz/SEND error
+/]
+	psout
+	jrst	ERRMSG
+
+	Subttl Receive A file
+
+RECEIVE:
+	call	SUBOPT			;get sub options
+	movsi	1,(GJ%SHT!GJ%FOU)
+	move	2,A
+	gtjfn
+	 jrst	RCVERR
+	call	OPNFIL			;open file depending on mode
+
+	skipn	1,MODDEV		; dialer or third line in use?
+	 move	1,.priou		;send to normal channel
+	movem	1,OUTJFN
+	setz	2,
+	sfmod
+	push	P,1
+	cain	1,.priou		;using control terminal ?
+	call	DISINT			; disable ^C interupts
+	pop	P,1
+	caie	1,.priou		; output directly to teminal ?
+	trne	F,(F%Q)			;  or noisy mode
+	%IF
+	 hrroi	1,[asciz/
+Block    /]
+	 psout
+	%END
+
+	setz	RECNUM,			;zero record number
+	setom	LSTREC			; never valid record number
+	movei	1,12
+	movem	1,TIMCNT		;reset time-out count
+SNDNAK:	movei	2,NAK
+	call	SNDCHR
+RCVLP:	setz	CHKSUM,
+	call	SETTIM
+	 jrst	SNDNAK			;what todo on time-out
+WAIT:	call	GETCHR			;should be SOH
+	cain	2,EOT			; end of file ?
+	 jrst	RCVDONE			; finished
+	caie	2,SOH
+	 jrst	WAIT
+	addi	CHKSUM,(2)
+	call	GETCHR			;record number
+	movem	2,RECSAV#		; save it...
+	addi	CHKSUM,(2)
+	call	GETCHR
+	addi	CHKSUM,(2)		;complemented record number
+	move	2,[point 8,BUFFER]
+	movni	3,BUFSIZ
+	call	GETSTR			;get the block
+	call	CSUM			;compute Check sum
+	call	GETCHR			;get foriegn computers check sum
+	andi	CHKSUM,377		;only 8 bits
+	caie	2,(CHKSUM)		; see if they match...
+	 jrst	SNDNAK
+
+;OK, we now have a valid block of data. Check if it is an "extra copy"
+
+	move	2,RECSAV		;get back record number
+	came	2,LSTREC		; same ?
+	 call	PUTBUF			;no, save buffer on disk
+	 movem	2,LSTREC		; and save record number
+	trne	F,(F%Q)			; Noisy mode ?
+	%IF
+	 hrroi	1,[byte(7) 10,10,10]
+	 psout
+	 movei	1,.priou
+	 move	3,[NO%LFL + <3,,12>]
+	 nout
+	  trn
+	%END	
+	movei	2,ACK
+	call	SNDCHR			;send positive acknoledgement
+	movei	1,12
+	movem	1,TIMCNT
+	jrst	RCVLP			; and get next block
+
+RCVDONE:
+	movei	2,ACK
+	call	SNDCHR
+	call	CLSFIL
+	jrst	CMDLP
+
+RCVERR:	hrroi	1,[asciz/RECEIVE error
+/]
+	psout
+	jrst	ERRMSG
+	Subttl	Make a call to TTY port or auto-dialer
+
+DIAL:	ildb	1,A			;get next character
+	cail	1,"a"
+	 subi	1,40			; upper-casify
+	cain	1,"T"
+	 jrst	TRYTTY			;try a terminal
+	cain	1,":"
+	 jrst	TRYHST			;try a host name
+	caig	1,"9"
+	caige	1,"0"			;is it a digit ?
+	 jrst	CALERR
+
+;;;*** Auto dialer code goes here
+
+	hrroi	1,[asciz/Sorry, no Autodialers yet.
+/]
+	psout
+	ildb	1,A
+	caig	1,"9"
+	caige	1,"0"
+	 trna
+	jrst	.-4
+	call	SUBOPT
+	jrst	CMDLP
+
+CALER1:	skipa	1,[-1,,[asciz/Illegal argument to "C" option
+/]]
+CALERR:	hrroi	1,[asciz/Error dialing number or acquiring TTY line
+/]
+	psout
+	jrst	ERRMSG
+
+
+
+	Subttl	make a "call" to a terminal line
+
+TRYTTY:	ildb	1,A			;next character
+	cail	1,"a"
+	 subi	1,40
+	caie	1,"T"			; also a T ?
+	 jrst	TTYNUM
+	ildb	1,A			; "Y"...
+	cail	1,"a"
+	 subi	1,40
+	caie	1,"Y"
+	 jrst	TTYNUM
+	ildb	1,A
+TTYNUM:	cain	1,"D"
+	 jrst	TDEBUG
+	setz	2,
+	caig	1,"9"
+	caige	1,"0"
+	 jrst	CALERR
+TTYLP:	imuli	2,10
+	addi	2,-60(1)
+	ildb	1,A
+	caig	1,"9"
+	caige	1,"0"
+	 jrst	TTYDON
+	jrst	TTYLP
+TTYDON:	push	P,2
+	seto	1,
+	adjbp	1,A
+	move	A,1			;back up byte pointer
+	call	SUBOPT			;get sub options
+	pop	P,2
+	call	OPNTTY
+	jrst	CMDLP
+
+OPNTTY:	hrroi	1,DEVNAM
+	addi	2,400000		;create device number
+	push	P,2
+	devst
+	 jrst	CALERR
+	movei	2,":"
+	idpb	2,1			;create name TTYnnn:
+	movei	1,.CLNJ1
+	hrroi	2,[asciz/MODEM-DEVICE/]
+	setz	3,			;delete old name, if any
+	crlnm
+	 trn
+	movei	1,.CLNJB
+	hrroi	2,[asciz/MODEM-DEVICE/]
+	hrroi	3,DEVNAM
+	crlnm
+	 jrst	CALERR
+	pop	P,1
+	asnd				;assign device to my job
+	 jrst	CALERR
+	hrroi	2,[asciz/MODEM-DEVICE:/]
+	movsi	1,(GJ%SHT)
+	gtjfn				; get a handle on it
+	 jrst	CALERR
+	movem	1,MODDEV
+	move	2,[10b4 ! OF%RD ! OF%WR]
+	openf				;and finally, open as modem device
+	 jrst	CALERR
+	setz	2,
+	sfmod
+	ret
+
+TDEBUG:	call	SUBOPT
+	hrroi	1,[asciz/Getting a PTY.../]
+	psout
+	tlo	F,(F%DEB)
+	move	1,['PTYPAR']
+	sysgt
+	hrrzm	1,FIRPTY#
+	movsi	1,(GJ%SHT)
+	hrroi	2,[asciz/PTY12:/]
+	gtjfn
+	 jrst	CALERR
+	movem	1,MODDEV
+	move	2,[10b5+of%rd+of%wr]
+	openf
+	 jrst	CALERR
+	dvchr
+	hrrzi	1,(1)			;get just unit number
+	add	1,FIRPTY
+	tro	1,400000		;change to TTY number
+	movem	1,PTYDD
+	movei	2,3
+	move	1,MODDEV
+	bout				;send ^C
+	jrst	CMDLP
+
+	Subttl	make a connection to a host, given its name.
+
+TRYHST:	hrroi	1,[asciz/Host names not supported yet.
+/]
+	psout
+	jrst	CMDLP
+
+define tba(HOSTNAME,DIALROUTINE)
+<	[asciz/HOSTNAME/],,<DIALROUTINE> >
+
+HSTTAB:	HSTLEN,,HSTLEN
+	tba	CRVAX,TRYHST		;CR's VAX 780
+	tba	IBMPC,TRYHST		;CR's IBM persoal computer
+	tba	VLSIVAX,TRYHST		;TSC's VLSI VAX 750
+
+HSTLEN== .-HSTTAB-1
+
+	Subttl	TERMINAL and ECHO modes
+
+TERMINAL:
+	trz	F,(F%S!F%R!F%V)		;dont view characters
+	movei	1,.priou
+	setz	2,
+	sfmod				;set 8 bit/no echo mode
+	cain	1,.priou		;using control terminal ?
+	 call	DISINT			;diable ^C, etc
+
+TERMLP:	movei	1,.priin
+	sibe
+	 jrst	GETTTY
+TSTPTY:	tlne	F,(F%DEB)
+	%IF
+	  move	1,MODDEV
+	  sibe
+	   jrst	GETMOD			;need to get a char from MODEM device
+	%ELSE
+	  move	1,PTYDD
+	  sobe
+	   jrst	GETMOD
+	%END
+	movei	1,400
+	disms
+	jrst	TERMLP
+
+GETTTY:	bin
+	move	1,MODDEV
+	cain	2,"E"-100
+	 jrst	CMDLP
+	bout
+	movei	1,.priin
+	sibe
+	 jrst	GETTTY
+	jrst	TSTPTY
+
+GETMOD:	move	1,MODDEV
+	bin
+	movei	1,.priou
+	bout
+	tlne	F,(F%DEB)
+	%IF
+	 move	1,MODDEV
+	 sibe
+	  jrst	GETMOD
+	%ELSE
+	 move	1,PTYDD#
+	 sobe
+	  jrst	GETMOD
+	%END
+	jrst	TERMLP
+
+
+ECHO:	jrst	TERMINAL
+
+	Subttl	Disconnect command
+
+DISCONNECT:
+	setzm	CMFLAG
+	move	1,MODDEV
+	hrli	1,(CO%NRJ)
+	closf				;close device
+	 trn
+	movei	1,(1)
+	dvchr
+	reld				;deassign it
+	 trn
+	movei	1,.CLNJ1
+	hrroi	2,[asciz/MODEM-DEVICE/]
+	setz	3,			;delete logical name...
+	crlnm
+	 trn
+	seto	1,
+	rljfn				; finally release the JFN
+	 trn
+	jrst	CMDLP
+
+	Subttl	TIMER routines
+
+;	Call is:
+;	pushj	P,SETTIM
+;	 <instruction to execute if time limit is exceeded>
+;
+;	SETTIM always takes the skip return
+;	 the instruction to be executed should be a jrst, as it
+;	is implemented by setting the interupt return address to
+;	that instruction.  if the instructio is TRN, then all
+;	interupts are cleared....
+
+SETTIM:	move	1,[.FHSLF,,.TIMAL]
+	setzb	2,3
+	timer
+	 trn
+	move	4,(P)
+	movem	4,INTINS
+	hlrz	4,(4)
+	cain	4,(trn)
+	 jrst	CPOPJ1
+	move	1,[.FHSLF,,.TIMEL]
+	movei	2,^d10000		;10 seconds
+	setz	3,
+	timer
+	 trn
+CPOPJ1:	aos	(P)
+CPOPJ:	ret
+
+INTER:	move	P,PDLPTR
+	sosl	TIMCNT#
+	 jrst	INTER2
+	hrroi	1,[asciz/10 Consecutive time-outs.  Aborting transfer
+/]
+	psout
+	jrst	CMDLP
+INTER2:	push	P,2
+ifn DEBUG,<hrrz 2,PCLEV1>		; the PC at which the timeout occured
+	push	P,INTINS		;alter return address
+	pop	P,PCLEV1
+	trne	F,(F%Q)
+	%IF
+	  push	P,1
+	  push	P,3
+	  hrroi	1,[asciz/ Timeout /]
+	   psout
+  ifn debug,<
+	  movei	1,.priou
+	  movei	3,10
+	  nout
+	   trn
+	  pop	P,3
+	  pop	P,1 >
+	%END
+	pop	P,2
+	debrk				;and dismis interupt
+
+
+DEVERR:
+EXAMPLE:
+ERRMSG:	move	P,PDLPTR
+	jrst	CMDLP
+
+SNDCHR:	move	1,OUTJFN
+	bout				;send to output channel
+	movei	1,.PRIOU
+	trne	F,(F%S)			; show Sent characters ?
+	 bout				;  yes, send to command terminal too
+	ret
+
+GETCHR:	move	1,OUTJFN
+	bin
+	movei	1,.priou
+	trne	F,(F%R)			;show Received characters ?
+	 bout				; yes
+	ret
+
+SNDSTR:	move	1,OUTJFN
+	push	P,3
+	push	P,2
+	sout 				;send block to other computer
+	pop	P,2
+	pop	P,3
+	movei	1,.priou
+	trne	F,(F%S!F%V)		;show Sent characters or view file ?
+	 sout
+	ret
+
+GETSTR:	push	P,3
+	push	P,2
+	move	1,OUTJFN
+	sin
+	pop	P,2
+	pop	P,3
+	movei	1,.PRIOU
+	trne	F,(F%R ! F%V)
+	 sout
+	ret
+
+DISINT: tlo	F,(F%CAP)
+	movei	1,-5
+	rtiw
+	movem	2,OLDTIW#		;save old Terminal interupt word
+	movei	1,.fhslf
+	rpcap
+	movem	3,OLDCAP#		;save old capabilities
+	tlo	3,(SC%CTC)
+	epcap
+	movei	1,-5
+	setzb	2,3
+	stiw 				;disable ^C interupts
+
+	Subttl	CSUM
+
+CSUM:	move	1,[point 8,BUFFER]
+	movei	2,BUFSIZ
+	 ildb	3,1
+	 addi	CHKSUM,(3)
+	sojg	2,.-2
+	ret
+
+GETBUF:	move	1,[byte(8) 32,32,32,32]	; fill buffer with ^Zs
+	movem	1,BUFFER
+	move	1,[BUFFER,,BUFFER+1]
+	blt	1,BUFFER+<BUFSIZ/4+2>
+	move	1,FILJFN
+	move	2,[point 8,buffer]
+	movni	3,bufsiz
+	sin
+	erjmp	GETEOF
+	ret
+GETEOF:	setom	EOFFLG
+	ret
+
+PUTBUF:	push	P,2
+	move	1,FILJFN
+	move	2,[point 8,BUFFER]
+	movni	3,BUFSIZ
+	movei	4,SUB
+	trnn	F,(F%B)			;stop on ^Z for text files
+	 movn	3,3
+	sout
+	pop	P,2
+	ret
+
+CLSFIL:	move	1,FILJFN
+	closf
+	 trn
+	ret
+
+OPNFIL:	skipa	2,[of%wr]
+IPNFIL:	move	2,[of%rd]
+	trne	F,(F%A!F%B)		;Explicit binary or Ascii mode ?
+	%IF
+	 push	P,2
+	 move	2,[1,,.FBBYV]
+	 movei	3,4
+	 gtfdb
+	 lsh	4,-<^d35-^d11>
+	 andi	4,77
+	 caie	4,10			;8 bit bytes ?
+	 %IF
+	  push	P,1
+	  hrroi	1,[asciz/(*** Binary Mode assumed ***)
+/]
+	  psout
+	  tro	F,(F%B)
+	  pop	P,1
+	 %END
+	 pop	P,2
+	%END
+	hrli	2,(7b5)			;assume ascii mode
+	trne	F,(F%B)			;unless binary was requested
+	 hrli	2,(10b5)
+	openf
+	 jrst	FILERR
+	movem	1,FILJFN
+	ret
+
+FILERR:	hrroi	1,[asciz/File open error
+/]
+	psout
+	jrst	ERRMSG
+
+
+	Subttl	Get sub-options
+
+SUBOPT:	ildb	1,A
+	caie	1,12
+	cain	1,0
+	 ret
+	cail	1,"a"
+	 subi	1,40			;upper case-ify
+	caie	1,15
+	cain	1,40
+	 ret
+	setz	2,
+OPTLP:	hlrz	3,SUBTAB(2)
+	jumpe	3,OPTERR
+	caie	1,(3)
+	aoja	2,OPTLP
+	hrrz	1,SUBTAB(2)
+	tro	F,(1)			;set appropriate bit
+	jrst	SUBOPT
+
+	define $SUB(a) <"a",,(F%'a)>
+
+SUBTAB:	$SUB	S			;type SENT characters
+	$SUB	R			;type RECEIVED chars
+	$SUB	V			;VIEW file
+	$SUB	T			;goto TERMINAL mode
+	$SUB	E			;goto ECHO mode
+	$SUB	D			;Disconnect
+	$SUB	Q			;Quiet
+	$SUB	A			;Ascii
+	$SUB	B			;Binary
+	"," ,, (F%COMMA)
+	0
+
+OPTERR:	hrroi	1,[asciz/Illegal Suboption
+/]
+	psout
+	jrst	SUBOPT
+
+	Subttl	data
+
+CHNTAB:	1,,INTER
+	block 35
+
+LEVTAB:	pclev1
+	exp 0,0
+
+PCLEV1:	0
+
+BUFFER:	block	bufsiz/4 + 2
+
+HLPTXT:	asciz/
+MODEM commands for this version of the TOPS-20 modem program
+have the following format:
+
+@MODEM <option><suboptions> <file>
+
+Where <option> is one of:
+
+ H	Print (this) help text.
+ S	Send a file
+ R	Receive a file
+ T	Terminal mode
+ E	Echo mode
+ C	make a call to auto-dialer or TTY line
+	C98596263	call up the SRI micom	(no auto-dialers exist yet)
+	CTTY120		use TTY120 for the transfer
+	C:<host>	do a transfer to <host> (not currently implemnted)
+ D	disconnect and deassign autodialer or TTY line
+
+and <sub-options> belong to the following list:
+
+ S	View sent characters
+ R	View receiverd characters
+ V	View file (data only)
+ B	use binary mode transfer
+ A	use ascii mode transfer
+ T	go to terminal mode after transfer
+ E	go to echo mode after transfer
+ D	disconnect after transfer
+ Q	Transfer Quietly (no TTY messages)
+
+Typing MODEM with no options will cause you to be droped into command
+mode, where MODEM will wait for options, and return when the specified
+action is complete (useful if you must transfer many files).
+
+If a "call" is not placed using the C option, then the jobs controling
+terminal is used for the file transfer.
+
+/
+
+PDLPTR:	iowd 20,PDL
+	block 2
+PDL:	block 20
+
+MODDEV:	0
+OUTJFN:	0
+FILJFN:	0
+EOFFLG:	0
+CMFLAG:	0
+INTINS:	0
+LSTREC:	0
+OLDMOD:	0
+OLDCOC:	block 2
+
+
+CMDBUF:	block 20
+DEVNAM:	block 10
+
+	end start
+

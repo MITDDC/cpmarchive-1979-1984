@@ -1,0 +1,55 @@
+Congradulations on your accquisition of my IBM Personal Computer
+implementation of the MODEM2 file transfer protocol and Heath-19
+terminal emulator.  I hope that you have accquired this program
+in a legitimate manner, rather than stealing it...
+
+You should have one single sided normal density IBM DOS format
+disk containing the following files:
+
+[the following programs are part of the IBMFTP release.  They are
+ fully supported and copyrighted.  They may not be sold or given
+ away...]
+
+IBMFTP.BAS	central program (saved in Ascii mode).
+CHKSUM.A86	Source code for checksum routine. (instructional)
+XMODEM.BAS	Other half of IBM-IBM file transfer. Operate your
+		system as a remote file access system.
+KEYFIG.BAS	program to redefine function keys and other
+		parameters.
+
+HEATH.X		Terminal emulator (BLOADable from basic).
+HEATH.COM	Terminal emulator (runable from DOS).
+HEATH.A86	Terminal emulator (source code - although this
+		is written in a funny assembler, it could still
+		be both usefull and instructional).
+
+IBMFTP.DOC	Documentation.
+KEYDEFS.DAT	A sample set of function key definitions - redefines
+		the keypad for use with the popular EMACS text editor.
+
+[the following are in the public domain, and are included because
+ they might be useful.  Their inculsion does not affect the price
+ of this package.  They may be circulated to whoever is interested.
+ No support is implied, though suggestions, bug reports, and (especially)
+ bug fixes are appreciated.  Many thanks to the people who wrote these
+ programs and released them to the public...]
+
+TOPSFTP.MAC	MODEM2 implementation for DECSystem 10s and 20s running
+		the TOPS-20 operating system.  Written in MACRO-10 by
+		Bill Westfield.
+UNIXFTP.C	MODEM2 (and other protocol) implementation for systems
+		running the UNIX operating system.  Written in C by
+		Lauren Weinstein.
+PROTOCOL.DOC	Description of the MODEM2 protocol.
+
+To get started using this right away, put the IBMFTP disk in drive B:,
+a disk containing BASICA in dirve A:, and issue the following
+commands:
+
+	A>B:
+	B>A:basica ibmftp
+
+from here on, things should be self explanatory.
+
+Enjoy
+Bill Westfield

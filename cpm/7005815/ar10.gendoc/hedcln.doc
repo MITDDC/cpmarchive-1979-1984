@@ -1,0 +1,93 @@
+headclnr.txt		1/29/82
+contributed by Roy Lipscomb, Logic Associates
+
+The following three items document Shugart's changing
+policy towards head-cleaning diskettes.  (Spelling
+and punctuation are faithful to the cited sources.)
+
+-------------------------------------------------------------
+(Reprinted from Personal Systems, newsletter of the San Diego
+Computer Society, July 81, p. 17)
+
+SHUGART DOES NOT RECOMMEND CLEANING DISKS
+
+The following is reprinted from a Shugart Service Memo (#2,
+dated January 27, 1981) and was submitted by Hugh Turner.
+
+"There have been numerous inquiries from our customers
+concerning Shugart's stand on cleaning diskettes.  Our Media
+Engineering group has finished it's testing on several
+cleaning diskettes and determined that they do not meet our
+engineering specifications, for the following reasons:
+
+*  The cleaning diskettes are too abrasive and are not as
+flexible as the media.  This causes the diskette to deteri-
+orate the head between 5-10uin horizontally and between
+2-15uin vertically.
+
+*  The cleaning diskettes do not comply with the side 0 button.
+Due to the flexibility of the cleaning diskettes, side 0 was
+only cleaned where the side 1 rails hit side 0.  The side 1
+head was not cleaned on the taper surface of the head.
+
+*  These results were seen after ten minutes which simulated
+twenty cleanings of 30 seconds each.
+
+BASED ON THE ABOVE TEST RESULT IT IS SHUGART'S RECOMMENDATION
+AT THIS TIME NOT TO APPROVE OR RECOMMEND ANY CLEANING DISKETTE.
+
+If customers continue to use a cleaning diskette they may run
+the risk of voiding their warranty.  Test results show that
+the cleaning diskettes will blend the side 0 head causing media
+wear under normal usage.  The corrective action for this
+problem is to replace the complete head assembly at the
+customer's expense.
+
+Our Engineering group is conducting on going evaluations with
+several vendors to correct the above discrepancies in order
+to approve some type of cleaning diskette in the future.
+
+Please direct any further questions to Technical Support, 475
+Oakmead Parkway, Sunnyvale CA 94086; (408)733-0100."
+
+-------------------------------------------------------------
+(Reprinted from Personal Systems, newsletter of the San Diego
+Computer Society, August 81, p. 8)
+
+Shugart Service Memo
+
+Product:  All Floppy Products 
+   Date:  March 20, 1981
+ Memo #:  4
+
+Subject:  Cleaning Diskettes for Floppy Dirves
+
+     Shugart Associates has approved Innovative Computer
+Products cleaning diskette (P/N 2024 only) for use on
+Floppy Disk Drives.
+     Use of the cleaning diskette kit will not void the
+warranty as long as the manufacturers instructions that
+are supplied with the kit are followed.
+     Shugart plans to private label cleaning diskettes
+in the near future.
+     This memo supercedes Memo #2, Cleaning Diskettes
+for Floppy Products.
+
+
+----------------------------------------------------------
+(Ad in Mini-Micro Systems, January 1982, p. 254)
+
+SHUGART OFFERS HEAD-CLEANING KIT
+
+This floppy-disk-drive head-cleaning kit in 5 1/4 and
+8-in. sizes contains two lint-free, non-abrasive polyester
+diskettes in vinyl jackets, a 4-oz. bottle of cleaning 
+solvent and a dispenser cap.  The kit, which provides
+13 cleanings per diskette, cleans single- or double-sided
+drives with a wet/dry application.  The kits sell for
+$28 for the 8-in. size and $26 for the 5 1/4-in. size,
+in OEM quantities.  SHUGART ASSOCIATES, 475 Oakmead
+Parkway, Sunnyvale, Calif. 94086.
+
+
+----------------------------------------------------------

@@ -1,0 +1,202 @@
+        INSTALLING A COMPUTER BULLETIN BOARD PROGRAM
+                    Ben Bronson, 3/29/81
+
+If you want to put up a bulletin board or a program exchange
+system that runs under CP/M (and if you don't want to write all
+your own software from scratch) you have two choices: Ward
+Christensen's and Randy Suess's assembly-language CBBS and the
+BASIC-language RBBS written by Howard Moulton, Bruce Ratoff,
+Ron Fowler, Tim Nicholas and others.
+
+		  * THE REAL CBBS *
+
+CBBS is the daddy of all bulletin board programs for micro-
+computers and as such has been imitated to some extent by all
+other public-domain and commercial BBS software.  It is also
+an excellent program: fast, compact, and flexible.  One of its
+best features is its sophisticated message editing capability.
+However, as its authors tell the would-be system operator
+quite plainly, installing it (not to mention modifying it)
+does require a good knowledge of assembly language.  CBBS is
+written as a whole set of modules that have to be configured,
+then linked, and finally maintained with another set of
+programs.
+
+If you are good at assembly language, you should certainly
+choose it over RBBS.  The cost is negligible in terms of what
+you get --
+
+Send a check for $50 made out to Randy Suess to: CBBS, 5219
+W Warwick, Chicago, Ill. 60641.  You will receive a copy of
+the CBBS source program and files on 2 CP/M format soft
+sectored 8" floppy disks.
+
+
+		     * MINICBBS *
+
+If you are only moderately familiar with assembler and want to
+run a system dedicated to software downloading rather than
+message interchange, there is one intermediate alternative that
+should be mentioned:  Keith Petersen's stripped-down version
+called MINICBBS, which runs as a COM file on a CP/M system to
+which (as is normal with program downloading or RCPM setups)
+the caller has access.  MINICBBS can be obtained in already
+assembled form from any of the SYSOPS (Keith himself, Dave
+Hardy, Calamity Cliffs or Dave Moritz) who use it, but (as
+CBBS is copyrighted and as MINICBBS needs several of the
+auxiliary and maintenance programs supplied on the CBBS distri-
+bution disks) they will only release it to those who have
+bought CBBS.  MINICBBS retains the good message editing
+features of its parent program and occupies only about l0K of
+disk space.  It is a good deal easier to get up and running
+than the full CBBS.
+
+The only disadvantages of MINICBBS are (1) that making modifi-
+cations requires greater familiarity with assembler and (2) 
+that its method of storing new messages makes keeping these
+private from other users a bit complicated.  The programs to do
+this are well worked out and in the public domain (for example,
+SECURITY.ASM and TAG2.ASM), but most MINICBBS sysops still
+find it necessary to keep the program and its messages in a
+very high user area and to move everything back down whenever
+they want to do some purging and editing.
+
+
+		   * RBBS, ETC. *
+
+The main (and only) alternative to the CBBS series is RBBS or
+its two RCPM-specialized descendants, ENTERBBS and MINIRBBS.
+
+The RBBS programs have several shortcomings.  In their current
+form they have inferior message editing features.  They are
+impossibly slow when run as BAS files under MBASIC.  And when
+compiled with BASCOM (which makes them almost as fast as CBBS
+or sometimes even as fast), they are bulky.  A compiled RBBS
+occupies 34K of disk space and RAM, and a compiled MINIRBBS
+needs 30K all by itself, compared with the 10K used by MINI-
+CBBS.  While most people have enough RAM so that size in 
+memory is not a problem, the RBBS series performs noticeably
+worse on systems with slow disk drives.
+
+On the other hand, RBBS has a single great advantage: it is a
+lot easier to install.  If you have a very modest knowledge of
+BASIC and own or have access to BASCOM, you can get a RBBS
+system up and running in a single evening, while installing
+CBBS takes several days for a crack assembly-language
+programmer.  To the RCPM operator its use of a MBASIC-type
+sequential message file is also an advantage--access to mes-
+sages can be controlled simply by declaring the MESSAGES file
+a $SYS file, and can easily be protected from XMODEMing by 
+using TAG2.COM.
+
+RBBS is essentially self-explanatory, but a few notes might
+ease the installation process even further.  Briefly, one
+becomes an RBBS SYSOP like this:
+
+
+		 * INSTALLING RBBS *
+
+(1) Get RBSUTL22.BAS (or ASC) and RBBS24.BAS (and later,
+ENTBBS24 & MINBBS24.BAS as well) from a local RCPM system.  As
+indicated earlier, you will also need to have a version of
+BYE (PMMIBY63, BYE65 and BYE67 all can load a COM file
+automatically after bringing themselves up when the telephone
+rings, so choose one of those--the COM file in question will
+of course be RBBS.COM).
+
+(2) Try the program with MBASIC in interpreter mode.  Just
+type MBASIC RBBS24 and see what happens.
+
+(3) Look at the disk directory after you have exited back to
+CP/M.  You'll notice that several new files have been created:
+MESSAGES, CALLERS, USERS, COUNTERS, SUMMARY, LASTCALR and (if 
+you have left yourself a comment) COMMENTS.  These are 7/11 of
+the auxiliary files that a full-fledged RBBS can use, and 7/7 
+of those it absolutely has to use.
+
+(4) Now use an editor (or a word processor that does not put
+queer control characters in the file--WordStar in non-document
+mode works fine) to write four brief text files.  Put amything
+you want into three of them, and call them INFO, BULLETIN and
+NEWCOM.  Just that.  Filenames without filetypes.  The fourth
+file, PWDS, should contain only three words separated by
+commas: 
+		HONDURAS,BANANA,NOPASS
+
+These are the P1$, P2$ and P3$ you will see referred to in the
+early parts of the source code.  "HONDURAS" and "BANANA" can
+be replaced with whatever you like; those are passwords for you,
+the SYSOP to use for quick entry and message-killing authority
+within the system.  "NOPASS" is what you put in if the system
+is to be for unrestricted public use.  Anything else here will 
+become the access password for all users.  Now return to CP/M.
+
+(5) Try the MBASIC RBBS routine again several times.  Sign in
+with the same name, then with different names.  Notice which
+text files are printed where when the name is new and when it
+is one the program already knows.  Try signing yourself in with
+the first name SYSOP and the second name anything but BANANA or
+whatever your P2$ is.  When you have had enough of this,
+
+(6) TYPE all the files with one-word names to see what they look
+like.  If you look at them with an editor you'll notice that
+the ones created by the program rather than you all have fixed-
+length lines.  Use the editor to put asterisks in front of a
+couple of the names you've invented that are already in the
+USERS file.  Make sure you don't inadvertently make the lines
+with asterisks longer than the others, and put the asterisks
+at the very beginning of the line.
+
+(7) Go back to CP/M and do MBASIC RBBS24.  Sign in with one of
+the names you have marked with an asterisk and see what happens.
+Play around with passwords a bit more.  By now you should under-
+stand most of the program's tricks.
+
+(8) So go into RBBS24 (again with an editor or word processor
+that does not create MBASIC-incompatible conttol characters)
+and personalize the various messages that appear in quotation
+marks.  Exit.  Test with MBASIC.  Try all combinations of
+commands and make sure they still work.  Kill a couple of
+messages.  Notice that you can kill the passworded ones if
+you're the SYSOP.
+
+(9) Next try RBSUTL22.BAS.  Run it with MBASIC.  Look at the
+menu and do what it tells you to do.  Purge the file of
+killed messages.  Remember to rebuild the SUMMARY file.  Exit.
+Look at the directory and what has happened to the MESSAGES
+and other files.  Now you know how to maintain an RBBS system.
+
+(10) And then compile.  You'll need about 50-52K of memory to
+hold both BASCOM and RBBS.  If you don't have that much,
+prevail on a friend or a local SYSOP (who is likely to be
+delighted at the idea of a new system that'll take some of the
+pressure off his) to compile it for you.  Use the /X switch
+(check the manual for why if you're curious).  Load with
+L80 with the /E and /N switches.  And presto.  You have a
+file called RBBS24.COM.  Do the same with RBSUTL22.
+
+(11) Run it.  Make sure it works as advertised.  Notice that
+it picks up all the files created while you were trying the
+program out with MBASIC and treats those files as its own.
+Rewrite the INFO, BULLETIN and NEWCOM files so that they
+contain appriate messages.  Test RBSUTL22.  Note that it runs
+a good deal faster in compiled form.
+
+(12) Last, assemble BYE with the filename of whatever you
+have called RBBS24.COM (that'll work fine) in the appropriate
+place.  Load it so that it too becomes a COM file.
+
+(13) Type BYE.  Notice that it responds "COM FILE LOADED".
+Wait for the telephone to ring.
+
+(14) With any luck at all, you will find that you are now the
+proud proprietor of a Computer Bulletin Board.
+
+The rest is up to you.  You'll have to decide whether you want
+public or passworded access, emphasis on messages or programs,
+and that sort of thing.  If you opt for a RCPM or program down-
+loading function, RBBS will work quite nicely for that too, but
+you may care to try ENTBBS24 and MINBBS24, which offer less
+temptation to people who want to use the system as primarily a
+message service.  Once you've succeeded in getting RBBS up,
+ENTERBBS & MINIRBBS will be a piece of cake.

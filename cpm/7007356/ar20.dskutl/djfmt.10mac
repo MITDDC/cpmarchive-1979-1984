@@ -1,0 +1,777 @@
+;  PROGRAM:  FORMAT2
+;  AUTHOR:  Richard Conn (from Morrow Designs' FORMT#, Version 5.1)
+;  Version:  1.0
+;  Date:  4 July 82
+;  Previous Versions:  None
+
+	.Z80
+	ASEG
+;****************************************************************
+;								*
+; FORMT#, Version 5.1 --					*
+; DISK FORMAT PROGRAM FOR DISK JOCKEY 2D CONTROLLER.		*
+; 11/16/79							*
+;								*
+;****************************************************************
+
+REVNUM	EQU	10	;Revision 1.0
+BDOS	EQU	5	;CP/M entry point
+WBOOT	EQU	0
+FCB	EQU	5CH
+DELIM	EQU	'/'	;DELIMITER for Command Line Options
+
+ORIGIN	EQU	0E000H
+DISKIO	EQU	ORIGIN+3F8H
+DATREG	EQU	DISKIO+7
+DRVSEL	EQU	DISKIO+1
+CSTALL	EQU	DISKIO+3
+CMDREG	EQU	DISKIO+4
+SBEGIN	EQU	ORIGIN+3DEH
+RAMINS	EQU	ORIGIN+7E2H
+DSIDE	EQU	10Q
+UNLODB	EQU	17Q
+WTCMD	EQU	364Q
+SICMD	EQU	131Q
+IMMIRQ	EQU	320Q
+UNLODA	EQU	30Q
+RESTOR	EQU	11Q
+INDEX	EQU	20Q
+TRKZRO	EQU	4
+INTRQA	EQU	1
+INTRQB	EQU	4
+LHSDNB	EQU	90DH
+LHDDNB	EQU	80CH
+LHSDNA	EQU	111H
+LHDDNA	EQU	10H
+ACR	EQU	0DH
+ALF	EQU	0AH
+
+	ORG	100H
+START:
+	LD	SP,STACK
+	XOR	A		;A=0
+	LD	(AUTO),A	;assume no automatic execution
+	LD	HL,(ORIGIN+7)	;adjust
+	INC	HL		;   the
+	LD	A,(HL)		;   calling
+	LD	HL,STDVSL+1	;   routines
+	LD	DE,4		;   for
+	LD	(HL),A		;   different
+	XOR	3		;   versions
+	ADD	HL,DE		;   of the
+	LD	(HL),A		;   disk
+	ADD	HL,DE		;   jockey
+	LD	(HL),A		;   controller
+	LD	DE,SMESSG	;print the
+	CALL	PBUFF		;   sign on message
+	LD	A,(FCB+1)	;check for command line option
+	CP	DELIM		;must have delimiter as first char
+	JP	NZ,CROK
+	LD	A,(FCB+2)	;get drive letter
+	LD	(LETTER),A
+	SUB	'A'		;take off ASCII bias
+	LD	(DRVNO),A	;save drive number
+	CP	4		;within range?
+	JP	NC,PRHELP	;print help message and exit
+	LD	A,(FCB+3)	;get format size argument
+	SUB	'1'		;strip off ASCII bias
+	LD	(NEWSIZ),A
+	CP	4		;within range?
+	JP	NC,PRHELP
+	LD	A,0FFH		;set automatic flag
+	LD	(AUTO),A
+	LD	DE,I2MESSG	;print formatting message
+	CALL	PBUFF
+	LD	A,(LETTER)	;print drive letter
+	CALL	PCHAR
+	LD	DE,ACRALF	;print new line
+	CALL	PBUFF
+	JP	PROCED		;proceed with formatting process
+PRHELP:
+	LD	DE,HELPMS	;print help message
+	CALL	PBUFF
+	JP	WBOOT		;abort
+CROK:
+	LD	DE,DMESSG	;echo the CR and
+	CALL	PBUFF		;   print drive select
+	CALL	RCHAR		;wait for response
+	CP	'Z'		;   new parameter
+	JP	Z,CROK		;   request
+	LD	(LETTER),A	;save for exit
+	SUB	'A'		;test for good
+	JP	P,NOTLOW	;   drive select
+INPUTB:
+	LD	DE,BMESSG	;print the bad
+	CALL	PBUFF		;   input message
+	JP	CROK		;   and wait for input
+
+NOTLOW:
+	CP	4	;test for drive
+	JP	P,INPUTB	;   select too large
+	LD	(DRVNO),A	;save drive no.
+
+FMTSIZ:
+	LD	DE,DENMSG	;Select the sector size
+	CALL	PBUFF
+	CALL	RCHAR
+	CP	'Z'
+	JP	Z,CROK
+	SUB	'1'		;Strip off ASCII bias
+	JP	P,SIZCHK
+SIZERR:
+	LD	DE,BMESSG
+	CALL	PBUFF
+	JP	FMTSIZ
+
+SIZCHK:
+	CP	4
+	JP	NC,SIZERR
+	LD	(NEWSIZ),A
+
+SENDI:
+	LD	DE,IMESSG	;send out the
+	LD	HL,JMESSG	;   diskette insert
+	CALL	SENDMP		;   message
+
+GETIN2:
+	CALL	RCHAR	;wait for response
+	CP	'Z'	;test for new
+	JP	Z,CROK	;   parameter request
+
+PROCED:
+	LD	DE,ACRALF
+	CALL	PBUFF
+
+	LD	A,(DRVNO)	;get the drive no
+	LD	C,A
+	LD	A,177Q		;drive select bits
+
+QLOOP:
+	RLCA			;rotate select bits
+	DEC	C		;   to proper drive
+	JP	P,QLOOP		;   position
+	AND	3FH
+	LD	(SELECT),A	;save for TRACK routine
+	CALL	STDVSL
+	CALL	MODEL
+	LD	BC,LHSDNA
+	JP	Z,PREP
+	LD	BC,LHSDNB
+PREP:
+	LD	A,B
+	CALL	STBITS
+	LD	A,C
+	CALL	STBITS
+	LD	HL,CMDREG
+	LD	(HL),IMMIRQ
+	LD	A,40H
+WIRQD:
+	DEC	A
+	JP	NZ,WIRQD
+	LD	A,(HL)
+	RRA	
+	JP	C,NOTRDY
+	RLA	
+	RLA	
+	JP	C,NOTRDY
+	LD	DE,WMESSG
+	RLA	
+	JP	C,NOTRDX
+	LD	DE,0
+	CALL	GTINDX
+IXLOOP:
+	CALL	GTSTAT
+	AND	INDEX
+	XOR	B
+	JP	NZ,DOREST
+	DEC	DE
+	LD	A,D
+	OR	E
+	JP	NZ,IXLOOP
+NOTRDY:
+	LD	DE,RMESSG	;not ready message
+NOTRDX:
+	EX	DE,HL
+	LD	DE,AMESSG	;drive message
+	CALL	SENDMP		;send error message
+	CALL	UNLOD
+	JP	SENDI		;back for more input
+
+DOREST:
+	LD	(HL),RESTOR
+WRSTRS:
+	LD	A,(HL)
+	RRA	
+	JP	NC,WRSTRS
+WRSTRD:
+	LD	A,(HL)
+	RRA	
+	JP	C,WRSTRD
+	LD	A,(HL)
+	AND	TRKZRO
+	JP	Z,NOTRDY
+
+	LD	BC,SDLIST
+	LD	HL,DLIST
+	CALL	OVLAY
+	LD	BC,L128
+	LD	HL,SLIST
+	CALL	OVLAY
+	LD	A,'*'
+	CALL	PCHAR
+	CALL	INDEXP
+	LD	H,0
+	CALL	TRACK
+	LD	DE,TABLE
+	LD	A,(NEWSIZ)
+	ADD	A,A
+	JP	Z,FINDIX
+	LD	L,A
+	LD	H,0
+	ADD	HL,DE
+	LD	C,(HL)
+	INC	HL
+	LD	B,(HL)
+	LD	HL,SLIST
+	CALL	OVLAY
+	LD	BC,DDLIST
+	LD	HL,DLIST
+	CALL	OVLAY
+	CALL	MODEL
+	LD	BC,LHDDNA
+	JP	Z,LOADD
+	LD	BC,LHDDNB
+LOADD:
+	LD	A,B
+	CALL	STBITS
+	LD	A,C
+	CALL	STBITS
+FINDIX:
+	CALL	INDEXP
+	LD	H,1
+TKSTEP:
+	LD	A,'*'	;print prompt
+	CALL	PCHAR
+	LD	DE,CMDREG
+	LD	A,SICMD
+	LD	(DE),A
+WSICMS:
+	LD	A,(DE)
+	RRA	
+	JP	NC,WSICMS
+WSICMD:
+	LD	A,(DE)
+	RRA	
+	JP	C,WSICMD
+	CALL	TRACK
+	LD	H,D
+	INC	H
+	LD	A,77
+	CP	H
+	JP	NZ,TKSTEP
+	CALL	UNLOD
+	LD	A,(AUTO)	;check for automatic execution
+	OR	A		;0=No
+	JP	NZ,WBOOT	;Return to OS if on automatic
+	LD	DE,FMESSG	;ask user if he wants to format again
+	CALL	PBUFF
+	CALL	RCHAR		;get response
+	CP	'F'
+	JP	Z,CROK
+	JP	WBOOT
+
+SENDMP:
+	PUSH	HL	;save second half
+	CALL	PBUFF		;send first half
+	LD	A,(LETTER)	;print the
+	CALL	PCHAR		;   letter
+	POP	DE		;send the second
+
+PBUFF:
+	LD	C,9
+	JP	BDOS
+
+RCHAR:
+	LD	C,1	;get user input
+	CALL	BDOS
+	CP	3	;^C?
+	JP	Z,WBOOT
+	LD	(INBUF),A	;save it
+	OR	A
+	LD	A,ACR
+	RET	Z
+	LD	A,(INBUF)	;get input
+	CP	'a'		;capitalize if necessary
+	RET	C
+	CP	'z'+1
+	RET	NC
+	SUB	40Q
+	RET	
+
+PCHAR:
+	PUSH	HL
+	PUSH	BC
+	PUSH	DE
+	PUSH	AF
+	LD	E,A
+	LD	C,2
+	CALL	BDOS
+	POP	AF
+	POP	DE
+	POP	BC
+	POP	HL
+	RET	
+
+STDVSL:
+	LD	(DISKIO+1),A
+	RET	
+
+STBITS:
+	LD	(DISKIO+2),A
+	RET	
+
+GTSTAT:
+	LD	A,(DISKIO+2)
+	RET	
+
+MODEL:
+	LD	A,(DISKIO-4)
+	CP	0C9H	; RET instruction
+	RET	
+
+UNLOD:
+	CALL	MODEL
+	LD	A,UNLODA
+	JP	Z,STBITS
+	LD	A,UNLODB
+	JP	STBITS
+
+GTINDX:
+	CALL	MODEL
+	LD	B,0
+	RET	Z
+	LD	B,INDEX
+	RET	
+
+INDEXP:
+	CALL	GTINDX
+WINDXH:
+	CALL	GTSTAT
+	AND	INDEX
+	XOR	B
+	JP	Z,WINDXH
+WINDXL:
+	CALL	GTSTAT
+	AND	INDEX
+	XOR	B
+	JP	NZ,WINDXL
+	RET	
+INDXW:
+	CALL	GTINDX
+	JP	WINDXL
+
+TABLE:
+	DEFW	L128
+	DEFW	L256
+	DEFW	L512
+	DEFW	L1024
+
+TRACK:
+	LD	A,(SELECT)
+	CALL	STDVSL
+	XOR	A
+	LD	(SIDENO),A
+	CALL	WTRACK
+	CALL	GTSTAT
+	AND	DSIDE
+	RET	NZ
+	INC	A
+	LD	(SIDENO),A
+	LD	A,(SELECT)
+	AND	357Q
+	CALL	STDVSL
+WIL:
+	CALL	INDXW
+	EX	DE,HL
+
+WTRACK:
+	CALL	MODEL
+	JP	Z,FMT
+	LD	A,22Q		;store stax d
+	LD	(RAMINS),A	;   instruction
+	LD	(CSTALL),A	;ready stall
+FMT:
+	LD	DE,DATREG	;1791 data reg
+	LD	L,1		;initialize sector reg
+	LD	BC,4E50H	;data & count
+OVLD1	EQU	$-2
+	LD	A,WTCMD		;issue a write
+	LD	(CMDREG),A	;   track command
+	JP	Z,WTL1A
+	LD	BC,4E4EH
+OVLDX	EQU	$-2
+	LD	A,B		;write first
+	LD	(DE),A		;   data byte
+	CALL	SBEGIN		;second byte
+WTL1A:
+	EX	DE,HL		;adjust the registers
+WTL1:
+	LD	(HL),B		;index mark
+	DEC	C		;   preamble
+	JP	NZ,WTL1		;   field
+	LD	BC,0CH		;data & count
+OVLD2	EQU	$-2
+WTL2:
+	LD	(HL),B		;index mark
+	DEC	C		;   zero leader
+	JP	NZ,WTL2		;   field
+OVLD3:
+	LD	(HL),0F6H	;special double
+	LD	(HL),0F6H	;   density clock
+	LD	(HL),0F6H	;   and data mark
+WTL3:
+	LD	(HL),0FCH	;index mark
+	LD	BC,4E32H	;data & count
+OVLD4	EQU	$-2
+WTL4:
+	LD	(HL),B		;sector mark
+	DEC	C		;   preamble
+	JP	NZ,WTL4		;   field
+SLOOP:
+	LD	BC,0CH		;data & count
+OVLD5	EQU	$-2
+WTL5:
+	LD	(HL),B		;sector mark
+	DEC	C		;   zero leader
+	JP	NZ,WTL5		;   field
+OVLD6:
+	LD	(HL),0F5H	;special double
+	LD	(HL),0F5H	;   density clock
+	LD	(HL),0F5H	;   and data mark
+WTL6:
+	LD	(HL),0FEH	;sector mark
+	LD	(HL),D		;track number
+	LD	(HL),0		;side number
+SIDENO	EQU	$-1
+	LD	(HL),E		;sector number
+	LD	(HL),1		;sector length
+OVLS1	EQU	$-1
+	LD	(HL),0F7H	;crc data bytes
+	INC	E		;increment sector
+	LD	BC,4E16H	;data & count
+OVLD7	EQU	$-2
+WTL7:
+	LD	(HL),B		;sector mark
+	DEC	C		;   postamble
+	JP	NZ,WTL7		;   field
+	LD	BC,0CH		;data & count
+OVLD8	EQU	$-2
+WTL8:
+	LD	(HL),B		;data mark
+	DEC	C		;   zero leader
+	JP	NZ,WTL8		;   field
+OVLD9:
+	LD	(HL),0F5H	;special double
+	LD	(HL),0F5H	;   density clock
+	LD	(HL),0F5H	;   and data mark
+WTL9:
+	LD	(HL),0FBH	;data mark
+	LD	BC,0E540H	;data & count
+OVLS2	EQU	$-2
+WTL10:
+	LD	(HL),B		;write first
+	DEC	C		;   quarter of
+	JP	NZ,WTL10	;   sector data
+	LD	C,40H		;count
+OVLS3	EQU	$-1
+WTL11:
+	LD	(HL),B		;write second
+	DEC	C		;   quarter of
+	JP	NZ,WTL11	;   sector data
+	LD	C,40H		;count
+OVLS4	EQU	$-1
+WTL12:
+	LD	(HL),B		;write third
+	DEC	C		;   quarter of
+	JP	NZ,WTL12	;   sector data
+	LD	C,40H		;count
+OVLS5	EQU	$-1
+WTL13:
+	LD	(HL),B		;write fourth
+	DEC	C		;   quarter of
+	JP	NZ,WTL13	;   sector data
+	LD	(HL),0F7H	;crc data bytes
+	LD	A,27		;last sector + 1
+OVLS6	EQU	$-1
+	LD	BC,4E36H	;count & data
+OVLS7	EQU	$-2
+WTL14:
+	LD	(HL),B		;data
+	DEC	C		;   postamble
+	JP	NZ,WTL14	;   field
+	CP	E		;last sector test
+	JP	NZ,SLOOP
+WTL15:
+	LD	(HL),B		;fill data
+	DEC	C		;   to index hole
+	JP	NZ,WTL15
+WTL16:
+	LD	(HL),B		;fill data
+	DEC	C		;   to index hole
+	JP	NZ,WTL16
+WTL17:
+	LD	(HL),B		;fill data
+	DEC	C		;   to index hole
+	JP	NZ,WTL17
+	RET	
+
+OVLAY:
+	LD	A,(HL)		;length of list
+	PUSH	HL		;save list ptr
+	LD	HL,WTRACK	;overlay area
+	EX	(SP),HL		;	recover	pointer
+	LD	D,0
+OVLAY1:
+	INC	HL		;increment pointer
+	LD	E,(HL)		;get offset
+	EX	(SP),HL		;exchange pointers
+	ADD	HL,DE		;add the offset
+	PUSH	AF		;save length count
+	LD	A,(BC)		;get replacement data
+	LD	(HL),A		;do the replacement
+	INC	BC		;next replacement data
+	POP	AF		;recover length count
+	DEC	A		;decrement
+	EX	(SP),HL		;exchange pointers
+	JP	NZ,OVLAY1
+	POP	HL		;adjust stack
+	RET	
+
+; THE LISTS BELOW REPRESENTS THE DISTANCES
+; BETWEEN SUCCESSIVE LOCATIONS OF THE WTRACK
+; ROUTINE THAT ARE TO BE OVERLAID IN ORDER
+; THAT THE SAME ROUTINE WILL SERVE TO FORMAT
+; DIFFERENT SIZED AND DENSITY DISKETTE
+; SECTOR FORMATS
+
+DLIST:
+	DEFB	20		;length of list
+	DEFB	OVLD1-WTRACK
+	DEFB	1
+	DEFB	OVLDX-OVLD1-1
+	DEFB	1
+	DEFB	OVLD2-OVLDX-1
+	DEFB	OVLD3-OVLD2
+	DEFB	1
+	DEFB	1
+	DEFB	OVLD4-OVLD3-2
+	DEFB	1
+	DEFB	OVLD5-OVLD4-1
+	DEFB	OVLD6-OVLD5
+	DEFB	1
+	DEFB	1
+	DEFB	OVLD7-OVLD6-2
+	DEFB	1
+	DEFB	OVLD8-OVLD7-1
+	DEFB	OVLD9-OVLD8
+	DEFB	1
+	DEFB	1
+
+SLIST:
+	DEFB	9		;list length
+	DEFB	OVLS1-WTRACK
+	DEFB	OVLS2-OVLS1
+	DEFB	1
+	DEFB	OVLS3-OVLS2-1
+	DEFB	OVLS4-OVLS3
+	DEFB	OVLS5-OVLS4
+	DEFB	OVLS6-OVLS5
+	DEFB	OVLS7-OVLS6
+	DEFB	1
+
+; OVERLAY DATA FOR SINGLE DENSITY
+; FORMATTED DISKETTES
+
+SDLIST:
+	DEFW	0FF28H
+	DEFW	0FF26H
+	DEFB	6
+	JP	WTL3
+	DEFW	0FF1AH
+	DEFB	6
+	JP	WTL6
+	DEFW	0FF0BH
+	DEFB	6
+	JP	WTL9
+
+; OVERLAY DATA FOR DOUBLE DENSITY
+; FORMATTED DISKETTES
+
+DDLIST:
+	DEFW	4E50H
+	DEFW	4E4EH
+	DEFB	0CH
+	LD	(HL),0F6H
+	DEFB	36H
+	DEFW	4E32H
+	DEFB	0CH
+	LD	(HL),0F5H
+	DEFB	36H
+	DEFW	4E16H
+	DEFB	0CH
+	LD	(HL),0F5H
+	DEFB	36H
+
+; OVERLAY DATA FOR SINGLE DENSITY
+; 26 SECTORS/TRACK 128 BYTE SECTORS
+
+L128:
+	DEFB	0
+	DEFW	0E520H
+	DEFB	20H
+	DEFB	20H
+	DEFB	20H
+	DEFB	27
+	DEFW	0FF1BH
+
+; OVERLAY DATA FOR DOUBLE DENSITY
+; 26 SECTORS/TRACK 256 BYTE SECTORS
+
+L256:
+	DEFB	1
+	DEFW	0E540H
+	DEFB	40H
+	DEFB	40H
+	DEFB	40H
+	DEFB	27
+	DEFW	4E36H
+
+; OVERLAY DATA FOR DOUBLE DENSITY
+; 15 SECTORS/TRACK 512 BYTE SECTORS
+
+L512:
+	DEFB	2
+	DEFW	0E580H
+	DEFB	80H
+	DEFB	80H
+	DEFB	80H
+	DEFB	16
+	DEFW	4E6AH
+
+; OVERLAY DATA FOR DOUBLE DENSITY
+; 8 SECTORS/TRACK 1024 BYTE SECTORS
+
+L1024:
+	DEFB	3
+	DEFW	0E500H
+	DEFB	0
+	DEFB	0
+	DEFB	0
+	DEFB	9
+	DEFW	4E74H
+
+AMESSG:
+	DEFB	ACR,ALF
+	DEFB	'  Drive $'
+RMESSG:
+	DEFB	' Is Not Ready$'
+
+WMESSG:
+	DEFB	' Is Write Protected$'
+
+BMESSG:
+	DEFB	ACR,ALF
+	DEFB	'  Improper Response$'
+
+DMESSG:
+	DEFB	ACR,ALF
+	DEFB	'FORMAT2 --'
+	DEFB	ACR,ALF
+	DEFB	'  Select Drive (A, B, C, D, ^C=Abort, or Z=Restart): $'
+
+SMESSG:
+	DEFB	'FORMAT2 -- Disk Jockey 2D Disk Format Program,'
+	DEFB	' Revision '
+	DEFB	'0'+REVNUM/10,'.','0'+(REVNUM MOD 10)
+	DEFB	'$'
+
+IMESSG:
+	DEFB	ACR,ALF
+	DEFB	'  Insert a Write Enabled Diskette in Drive $'
+
+I2MESSG:
+	DEFB	ACR,ALF
+	DEFB	'  Formatting Disk on Drive $'
+
+JMESSG:
+	DEFB	ACR,ALF
+	DEFB	'  Please Close the Drive Door'
+	DEFB	ACR,ALF
+	DEFB	'    Press RETURN to Proceed, ^C to Abort, or Z to Restart: $'
+
+FMESSG:
+	DEFB	ACR,ALF
+	DEFB	'  Function Complete'
+	DEFB	ACR,ALF
+	DEFB	'    Type RETURN to return to CP/M or F to Format '
+	DEFB	'Another Disk: $'
+
+DENMSG:
+	DEFB	ACR,ALF
+	DEFB	'  Select a sector size:'
+	DEFB	ACR,ALF
+	DEFB	'     1) 128 Byte Single density.'
+	DEFB	ACR,ALF
+	DEFB	'     2) 256 Byte Double density.'
+	DEFB	ACR,ALF
+	DEFB	'     3) 512 Byte Double Density.'
+	DEFB	ACR,ALF
+	DEFB	'     4) 1024 Byte Double Density.'
+	DEFB	ACR,ALF
+	DEFB	'  Sector Size (1, 2, 3, 4, ^C=Abort, or Z=Restart): $'
+
+HELPMS:
+	DEFB	ACR,ALF,ALF
+	DEFB	'FORMAT2 is used to format disks using the Morrow Designs'
+	DEFB	ACR,ALF
+	DEFB	'DJ/2D Floppy Disk Controller.  It may be invoked in one'
+	DEFB	ACR,ALF
+	DEFB	'of two ways:'
+	DEFB	ACR,ALF,ALF
+	DEFB	'	FORMAT2		<-- Prompt User'
+	DEFB	ACR,ALF
+	DEFB	'	FORMAT2 /ln	<-- Format Disk l (A,B,C,D) for'
+	DEFB	ACR,ALF
+	DEFB	'				Density n (1,2,3,4), where'
+	DEFB	ACR,ALF
+	DEFB	'				Densities are 128, 256, 512,'
+	DEFB	ACR,ALF
+	DEFB	'				and 1024 for 1, 2, 3, and 4,'
+	DEFB	ACR,ALF
+	DEFB	'				resp'
+	DEFB	'$'
+
+ACRALF:
+	DEFB	ACR,ALF,'$'
+
+AUTO:
+	DEFB	0	;Automatic execution flag (0=no, 0ffh=yes)
+LETTER:
+	DEFB	0	;Drive Letter (A-D)
+DRVNO:
+	DEFB	0	;Drive Number (0-3)
+SELECT:
+	DEFB	0	;Disk Select
+NEWSIZ:
+	DEFB	0	;Size of Disk to Format (0-3)
+INBUF:
+	DEFB	0	;User Input Char
+
+;
+;  Stack Area
+;
+	DEFS	50
+STACK	EQU	$
+	DEFB	'End'	;End of Program
+
+	END	

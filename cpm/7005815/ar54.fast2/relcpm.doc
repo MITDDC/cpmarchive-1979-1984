@@ -1,0 +1,54 @@
+How to integrate you bios into movcpm.com
+
+Once this is done, you will have the ability to create a
+CP/M system for any memory size almost instantly.
+
+You will need:
+1)	MAC.COM and SID.COM from Digital Research
+2)	REL.UTL from the CP/M users group
+3)	a BIOS with a rel equate and length <=512 bytes
+4)	a cold boot with a rel equate
+4)	RELCPM.SUB from the users group will be helpfull but
+	not necessary
+
+About your BIOS:  If you don't have a rel equate in your BIOS,
+but do have a Tarbell disk controller, then get yourself
+BVIOS.ASM and BVBOOT from the CP/M users group.  If you don't
+have a Tarbell, get listings of the above or look in the
+CP/M alteration guide for and example of how to add a rel
+equate.  If you want the signon message to have the correct
+memory size filled in by MOVCPM, it must be of the form
+'NNK CP/M VERS 1.4'.
+
+Assuming all of the above has been taken care of, execute
+RELCPM.SUB and perform the required edits changing bias
+from 0000h to 0100h.  Make sure that rel equ true.
+Once you end up in SID with REL.UTL in
+place, type the following: (be carefull or it won't work)
+
+f100 3000 0
+iMOVCPM.COM
+r
+f980 9FF 0
+f1F00 20FF 0
+iBVBOOT0.HEX
+r980
+iBVBOOT.HEX
+r2400
+c.setadrs,980,2400
+c.setlen,80,2110
+iBVIOS0.HEX
+r1F00-1500
+iBVIOS.HEX
+r2400-1600
+c.setadrs,1f00,2400
+c.setlen,200,23c0
+g0
+save 35 MOVCPMX.COM
+
+Test MOVCPMX.COM, the two forms are
+	MOVCPMX 32	;generate a 32K system and start it
+	MOVCPMX 32 32	;generate a 32K system and leave it
+			;in memory for sysgen or save
+
+Good luck.

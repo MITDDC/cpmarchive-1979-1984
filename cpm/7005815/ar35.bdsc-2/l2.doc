@@ -1,0 +1,529 @@
+
+
+
+L2 (C Linker) v2.1               1                         7 Dec 81
+
+
+
+
+
+
+
+
+
+
+                   The Mark of the Unicorn Linker
+                             For BDS C
+
+                           v2.1 7 Dec 81
+                         Linker and Docs by
+                Scott W. Layson, Mark of the Unicorn
+
+
+L2 is an  alternative  to  CLINK  for  linking  BDS  C programs.  A
+program linked with CLINK will  have  a jump table at the beginning
+of  each function; calls to other  functions  are  made  indirectly
+through  the  table.  L2 eliminates these jump tables, and  adjusts
+indirect calls through them to go directly to the target function. 
+Besides  making the code imperceptibly faster, this  has  two  real
+advantages: one, it makes the code smaller by 4% to 10% (the latter
+has  been  observed  in  a  program containing many small functions
+which do  little besides call a few other functions), and it allows
+SID  to  display the  name  of  the  target  function  of  a  call,
+simplifying debugging. 
+
+L2  seems  to  be complete enough to replace CLINK  entirely.   Its
+biggest  advantage is that it's written in C, so that if  you  need
+some feature  it  doesn't  have, you can just hack it in.  However,
+its  user  interface and certain aspects of its behavior are rather
+different. 
+
+The most important difference  is  the distinction it makes between
+"program" and  "library"  CRL  files.   Program files are loaded in
+their  entirety;  each  function  in a program file is  linked  in,
+whether or not it has been referenced by the time it is encountered
+(unless another function  with  the  same  name  has  already  been
+loaded).  Library files  are  scanned  for  needed  functions; only
+those that have been referenced by another function are included in
+the  object code.  CLINK treats all CRL files as libraries in  this
+sense (except see the -f option for v1.4). 
+
+A typical command line is
+
+     l2 foo bar -l bletch grotz -wa
+
+Given this command, L2 will load all the  functions  in FOO.CRL and
+BAR.CRL  (the  program files).  Then it  will  scan  the  libraries
+BLETCH.CRL, GROTZ.CRL, DEFF.CRL,  and DEFF2.CRL (in that order) for
+functions that have  been  referenced  but  not  linked.   If there
+remain unsatisfied references, L2 will display a list of the needed
+functions and  prompt  for  the name of a CRL file to scan; it will
+
+
+
+
+
+
+
+
+
+L2 (C Linker) v2.1               2                         7 Dec 81
+
+
+
+
+repeat this process  until  all references are satisfied (just like
+CLINK). Then it will write the resulting code to  FOO.COM,  display
+the  link statistics, and write a symbol table (with the link stats
+appended) to FOO.SYM.
+
+In more detail, then: here is a list of  the available command-line
+options.   Options  consist  of  a  dash  followed by  a  (possibly
+one-letter)  word,  preceded  and  followed  by  a  space.   Unlike
+CLINK's, L2's options  may  not  be combined; "-l -w", for example,
+may not be abbreviated "-lw"; and "-m fubar"  may  not  be  written
+"-mfubar".
+
+-f <funcs>       Reserves enough table size for <funcs> functions. 
+                 (<funcs>  is  in decimal.)  The default is 200. If
+                 you  often  link  programs  with   more  than  200
+                 functions,  you  may wish to change the default --
+                 it's in setup() in L2.C.
+
+-l                CRL file names  before  the  first  "-l"  on  the
+                 command line will be treated as program files; CRL
+                 files  after  the  first   "-l"   are  treated  as
+                 libraries.  Subsequent "-l"s have no effect. 
+
+-m <name>        <name> becomes the  top-level  function.   This is
+                 the  function initially called when the .COM  file
+                 is run; by default,  of course, it is "main". Note
+                 that,  unlike  with  CLINK, the top-level function
+                 need not be the  first  function  in the first CRL
+                 file; it can be anywhere.  -m also works with -ovl
+                 (see below). 
+
+-ovl <name> <addr>
+                 An overlay segment will be built instead of a root
+                 segment; the overlay will be linked to run at base
+                 address <addr> (entered in  hex).   <name>  is the
+                 name of  the root segment for which the overlay is
+                 being built; <name>.SYM, a symbol  table  produced
+                 with either L2 or CLINK,  will be read in *before*
+                 the CRL files,  to allow overlay functions to call
+                 root  functions.   The  name  of   the   top-level
+                 function in the overlay -- i.e., the one that gets
+                 invoked by a call to the overlay base  address  --
+                 is by  default  not "main", but rather <firstcrl>,
+                 the name of the first  CRL  file in the L2 command
+                 line.   The  overlay   segment   is   written   to
+                 <firstcrl>.OVL. (See example below.) 
+
+-org <addr>      This option is used to produce a root segment with
+                 base address <addr>, e.g., for use  in  generating
+                 code for ROMming. <addr> is entered in hex, and is
+                 the starting address  of the code, not of RAM; the
+                 default is, of  course,  0x100. (To link a program
+
+
+
+
+
+
+
+
+
+L2 (C Linker) v2.1               3                         7 Dec 81
+
+
+
+
+                 for   a   nonstandard  CP/M,  you  need  a  C.CCC,
+                 DEFF.CRL,  and DEFF2.CRL which have been assembled
+                 for that  address.   If  you  are  running L2 on a
+                 nonstandard  CP/M, you should change  the  default
+                 origin  in  setup()  to  0x4300.) If you are using
+                 this  option to generate code for ROM, be sure  to
+                 use the "-t" option also (see below). 
+
+-t  <addr>         Works  just like the CLINK "-t" option: sets the
+                 stack pointer to the given address at the start of
+                 the run-time package.  This  option MUST ALWAYS BE
+                 USED when "-org" is used to generate code for ROM.
+                 IF   "-t"  is  NOT  used,  then  the   first   two
+                 instructions of the resulting COM file will be:
+
+                      lhld origin-100h+6
+                      sphl
+
+                 (where "origin" is normally 0x100 or 0x4300) while
+                 using  "-t" causes the first two  instructions  to
+                 be:
+
+                      lxi sp,<addr>
+                      nop
+
+-w                A  SID-compatible  symbol  table  is  written  to
+                 <firstcrl>.SYM,  where <firstcrl> is the  name  of
+                 the first CRL  file  listed  in the command line. 
+                 This table is normally produced in address  order,
+                 not alphabetical order like CLINK's; see below for
+                 how to change this. 
+
+-wa              A variation on -w. The link statistics, which  are
+                 always  displayed on the console  at  the  end  of
+                 linking, are also appended to the .SYM  file.   If
+                 the resulting .SYM file is read into SID, SID will
+                 complain  by  issuing  its typical  verbose  error
+                 message "?", but then  will  work  correctly.  The
+                 big advantage of putting the stats at the  end  of
+                 the .SYM file is that one can subsequently look at
+                 that file to see exactly how long the code was and
+                 where the externals started. 
+
+-ws              Another variation  on  -w.  This  one  writes  the
+                 symbol   table  to  <firstcrl>.SYM  and  the  link
+                 statistics to <firstcrl>.LNK.
+
+Because L2 is so large, it cannot  always  link large programs in a
+single pass.  If it runs  out  of  memory  during  linking, it will
+switch automatically to (very slow) two-pass  mode.   (If  it  says
+"Module won't fit in memory at all", you probably have a very large
+program file.  Split it up  or  make it a library.  If this doesn't
+
+
+
+
+
+
+
+
+
+L2 (C Linker) v2.1               4                         7 Dec 81
+
+
+
+
+work, you don't have enough memory to use L2.)
+
+L2 is  built  from  the source files L2.C, SCOTT.C, and CHARIO.C. A
+typical compilation is
+
+
+
+     cc l2.c -e4500
+     cc scott.c
+     cc chario.c
+        followed by either
+     clink l2 chario scott
+        or
+     l2 l2 chario -l scott
+        depending on whether an L2.COM is handy.
+
+If you want  a  slightly  shorter version, comment out the "#define
+OVERLAYS"  statement near the  beginning  of  L2.C.  You  can  then
+compile with -e4100; the resulting L2 will  not  accept  the "-ovl"
+option. 
+
+If  you  have  a pre-release of MARC and want a MARC  cross-linker,
+uncomment  the  "#define  MARC". Then, when  you  use  the  "-marc"
+option, L2 will look for CM.CCC,  DEFFM.CRL,  and DEFF2M.CRL, which
+should be the MARC versions of these files.  L2 will produce a .COM
+file  which must be MFTPed to MARC, then converted to load format. 
+L2 itself does  not yet run under MARC; if anyone has the energy to
+convert it, let me know! 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+L2 (C Linker) v2.1               5                         7 Dec 81
+
+
+
+
+
+
+
+
+
+
+                    Relocatable Overlay Manager
+
+
+MAKOVL is a  variation  on  L2.  It builds relocatable overlays and
+stores them  in fixed-size slots in a single overlay file.  Here is
+the (rather terse) documentation from the beginning of MAKOVL.C:
+
+     Command format:
+
+
+          makovl <root name> <overlay name> {<CRL file>
+
+     [-l {<CRL file>}] [-nd]}
+
+     Overlay descriptor file, <root name>.DES, contains:
+
+
+          <overlay slot size> <relocation info size>
+          <CRL file> ... (default search list)
+          ... (more default search list)
+          <blank line>
+          <overlay name> <slot number>
+               <function name>  <comments or whatnot>
+               <function name>  <comments or whatnot>
+               ... (an entry for each top-level function in
+          the overlay)
+          <blank line>
+          <overlay name> <slot number>
+               <function name>  <comments or whatnot>
+               <function name>  <comments or whatnot>
+               ...
+          ... (an entry for each overlay in the file)
+
+     Overlay segments are of length <overlay slot size> bytes,
+     of which the last  <relocation  info  size> bytes holds a
+     list  of  relocation offsets.  This is a  null-terminated
+     string  of  byte  values  giving  the  difference between
+     successive addresses to  be  relocated;  a  value  of 255
+     means  to  add  255  to the next byte value  to  get  the
+     offset.   The  first offset is relative to -1 (so that we
+     can  relocate  the  first word of the overlay).   At  the
+     beginning of the overlay  is  a  table  of  addresses  of
+     top-level functions, one address for each function listed
+     for that overlay in the descriptor file. 
+
+     The -l option  works  as  for L2: CRL files listed before
+
+
+
+
+
+
+
+
+
+L2 (C Linker) v2.1               6                         7 Dec 81
+
+
+
+
+     the  -l  are  loaded  in entirety; those after  are  just
+     scanned for needed functions.  Any functions specified in
+     the  default search list in the overlay  descriptor  file
+     are also scanned, unless the -nd (no default)  option  is
+     given. 
+
+     The  overlay,  once  created,  is   written   into  <root
+     name>.OVL, at  address  <slot  number>  *  <overlay  slot
+     size>. 
+
+Here is an example of a .DES file, with comments in brackets:
+
+
+     1024 128                 [1K overlay slots; 128 relocation
+     bytes]
+     lib1 lib2 lib3           [default CRL libraries]
+
+     OvlOne    0              [overlay name, slot number]
+          Func11              [callable functions in the overlay]
+          Func12
+          Func13
+
+     OvlTwo    1              [another overlay name & slot]
+          Func21
+          Func22
+          Func23
+
+Here is some code to load and execute the generated overlays:
+
+
+     /* Overlay manager */
+
+     int curovl, ovlfd;
+
+     #define OVLSIZE     1024      /* overlay space size in bytes
+     */
+     #define RELOCSIZE   128       /* size of relocation info */
+     char overlay[OVLSIZE];
+
+     OvlInit()                     /* start overlay manager */
+     {
+          curovl = -1;
+          if ((ovlfd = open ("FUBAR.OVL", INPUT)) < 0) {
+               puts ("Can't find the overlay file, FUBAR.OVL\n");
+               exit (1);
+               }
+          }
+
+     OvlFini()                     /* clean up overlay manager */
+     {
+          close (ovlfd);
+          }
+
+
+
+
+
+
+
+
+
+L2 (C Linker) v2.1               7                         7 Dec 81
+
+
+
+
+
+     OvlCall (ovlno, fun, arg1, arg2) /* call function <fun> in
+     overlay <ovlno> */
+          int ovlno, fun, arg1, arg2; /* with args (<arg1>,
+     <arg2>) */
+     {
+          int *ovltab, (*ovlfunct)();   /* note C bug: "int
+     (**ovltab)()" doesn't work */
+     
+          OvlLoad (ovlno);
+          ovltab = overlay;
+          ovlfunct = ovltab[fun];
+          return (*ovlfunct) (arg1, arg2);
+          }
+
+     OvlLoad (ovlno)               /* load overlay <ovlno> */
+          int ovlno;
+     {
+          char reloc[RELOCSIZE];
+     
+          if (ovlno == curovl) return;
+          if (seek (ovlfd, ovlno * ((OVLSIZE + RELOCSIZE) / 128),
+     ABSOLUTE) < 0
+              || read (ovlfd, overlay, (OVLSIZE / 128)) < 0
+              || read (ovlfd, reloc, (RELOCSIZE / 128)) < 0) {
+               puts ("Read error in the overlay file,
+     FUBAR.OVL\n");
+               exit (1);
+               }
+          OvlReloc (overlay, reloc);
+          curovl = ovlno;
+          }
+
+     OvlReloc (code, rels)         /* relocate an overlay */
+          char *code, *rels;
+     {
+          int *itemp;
+          char *btemp;
+     
+          btemp = code - 1;
+          while (*rels) {
+               btemp += *rels;
+               if (*rels++ == 255) btemp += *rels++;
+               itemp = btemp;
+               *itemp += code;
+               }
+          }
+
+To call these functions:
+
+
+
+
+
+
+
+
+
+
+
+
+L2 (C Linker) v2.1               8                         7 Dec 81
+
+
+
+
+     #define FUNC11      0, 0
+     #define FUNC12      0, 1
+     #define FUNC13      0, 2
+
+     ...
+
+          OvlCall (FUNC11, arg1, arg2);
+
+     ...
+
+To make a MAKOVL.COM:
+
+
+
+     cc makovl.c -e4100
+     cc chario.c         (if necessary)
+     cc scott.c          (if necessary)
+     l2 makovl chario -l scott
+
+
+
+                                  Good luck
+
+
+                                  Scott W. Layson
+                                  Mark of the Unicorn
+                                  P.O. Box 423
+                                  Arlington, MA 02174
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

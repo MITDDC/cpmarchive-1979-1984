@@ -1,0 +1,347 @@
+
+Date:  22 March 1982 05:21 est
+From:  Schauble.Multics at MIT-MULTICS
+Subject:  MicroNet file transfer protocol
+To:  REM at MIT-MC
+
+		         DISCLAIMER
+
+This description of the MicroNet protocol was gleaned from the code
+for the MicroNet Executive, version 2.3, written by Russ Ranshaw. The
+source for the Executive is copyright 1980, 1981 by CompuServe
+Incorporated. The notes here result from a quick examination of the
+Executive, and are not guaranteed to be correct. I accept no
+responsibility of any kind for errors, and solicit corrections.
+
+
+	         MicroNet File Transfer Protocol
+
+    This version of the protocol is implemented as part of a terminal
+emulator program that runs as an application under CP/M. The complete
+protocol described here includes the terminal emulator protocol also.
+
+     The protocol is intended to run over conventional asynchronous
+communications lines. The basic transmission unit is an 8 bit byte
+framed by start and stop bits, just as for conventional terminals. It
+is primarily intended to be used for file transfer between the
+MicroNet mainframe and a remote microcomputer. The remote micro must
+have an operator terminal and an operator to control the transfer.
+
+
+     Two major modes of operation are supported over this line:
+"non-protocol" mode is used for communicating with the remote micro's
+operator terminal.  This is the mode in use when the connection is
+established.  When in this mode, characters received over the comm
+line are sent to the operator's terminal.  The only characters that
+are intercepted and interpreted are:
+
+     <DLE>   Quotes that following character so that it will be sent
+             directly to the operator terminal without any other
+             interpretation.
+             
+     ^R      If the remote micro has a printer attached, begin
+             copying traffic for the operator terminal to the printer.
+             
+     ^T      Cancels a previous ^R
+             
+     <SO>    Ignored
+             
+     <SI>    Enter protocol mode.
+
+    In addition, any characters received from the operators terminal
+will be sent out over the comm line.
+
+
+
+Protocol mode with no transfer active.
+
+    This mode is entered when an <SI> is received in non-protocol
+mode. This mode continues copying characters from the comm line to
+the operator terminal, however, the set of recognized controls
+changes to:
+
+     <SO>    Return to non-protocol mode.
+             
+     <SI>    Ignored.
+             
+     ^R      Turn printer on, as above.
+             
+     ^T      Turn printer off, as above.
+             
+     ESC-I   Send executive identification. This control causes the
+             remote micro to send its identification string. This
+             string has the form:
+             
+             # executive-id, capabilities <CR>
+             
+             (The # is literal, and no spaces are actually sent.) 
+             
+             The executive-id's I have seen are
+                  CPMTarbell, CPMHeath/Zenith, CPMPMMI, and TRSDOS. 
+             I do not know what use, if any, is made of this
+             information.
+             
+             <capabilities> are a string of options, separated by
+             commas, that describe the capabilities of the remote
+             micro. The possibilites I have seen are:
+             
+             CC - cursor control. Declares that the micro is capable
+             of screen control using these escape sequences:
+                 ESC-A	Cursor UP
+                 ESC-B	Cursor DOWN
+                 ESC-C	Cursor RIGHT
+                 ESC-D	Cursor LEFT
+                 ESC-H	Cursor HOME  (line 0, column 0, or
+                                  upper left corner.)
+                 ESC-J	Erase from cursor to end of screen
+                 ESC-K        Erase from cursor to end of line
+                 ESC-j	Erase entire screen and home cursor.
+                 <FF>	Erase entire screen and home cursor.
+                 ESC-Y<L+32><C+32> Position cursor to line L, char C.
+                 
+             HC - hard copy. Declares that the remote has an attached
+                 printer and can perform these control sequences:
+                 
+                 ^R		Printer on
+                 ^T		Printer off
+                 ESC-e	Stop sending to operator terminal.
+                 ESC-f	Start sending to operator terminal.
+                 
+             PA - A protocol. The remote micro can perform file
+                 transfer using the MicroNet A protocol.
+                 
+             PL - L protocol. The remote micro can perform down-line
+                 loading using the MicroNet L protocol.
+                 
+             I believe that there are other options, but I do not
+             know what they are or what they do.
+             
+             For example, the response of this version of the
+             executive (when configured for a random CP/M system) to
+             ESC-I is:
+             
+             #CPMTarbell,CC,HC,PA,PL<CR>
+             
+
+     ESC-L   Begin a down-line load using the MicroNet L protocol.
+             
+     ESC-A   Begin a file transfer using the MicroNet A protocol.
+             
+Any other escape sequence will be ignored.
+
+I suspect that the escape sequences shown under the CC option are
+used for cursor control when in non-protocol mode.
+
+
+
+		    MicroNet "L" Protocol
+
+     The  "L" protocol is used down-line load object code from the
+MicroNet host mainframe into the remote micro. This is begun when the
+remote micro receives an ESC-L control sequence. The remote will
+expect this control to be immediately followed by ONE block in the
+following format:
+
+  Byte	Contents
+--------------------------------------------------
+   1	Count of data bytes, 1 to 255.
+   2	Low order byte of load address.
+   3 	High order byte of load address.
+   4-N	Data to be loaded.
+   N+1	Checksum byte.
+
+    If more than one block is to be loaded, each block must be
+preceeded by an ESC-L.
+
+[Note: This implementation contains a very serious flaw: The block is
+stored directly into its destination location as it is received, using
+the count and address in the block header, BEFORE any error checking
+is done. If the count or address is received in error, the rest of
+the block will be stored somewhere at random, perhaps damaging the
+rest of the system. PLS]
+
+    The remote micro will receive the block, locating the block end
+by counting data characters, and verify the checksum. If the checksum
+is correct, it will send "." (single character), otherwise, it will
+respond "/". In either case, it will return to the terminal emulator
+to await the next operation. This version of the Executive does not
+contain any form of receive time-out on this end, nor any method of
+exiting from the receive block operation other than by character
+count. All 256 possible 8 bit characters may be contained within the
+block.
+
+
+
+		     MicroNet A Protocol
+
+    The "A" protocol is used to transfer files between the MicroNet
+host mainframe and the remote micro. This operation is begun when the
+remote micro receives an ESC-A control sequence. Note that although
+the transfer may be in either direction, it is always controlled by
+the MicroNet host mainframe. Transmission parameters are determined
+in a dialog with the remote operator before entering protocol mode.
+
+    When the remote receives the ESC-A sequence, it sets its block
+sequence number to "0" then performs a block receive (described
+below) expecting the data part of the block to contain:
+
+     <direction><transfer-type><file-spec>
+          
+          <direction> is the single character U (Upload) if the
+          transfer is remote to host mainframe, or the single
+          character D (Download) if the transfer is host to remote.
+          
+          <transfer-type> is the single character A if the file being
+          sent is a CP/M ASCII file (The remote Executive will append
+          a ^Z (standard CP/M end of file character) when the
+          transfer is complete.), or the character B if the file is
+          binary (will be stored as received).
+          
+          <file-spec> is the name of the file being sent or received
+          on the remote micro file system. This spec is in the form
+          expected by the remote operating system, e.g., a CP/M file
+          spec.
+          
+    The Executive will then set up for the transfer, if possible, by
+opening the destination file. It will then acknowledge the block by
+sending ".". It will then receive blocks containing the file data and
+write them to the destination file. This process will continue until
+an EOF block is seen. The Executive will then close the file (perhaps
+appending ^Z in the process) and return to the terminal emulator to
+await the next operation.
+
+Block receive.
+
+    The block receive operation proceeds as follows:
+
+    1. If this is not the first block, containing the transfer specs,
+       acknowledge the previous block by sending ".".
+
+    2. Increment the block sequence number. This is set to "0" when
+       the transfer is begun, and increments cyclically "0"
+       through "9".
+       
+    3. Receive a block on the form:
+       
+       <SOH> <sequence> <data> <ETX> <checksum>
+       
+       The end of block is the <ETX>, the <checksum> is the next
+       byte.  The <ETX> is not included in the checksum, but the
+       <sequence> is.  Within the data, these characters have special
+       interpretation:
+       
+       <EOT> - sets end of file flag. This does not end the block,
+       however, any other data in the block will be ignored.
+       
+       <DLE> - The next character is a translated control character.
+       It is converted by setting the high order three bits to zero,
+       leaving only the low 5 bits. The <DLE> is not included in the
+       checksum, but the converted control character is. The
+       characters masked in this fashion are <NUL>, <SOH>, <STX>,
+       <ETX>, <EOT>, <DLE>, and <NAK>. The checksum WILL be sent in
+       this fashion if it happens to be one of the offending 
+       characters.
+       
+       <ETX>, of course, cannot occur within the data.
+       
+    4. Validate the checksum. If this fails, go to 7.
+       
+    5. Validate the sequence. If the block sequence received is too
+       low, assume this is a duplicate block, acknowledge it
+       by sending "." and go to step 3 to try again. If the block
+       sequence received is too high, assume that a block has been
+       missed entirely and abort the transfer by sending <NAK>.
+       
+    6. Return the block, now presumed correct.
+       
+    7. Tell the host about the error by sending "/", and go back to
+       step 3 to try again.
+       
+    The end of block is located by the <ETX>. The next byte must be
+the checksum. The remote may abort the transfer by sending <NAK> in
+place of a block acknowledgement. Characters preceeding the <SOH> are
+ignored, except for a naked <ETX>, which causes a "/" response
+(assuming that the <SOH> on a block was missed). The remote contains
+no receive time out, and no way is provided to end a transfer other
+than the host sending a end of file block.
+
+    The format of an end of file block is
+
+       <SOH> <sequence> <EOT> <ETX> <checksum>
+
+    This description is for a file transfer from host to remote
+micro. If the transfer is in the other direction, the same block
+formats are used. although the sequence of operations is slightly
+different.
+
+Host to Remote micro transfer
+
+     Host                                Remote
+------------------------------------------------------------
+     Esc-A        ---->
+     <SOH> 1 D <type> <filespec><ETX><cksum> ----->
+
+                              <------      "."
+
+     <SOH> 2 data data <ETX> <cksum>   ---->
+				    
+			<------      "."
+     more data      ----->
+
+     <SOH> <seq> <EOT> <ETX> <cksum>  ----->
+
+                              <------      "."
+
+
+Remote Micro to Host transfer
+
+
+     Host                                 Remote
+------------------------------------------------------------
+     ESC-A         ----->
+     <SOH> 1 U <type> <filespec> <ETX <cksum> ----->
+
+                              <------      "."
+
+          <----- <SOH> <seq> data <ETX> <cksum>
+
+      "."  ----->
+
+          <----- <SOH> <seq> data <ETX> <cksum>
+
+      "."  ----->
+
+          <----- <SOH> <seq> <EOT> <ETX> <cksum>
+
+    As with the Host to Remote, the receiver, in this case the Host,
+acknowledges a block by sending "." and requests retransmission by
+sending "/". For this operation, the Executive does implement a four
+second timeout when waiting for an acknowledgement. If this timer
+expires, it sends another <ETX>. 
+
+    Certain characters may be received from the Host during the
+transfer:
+
+     <NAK>  Aborts the transfer instantly and returns to terminal
+            mode. This is not acknowledged.
+
+     ^S     Stop sending.
+
+     ^Q     Resume sending.
+
+
+
+Checksums.
+
+    The same checksum is used for both protocols. It is initialized
+to zero at the start of each block and then calculated as:
+
+    For each byte included in the checksum:
+
+       1. Get previous checksum.
+
+       2. Rotate one bit left.
+
+       3. Add in current data byte, with end-around carry.
+
+

@@ -1,0 +1,101 @@
+
+                 Public Domain Responsibilities
+                       By Richard Greenlaw
+     From Dr. Dobb's Journal, Number 81, July 1983, Page 10
+
+To DDJ Readers and CP/M Users,
+
+	Over  the  years  that DDJ has been serving  us,  I  have 
+contributed on article (a disassembler in issue no. 27), a review 
+of the PC-1 pocket computer (in issue no.  52) and a few letters.  
+However,  this contribution is a bit different.   The bottom line 
+of this letter is a warning!
+
+	I  am  the  author  of a set  of  programs  which  is  in 
+widespread   public   domain   distribution   (at   least   three 
+continents).   They are called SQ.COM, USQ.COM and FLS.COM.  They 
+run  on CP/M systems and serve to squeeze files to smaller  sizes 
+in   preparation  for  transmission  via  modem  or  distribution 
+diskette.
+
+	The latest version of these programs are 1.5, 1.5 and 1.1 
+respectively.   I  released these programs to the public  domain, 
+except  for financial gain,  and included full source code (in  C 
+language)  and  extensive documentation.   This software  is  now 
+available via the C Users group, which has advertized in DDJ.
+
+	Having  had reasonable experiences with  previous  public 
+offerings,   I  gave my name and address in the documentation and 
+in the sign-on message of each program.  Therein lies the story!
+
+	In recent months I have had a couple of dozen phone calls 
+claiming  that  these programs have  destroyed  various  innocent 
+files.   But when I ask for details,  I find that the programs in 
+question have version numbers higher than any I have ever issued!  
+Not  only that,  but many different version numbers,  as high  as 
+1.9, have been mentioned!
+
+	I  expect  that  whoever produced each version  of  these 
+programs was as innocent as I was in August of 1981 when I ussued 
+the above-mentioned programs.   But the fact remains that one  or 
+more  persons has taken it upon themselves to propagate  modified 
+versions  of  my  software without taking the  responsibility  of 
+adding  their name and address to the documentation  and  sign-on 
+messages.
+
+	It is an unfortunate fact that C and probably other high-
+level  languages  can crash impolitely when the CP/M TPA  is  too 
+small  for the program and its data space,  including dynamically 
+allocated  local  variables.   (These programs do  use  recursive 
+algorithems).
+
+	I have heard,  without confirmation, that vast amounts of 
+code  have been added to some versions of these programs  to  add 
+wild card file name processing.   Perhaps this is the problem.  I 
+provided that feature as a separate program,  FLS.COM,  precisely 
+for  that reason.   It is also possible that full and careful use 
+of the recompilation options available in BDS-C has been  abused, 
+resulting  in too much code or improperly linked code.   Or maybe 
+there  have  simply  been  some accidents  in  copying  or  modem 
+transmission.
+
+	Whatever  the  case,  I  recommend  that  if  you  modify 
+software which you have not written, then try to consult with the 
+original author before publicly distributing such  software.   If 
+that is not possible, at least accept the responsibility of being 
+the  first  line of complaint handling by adding (not  replacing) 
+your name to the documentation and sign-on message.
+
+	If  anyone has a file which the above-mentioned  versions 
+of my programs cannot squeeze and then reproduce,  please contact 
+me.   My  computers  can read and write  the  following  diskette 
+formats:  Micropolis  Mod  II,  Max-80 5" 40  track/side  (SS/DS, 
+SD/DD)  formats,   Osborne  Single  Density,  Omikron  5"  single 
+density, Xerox 5" single density.  Except for the Micropolis, all 
+of the above are handled by my Lobo Max-80 computer.
+
+	Do  you  really  want  more  public  domain  source  code 
+sofrware?    If  so,   and  if  you  know  the  source  of  these 
+modifications,  please  help stamp out the bad versions (copies?) 
+of  this software.   Unfortunately,  I don't know  exactly  which 
+versions are bad because not one single person has ever sent me a 
+courtesy copy of any modifications!
+
+	To  those  bewildered innocent victims,  the  unsqueezing 
+precess contains a validity check based on the original file.  If 
+you  can produce a file (not just a console display)  by  running 
+the  USQ.COM program,  then the resulting file should be an exact 
+replica of the original.
+
+	I  also ask purchasers of communications packages  who  I 
+have  authorized to distribute this software not to assume that I 
+am  responsible for the communications packages.   It seems  that 
+reproduction of my documentation files makes my name and  address 
+more prominent than those of the commercial distributers!
+
+			Sincerely,
+			Richard Greenlaw
+			251 Colony Ct.
+			Gahanna, Ohio  43230
+
+

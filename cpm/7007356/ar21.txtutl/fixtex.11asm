@@ -1,0 +1,1082 @@
+;			 FIXTEX.ASM version 1.1
+;			   by Paul L. Kelley
+;			       based on
+;			 FILTER.ASM version 1.1
+;				 and
+;			 FILTEX.ASM version 1.0
+;			by Keith Petersen, W8SDZ
+;
+;01/14/83 - Did the following:
+;   1. Fixed bug (missing ENDIF) in version 1.0,
+;   2. Rewrote instructions on user-definable options
+;      to avoid some possible confusion.
+;                                            EOS
+;01/03/83 - Did the following:
+;
+;	1. Changed to assemble with DRI's ASM,
+;	2. Changed so that if input file is FILENAME.ABC then output
+;		file is FILENAME.XYZ where the various XYZ's are given
+;		below or, if renaming is chosen, the output file has
+;		the original file name and type and the input file name
+;		has the file type BAK,
+;	3. Modified so that output file can be on different drive
+;		from input,
+;	4. Added routines to output several types of files depending
+;		on assembly time switches, these switches can be set to
+;		do a number of operations (some are mutually exclusive).
+;		All cases pad the last sector with EOFs. The operations
+;		are:
+;	  a. leave text unchanged, filetype=PAD
+;	  b. delete all control characters except CR, LF and TAB,
+;		filetype=FIX
+;	  c. insert LF after each CR if absent, filetype=ALF
+;	  d. insert CR before each LF if absent, filetype=ACR
+;	  e. delete extraneous LF (those not following CR), filetype=FEL
+;	  f. delete LF, filetype=FLF
+;	  g. insert one space on each blank line, filetype=ASP
+;	  h. delete LF and insert a space on each blank line, filetype=SFL
+;	  i. replace TAB with spaces, filetype=FTB
+;	  j. delete LF and replace TAB with spaces, filetype=FLT
+;	  k. replace TAB with spaces and insert a space on each blank line,
+;		filetype=SRT
+;	  l. delete LF and replace TAB with spaces and insert a space
+;		on each blank line,
+;		filetype=FBB (canonical bulletin board file)
+;	  m. delete any character following ESC, filetype=FES
+;	  n. replace more than one space with TAB where possible,
+;		filetype=RSP
+;	  o. replace more than one space with TAB where possible
+;		except in 'qouted' strings,
+;		filetype=FSM (canonical assembly file)
+;	  p. insert a tab at start of each line, filetype=ATB
+;	  q.  insert an arbitrary number of spaces at start of each line,
+;		filetype=ANS
+;
+;Options f, g, h, i, j, k and l may be useful when sending files to
+;bulletin boards and mainframes. Option m may be useful when capturing
+;text from mainframes which control your terminal in full screen mode.
+;Option o can shorten assembly language files.
+;						P.L.Kelley
+;
+;From FILTER.ASM Version 1.1 - Revised 01/27/81
+;This program copies any ASCII file and filters out (ignores)
+;all control characters except CR, LF, and TAB.  It also sets
+;the high order bit of all characters to zero so that files
+;created with WordStar or other text processing programs can
+;be read by MBASIC.  The filtered copy of the of the file is
+;created as 'FILTER.FIL' on the default drive.  The source
+;file is left intact.  If the original file's EOF (1AH) is
+;not at the physical end of the last sector, this program
+;will pad the last sector with EOF's.  This is useful for
+;'cleaning up' a file which was originally created by MBASIC
+;or text editors which do not pad the last sector with EOF's.
+;						 Keith Petersen, W8SDZ
+;
+;Command: FILTER [drive:]<filename.filetype> [drive:]
+;
+FALSE	equ	0
+TRUE	equ	0ffh
+;
+; ********** USER DEFINABLE AREA BEGINS HERE *****************
+ 
+renfil	equ	FALSE	;if true, output file has name of
+			; input file and input file has file
+			; type BAK.
+			; if false, output file is given
+			; distinctive file type and input file
+			; is not renamed.
+;
+fltctl	equ	FALSE	;filters control chars (exc. CR,LF,TAB)
+			; FLTCTL is independent of other options,
+			; but should probably be set TRUE if
+			; FLTESC (below) is TRUE.
+;
+
+; +++++++  Read the following carefully - easy to go wrong ++++++
+
+;The remaining options fall into two mutually-exlusive groups, i.e.,
+; ALL of the other group's options must be FALSE if any options
+; in a Group a are set TRUE.
+
+;In the case of GROUP ONE, only one of the seven possible
+; options may be true (and all Group Two options must be FALSE).
+
+;In the case of GROUP TWO, one or more of the three options
+; may be TRUE (and all of Group One options must be FALSE)
+;
+
+;+++++ GROUP ONE Options start here - ONLY ONE may be TRUE,
+;                                     AND all GROUP TWO Options
+;                                     must be FALSE if a GROUP ONE
+;                                     Options is TRUE. ++++++++++++++
+
+addlf	equ	FALSE	;add LF after CR if missing
+addcr	equ	FALSE	;add CR before LF if missing
+addtab	equ	FALSE	;add TAB at the start of each line
+addnsp	equ	FALSE	;add spaces at the start of each line
+fltelf	equ	FALSE	;filter LF if not after CR
+fltesc	equ	FALSE	;filter character after ESC, you will likely
+			; also want to set ftlctl to TRUE
+spcrpl	equ	FALSE	;replace spaces with TAB (where possible)
+			; End GROUP ONE Options
+;
+			; Subordinate GROUP ONE Option:
+fltasm	equ	FALSE	;Do not replace spaces in 'quoted' strings.
+			; This equate may be TRUE only if SPCRPL in
+			; Group 1 (above) is also TRUE.
+;
+; ~~~~~~~~ END GROUP ONE - BEGIN GROUP TWO Options ~~~~~~~~~~~~~~~
+
+; ++++++++++++++++++++++ ANY of ALL Group TWO Options may be TRUE,
+;                        but ONLY is ALL Group ONE Optiond are FALSE
+;                                      ++++++++++++++++++++++++++++
+
+filtlf	equ	FALSE	;filter all LF
+addsp	equ	FALSE	;add one space on each blank line
+tabrpl	equ	FALSE	;replace TAB with spaces
+
+; ~~~~~~~~~~~~~~ End GROUP TWO Options ~~~~~~~~~~~~~~~
+;
+numspc	equ	8	;defines number of spaces to add at
+			; start of line if ADDNSP is TRUE.
+			; May change to suit yourself.
+;
+tablen	equ	8	;defines length of TAB inserted by TABRPL.
+			; May change to suit yourself
+;
+; ******************** END OF USER DEFINABLE AREA ********
+
+; NOTE:  Although you could probably enlarge BSIZE (below) up
+;        to a value of TPA - 2 (in K bytes), it probably wouldn't
+;        improve speed very much.  Unless you know exactly what
+;        you're doing, and why, you're better off leaving the
+;        value for BSIZE as it is.
+;
+;Define write buffer size
+BSIZE	EQU	16	;<--NOW SET FOR 16k
+;
+
+;
+;BDOS equates
+;
+WBOOT	EQU	0	;WARM BOOT ENTRY ADRS
+WRCON	EQU	2	;WRITE CHARACTER TO CONSOLE
+BDOS	EQU	5	;CP/M BDOS ENTRY ADRS
+PRINT	EQU	9	;PRINT STRING (DE) UNTIL '$'
+OPEN	EQU	15	;OPEN DISK FILE
+close	equ	16
+erase	equ	19
+READ	EQU	20	;READ SEQUENTIAL FILE
+write	equ	21
+make	equ	22
+rename	equ	23
+STDMA	EQU	26	;SET DMA ADDRESS
+FCB	EQU	5CH	;DEFAULT FILE CONTROL BLOCK
+;
+cr	equ	13
+lf	equ	10
+tab	equ	9
+eof	equ	1ah
+esc	equ	1bh
+quote	equ	''''
+cmnt	equ	';'
+del	equ	7fh
+mask	equ	7fh
+;
+;Program starts here
+;
+	ORG	100H
+;
+START:
+	LXI	SP,STACK  ;SET STACK POINTER
+	CALL	ILPRT	;PRINT
+	DB	CR,LF,'FXTXT version 1.1 - ASCII file utility',CR,LF,0
+	if	fltctl
+	call	ilprt
+	db	'Deletes all control characters except CR'
+	endif	;fltctl
+	if	((not filtlf) or (not tabrpl)) and fltctl
+	db	', LF and TAB'
+	endif	;((not filtlf) or (not tabrpl)) and fltctl
+	if	filtlf and (not tabrpl) and fltctl
+	db	' and TAB'
+	endif	;filtlf and (not tabrpl) and fltctl
+	if	fltelf and (not tabrpl) and fltctl
+	db	', TAB and LF following CR'
+	endif	;fltelf and (not tabrpl) and fltctl
+	if	tabrpl and (not filtlf) and fltctl
+	db	' and LF'
+	endif	;tabrpl and (not filtlf) and fltctl
+	if	fltctl
+	db	cr,lf,0
+	endif	;fltctl
+	if	(not fltctl) and filtlf
+	call	ilprt
+	db	'Deletes LF',cr,lf,0
+	endif	;(not fltctl) and filtlf
+	if	(not filtlf) and fltelf
+	call	ilprt
+	db	'Deletes LF not after CR',cr,lf,0
+	endif	;(not filtlf) and fltelf
+	if	addlf or addcr or addsp or addtab or fltesc
+	call	ilprt
+	endif	;addlf or addcr or addsp or addtab or fltesc
+	if	addlf
+	db	'Inserts LF after CR if missing'
+	endif	;addlf
+	if	addcr
+	db	'Inserts CR before LF if missing'
+	endif	;addcr
+	if	addsp
+	db	'Inserts a space on blank lines'
+	endif	;addsp
+	if	fltesc
+	db	'Deletes character after ESC'
+	endif	;fltesc
+	if	addtab
+	db	'Adds a TAB at the start of each line'
+	endif	;addtab
+	if	addlf or addcr or addsp or addtab or fltesc
+	db	cr,lf,0
+	endif	;addlf or addcr or addsp or addtab or fltesc
+	if	spcrpl or tabrpl
+	call	ilprt
+	endif	;spcrpl or tabrpl
+	if	tabrpl
+	db	'Replaces TAB with spaces'
+	endif	;tabrpl
+	if	spcrpl
+	db	'Replaces spaces with TAB where possible'
+	endif	;spcrpl
+	if	fltasm
+	db	' except in ''quoted'' strings'
+	endif	;fltasm
+	if	spcrpl or tabrpl
+	db	cr,lf,0
+	endif	;spcrpl or tabrpl
+	if	addnsp
+	call	ilprt
+	db	'Adds ',0
+	lxi	h,numspc
+	call	decout
+	call	ilprt
+	db	' spaces at the start of each line',cr,lf,0
+	endif	;addnsp
+	lda	ftype
+	cpi	0
+	jnz	nofix
+	if	not fltctl
+	call	ilprt
+	db	'Text unchanged',cr,lf,0
+	lxi	h,padftp
+	endif	;not fltctl
+	if	fltctl
+	lxi	h,fixftp
+	endif	;filctl
+	lxi	d,ftype
+	mvi	b,3
+	call	move
+nofix:
+	if	not renfil
+	lxi	d,outftp
+	lxi	h,ftype
+	mvi	b,3
+	call	move
+	call	ilprt
+	db	'Output file type is '
+outftp:	db	'   ',cr,lf,0
+	endif	;not renfil
+	if	renfil
+	call	ilprt
+	db	'Input file type will be changed to BAK',cr,lf,0
+	endif	;renfil
+	LDA	FCB+1
+	CPI	' '	;FILENAME THERE?
+	JNZ	OPENIT	;YES, GO OPEN IT
+	CALL	EXIT	;PRINT MSG THEN EXIT
+	DB	'Usage: FILTER [drive:]<filename.filetype> [drive:]',CR,LF
+	DB	'       [ ] = optional, < > = required$'
+;
+;Open source file
+;
+OPENIT:	LXI	D,FCB
+	MVI	C,OPEN
+	CALL	BDOS
+	INR	A	;CHECK FOR NO OPEN
+	JNZ	DECFIL	;NO ERROR, CONTINUE
+	CALL	EXIT
+	DB	'++ SOURCE FILE NOT FOUND ++$'
+;
+;Check for destination drive and erase then open output file
+;
+decfil:	lxi	h,80h
+	mvi	d,0
+	mov	e,m
+	dad	d
+	mov	a,m
+	cpi	':'
+	mvi	a,0
+	jnz	nodest
+	dcx	h
+	mov	a,m
+	sbi	'A'
+	cpi	16
+	jnc	wrgdest
+	inr	a
+nodest:	sta	fcb2
+	lxi	h,fcb+1
+	lxi	d,fcb2+1
+	mvi	b,8
+	call	move
+	lxi	d,fcb2
+	mvi	c,erase
+	call	bdos
+	lxi	d,fcb2
+	mvi	c,make
+	call	bdos
+	CALL	ILPRT	;PRINT:
+	DB	'Input and output files open',CR,LF,CR,LF,0
+;
+;Read sector from source file
+;
+READLP:	LXI	D,80H
+	MVI	C,STDMA
+	CALL	BDOS
+	LXI	D,FCB
+	MVI	C,READ
+	CALL	BDOS
+	ORA	A	;READ OK
+	JZ	WRDISK	;YES, SEND IT TO OUTPUT
+	CPI	1	;END-OF-FILE?
+	JZ	padeof	;TRANSFER DONE, CLOSE, EXIT
+	CALL	ERXIT
+	DB	'++ SOURCE FILE READ ERROR ++$'
+;
+;Write sector to output file (with buffering)
+;
+WRDISK:	LXI	H,80H	;READ BUFFER ADRS
+;
+WRDLOP:
+;
+	if	addlf
+	lda	crflg
+	ora	a
+	mov	a,m
+	jz	skip2
+	cpi	lf
+	jz	putchr
+	call	more
+	dcr	l
+	mvi	a,lf
+	jmp	putchr
+	endif	;addlf
+;
+	if	tabrpl
+	lda	tabflg
+	ora	a
+	jz	skip
+	lda	tabcnt
+	dcr	a
+	sta	tabcnt
+	jz	endtab
+	dcr	l
+	call	more
+	mvi	a,' '
+	jmp	putchr
+endtab:	xra	a
+	sta	tabflg
+	endif	;tabrpl
+;
+	if	fltasm
+	mov	a,m
+	cpi	cmnt
+	jnz	nocmnt
+	lda	quoflg
+	ora	a
+	jnz	nocmnt
+	mvi	a,true
+	sta	cmtflg
+	jmp	spctst
+nocmnt:	lda	cmtflg
+	ora	a
+	jnz	spctst
+	mov	a,m
+	cpi	quote
+	jnz	noflip
+	lda	quoflg
+	cma
+	sta	quoflg
+noflip:	lda	quoflg
+	ora	a
+	jnz	skip
+	endif	;fltasm
+;	
+	if	spcrpl
+spctst:	lda	spcflg
+	ora	a
+	jnz	spcst2
+	mov	a,m
+	cpi	' '
+	jz	spcset
+	endif	;spcrpl	
+;
+skip:	MOV	A,M	;GET BYTE FROM READ BUFFER
+skip2:	CPI	eof	;END OF FILE MARKER ?
+	JZ	padeof	;TRANSFER DONE, CLOSE, EXIT
+;
+	if	addtab
+	lda	crflg
+	ora	a
+	mov	a,m
+	jz	skip3
+	cpi	lf
+	jz	putcrlf
+	call	more
+	dcr	l
+	mvi	a,tab
+	jmp	putchr
+	endif	;addtab
+;
+	if	addnsp
+	lda	crflg
+	ora	a
+	mov	a,m
+	jz	skip3
+	cpi	lf
+	jz	putcrlf
+	call	more
+	dcr	l
+	lda	spccnt
+	dcr	a
+	sta	spccnt
+	mvi	a,' '
+	jz	putchr
+	jmp	putcrlf
+	endif	;addnsp
+;
+skip3:	ANI	mask	;STRIP PARITY BIT
+	CPI	del	;DEL (RUBOUT) ?
+	JZ	nIGNOR	;YES, IGNORE IT
+	CPI	' '	;SPACE OR ABOVE?
+	JNC	PUTCHR	;YES GO WRITE IT
+;
+	if	addcr
+	lda	crflg
+	ora	a
+	mov	a,m
+	jnz	lftest
+	cpi	lf
+	jnz	crtest
+	mvi	a,true
+	sta	crflg
+	call	more
+	dcr	l
+	mvi	a,cr
+	jmp	putcrlf
+lftest:	cpi	lf
+	jmp	putchr
+	endif	;addcr
+;
+	if	fltelf
+	lda	crflg
+	ora	a
+	mov	a,m
+	jnz	lftest
+	cpi	lf
+	jz	ignore
+lftest:	cpi	lf
+	jz	putchr
+	endif	;fltelf
+;
+	if	not (filtlf or fltelf or addcr or addtab or addnsp)
+lftest:	CPI	LF	;LINE FEED ?
+	JZ	PUTcrlf	;YES GO WRITE IT
+	endif	;not (filtlf or fltelf or addcr or addtab or addnsp)
+;
+	if	filtlf
+	cpi	lf
+	jz	ignore
+	endif	;filtlf
+;
+	if	addsp
+	cpi	cr
+	jnz	tabtst
+	lda	crflg
+	ora	a
+	mov	a,m
+	jz	crtest
+	call	more
+	dcr	l
+	mvi	a,' '
+	jmp	putchr
+	endif	;addsp
+;
+crtest:	CPI	CR	;CARRIAGE RETURN ?
+;
+	if	addlf or fltelf or addsp or addcr or addtab or addnsp
+	jnz	tabtst
+	mvi	a,true
+	sta	crflg
+	mov	a,m
+	cpi	cr
+	endif	;addlf or fltelf or addsp or addcr or addtab or addnsp
+;
+	if	tabrpl or spcrpl
+	jnz	tabtst
+	xra	a
+	sta	lincnt
+	sta	cmtflg
+	sta	quoflg
+	mov	a,m
+	cpi	cr
+	endif	;tabrpl or spcrpl
+;
+	JZ	PUTcrlf	;YES GO WRITE IT
+tabtst:	CPI	TAB	;TAB CHARACTER ?
+;
+	if	spcrpl
+	cz	inccnt
+	mov	a,m
+	cpi	tab
+	jz	putcrlf	
+	endif	;spcrpl
+;
+	if	not (tabrpl or spcrpl)
+	JZ	PUTCHR	;YES, GO WRITE IT
+	endif	;not (tabrpl or spcrpl)
+;
+	if	tabrpl
+	cz	tabset
+	mov	a,m
+	cpi	tab
+	jz	ignore
+	endif	;tabrpl
+;
+	if	fltesc
+	cpi	esc
+	jnz	nignor
+	mvi	a,true
+	sta	escflg
+	endif	;fltesc
+;
+	if	addlf
+	xra	a
+	sta	crflg
+	endif	;addlf
+;
+nignor:
+	if	not fltctl
+	mov	a,m
+	jmp	putcrlf
+	endif	;not fltctl
+;
+;Ignore character and add one to ignore count
+;
+IGNORE:	PUSH	H	;SAVE INPUT BUFFER ADRS
+	LHLD	DCOUNT	;GET DELETE COUNTER
+	INX	H	;ADD ONE
+	SHLD	DCOUNT	;SAVE NEW COUNT
+	POP	H	;GET INPUT BUFFER ADRS BACK
+	JMP	TSTEND	;IGNORE CHARACTER AND CONTINUE
+;
+;Pad last sector with EOFs
+;
+padeof:	lhld	nxtout
+	call	sectst
+	jz	nopad
+padcnt:	mvi	m,eof
+	inx	h
+	call	sectst
+	jnz	padcnt
+	lxi	h,scinbf
+	inr	m
+nopad:	mvi	a,true
+	sta	finis
+	jmp	wrblock
+;
+;Check if end of output sector
+;
+sectst:	mvi	a,0
+	cmp	l
+	rz
+	mvi	a,80h
+	cmp	l
+	ret
+;
+;Add one to acount
+;
+more:	push	h
+	lhld	acount
+	inx	h
+	shld	acount
+	pop	h
+	ret
+;
+;Add count of spaces eliminated to dcount
+;
+	if	spcrpl
+less:	push	h
+	lhld	dcount
+	lda	spccnt
+less2:	inx	h
+	dcr	a
+	jnz	less2
+	shld	dcount
+	pop	h
+	ret
+	endif	;spcrpl
+;
+	if	tabrpl
+tabset:	mvi	b,tablen
+	lda	lincnt
+tabagn:	sub	b
+	jnc	tabagn
+	cma
+	inr	a
+	inr	a
+	sta	tabcnt
+	mvi	a,true
+	sta	tabflg
+	ret
+	endif	;tabrpl
+;
+	if	spcrpl
+spcset:	mvi	a,true
+	sta	spcflg
+	xra	a
+spcst4:	inr	a	
+	sta	spccnt
+	lda	lincnt
+	inr	a
+	sta	lincnt
+	mvi	b,tablen
+tabagn:	sub	b
+	jz	spcst3
+	jnc	tabagn
+	inr	l
+	jz	readlp
+spcst5:	mov	a,m
+	cpi	tab
+	jz	spcst7
+	cpi	' '
+	mvi	a,true
+	jnz	spcst3	;put spaces
+	lda	spccnt
+	jmp	spcst4
+;
+spcst2:	lda	dowflg
+	ora	a
+	jnz	dowrbf
+	jmp	spcst5
+;
+spcst7:	call	inccnt
+spcst3:	cma
+	sta	tabflg
+	mvi	a,true
+	cma
+	sta	dowflg
+;
+dowrbf:	lda	tabflg
+	ora	a
+	jz	space
+	xra	a
+	sta	tabflg
+	sta	dowflg
+	lda	spcflg
+	ora	a
+	mvi	a,false
+	sta	spcflg
+	jz	nosngl
+	lda	spccnt
+	cpi	1
+	mvi	a,' '
+	jz	putcrlf
+	call	more
+nosngl:	call	less
+	mvi	a,tab
+	jmp	putcrlf
+space:	dcr	l
+	lda	spccnt
+	dcr	a
+	sta	spccnt
+	jnz	moresp
+	xra	a
+	sta	spcflg
+	sta	dowflg
+moresp:	mvi	a,' '
+	jmp	putcrlf
+;
+inccnt:	mvi	b,tablen
+	lda	lincnt
+tbagn2:	sub	b
+	jnc	tbagn2
+	cma
+	mov	b,a
+	lda	lincnt
+	add	b
+	inr	a
+	sta	lincnt
+	xra	a
+	sta	spcflg
+	ret
+	endif	;spcrpl
+;
+;Write character to output buffer
+;
+putchr:	
+;
+	if	addlf or fltelf or addsp or addcr or addtab or addnsp
+	push	psw
+	xra	a
+	sta	crflg
+	pop	psw
+	endif	;addlf or fltelf or addsp or addcr or addtab or addnsp
+;
+	if	addnsp
+	push	psw
+	mvi	a,numspc
+	sta	spccnt
+	pop	psw
+	endif	;addnsp
+;
+	if	tabrpl or spcrpl
+	push	psw
+	lda	lincnt
+	inr	a
+	sta	lincnt
+	pop	psw
+	endif	;tabrpl or spcrpl
+;
+	if	fltesc
+	lda	escflg
+	ora	a
+	mov	a,m
+	jz	putcrlf
+	xra	a
+	sta	escflg
+	jmp	ignore
+	endif	;fltesc
+;
+PUTcrlf:
+	PUSH	H	;SAVE INPUT BUFFER ADRS
+	lhld	nxtout
+	mov	m,a
+	inx	h
+	shld	nxtout
+	call	sectst
+	jnz	secnic
+	lda	scinbf
+	inr	a
+	sta	scinbf
+	cpi	bsize*8
+	jz	wrblock
+secnic:	POP	H	;GET INPUT BUFFER ADRS BACK
+;
+TSTEND:	INR	L	;DONE WITH SECTOR?
+	JNZ	WRDLOP	;NO, GET ANOTHER BYTE
+	JMP	READLP	;GO GET ANOTHER SECTOR
+;
+;Write memory buffer to output file
+;
+wrblock:
+	lda	scinbf
+	ora	a
+	jz	tdone
+	mov	c,a
+	lxi	d,buffer
+dkwrlp:	push	d
+	push	b
+	mvi	c,stdma
+	call	bdos
+	lxi	d,fcb2
+	mvi	c,write
+	call	bdos
+	pop	b
+	pop	d
+	ora	a
+	jnz	wrerr
+	lxi	h,80h
+	dad	d
+	xchg
+	dcr	c
+	jnz	dkwrlp
+	lda	finis
+	ora	a
+	jnz	tdone
+	xra	a
+	sta	scinbf
+	lxi	h,buffer
+	shld	nxtout
+	jmp	secnic
+;
+wrerr:	call	erxit
+	DB	'++ OUTPUT FILE WRITE ERROR, DISK FULL ++$'
+;
+;Transfer is done - close destination file
+;
+TDONE:	lxi	d,fcb2
+	mvi	c,close
+	call	bdos
+;
+;Rename files
+;
+	if	renfil
+	xra	a
+	sta	fcb+16
+	sta	fcb2+16
+	lxi	d,fcb+16
+	lxi	h,fcb
+	mvi	b,12
+	call	move
+	lxi	d,fcb2+17
+	lxi	h,fcb2+1
+	mvi	b,11
+	call	move
+	lxi	d,fcb+25
+	lxi	h,bakftp
+	mvi	b,3
+	call	move
+	lxi	d,fcb2+25
+	lxi	h,fcb+9
+	mvi	b,3
+	call	move
+	lxi	d,fcb+16
+	mvi	c,erase
+	call	bdos
+	xra	a
+	sta	fcb+16
+	lxi	d,fcb
+	mvi	c,rename
+	call	bdos
+	lxi	d,fcb2
+	mvi	c,rename
+	call	bdos
+	endif	;renfil
+;	
+;Output messages to operator and exit
+;
+	CALL	ILPRT	;PRINT:
+	DB	'Function complete:',cr,lf,0
+	if	tabrpl or fltesc or spcrpl or filtlf or fltelf or fltctl
+	LHLD	DCOUNT	;GET DELETED CHAR COUNT
+	CALL	DECOUT	;PRINT IT
+	call	ilprt
+	endif	;tabrpl or fltesc or spcrpl or filtlf or fltelf or fltctl
+	if	fltctl
+	DB	' bytes '
+	endif	;fltctl
+	if	(tabrpl or fltesc or spcrpl or filtlf or fltelf) and fltctl
+	db	'including'
+	endif	;(tabrpl or fltesc or spcrpl or filtlf or fltelf) and fltctl
+	if	tabrpl
+	db	' TABs '
+	endif	;tabrpl
+	if	tabrpl and filtlf
+	db	'and'
+	endif	;tabrpl and filtlf
+	if	filtlf or fltelf
+	db	' LFs '
+	endif	;filtlf or fltelf
+	if	spcrpl
+	db	' spaces '
+	endif	;spcrpl
+	if	fltesc
+	db	' single characters following ESC '
+	endif	;fltesc
+	if	tabrpl or spcrpl or filtlf or fltelf or fltctl or fltesc
+	db	'deleted',cr,lf,0
+	endif	;tabrpl or spcrpl or filtlf or fltelf or fltctl or fltesc
+	if	addlf or addsp or addcr or tabrpl or addtab or addnsp or spcrpl
+	lhld	acount
+	call	decout
+	call	ilprt
+	endif	;addlf or addsp or addcr or tabrpl or addtab
+		;or addnsp or spcrpl
+	if	tabrpl or addnsp or addsp
+	db	' spaces added',cr,lf,0
+	endif	;tabrpl or addnsp or addsp
+	if	spcrpl or addtab
+	db	' TABs added',cr,lf,0
+	endif	;spcrpl or addtab
+	if	addlf
+	db	' LFs added',cr,lf,0
+	endif	;addlf
+	if	addcr
+	db	' CRs added',cr,lf,0
+	endif	;addcr
+	call	ilprt
+	db	'Last sector padded with EOFs',cr,lf,0
+	jmp	wboot
+;
+;Erase the incomplete output file, then exit
+;
+ERXIT:	lxi	d,fcb2
+	mvi	c,close
+	call	bdos
+	lxi	d,fcb2
+	mvi	c,erase
+	call	bdos
+;
+;Print message then exit to CP/M warm boot
+;
+EXIT:	POP	D	;GET MSG ADRS
+	MVI	C,PRINT	;PRINT MESSAGE
+	CALL	BDOS
+	CALL	ILPRT	;PRINT CRLF
+	DB	CR,LF,0
+	JMP	WBOOT	;ASSURES UPDATE OF BIT MAP
+;
+;Print illegal destination drive message
+;
+wrgdest:
+	call	exit
+	db	'++ ILLEGAL DESTINATION DRIVE ++$'
+;
+;Inline print routine - prints string pointed to
+;by stack until a zero is found.  Returns to caller
+;at next address after the zero terminator.
+;
+ILPRT:	XTHL		;SAVE HL, GET MSG ADRS
+;
+ILPLP:	MOV	A,M	;GET CHAR
+	CALL	TYPE	;OUTPUT IT
+	INX	H	;POINT TO NEXT
+	MOV	A,M	;TEST
+	ORA	A	;..FOR END
+	JNZ	ILPLP
+	XTHL		;RESTORE HL, RET ADDR
+	RET		;RET PAST MSG
+;
+;Send character in A register to console
+;
+TYPE:	PUSH	B
+	PUSH	D
+	PUSH	H
+	MOV	E,A	;CHAR TO E FOR CP/M
+	MVI	C,WRCON	;WRITE TO CONSOLE
+	CALL	BDOS
+	POP	H
+	POP	D
+	POP	B
+	RET
+;
+;Decimal output - print HL as decimal
+;number with leading zero suppression
+;
+DECOUT:	PUSH	B
+	PUSH	D
+	PUSH	H
+	LXI	B,-10
+	LXI	D,-1
+;
+DECOU2:	DAD	B
+	INX	D
+	JC	DECOU2
+	LXI	B,10
+	DAD	B
+	XCHG
+	MOV	A,H
+	ORA	L
+	CNZ	DECOUT
+	MOV	A,E
+	ADI	'0'
+	CALL	TYPE
+	POP	H
+	POP	D
+	POP	B
+	RET
+;
+move:	mov	a,m
+	stax	d
+	inx	h
+	inx	d
+	dcr	b
+	jnz	move
+	ret
+;
+;Output file control bytes
+;
+fcb2:	db	'         '
+;		 ^^^^^^^^^	;9 bytes
+ftype:
+	if	addlf
+	db	'ALF'
+	endif	;addlf
+	if	fltelf
+	db	'FEL'
+	endif	;fltelf
+	if	filtlf and (not addsp) and (not tabrpl)
+	db	'FLF'
+	endif	;filtlf and (not addsp) and (not tabrpl)
+	if	addsp and (not filtlf) and (not tabrpl)
+	db	'ASP'
+	endif	;addsp and (not filtlf) and (not tabrpl)
+	if	filtlf and addsp and (not tabrpl)
+	db	'SFL'
+	endif	;filtlf and addsp and (not tabrpl)
+	if	fltesc
+	db	'FES'
+	endif	;fltesc
+	if	addcr
+	db	'ACR'
+	endif	;addcr
+	if	tabrpl and (not filtlf) and (not addsp)
+	db	'RTB'
+	endif	;tabrpl and (not filtlf) and (not addsp)
+	if	tabrpl and (not filtlf) and addsp
+	db	'SRT'
+	endif	;tabrpl and (not filtlf) and addsp
+	if	tabrpl and filtlf and (not addsp)
+	db	'FLT'
+	endif	;tabrpl and filtlf and (not addsp)
+	if	tabrpl and filtlf and addsp
+	db	'FBB'
+	endif	;tabrpl and filtlf and addsp
+	if	addtab
+	db	'ATB'
+	endif	;addtab
+	if	addnsp
+	db	'ANS'
+	endif	;addnsp
+	if	spcrpl and (not fltasm)
+	db	'RSP'
+	endif	;spcrpl and (not fltasm)
+	if	fltasm
+	db	'FSM'
+	endif	;fltasm
+	db	0,0,0,0,0,0,0,0,0,0,0,0
+	db	0,0,0,0,0,0,0,0,0,0,0,0
+	db	0,0,0
+;
+lincnt:	db	0
+tabcnt:	db	0
+scinbf: db	0
+finis:	db	false
+spccnt:	db	numspc
+tabflg:	db	false
+spcflg:	db	false
+dowflg:	db	false
+quoflg:	db	false
+cmtflg:	db	false
+escflg:	db	false
+crflg:
+	if	not (addsp or addnsp or addtab)
+	db	false
+	endif	;not (addsp or addnsp or addtab)
+	if	addsp or addnsp or addtab
+	db	true
+	endif	;addsp or addnsp or addtab
+nxtout:	dw	buffer
+DCOUNT:	DW	0	;DELETED CHARACTER COUNTER
+acount:	dw	0	;added character counter
+bakftp:	db	'BAK'
+fixftp:	db	'FIX'
+padftp:	db	'PAD'
+		DS	100	;ROOM FOR STACK
+STACK:		ds	2	;STACK POINTER SET HERE
+;
+;Put write buffer on even page boundary
+BUFFER	EQU	($ and 0ff00h) + 100h	;WRITE BUFFER STARTS HERE
+;
+	END
+

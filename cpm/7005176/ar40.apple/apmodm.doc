@@ -1,0 +1,119 @@
+		APMODEM VERSION 2.0 AND VERSION 1.0
+
+     APMODEM is a modification of Ward Christensen's famous program 
+MODEM which allows transfer of programs under the CP/M operating system.
+This program has been so popular, that it has established the protocol for
+CP/M file transfer via modem.
+     Apple CP/M is a full 56k standard CP/M, but is limited in that the
+disk format is unique to Apple.  This inhibits the exchange of software, which
+is distressing since one of the main advantages of CP/M is the extensive 
+amount of public domain software available.  With this modified version of
+Ward's program, coupled with the many remote CP/M systems, all of this software
+is now available to Apple users.
+     This program should work with just about any modem set-up currently extant
+on the Apple.  It has been tested with the D.C. Hayes Micromodem II, the CCS
+7710A serial interface, and the Apple communications card.  It should also work
+with the SSM serial board, but I have not tested it with this board or the
+Apple serial interface.  Should you find that it doesn't work with these, 
+please let me know, or even better, fix the program so that it works!
+     The program is supplied as an ASM file, and will assemble without
+modification to run with the Micromodem II.  Version 2.0 implements auto-
+dialing feature of this modem, while version 1.0 does not.  To make the
+COM file, simple type ASM APMODEM2 (of course, the assembler, ASM.COM must
+be on the disk) and then LOAD APMODEM2.
+     If you have another modem than the Micromodem, you must change the equate
+for the Micromodem (found in the first few program lines after the opening 
+comments) to FALSE and the equate for your modem to TRUE.  You must also change
+the equate for INITREQ (initialization required) to TRUE.  The conditional
+assembly will then take place properly for you modem.
+     The modem program is very simple to use and self documenting if you type
+
+	MODEM H    (for help).
+
+     The program is controlled by the command line which also invokes the 
+program.  To use simply type (from CP/M):
+ 
+	MODEM (command string).
+
+     The command string consists of a series of characters specifying the
+function the modem is to carry out.  For example:
+
+	MODEM TO    ==> sets the modem up as a terminal in the originate mode.
+
+	MODEM S.110 PIP.COM ==>sends the file PIP.COM to another computer
+					at 110 baud.
+     The commands can be classed as primary and secondary commands.  The
+primary command is represented by the first letter of the commands string.
+Allowable primary commands are:
+
+H	prints the help file...a list of the commands.
+
+X	examples of how to use the modem program.
+
+C	(Micromodem II only) automatically dial a number.  The program then
+	  asks for the number, dials it, and if carrier is detected, drops
+          into terminal mode.  If the carrier is not detected, it hangs up.
+
+T	terminal mode.  Full duplex.
+
+S	send a file to another computer.
+
+R	receive a file from another computer.
+
+E	act as a computer (echo all characters).
+
+D	disconnect the phone (hang up) (Micromodem II only).
+
+Allowable secondary options are:
+
+A	answer mode.
+
+O	originate mode.
+
+D	hang up after execution of previous options.
+
+T	go to terminal mode after previous options.
+
+E	go to echo mode after previous options.
+
+Q	quiet mode, no message displays.
+
+R	show characters received.
+
+S	show characters sent.
+
+V	view the file sent/received, as it goes/comes.
+
+     The baud rates may be switched on the Micromodem and Com card by
+specifying .300 or .110 after the last of the secondary options in the 
+command line.
+
+Examples:
+
+	MODEM ROVT FILE.COM ==> receive a file in originate mode, viewing
+				  it as it comes in and save it in FILE.COM.
+				  Drop into terminal mode when done.
+
+	MODEM SAT.110 C:BYE.ASM ==> sent a file in answer mode, at 110 baud,
+					dropping back into terminal mode when
+					done.  Get the file from drive C:
+
+	MODEM C  ==> dial a number to be asked for and connect with the
+			computer at the other end.  (will drop into terminal
+			mode with defaults set (originate, 300 baud)).
+
+     The following control characters are active in terminal mode:
+
+	ctrl-E ==> exit to CP/M, but don't hang up.
+	ctrl-D ==> disconnect (hang up)	(Micromodem only).
+
+     I will be happy to answer any questions.  Happy modeming!
+
+		Gordon Banks
+		5715 S. Drexel #209
+		Chicago, IL 60637
+		(312) 324-6194
+
+	Enclose SASE for mail replies.
+
+

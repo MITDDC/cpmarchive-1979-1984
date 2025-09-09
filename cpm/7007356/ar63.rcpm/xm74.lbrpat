@@ -1,0 +1,34 @@
+                           XM74LBR.PAT
+                         by Eliot Ramey
+                           (05/18/83)
+
+	I have found in not only neccassary, but very convienient to
+library many files on my RCP/M disks.  Many people do not always recognize
+certain files as being in a package due to non-standard naming conventions,
+so a library groups the files and people can easily tell that all the files
+are related.  Also, by librarying files I can save directory space which
+is limited to 64 entries on my system.  The side effect of librarying files
+is very large files which could take hours to download at 300 baud.  The
+solution is to only allow members of the libraries to be downloaded, and
+not the whole library.  One prevents a file from being downloaded by
+"tagging" the high bit on the first byte of the file name, and xmodem
+will not send that file.  The way XMODEM74 has been written, it will not
+allow this file to be accessed by any means.  I wanted XMODEM74 to access
+this file IF the user was using the "L" option in xmodem.  The following
+patch will allow xmodem to send members from a library file, but will not
+allow sending of the entire .LBR file.
+
+OPENOT:
+	lda	optsav
+	cpi	'L'
+	jz	openok2
+
+Find the label OPENOT: in XMODEM74.ASM and insert directly after the
+label the three lines shown in lower case.
+
+					Happy downloading,
+					Eliot S. Ramey
+					Arlington RCP/M
+					(703)536-3769 (300-710 baud)
+
+

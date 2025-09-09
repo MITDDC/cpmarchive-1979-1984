@@ -1,0 +1,27 @@
+     The file VOICE.C contains a major subroutine "talk" which enables the 
+user to operate a Votrax SC-01 speech synthesizer chip phonetically. That is, 
+the subroutine takes as right argument a character string made up of the 
+Votrax standard phoneme descriptors. For example the statement
+     talk("T,EH,N,PA1,");    (the trailing , is mandatory)
+will say the word ten. Note that without the final PA1 the synthesizer will 
+say NNNNNN.... if you use a latched scheme like I do. 
+     Some other subroutines to make life easier are included. They are
+[1] saynum(num)    will pronounce a number (num is unsigned integer)
+[2] sayday(dayow)   will say the day of the week (dayow is char 0-6)
+[3] saymonth(month) will say the month  (month is char 0-11).
+     No doubt this could be sped up in some way, but it simplifies 
+code. Especially if you want to write an interactive program to check out 
+various phoneme combinations. The routine "pronounce" assumes that you have 
+the chip set up as a LIST device when IOBYTE is set for UC3: . I.E. setting 
+STAT LIST:=UC3: on my micro gets the Votrax ready for LIST output. This 
+routine will most likely need changing on your machine, although this route is 
+convenient for interfacing less tolerant languages as STAT can do all the 
+work.
+     Easiest method of use in BDS-C is to compile VOICE.C separately and CLINK 
+it to whatever routines you write to use the synthesizer.
+
+/* written by Mark Zachmann
+                56 Rutgers St. #4
+                Rochester, N.Y. 14607
+        */
+

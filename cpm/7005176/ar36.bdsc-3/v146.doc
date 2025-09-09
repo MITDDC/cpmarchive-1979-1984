@@ -1,0 +1,260 @@
+ 
+                          BDS C User's Guide Addenda
+                         v1.46 Edition --  March, 1982
+ 
+                                  Leor Zolman
+                                  BD Software
+                                33 Lothrop st.
+                        Brighton, Massachussetts 02135
+ 
+ 
+ 
+     There  have  been  several new sets of features added to BDS C v1.46.  The
+new   features   fall   into  three   catagories:   preprocessor   enhancement,
+CP/M-specific compiler performance  enhancement by selective overwriting of the
+CCP (Console Command Processor), and  new  utility  programs (including CASM.C,
+which  provides for the creation of CRL-format object  files  out  of  assembly
+language  source  files WITHOUT the need for MAC.COM and the old CMAC.LIB macro
+package).  
+ 
+ 
+The preprocessor enhancements are as follows:  
+ 
+0.   Parameterized  #defines are now supported. This allows a macro in the form
+     of a function call  to  be expanded (before compilation) into an arbitrary
+     string, with the original  parameters  substituted  into  the string.  For
+     example, the sequence 
+     
+             #define foo(x,y) x * 3 + y
+             .
+             .
+             .
+             z = foo(bar,zot());
+ 
+     results in the final line actually reading:  
+     
+             z = bar * 3 + zot();
+ 
+ 
+0.5  One feature of "#define" substitution has been slightly changed:    when a
+     symbolic  constant appears in the definition of ANOTHER symbolic constant,
+     then the substitution  of the first constant does not take place until the
+     substitution of the second does. This means that in a sequence such as 
+     
+             #define FOO 1
+             #define BAR FOO+1
+ 
+     the  string that gets substituted  for  "BAR"  depends  upon  the  current
+     definition  of  "FOO"; if "FOO" got re-#defined at some point, "BAR" would
+     change accordingly.  Given  the  above  example, in past versions of BDS C
+     "BAR" became "1+1" at its definition point and would not have changed even
+     if "FOO" were re-#defined, unless "BAR" was  also re-#defined after "FOO".
+ 
+1.   The 
+     
+             #if <expr>
+ 
+     conditional  compilation  directive  is now supported,  but  only  with  a
+     special limited syntax for the expression argument, defined as follows:  
+     
+             <expr>  := <expr2>              or
+                        <expr2> && <expr>    or
+                        <expr2> || <expr>
+
+BDS C v1.46 Doc Update, 3/82            1
+î
+
+
+          
+             <expr2> := <constant>           or
+                        !<expr2>             or
+                        (<expr>)
+ 
+     The <constant> may be a symbolic constant,  but  is  treated  as a logical
+     value always...i.e, 0 is false and any non-zero value is true (1).    This
+     allows  users  to  write  system-dependent conditional expressions without
+     having to resort to #ifdef/#ifndef  and  commenting/un-commenting  #define
+     statements to yield the desired conditions.  
+ 
+2.   Nesting   of  conditional  compilation  directives  is  now  allowed,  and
+     incorrect nesting  attempts  will now draw an appropriate error instead of
+     doing random things to the source  text.    Note that each and every #else
+     directive  MUST  be  followed  by a matching #endif  (unlike  C's  control
+     structure syntax, in which an if...else  chain  may be extended as long as
+     desired.) 
+
+****************************
+ 
+ 
+The following enhancements to the v1.46 compiler and linker affect the USAGE of
+the compiler, not the C language syntax it accepts:  
+ 
+In  the  past, the compiler and linker have performed a  CP/M  warm-boot  after
+every compilation  had  either  been completed or aborted due to an error.  For
+v1.46, a warm-boot will only take place when the memory occupied by the Console
+Command Processor (CCP) is actually needed for the task. Since there is usually
+plenty  of memory left over after  a  compilation  or  linkage,  I  decided  to
+eliminate  the  pain of having to wait for the system to re-boot after each and
+every usage of the compiler or linker.  
+ 
+One feature of BDS  C  in  the  past has been that it automatically aborted any
+pending "SUBMIT" file after compilation  when an error had been detected during
+the compilation. This had required the compiler  to seek to the directory track
+on disk and erase "$$$.SUB" before re-booting, but  the  extra  time thus spent
+was  negligable  since  a seek to the low tracks was coming up soon  anyway  in
+order to do the warm-boot.   Now, since a warm-boot isn't standard anymore, and
+the compiler is often used without  being  in  a "submit" file, the compiler no
+longer AUTOMATICALLY aborts "submit" files following  an error.  The feature IS
+availalable, though, through the new "-x" option to CC1.  If  "-x"  is given on
+the  CC1 command line, then "submit" files will be aborted following an  error.
+Any time CC1 is used in a "submit" file, "-x" should appear on the command line
+in the  "submit" file. If CC1 is used stand-alone, then "-x" should not be used
+(it would  just  cause  some needless disk activity upon error.) MAKE A NOTE OF
+THE "-X" OPTION UNDER THE  CC1  OPTIONS  SECTIONS  OF  THE  BDS C USER'S GUIDE.
+Since CLINK is not aborted very often, it has not been given  a "-x" option and
+(as  in  previous  versions)  will  always  abort  pending "submit" files  when
+prematurely terminated.  
+ 
+Note that both the compiler and linker now send a bell character (control-G) to
+the  user  console after completing a task in which one  or  more  errors  have
+occurred. This  is  to alert the user in the case of a premature completion and
+return to command level  (as  when  a fatal error is detected by the compiler),
+since  audible  warm-boots no longer serve  to  notify  the  user  of  compiler
+termination.  
+
+****************************
+ 
+ 
+
+BDS C v1.46 Doc Update, 3/82            2
+î
+
+
+The  major  new  utility   program   included   with   v1.46   is   CASM.C,  an
+assembly-language-to-CRL     conversion     preprocessor.    CASM    takes    a
+specially-formatted assembly lanaguage source  file  having extension ".CSM" as
+input,  and  puts  out  an  ".ASM" file which may then be assembled  using  the
+standard CP/M assembler (ASM.COM),  to  eventually  produce a CRL-format object
+file. Note that sources to the assembly-language portion  of  the BDS C library
+are now provided as ".CSM" files instead of ".ASM" files, and a  "submit"  file
+named   "CASM.SUB"  has  been  provided  to  automate  the  entire  process  of
+"CSM"-to-"CRL"  conversion. A separate document detailing the operation of CASM
+is included with the BDS C v1.46 package.  
+ 
+A new wild-card expansion utility, named WILDEXP.C, allows ambiguous file names
+to be specified on  the  command line to C-generated programs; then by a simple
+function call, the ambiguous  references  are expanded to include all filenames
+on  the  current  disk that match the specification.  Exceptions  may  also  be
+specified.  
+ 
+A new utility named  NOBOOT.C is also included: when NOBOOT.COM is invoked upon
+a COM file produced by  the C compiler, it will make some magic changes so that
+the COM file no longer performs  a  warm-boot  after  completing execution. The
+changes involve forcing the run-time stack to begin BELOW  the  CCP, and having
+the program save the system stack pointer passed to it by CP/M so  that  the SP
+may be restored after execution and control can pass directly back to the  CCP.
+NOBOOT  should  be  used ONLY with programs linked using the standard, supplied
+form of the run-time package (C.CCC). Note that the "topofmem" library function
+has been modified to recognize when NOBOOT is in effect at run-time, and should
+return the correct value for the end of available user memory in all cases.  
+
+****************************
+ 
+ 
+The following bugs have been detected and corrected for BDS C v1.46:  
+ 
+1.   CC1 had crashed  when  an  "#include"  file  was  not  terminated  with  a
+     carriage-return/linefeed sequence.  
+ 
+2.   CLINK  no  longer  complains about not being able to find "DEFF3.CRL" when
+     there are undefined  function  references  in a linkage; if DEFF3.CRL does
+     exist, it will be searched, but if it does not  exist,  that  fact will no
+     longer draw an error.  
+ 
+3.   Literal  strings  having  continuation  lines might have confused the  CC1
+     preprocessor in some versions, to the effect that a "#defined" symbol name
+     that happened to match a character sequence  within  the continuation line
+     of  the  string  was incorrectly substituted for by the preprocessor,  and
+     such a symbol appearing  AFTER  the  end of the string was NOT substituted
+     for.  
+ 
+4.   In  the  DIO  package,  the variable "c" in  the  "getchar"  function  was
+     incorrectly declared as a  "char"  instead  of  an  "int";  this  caused a
+     physical EOF to be returned as the value 255 instead of -1. Note that this
+     problem  only  appeared  when the text file was not terminated by a CPMEOF
+     (control-Z) character.  
+ 
+5.   Another DIO-related bug: when  text  containing  both carriage-returns and
+     linefeeds  was  fed  to  the  DIO  "putchar" function, an  extra  linefeed
+     character was appended to each line  and  resulted  in an extra blank line
+     between  each  actual  line  of the output file. This has  been  fixed  by
+     building some state information  into the DIO version of "putchar" so that
+     the redundant linefeeds are not generated.  
+
+BDS C v1.46 Doc Update, 3/82            3
+î
+
+
+6.   CLINK now warns the user when the  address of the end of the external data
+     area falls above the effective "top  of  memory"  address  (and  thus  not
+     leaving any room for the run-time stack) to prevent hair-pulling confusion
+     if  such  a  condition  is not noticed by the user.  If you are generating
+     special-purpose code in which  you  purposely tell the linker that the top
+     of memory is below the external area,  then just ignore the error message.
+ 
+7.   The "gets" library function has been modified  to use the stack during its
+     BDOS  call  to  get  a  line of text, and then copy the  result  into  the
+     supplied buffer area. This  means  that  the  buffer area passed to "gets"
+     need no longer be 2 bytes longer than the longest  expected  string;  but,
+     "gets"  still  does not know how long the buffer you give it really is and
+     you must make sure to supply a large enough buffer (when "gets" calls BDOS
+     function 10, it supplies the BDOS with a 135-byte buffer on the stack, and
+     as much of this as is filled up is copied to the user-supplied buffer upon
+     return from the BDOS call).  
+ 
+     A new alternative  to  "gets"  has  been supplied, called "getline", which
+     works just like the "getline" function  shown  in Kernighan & Ritchie. The
+     format is:  
+     
+             int getline(strbuf,maxlen)
+             char *strbuf;
+             int maxlen;
+ 
+     "Getline" collects a line of text from the user, where the maximum allowed
+     length of the line is "maxlen" characters (where "maxlen" is supplied as a
+     parameter). The return value is the length of the  entered  line.    Since
+     "getline"  also uses BDOS function 10 to collect the line, a call such  as
+     "getline(str,135);"  would  work  the  same as "gets(str);". Use "getline"
+     either to limit the line length to some  small  number, or to allow longer
+     lines (up to 255 characters) than the maximum of  135  that "gets" allows.
+ 
+     Note that both "gets" and "getline" will return immediatly  if  the number
+     of  characters  typed  reaches  the  maximum  allowed  (135  for "gets" or
+     'maxlen' for "getline"), even if no newline (carriage-return in this case)
+     is typed by the user. This is due to the behavior of the BDOS,  and  there
+     aint'  nuthin  to  be done about it short of writing an entire "gets" from
+     scratch in terms of low-level character I/O, and that just isn't worth the
+     trouble.  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+BDS C v1.46 Doc Update, 3/82            4
+î

@@ -1,0 +1,50 @@
+
+                       CONTENTS OF VOLUME #7
+
+     This  volume developed fast and slow.   The material came in 
+fast  but  I  had  the newsletter to get  out  so  it  was  slow.  
+However,  you will see some new names this time and some original 
+ideas.  We have a excellent start with our disks and it is easier 
+to  program  with such help.  But don't slow down.  Keep  sending 
+those programs.   If we keep it up,  the day will come when  most 
+any  module we need will be available FREE.  Then programing will 
+be just a logical excerise and not a coding drag.
+                         
+1.   This first group is the Dr.Bowles DataBase seed program that 
+     he used in his classes.  It is a frame to which a expanded 
+     data base can be built.  I have a special interest in data
+     bases  and I am glad that Dr.Bowles donated this  to  Public 
+     Domain. The one who gets this converted to Pascal/Z will win 
+     a  free disk full of software and the gratitude of  everyone 
+     else.
+
+     DATABASE.DOC        DBBUILDE.CPM        DBDEMO.CPM
+     DBUNIT.1            DBUNIT.2            DBUNIT.3
+     DBUNIT.4            DBUNIT.CPM
+
+2.   Donald Killen ,of Carrollton Texas, found that as he played 
+     around  with  his BIOS,  he ran out of track space.   So  he 
+     reworked things a bit. Now he has as much space as he wants.
+     That means, of course, a different SYSGEN. So this group of
+     programs  are all about how to do that.  
+
+     SGEN.COM            SGEN.MAC            MACROZ.MAC
+     CLIB.MAC            SGEN.DOC            
+
+3.   Gene Duncan,  of Palo Alto-Ca, likes to do orginal work and 
+     has donated the following programs.  His address is listed
+     in Newsletter #5 and would appreciate any feedback that you
+     might want to pass on to him. It'll give him an idea of how
+     he is doing.  The BSORT group is a sort program that is fast
+     and  can't  be  fooled.   He gives some  background  in  the 
+     program so be sure to check that program.  The PGLST group 
+     is a print format program that will save paper.  It reads a
+     text  file  of fixed or variable length  character  records, 
+     each record ending with a CR and LF,  and arranges them on a 
+     print  page in columns.  I added the data file W3UA to  show 
+     you how it works, nice utility.
+
+     BSORT.ASM           BSORT.COM           BSORT.NOT
+     PGLST.PAS           PGLST.COM           PGLST.NOT
+     W3UA.LIB
+

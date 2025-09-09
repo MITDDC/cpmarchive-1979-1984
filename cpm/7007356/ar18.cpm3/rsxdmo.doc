@@ -1,0 +1,252 @@
+RSXDEMO.DOC							7-15-83	
+
+      Copyright (c) 1983 by George F Peace.  All rights reserved.
+
+1.  Introduction
+
+This document and the accompanying program are provided to assist the CP/M
+Plus user in understanding the operation of the Resident System Extension
+(RSX) feature.  Some of the information presented is also available in the
+"CP/M Plus (CP/M Version 3) Operating System Programmer's Guide" by Digital
+Research.
+
+An RSX is a Page Relocatable (PRL) file with the file type RSX.  RSXs are
+combined with a CP/M Plus program by the GENCOM utility.  At execution time,
+the program loader dynamically relocates the RSXs to the top of the TPA
+and updates the RSX headers and page zero address six to reflect the
+presence of those routines.  Control is then passed to the COM file to
+perform any operation required to initialize the RSXs and/or the CP/M Plus
+environment.
+
+CP/M-Plus is released with several RSXs or programs with attached RSXs.
+These include GET, PUT, SAVE and SUBMIT. GET and PUT intercept console input
+and output requests respectively and convert those requests into CP/M file
+I/O requests.  SAVE intercepts the warm boot BDOS function following
+execution of a program and allows the user to save memory to disk.  SUBMIT
+functions similarly to GET by replacing console input requests with file I/O.
+
+The CP/M Plus user can create an RSX to perform functions that in the past
+typically required a detailed understanding of CP/M memory organization and
+operation.  Those functions might include
+
+	- Restricting certain BDOS function calls according to
+	  specific security requirements
+	- data manipulation (i.e. encryption)
+	- Implementation of RAM disks
+	- Implementation of hard disk interfaces
+
+The RSX accompanying this document receives all BDOS function calls and
+intercepts those that are console-related following its relocation and
+initialization.  The program displays the function number for each one
+intercepted.  If BDOS was CALLed via address 0005h, the address of that
+CALL will also be displayed.  Its operation thus generates a run-time
+trace of BDOS calls.
+
+
+2.  Resident System Extension Structure
+
+Each RSX must contain a standard 27 byte prefix.  The following is an
+example of that structure.
+
+0	serial:	db	0,0,0,0,0,0	;room to insert serial number
+1	start:	jmp	ftest		;beginning of program
+2	next:	db	0C3H		;jump instruction op-code
+3		dw	0		;next module in line (or BDOS)
+4	prev:	dw	0		;previous module
+5	remov:	db	00h		;remove flag clear
+6	nonbnk:	db	0		;>0 to load only in non-banked CP/M
+7	rsxnam:	db	'RSXDEMO '	;the name of this RSX
+8	loader:	db	0		;loader flag
+9		db	0,0		;reserved
+
+
+Updated				Legend
+  by
+
+loader 	0 - This area is reserved for the program loader to insert the
+	    CP/M Plus serial number.  This allows existing programs that
+	    use that value (always expected to be the first six bytes of
+	    the first page of BDOS) to operate without error in an RSX
+	    environment.
+ user	1 - This is the jump to the actual start of the RSX code
+loader	2 - This field points to the next higher RSX or BDOS if this
+	    is the last RSX
+loader	4 - This is the address of the previous RSX or 0005 if this is
+	    the first RSX
+ user	5 - This flag is set to zero if the RSX is to remain in memory
+	    indefinitely.  It is set to 0FFh to force its removal from
+	    memory on the next warm boot
+ user   6 - Set this to 0FFh if this RSX is to be loaded only when being
+	    executed on a non-banked CP/M Plus.  DIRLBL.RSX is an example
+	    of the use of this flag.  The RSX handles BDOS function 100
+	    in a non-banked environment
+ user   7 - This field is any eight byte literal to uniquely identify
+	    the RSX
+loader	8 - This flag is set to 0FFh if the RSX is the CP/M Plus LOADER
+	    and zero if it is a user RSX
+
+
+3.  Resident System Extension Logic Flow
+
+  The first thing a programmer needs to do in any RSX is save the caller's
+environment to allow normal processing of the BDOS request in subsequent
+RSXs.
+  Next, the RSX should retrieve the BDOS function number (from register C)
+and test for one of those being intercepted.
+  If the BDOS function is not one of those being intercepted, restore the
+caller's environment and jump to tag NEXT: (see line 2 in the RSX prefix
+above).  Note that any time an RSX passes control to BDOS, tag NEXT: must
+be used.  Remember that the RSX is essentially a part of BDOS and a call
+to address 0005 will produce unpredictable results.
+  If the BDOS function is being intercepted, perform any processing
+required and restore the caller's environment (except for any flags or
+indicators being returned).
+  Now, determine whether this RSX preprocesses or replaces the BDOS function
+and pass control either to label NEXT: to continue with the next RSX or an
+RET instruction to return immediately to the caller.
+
+
+4.  BDOS Function 60 (call Resident System Extension)
+
+This is the special BDOS function to be used to communicate with an active
+RSX.  The function is called with 60 (03Ch) in C and the RSX Parameter Block
+address in DE.  The parameter block has a structure as follows:
+
+	RSXPB:	db	FUNCTION	;the RSX function number
+		db	NUMPARMS	;the number of parameter words
+		dw	PARAM1		;parameter word 1
+		dw	PARAM2		;parameter word 2
+		.
+		.
+		dw	PARAMn		;parameter word n
+
+The FUNCTION byte must a number between 0 and 127.  By use of this BDOS
+function, data and commands can be passed to or from an active RSX.  If
+no RSX traps this BDOS function, the BDOS returns 0FFh in registers A and L.
+
+It might be useful to designate parameter one of the Parameter Block as
+a target RSX indicator (i.e. the RSX name).  In that way, multiple RSXs
+obtained from different sources can each use the full range of subfunctions
+and yet intercept only their own subfunctions.
+
+
+5.  Preparing a Resident System Extension for Execution
+
+An RSX is stored and loaded as part of a specially constructed COM file.
+The RSX is typically attached to a COM file which performs specific
+operations using the extensions provided by that RSX.  The RSX can,
+however, be attached to a dummy COM file so that the only operation
+performed is the RSX load.  In that case, the RSX is normally locked into
+memory until triggered for removal.  The GENCOM utility constructs this
+COM file according to user-defined parameter input.
+
+5.1  Assembling the RSX
+
+The RSX must be a page relocatable file because its execution address
+is determined dynamically by the loader.  The RMAC assembler and LINK-80
+must therefore be used to assemble and link the RSX.
+
+	A>RMAC RSXDEMO
+	A>LINK RSXDEMO [op]
+
+5.2  Assembling the Main Program
+
+As was indicated above, the RSX is typically attached to some COM file
+that uses the extensions provided by that RSX.  In this example, an
+assembler program will be used to demonstrate both RSX construction and
+use of BDOS function 60 to control that RSX.  Use your word processor
+to split the following program into RSXINIT.ASM.
+
+; RSXINIT.ASM	copyright (c) 1983 by George F Peace
+
+; usage: RSXINIT			loads the RSX
+; 	 RSXINIT <any parameter>	unloads the RSX
+
+dma	equ	80h
+bdos	equ	5
+wboot	equ	0
+callrsx	equ	60
+rsx$init equ	13
+rsx$term equ	14
+
+	org	100h
+	lda	dma		;get command tail length
+	cpi	0		;anything there?
+	jnz	termrsx		;yes - assume terminate request
+	mvi	a,rsx$init	;get initialization function
+loadrsx:
+	sta	rsxpb		;store subfunction in parameter block
+	mvi	c,callrsx	;get RSX command index
+	lxi	d,rsxpb		;get RSX parameter block address
+	call	bdos
+	mvi	c,wboot		;terminate the program but not the RSX
+	jmp	bdos
+termrsx:
+	mvi	a,rsx$term	;get RSX termination function
+	jmp	loadrsx		;now go set up the RSX
+
+rsxname: db	'RSXTEST '	;name of RSX we're calling
+rsxpb:	db	rsx$init	;RSX initialization function
+	db	1		;1 parameter word follows
+	dw	rsxname		;parameter 1 address
+	end
+
+The commands to assemble the control program are
+
+	A>MAC RSXINIT
+	A>HEXCOM RSXINIT
+
+
+5.3  Attaching the RSX to the Main Program
+
+The final step in RSX construction is the generation of the special COM
+file containing both the main program and the attached RSX.  The GENCOM
+command is used for this purpose.  GENCOM requires that the RSX have a
+file type of RSX so it can be properly identified and included in the COM
+file.  
+
+	A>RENAME RSXDEMO.RSX=RSXDEMO.PRL
+	A>GENCOM RSXINIT RSXDEMO
+
+
+5.4  Using the Resident System Extension
+
+Now that the RSXINIT COM file has been updated by GENCOM, it's time to
+try it out.  To load the RSX, type
+
+	RSXINIT
+
+then execute a program or issue a CCP command.  When you are finished
+testing the RSX, type
+
+	RSXINIT <any parameter>
+
+to remove the RSX from memory.  You can return the RSXINIT.COM file to
+its original unmodified state by typing
+
+	GENCOM RSXINIT
+
+
+6.  Excuses and Closing Comments
+
+There are certainly more ways to implement an RSX than the one presented
+here.  My intent has been to provide a general introduction to the
+Resident System Function capability rather than a detailed text.  I believe
+the Digital Research documentation is an adequate reference text.  Why did
+I even provide this text if the DRI documents are "adequate"?  My CP/M
+Plus machine was provided with only the barest (non-DRI) documentation.  I
+had to gather the material piece-by-piece until I purchased the DRI manual
+set.  Maybe there are a few other frustrated Plus users out there too.
+
+
+I can be contacted at:	George F Peace
+			1703 Headwaters Road
+			Midlothian, Virginia  23113
+
+		or the CP-MIG on CompuServe (id 71555,1501)
+
+-----	-----	-----	-----	-----	-----	-----	-----	-----
+
+CP/M is a registered trademark of Digital Research
+CP/M Plus, LINK-80, MAC, and RMAC are trademarks of Digital Research
+HEXCOM is anybody's guess

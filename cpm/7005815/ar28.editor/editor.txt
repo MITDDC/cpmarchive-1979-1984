@@ -1,0 +1,41 @@
+ #: 17542      Sec. 2 - C sect
+Sb: #EDITOR.C
+    18-Jul-82  13:14:45
+Fm: Ken Presser 70665,147
+To: Frank Ivan 70003,2244 (X)
+Frank --
+  I have gotten the editor to work to some extent.  It still has bugs that I
+need to track down.  The original Editor appeared in Dr Dobb's and was written
+in Small C.  This is available from the BDS C user's group (both Small C and
+the original Editor) for a copying fee.  The major enhancement in the version
+here is that it allows you to edit files larger than the available memory by
+reading and writing parts of the file similar to the CP/M ED.  If I can get the
+bugs out of it I will put a file of fixes out on the Access Database.  As a
+start you need to make the changes in the latest Dr. Dobbs.    -- Ken
+* Reply:
+	17580
+
+ #: 17580      Sec. 2 - C sect
+Sb: #17542-#EDITOR.C
+    18-Jul-82  23:18:19
+Fm: Frank Ivan 70003,2244
+To: Ken Presser 70665,147 (X)
+Ken,
+Thanks, I am converting it to AZTEC C and am getting some things to work. 
+Still quite a ways to go, but I wondered how it SHOULD work.
+I'll let you know how it turns out - Frank
+
+ #: 18035      Sec. 2 - C sect
+Sb: #17580-EDITOR.C
+    25-Jul-82  13:53:26
+Fm: Ken Presser 70665,147
+To: Frank Ivan 70003,2244
+Frank, You can use the editor pretty much like it is described in Dr. Dobbs
+using the LOAD and SAVE commands or you can make use of the READ, WRITE and
+FINISH commands to read from one file, edit and then write to an output file
+retaining the original as a backup.  One of the minor bugs in the program is
+that FINISH does not clear the memory buffer after it is done.  This is easily
+fixed by a call to the buffer clear routine at the end of the finish function. 
+Good luck and keep me informed of progress.  I may have some time to get back
+on this project now so I may have some more info for you later. -Ken
+

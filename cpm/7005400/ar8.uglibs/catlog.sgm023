@@ -1,0 +1,41 @@
+Sig/M volume 23		MBasic disassembler
+			Date Routines
+			miscellaneous utilities
+
+	(original materials from Pascal Z User Group volume 5)
+
+	-CATALOG.023		contents of Sig/M volume 23
+	ABSTRACT.023		comments
+	CRCKFILE.023		CRC of Sig/M volume 23
+
+
+23.1    EXPO.PAS              demo on the use of exponents
+23.2    EXPO.COM              /
+23.3    COMPARE.DOC           UCSD program Compare documentation
+23.4    DISASMB.DOC           disassembler in MICROSOFT Basic
+
+	related modules
+8085      LST            8085      TAB            XREF      BAS
+ZILOG     LST            ZILOG     TAB            XREF      SUB
+INTEL     LST            INTEL     TAB            TDL       LST
+TDL       TAB            LST8085   BAS            LSTINTEL  BAS
+LSTTDL    BAS            LSTZILOG  BAS            TAB8085   BAS
+TABINTEL  BAS            TABTDL    BAS            TABZILOG  BAS
+DISASMB   BAS            
+
+23.5.   DATE.DOC             dates routines 
+
+	related modules
+PROMT     LIB            MAKEDATE  LIB            RMAKEDA  LIB
+BRKDATE   LIB            DASTRLON  LIB            DASTRSH  LIB
+DASTRFIX  LIB            DATE      PAS            DATEFUNC LIB
+
+23.6    MISC.DOC	     miscellaneous routines
+
+	related modules
+GETINT    LIB            CAPCHAR   LIB            PADSTR   LIB
+CAPSTR    LIB            DEPAD     LIB            STRVAL   LIB
+
+23.7   HANOI COM/PAS        
+23.8   DIS.ASM/DOC          
+23.9   CONFER.PAS/COM       conference scheduling

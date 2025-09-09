@@ -1,0 +1,209 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;                                            ;;;
+;;; This is the INFO-CPM Mailing List          ;;;
+;;; Send mail to INFO-CPM-REQUEST to be added  ;;;
+;;;                                            ;;;
+;;; PLEASE - DO *NOT* MODIFY THIS LIST!        ;;;
+;;;                                            ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; The Archive File:
+;;;
+(FILE [CPM;CPM ARCHIV])
+;;;
+;;; At MIT-MC:
+;;;
+(ARICH  MC)
+(!ARPEE MC)
+(AUTHOR MC)
+(BEAN   MC)
+(BLUE   MC)
+(BYTE   MC)
+(CLJ    MC)
+(CONN   MC)
+(DEVON  MC)
+(EGBERT MC)
+(EGK    MC)
+(ES     MC)
+(FJW    MC)
+(GRUPP  MC)
+(GZ     MC)
+(HH     MC)
+(IRBY   MC)
+(ITTAI  MC)
+(JLM    MC)
+(JWP    MC)
+(KALA   MC)
+(KLUDGE MC)
+(LAUREN MC)
+(LEOR   MC)
+(MAZE   MC)
+(MCTESQ MC)
+(MJW	MC)
+(MMB    MC)
+(PLK    MC)
+(POURNE MC)
+(RGF    MC)
+(RJM    MC)
+(STEVEH MC)
+(SLIBES MC)
+(W8SDZ  MC)
+(WLG    MC)
+;;;
+;;; At MIT-ML:
+;;;
+(BNH    ML)
+(DAN    ML)
+(LEO    ML)
+(MADDOX ML)
+(MADLER ML)
+(PGA	ML)
+(PINTO  ML)
+;;;
+;;; At MIT-AI:
+;;;
+(BADOB  AI)
+(CAL    AI)
+(CSTACY AI)
+(DAG    AI)
+(DANIEL AI)
+(EB     AI)
+(EH     AI)
+(ELMO   AI)
+(FMF    AI)
+(FONER  AI)
+(GAI    AI)
+(GEOFFM AI)
+(GUMBY  AI)
+;(GYRO   AI) - out til end of February
+(HART   AI)
+(JERRYB AI)
+(LIN    AI)
+(MEADER AI)
+(MITCHW AI)
+(MITTON AI)
+(PLEHN  AI)
+(PLOUFF AI)
+(PNH    AI)
+(SAM    AI)
+(SEH    AI)
+(SPAM   AI)
+;(SWAIN  AI)
+(TANG   AI)
+;(TGARY  AI)
+(VANDAL AI)
+(WATSON AI)
+(ZVI    AI)
+;;;
+;;; At MIT-MULTICS:
+;;;
+(HGBaker.Symbolics   MULTICS)
+(micro-list.SoftArts MULTICS)
+(Schauble.Multics    MULTICS)
+(Solomon             MULTICS)
+;;;
+;;; Other:
+;;;
+(ELIOT    MIT-DMS)
+;;;
+(G.MIKES  MIT-EECS)
+(UC.B     MIT-EECS)
+;;;
+(GNC          LL)
+(OFF82        LL)
+;;;
+(david    UTEXAS-11)
+(mccallum UTEXAS-11)
+(MKNOX    UTEXAS-11)
+(RICK     UTEXAS-11)
+;;;
+(CC.SCHUCKING  UTEXAS-20)
+;;;
+;(AThompson  USC-ECL)
+(BHUBER     USC-ECL)
+(HX         USC-ECL)
+(NMAX       USC-ECL)
+(STERNLIGHT USC-ECL)
+;
+(CLEMENTS BBNA)
+(JSWAIN   BBNA)
+(MBARNES  BBNA)
+(TICSL    BBNA)
+;
+(TAPPAN   BBNG)
+;
+(EHAHN    BBNE)
+;
+(allegra!psuvax!boykin BERKELEY)
+(post-info-cpm         BERKELEY)
+(csvax.mjs             BERKELEY)
+;
+(BBOARD.CPM    CMU-20C)
+(BLACKWELL     CMU-20C)
+;
+(Ed.DeHart     CMUB)
+(SHOLAR        CMUA)
+(Wayne.Book    CMUA)
+;
+(JGilbert     DARCOM-HQ)
+(Llayten      DARCOM-HQ)
+;
+(new.info-cpm RAND-UNIX)
+;
+(CSL.SUN.GMO  SU-SCORE)
+(G.BABBAGE    SU-SCORE)
+;
+(MOORE        USC-ISIB)
+(OVERMAN      USC-ISIF)
+;
+(BARKLEY      NBS-10)
+;
+(fenchel.ES   PARC-MAXC)
+(GWilliams    PARC-MAXC)
+(Henning.ES   PARC-MAXC)
+(Weissman     PARC-MAXC)
+;
+(ATHEY        LLL-MFE)
+("MORTON JIM" LLL-MFE)
+(MARON        LLL-MFE)
+("7600 OPR"   LLL-MFE)
+;
+(AUTREY-HUNLEY SRI-KL)
+(BILLW         SRI-KL)
+(ROODE         SRI-KL)
+;
+(BOMBERGER    AMES-67)
+(HATHAWAY     AMES-67)
+;
+(CROSSLAND    UTAH-20)
+(M-SMITH      UTAH-20)
+;
+(DCD          WASHINGTON)
+(JSP          WASHINGTON)
+;
+(chesley      SRI-UNIX)
+(fylstra.tsca SRI-UNIX)
+;
+(GRAY         UCLA-SECURITY)
+(rudisin      UCLA-SECURITY)
+;
+(bbloom       BRL)
+(keller       BRL)
+;
+(EBM          XX)
+;
+(gerber.acf1  NYU)
+(KENNER       NYU)
+;
+(ISISW.MOORE  RUTGERS)
+(JEFFREY      OFFICE)
+(MALIS        BBN-UNIX)
+(MICRO        DARCOM-KA)
+(MAX          SCT)
+(PLATTS       WHARTON)
+(sdcsvax!robert  NPRDC)
+(SECO         OFFICE-1)
+(WHITE        SUMEX-AIM)
+;;;
+;;; End of List
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
