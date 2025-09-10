@@ -18,7 +18,7 @@ A list of all the tape images and their paths in the ToTS collection that these 
 ### [ITSarchivefilelist.txt](../main/ITSarchivefilelist.txt)
 A list of all the ITS archive files and their paths in this repo.
 ## Preferred Citation
-[filename], MIT-MC CP/M archive files, 1979-1984, Massachusetts Institute of Technology, Tapes of Tech Square (ToTS) collection, MC-0741. Massachusetts Institute of Technology, Department of Distinctive Collections, Cambridge, Massachusetts.
+[filename], MIT-MC CP/M archive files, 1979-1984, Massachusetts Institute of Technology, Tapes of Tech Square (ToTS) collection, MC-0741. Massachusetts Institute of Technology, Department of Distinctive Collections, Cambridge, Massachusetts. [swh:1:dir:6b6eefeb4e432ef59218495f26adb68cc0bf383c](https://archive.softwareheritage.org/swh:1:dir:6b6eefeb4e432ef59218495f26adb68cc0bf383c)
 ## Rights
 [These items may be under copyright](https://rightsstatements.org/page/CNE/1.0/). Please consult the collection finding aid or catalog record and the [MIT Libraries Permissions Policy](https://libraries.mit.edu/about/policies/copyright-permissions-policy/) for more information. Any questions about permissions should be directed to [permissions-lib@mit.edu](mailto:permissions-lib@mit.edu)
 ## Acknowledgements
